@@ -1,9 +1,3 @@
-
-
-export function main(): void {
-  console.log('Flowlang Backend Agent is running!');
+export function main(): string {
+  return 'Flowlang Backend Agent is running!';
 }
-
-if (require.main === module) {
-  main();
-} 

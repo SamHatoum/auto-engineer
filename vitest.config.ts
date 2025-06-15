@@ -7,8 +7,19 @@ export default defineConfig({
     include: ['**/*.specs.{js,ts}'],
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/'],
-      all: true
+      exclude: [
+        'node_modules/',
+        'dist/**',
+        '**/*.d.ts',
+        '**/*.js'
+      ],
+      all: true,
+      thresholds: {
+        lines: 90,
+        functions: 90,
+        branches: 90,
+        statements: 90
+      }
     }
   }
 }) 

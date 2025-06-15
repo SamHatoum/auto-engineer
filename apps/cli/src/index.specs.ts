@@ -1,10 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { main } from './index';
 
 describe('CLI', () => {
-  it('should log a message', () => {
-    const consoleSpy = vi.spyOn(console, 'log');
-    main();
-    expect(consoleSpy).toHaveBeenCalledWith('CLI is running!');
+  it('should return the correct message', () => {
+    expect(main()).toBe('CLI is running!');
   });
 }); 

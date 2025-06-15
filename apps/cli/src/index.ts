@@ -1,9 +1,3 @@
-
-
-export function main(): void {
-  console.log('CLI is running!');
+export function main(): string {
+  return 'CLI is running!';
 }
-
-if (require.main === module) {
-  main();
-} 
