@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
-  "changelog": ["@changesets/changelog-github", {"repo": ""}],
+  "changelog": ["@changesets/changelog-github", {"repo": "samhatoum/auto-engineer"}],
   "commit": false,
   "fixed": [],
   "linked": [],
