@@ -1,5 +1,11 @@
 # @auto-engineer/flowlang-modeling-agent
 
+## 0.1.2
+
+### Patch Changes
+
+- Tests publish workflow on GH actions
+
 ## 0.1.1
 
 ### Patch Changes
