@@ -1,11 +1,11 @@
-name: CI
+name: Build & Test
 
 on:
   pull_request:
   push:
 
 jobs:
-  build_and_test:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
