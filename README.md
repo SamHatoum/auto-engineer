@@ -5,15 +5,15 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![Monorepo](https://img.shields.io/badge/monorepo-turborepo-orange)](https://turbo.build/repo)
 
-
 # Auto Engineer
+
 _Goal: Create a production-grade application builder, not just another prototype tool._
 
-Auto Engineer is a sophisticated system that generates well-architected, scalable applications with proper design patterns, robust external system integrations, and enterprise-grade security.
+Auto Engineer generates well-architected, scalable applications with proper design patterns, robust external system integrations, and enterprise-grade security.
 
 It takes a village, so roll up your sleeves and join in – or show your support by clicking star to keep an eye ⭐☝️.
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -63,6 +63,51 @@ pnpm dev
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## 📝 Commit Message Guidelines
+
+This project uses [commitlint](https://commitlint.js.org/) to enforce consistent commit messages across the monorepo.
+
+### How it works
+
+- **Scope enforcement:**  
+  Commit messages must use a scope that matches a package or app directory (e.g. `apps/cli`), or the special `global` scope for changes affecting the whole repo.
+- **Configuration:**  
+  The rules are defined in `commitlint.config.ts` at the repo root. Scopes are dynamically generated from the current package and app directories.
+- **Global scope:**  
+  Use the `global` scope for changes that are not specific to a single package or app.
+
+### Example commands and commit messages
+
+```bash
+git commit -m "feat(packages/flowlang-modeling-agent): add new feature"
+git commit -m "fix(apps/cli): correct CLI argument parsing"
+git commit -m "chore(global): update repository settings"
+```
+
+## 📦 Versioning & Releases
+
+This project uses [Changesets](https://github.com/changesets/changesets) for versioning and publishing packages.
+
+### How it works
+
+1. **Create a Changeset:**
+   - Run `pnpm changeset` and follow the prompts to describe your changes. This creates a markdown file in the `.changeset/` directory.
+2. **Commit the Changeset:**
+   - Commit the changeset file along with your code changes.
+3. **Open a Pull Request:**
+   - When your PR is merged to `main`, a GitHub Action will automatically create or update a release PR with version bumps and changelogs.
+4. **Release:**
+   - When the release PR is merged, the CI pipeline will:
+     - Build and test all packages.
+     - Publish updated packages to npm if all checks pass.
+
+### Commands
+- `pnpm changeset` – Start a new changeset
+- `pnpm release` – Publish packages (run by CI)
+
+### Automation
+- Publishing is fully automated via GitHub Actions. Manual publishing is not required. 
+
 ## 📝 License
 
-This project is licensed under the Elastic License 2.0 - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the Elastic License 2.0 - see the [LICENSE](LICENSE) file for details.
