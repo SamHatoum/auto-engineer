@@ -1,5 +1,11 @@
 # @auto-engineer/cli
 
+## 0.1.1
+
+### Patch Changes
+
+- Testing GH publish workflow
+
 ## 0.1.0
 
 ### Minor Changes
