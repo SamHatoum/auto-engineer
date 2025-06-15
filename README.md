@@ -7,7 +7,7 @@
 
 
 # Auto Engineer
-Goal: To create a production-grade application builder, not just another prototype tool. 
+Goal: Create a production-grade application builder, not just another prototype tool. 
 
 We're building a sophisticated system that generates well-architected, scalable applications with proper design patterns, robust external system integrations, and enterprise-grade security.
 
