@@ -7,11 +7,101 @@
 
 # Auto Engineer
 
-_Goal: Create a production-grade application builder, not just another prototype tool._
+> Build production-grade applications with AI assistance. Not just another prototype tool.
+
+## ✨ Features
+
+- 🤖 AI-powered code generation with best practices
+- 🏗️ Enterprise-grade architecture and security
+- 🔄 Continuous collaboration between AI and team
+- 📦 Domain-driven design with vertical slices
+- 🧪 Built-in testing and validation
+- 📚 Self-documenting system
+
+## 🎯 How It Works
+
+1. ✍️ Enter a prompt describing your application
+2. 🤝 Collaborate with the AI and your team
+3. 🏗️ AI builds the app with best practices
+4. 🔄 Iterate beyond day 0
+
+## What Makes It Different
 
 Auto Engineer generates well-architected, scalable applications with proper design patterns, robust external system integrations, and enterprise-grade security.
 
-It takes a village, so roll up your sleeves and join in – or show your support by clicking star to keep an eye ⭐☝️.
+It achieves this through a combination of techniques:
+
+* **Architecture as Code**: Engineers maintain full control of design decisions while AI operates within defined constraints, focusing on rapid code generation
+* **Bulletproof Design Patterns**: Implements gateways and anti-corruption layers for robust external system integrations
+* **Sliced Architecture**: Organizes code into domain-driven slices, ensuring low coupling and high cohesion between components
+* **Specification by Example & BDD**: Ensures correct implementation from the start through clear specifications
+* **Built-in Regression Testing**: Maintains system integrity by preventing breaking changes
+* **Self-Documenting System**: Provides full transparency into human and AI decisions over time
+
+## 🔄 FlowLang
+
+FlowLang is a declarative language for defining system behaviors through vertical slices. It bridges the gap between technical and non-technical stakeholders by providing a common language that:
+
+* **Describes Complete Flows**: Captures entire user journeys and system interactions
+* **Uses Vertical Slices**: Organizes functionality by domain-driven slices rather than technical layers
+* **Enables Collaboration**: Allows technical, non-technical, and AI systems to work together
+* **Specifies Behavior**: Defines both frontend and backend requirements in a single flow
+* **Includes Validation Rules**: Embeds business rules and acceptance criteria directly in the flow
+
+### Example Flow
+
+```yml
+Flow: Guest Books a Property
+  Slice: Guest searches for available properties
+    Frontend: Search Interface
+      A clean search interface with location input, date pickers, and guest counter.
+      
+      Rule: Search Form Validation  
+        Should require check-in and check-out dates  
+        Should validate dates are in the future  
+
+    Backend: Property Search  
+      Executes a search against the property index using the guest's criteria.  
+      
+      Rule: Search shows available properties
+        Example: Search by default parameters
+          Given PropertyAddeded
+          ```json
+          {
+            "propertyId": "prop_123",
+            "location": "San Francisco",
+            "pricePerNight": 250,
+            "maxGuests": 4,
+            "amenities": ["WiFi", "Kitchen", "Parking"],
+            "bookedDates": []
+          }
+          ```
+          When SearchPropertiesQuery
+          ```json
+          {
+            "location": "San Francisco",
+            "checkIn": "2025-07-15",
+            "checkOut": "2025-07-18",
+            "guests": 2,
+            "priceMax": 300
+          }
+          ```
+          Then SearchResults
+          ```json
+          {
+            "searchId": "search_abc123",
+            "resultsCount": 47,
+            "topResults": ["prop_123"],
+            "averagePrice": 225.00
+          }
+          ```
+```
+
+This approach enables:
+* **Clear Architecture**: Each slice defines its own frontend and backend requirements
+* **Traceable Requirements**: Rules and validations are explicitly defined
+* **AI Understanding**: Structured format that AI systems can parse and implement
+* **Living Documentation**: Flows serve as both specification and documentation
 
 ## 🚀 Quick Start
 
@@ -29,37 +119,19 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Run development mode
-pnpm dev
+# Run tests
+pnpm test
 ```
-
-## 🛠️ Development
-
-### Available Scripts
-
-- `pnpm build` - Build all packages in the monorepo
-- `pnpm dev` - Run development mode across all packages
-- `pnpm test` - Run all tests with coverage reporting
-- `pnpm test:watch` - Run tests in watch mode for development
-- `pnpm test:coverage` - Generate test coverage reports
-- `pnpm lint` - Run linting across all packages
-- `pnpm clean` - Clean all build artifacts and caches
-- `pnpm changeset` - Create a new changeset for versioning
-- `pnpm version` - Update versions based on changesets
-- `pnpm release` - Publish packages based on changesets
-
-### Adding a New Package
-
-1. Create a new directory in either `apps/` or `packages/`
-2. Initialize with `pnpm init`
-3. Add necessary dependencies
-4. Update the package's `package.json` with appropriate scripts
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: adds some amazing feature'`)
+3. Commit your changes following our commit message format:
+   ```bash
+   git commit -m "feat(scope): add amazing feature"
+   ```
+   > Note: For information about valid scopes, see the [Commit Message Guidelines](#-commit-message-guidelines) section below.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
