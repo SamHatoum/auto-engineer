@@ -1,7 +1,3 @@
-# Auto Engineer
-
-Use AI to build enterprise grade apps that scale.
-
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![License: EL2](https://img.shields.io/badge/License-EL2-blue.svg)](https://www.elastic.co/licensing/elastic-license)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E=8.15.4-orange)](https://pnpm.io/)
@@ -9,6 +5,13 @@ Use AI to build enterprise grade apps that scale.
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![Monorepo](https://img.shields.io/badge/monorepo-turborepo-orange)](https://turbo.build/repo)
 
+
+# Auto Engineer
+Goal: To create a production-grade application builder, not just another prototype tool. 
+
+We're building a sophisticated system that generates well-architected, scalable applications with proper design patterns, robust external system integrations, and enterprise-grade security.
+
+It takes a village, so roll up your sleeves and join us – or show your support by clicking star to keep an eye ⭐☝️.
 
 ## 🚀 Getting Started
 
@@ -34,11 +37,16 @@ pnpm dev
 
 ### Available Scripts
 
-- `pnpm build` - Build all packages
-- `pnpm dev` - Run development mode
-- `pnpm test` - Run tests
-- `pnpm lint` - Run linting
-- `pnpm clean` - Clean all build artifacts
+- `pnpm build` - Build all packages in the monorepo
+- `pnpm dev` - Run development mode across all packages
+- `pnpm test` - Run all tests with coverage reporting
+- `pnpm test:watch` - Run tests in watch mode for development
+- `pnpm test:coverage` - Generate test coverage reports
+- `pnpm lint` - Run linting across all packages
+- `pnpm clean` - Clean all build artifacts and caches
+- `pnpm changeset` - Create a new changeset for versioning
+- `pnpm version` - Update versions based on changesets
+- `pnpm release` - Publish packages based on changesets
 
 ### Adding a New Package
 
