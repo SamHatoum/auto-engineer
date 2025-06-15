@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/src/**/*"],
+  "exclude": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/*.specs.ts"
+  ],
+  "references": [
+    { "path": "./apps/cli" },
+    { "path": "./packages/emmett-generator" },
+    { "path": "./packages/flowlang-backend-agent" },
+    { "path": "./packages/flowlang-frontend-agent" },
+    { "path": "./packages/flowlang-modeling-agent" }
+  ]
+}  
