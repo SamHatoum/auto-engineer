@@ -66,7 +66,7 @@ Flow: Guest Books a Property
       
       Rule: Search shows available properties
         Example: Search by default parameters
-          Given PropertyAddeded
+          Given PropertyAdded
           ```json
           {
             "propertyId": "prop_123",
