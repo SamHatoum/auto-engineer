@@ -40,7 +40,6 @@ coverage
 .nyc_output
 
 # Changesets
-.changeset/*.md
 !.changeset/config.json
 
 # Misc
