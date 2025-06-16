@@ -4,6 +4,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green)](https://nodejs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![Monorepo](https://img.shields.io/badge/monorepo-turborepo-orange)](https://turbo.build/repo)
+[![Discord](https://img.shields.io/discord/1336421551255457846?label=Discord&logo=discord)](https://discord.gg/2K4hK9EX)
 
 # Auto Engineer
 
@@ -125,6 +126,8 @@ pnpm test
 ```
 
 ## 🤝 Contributing
+
+Join our [Discord community](https://discord.gg/2K4hK9EX) to connect with other developers, get help, and share your ideas!
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
