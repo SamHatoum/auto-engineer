@@ -1,36 +1,30 @@
 [![Discord Online](https://img.shields.io/discord/1336421551255457846?label=Online&logo=discord)](https://discord.gg/2K4hK9EX)
-[![Discord Users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F2K4hK9EX%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Total&color=green&style=flat)](https://discord.gg/2K4hK9EX)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![Discord Users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F2K4hK9EX%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Total&color=brightgreen&style=flat)](https://discord.gg/2K4hK9EX)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E=8.15.4-orange)](https://pnpm.io/)
 [![Monorepo](https://img.shields.io/badge/monorepo-turborepo-orange)](https://turbo.build/repo)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![License: EL2](https://img.shields.io/badge/License-EL2-blue.svg)](https://www.elastic.co/licensing/elastic-license)
 
-<!--
-If the badge above does not show the member count, it may be due to Discord or shields.io caching. The widget is enabled and working: https://discord.com/api/guilds/1336421551255457846/widget.json
--->
-
 # Auto Engineer
 
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
-## ✨ Features
-
-- 🤖 AI-powered code generation with best practices
-- 🏗️ Enterprise-grade architecture and security
-- 🔄 Continuous collaboration between AI and team
-- 📦 Domain-driven design with vertical slices
-- 🧪 Built-in testing and validation
-- 📚 Self-documenting system
-- 🎮 Fully MCP-driven for IDE, chat, and custom AI control
-
 ## 🎯 How It Works
 
 1. ✍️ Enter a prompt describing your application
-2. 🤝 Collaborate with the AI and your team
-3. 🏗️ AI builds the app with best practices
-4. 🔄 Iterate beyond day 0
+2. 🏗️ AI builds the app with best practices
+3. 🤝 Iterate with the AI (and your team)
+4. 🔄 Continue far beyond day 0
+
+## ✨ Features
+
+- 🤖 AI-powered code generation with enterprise-grade architecture & security
+- 📦 Domain-driven, slice-based design with built-in testing
+- 🔄 Continuous AI & team collaboration
+- 🎮 Fully MCP-driven (IDE, chat, custom AI control)
+- 📚 Self-documenting
 
 ## What Makes It Different
 
