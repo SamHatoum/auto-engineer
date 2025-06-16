@@ -52,12 +52,8 @@ jobs:
         if: success()
         id: get_packages
         run: |
-          # Debug: Show raw JSON output
-          echo "Raw JSON output:"
-          pnpm changeset status --json
-          
           # Get packages that were published in this release
-          PACKAGES=$(pnpm changeset status --json | jq -r '.releases | to_entries[] | select(.value.type == "major" or .value.type == "minor" or .value.type == "patch") | "\(.value.name)@\(.value.newVersion)"')
+          PACKAGES=$(find .changeset -name "*.md" -type f -exec cat {} \; | grep -o '"@auto-engineer/[^"]*"' | sort -u | sed 's/"//g')
           echo "packages<<EOF" >> $GITHUB_OUTPUT
           echo "$PACKAGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -74,10 +70,9 @@ jobs:
           COMMIT=$(git rev-parse HEAD)
           while IFS= read -r package; do
             if [[ $package == @auto-engineer/* ]]; then
-              name=$(echo $package | cut -d'@' -f1)
-              version=$(echo $package | cut -d'@' -f2)
-              tag="${name#@auto-engineer/}-v${version}"
-              git tag -a "$tag" -m "Release $package" $COMMIT
+              version=$(pnpm list $package --json | jq -r '.[0].version')
+              tag="${package#@auto-engineer/}-v${version}"
+              git tag -a "$tag" -m "Release $package@$version" $COMMIT
               git push origin "$tag"
             fi
           done <<< "${{ steps.get_packages.outputs.packages }}" 
