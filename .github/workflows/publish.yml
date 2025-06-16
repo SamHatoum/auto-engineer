@@ -41,8 +41,8 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: pnpm release
-          commit: "chore: version packages"
-          title: "chore: version packages"
+          commit: "chore(global): version packages"
+          title: "chore(global): version packages"
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
