@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/flowlang-backend-agent",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
