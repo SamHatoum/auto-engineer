@@ -52,6 +52,10 @@ jobs:
         if: success()
         id: get_packages
         run: |
+          # Debug: Show raw JSON output
+          echo "Raw JSON output:"
+          pnpm changeset status --json
+          
           # Get packages that were published in this release
           PACKAGES=$(pnpm changeset status --json | jq -r '.releases | to_entries[] | select(.value.type == "major" or .value.type == "minor" or .value.type == "patch") | "\(.value.name)@\(.value.newVersion)"')
           echo "packages<<EOF" >> $GITHUB_OUTPUT
