@@ -52,7 +52,8 @@ jobs:
         if: success()
         id: get_packages
         run: |
-          PACKAGES=$(pnpm list -r --json | jq -r '.[] | select(.version != null) | "\(.name)@\(.version)"')
+          # Get packages that were published in this release
+          PACKAGES=$(pnpm changeset status --json | jq -r '.releases[] | select(.type == "major" or .type == "minor" or .type == "patch") | "\(.name)@\(.newVersion)"')
           echo "packages<<EOF" >> $GITHUB_OUTPUT
           echo "$PACKAGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -66,12 +67,13 @@ jobs:
       - name: Create Tags
         if: success()
         run: |
+          COMMIT=$(git rev-parse HEAD)
           while IFS= read -r package; do
             if [[ $package == @auto-engineer/* ]]; then
               name=$(echo $package | cut -d'@' -f1)
               version=$(echo $package | cut -d'@' -f2)
               tag="${name#@auto-engineer/}-v${version}"
-              git tag -a "$tag" -m "Release $package"
+              git tag -a "$tag" -m "Release $package" $COMMIT
               git push origin "$tag"
             fi
           done <<< "${{ steps.get_packages.outputs.packages }}" 
