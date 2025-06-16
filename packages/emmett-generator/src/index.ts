@@ -1,4 +1,4 @@
-// Version bump: another trivial change
+// Version bump: yet another trivial change
 export function main(): string {
   return 'Emmett Generator is running!';
 }
