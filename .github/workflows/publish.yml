@@ -53,7 +53,7 @@ jobs:
         id: get_packages
         run: |
           # Get packages that were published in this release
-          PACKAGES=$(pnpm changeset status --json | jq -r '.releases[] | select(.type == "major" or .type == "minor" or .type == "patch") | "\(.name)@\(.newVersion)"')
+          PACKAGES=$(pnpm changeset status --json | jq -r '.releases | to_entries[] | select(.value.type == "major" or .value.type == "minor" or .value.type == "patch") | "\(.value.name)@\(.value.newVersion)"')
           echo "packages<<EOF" >> $GITHUB_OUTPUT
           echo "$PACKAGES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
