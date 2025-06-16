@@ -169,6 +169,11 @@ git commit -m "chore(global): update repository settings"
 
 This project uses [Changesets](https://github.com/changesets/changesets) for versioning and publishing packages.
 
+> **⚠️ Important:**
+> - Do **not** run `changeset version` or `changeset publish` locally or push version bumps directly to `main`.
+> - Always use Pull Requests and let the GitHub Action create and merge the release PR. This ensures correct versioning, publishing, and tagging of only the changed packages.
+> - If you bypass this flow, tags and changelogs may not be generated correctly.
+
 ### How it works
 
 1. **Create a Changeset:**
