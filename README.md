@@ -17,6 +17,7 @@
 - 📦 Domain-driven design with vertical slices
 - 🧪 Built-in testing and validation
 - 📚 Self-documenting system
+- 🎮 Fully MCP-driven for IDE, chat, and custom AI control
 
 ## 🎯 How It Works
 
@@ -179,6 +180,12 @@ This project uses [Changesets](https://github.com/changesets/changesets) for ver
 
 ### Automation
 - Publishing is fully automated via GitHub Actions. Manual publishing is not required. 
+
+### Changelogs
+- Each package maintains its own changelog in `CHANGELOG.md`
+- Changelogs are automatically generated from changesets
+- Changes are categorized by type (feat, fix, chore, etc.)
+- Each entry includes the PR number and author for traceability
 
 ## 📝 License
 
