@@ -48,21 +48,30 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Get Published Packages
+        if: success()
+        id: get_packages
+        run: |
+          PACKAGES=$(pnpm list -r --json | jq -r '.[] | select(.version != null) | "\(.name)@\(.version)"')
+          echo "packages<<EOF" >> $GITHUB_OUTPUT
+          echo "$PACKAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Configure Git
         if: success()
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "github-actions@github.com"
 
-      - name: Get Latest Version
-        if: success()
-        id: get_version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create Tag
+      - name: Create Tags
         if: success()
         run: |
-          git tag -a "v${{ steps.get_version.outputs.version }}" -m "Release v${{ steps.get_version.outputs.version }}"
-          git push origin "v${{ steps.get_version.outputs.version }}" 
+          while IFS= read -r package; do
+            if [[ $package == @auto-engineer/* ]]; then
+              name=$(echo $package | cut -d'@' -f1)
+              version=$(echo $package | cut -d'@' -f2)
+              tag="${name#@auto-engineer/}-v${version}"
+              git tag -a "$tag" -m "Release $package"
+              git push origin "$tag"
+            fi
+          done <<< "${{ steps.get_packages.outputs.packages }}" 
