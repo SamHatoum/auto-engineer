@@ -1,6 +1,6 @@
 # Default owners for everything in the repo
-* @sam
+* @SamHatoum
 
 # Specific file/directory owners
-.github/ @sam
-.github/workflows/ @sam 
+.github/ @SamHatoum
+.github/workflows/ @SamHatoum
