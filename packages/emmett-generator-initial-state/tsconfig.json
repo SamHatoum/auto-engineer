@@ -1,31 +1,11 @@
 {
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  },
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2021",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "outDir": "dist",
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noEmitOnError": true,
-    "noEmit": false,
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
     "emitDecoratorMetadata": true,
-    "useDefineForClassFields": false,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "types": ["node"]
+    "experimentalDecorators": true,
   },
-  "include": ["src/**/*.ts"],
-  "exclude": [
-    "**/dist/**",
-    "**/node_modules/**",
-    "**/*.specs.ts"
-  ]
+  "include": ["src/**/*"]
 }

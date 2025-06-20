@@ -4,7 +4,7 @@ import {AvailablePropertiesReadModel} from "../../domain/slices/search-for-avail
 import {AvailableProperty} from "../../domain/slices/search-for-available-property/views";
 
 @ObjectType()
-export class SearchPropertiesVew {
+export class SearchPropertiesView {
     @Field(() => String)
     propertyId!: string;
 
@@ -24,13 +24,13 @@ export class SearchPropertiesVew {
 
 @Resolver()
 export class SearchQueryResolver {
-    @Query(() => [SearchPropertiesVew])
+    @Query(() => [SearchPropertiesView])
     async availableProperties(@Ctx() ctx: GraphQLContext): Promise<AvailableProperty[]> {
         const model = new AvailablePropertiesReadModel(ctx.eventStore);
         return model.getAll();
     }
 
-    @Query(() => [SearchPropertiesVew])
+    @Query(() => [SearchPropertiesView])
     async searchProperties(
         @Ctx() ctx: GraphQLContext,
         @Arg('location', () => String, {nullable: true}) location?: string,

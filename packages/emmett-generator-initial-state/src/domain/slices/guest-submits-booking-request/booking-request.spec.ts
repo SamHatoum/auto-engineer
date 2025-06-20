@@ -20,6 +20,7 @@ describe('Booking | RequestBooking', () => {
                 type: 'RequestBooking',
                 data: {
                     propertyId: 'prop_789',
+                    hostId: 'host_123',
                     guestId: 'guest_456',
                     checkIn: '2025-07-15',
                     checkOut: '2025-07-18',
@@ -35,6 +36,7 @@ describe('Booking | RequestBooking', () => {
                 type: 'BookingRequested',
                 data: {
                     bookingId: 'book_xyz789',
+                    hostId: 'host_123',
                     propertyId: 'prop_789',
                     guestId: 'guest_456',
                     checkIn: '2025-07-15',
@@ -53,6 +55,7 @@ describe('Booking | RequestBooking', () => {
             type: 'BookingRequested',
             data: {
                 bookingId: 'book_xyz789',
+                hostId: 'host_123',
                 propertyId: 'prop_789',
                 guestId: 'guest_456',
                 checkIn: '2025-07-15',
@@ -68,6 +71,7 @@ describe('Booking | RequestBooking', () => {
                 type: 'RequestBooking',
                 data: {
                     propertyId: 'prop_789',
+                    hostId: 'host_123',
                     guestId: 'guest_456',
                     checkIn: '2025-07-15',
                     checkOut: '2025-07-18',
