@@ -3,6 +3,7 @@ export type BookingRequested = {
     data: {
         bookingId: string;
         propertyId: string;
+        hostId: string;
         guestId: string;
         checkIn: string;
         checkOut: string;

@@ -1,5 +1,4 @@
 import {
-    CommandHandler,
     reactor,
     type EventStore,
     type CommandSender,
@@ -8,21 +7,14 @@ import {
     type MessageHandlerResult
 } from '@event-driven-io/emmett';
 import type { BookingRequested } from '../guest-submits-booking-request/events';
-import { HostManagesBookingRequestWorkflow } from './workflow';
-import { evolve } from './evolve';
-import { initialWorkflowState } from './state';
+import { HostNotificationHandler } from './handler';
 import { handleNotifyHost } from './external-system';
-import type { HostNotified } from './events';
+import type { NotifyHost } from './commands';
 
 type ReactorContext = {
     eventStore: EventStore;
     commandSender: CommandSender;
 };
-
-const handleWorkflowState = CommandHandler<any, HostNotified>({
-    evolve,
-    initialState: initialWorkflowState,
-});
 
 const handleBookingRequestedEvent: SingleRecordedMessageHandlerWithContext<
     BookingRequested,
@@ -32,63 +24,34 @@ const handleBookingRequestedEvent: SingleRecordedMessageHandlerWithContext<
     const { eventStore } = context;
     const event = recordedEvent as any;
 
-    const workflowId = `host-manages-booking-${event.data.bookingId}`;
-
     try {
-        await handleWorkflowState(
-            eventStore,
-            workflowId,
-            async (currentState) => {
-                const outputs = HostManagesBookingRequestWorkflow.decide(event, currentState);
-                let hostNotifiedEvent: HostNotified | null = null;
-                for (const output of outputs) {
-                    switch (output.action) {
-                        case 'Send':
-                            if (output.message.type === 'NotifyHost') {
-                                await handleNotifyHost(output.message);
-                                console.log(`📧 Host ${output.message.data.hostId} notified about booking ${event.data.bookingId}`);
-                                hostNotifiedEvent = {
-                                    type: 'HostNotified',
-                                    data: {
-                                        workflowId,
-                                        bookingId: event.data.bookingId,
-                                        hostId: output.message.data.hostId,
-                                        notificationType: output.message.data.notificationType,
-                                        channels: output.message.data.channels,
-                                        notifiedAt: new Date().toISOString(),
-                                    },
-                                };
-                            }
-                            break;
-                        case 'Complete':
-                            console.log(`✅ Host notification workflow completed for booking ${event.data.bookingId}`);
-                            break;
-                        case 'Ignore':
-                            console.log(`⏭️ Host notification ignored for booking ${event.data.bookingId}: ${output.reason}`);
-                            break;
-                        case 'Accept':
-                            console.log(`✔️ Host notification workflow accepted for booking ${event.data.bookingId}`);
-                            break;
-                        case 'Error':
-                            console.error(`❌ Host notification workflow error for booking ${event.data.bookingId}: ${output.reason}`);
-                            break;
-                        default:
-                            console.log(`🔄 Host notification workflow action: ${output.action}`);
-                    }
-                }
-                return hostNotifiedEvent ? [hostNotifiedEvent] : [];
-            }
-        );
-
-        console.log(`✅ Host notification workflow completed for booking ${event.data.bookingId}`);
+        const notifyCommand: NotifyHost = {
+            type: 'NotifyHost',
+            kind: 'Command',
+            data: {
+                hostId: event.data.hostId,
+                notificationType: 'booking_request',
+                priority: 'high',
+                channels: ['email', 'push', 'sms'],
+                message: `Guest ${event.data.guestId} wants to book property ${event.data.propertyId} from ${event.data.checkIn} to ${event.data.checkOut}`,
+                actionRequired: true,
+            },
+            metadata: {
+                now: new Date(),
+            },
+        };
+        await handleNotifyHost(notifyCommand);
+        console.log(`📧 Host ${event.data.hostId} notified about booking ${event.data.bookingId}`);
+        const handler = new HostNotificationHandler(eventStore);
+        await handler.handle(event);
+        console.log(`✅ Host notification completed for booking ${event.data.bookingId}`);
         return;
-
     } catch (error) {
-        console.error(`❌ Host notification workflow failed for booking ${event.data.bookingId}:`, error);
+        console.error(`❌ Host notification failed for booking ${event.data.bookingId}:`, error);
 
         return {
             type: 'STOP',
-            reason: `Host notification workflow failed: ${error}`,
+            reason: `Host notification failed: ${error}`,
         };
     }
 };
@@ -98,19 +61,18 @@ export const setup = async (eventStore: EventStore, commandSender: CommandSender
         eventStore,
         commandSender,
     };
-    const workflowReactor = reactor<
+    const notificationReactor = reactor<
         BookingRequested,
         InMemoryReadEventMetadata,
         ReactorContext
     >({
-        processorId: 'host-manages-booking-request-workflow',
+        processorId: 'host-notification-policy',
         canHandle: ['BookingRequested'],
         eachMessage: handleBookingRequestedEvent,
     });
-
-    await workflowReactor.start(context);
-    console.log('Host notification workflow reactor started');
+    await notificationReactor.start(context);
+    console.log('Host notification policy reactor started');
     return {
-        workflowReactor,
+        notificationReactor,
     };
 };

@@ -1,11 +1,11 @@
-export type WorkflowState =
+export type NotificationState =
     | { status: 'Initial' }
     | {
-    status: 'Completed';
+    status: 'Notified';
     hostId: string;
     notifiedAt: string;
 };
 
-export const initialWorkflowState = (): WorkflowState => ({
+export const initialNotificationState = (): NotificationState => ({
     status: 'Initial'
 });

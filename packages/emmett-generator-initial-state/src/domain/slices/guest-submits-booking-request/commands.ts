@@ -2,6 +2,7 @@ export type RequestBooking = {
     type: 'RequestBooking';
     data: {
         propertyId: string;
+        hostId: string;
         guestId: string;
         checkIn: string;
         checkOut: string;

@@ -1,22 +1,18 @@
-import type { WorkflowState } from './state';
+import type { NotificationState } from './state';
 import type { HostNotified } from './events';
 
 export const evolve = (
-    state: WorkflowState,
+    state: NotificationState,
     event: HostNotified,
-): WorkflowState => {
+): NotificationState => {
     switch (event.type) {
-        case 'HostNotified': {
-            if (state.status !== 'Initial') return state;
-
+        case 'HostNotified':
             return {
-                status: 'Completed',
+                status: 'Notified',
                 hostId: event.data.hostId,
                 notifiedAt: event.data.notifiedAt,
             };
-        }
-        default: {
+        default:
             return state;
-        }
     }
 };

@@ -10,7 +10,6 @@ export const decide = (
   if (command.type !== 'ListProperty') {
     throw new IllegalStateError(`Unexpected command type: ${command.type}`);
   }
-
   return listProperty(command, state);
 };
 

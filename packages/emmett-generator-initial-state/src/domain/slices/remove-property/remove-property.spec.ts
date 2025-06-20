@@ -1,31 +1,11 @@
-import { DeciderSpecification } from '@event-driven-io/emmett';
-import { decide } from './decide';
-import { evolve } from './evolve';
-import { initialPropertyState } from './state';
-import { RemoveProperty } from './commands';
-import { PropertyRemoved } from './events';
-import { describe, it, expect } from 'vitest';
+import {DeciderSpecification} from '@event-driven-io/emmett';
+import {decide} from './decide';
+import {evolve} from './evolve';
+import {initialPropertyState} from './state';
+import {describe, expect, it} from 'vitest';
 
 describe('Property | RemoveProperty', () => {
     const now = new Date();
-
-    const command: RemoveProperty = {
-        type: 'RemoveProperty',
-        data: {
-            propertyId: 'property-123',
-            hostId: 'host-abc',
-        },
-        metadata: { now },
-    };
-
-    const expectedEvent: PropertyRemoved = {
-        type: 'PropertyRemoved',
-        data: {
-            propertyId: 'property-123',
-            hostId: 'host-abc',
-            removedAt: now,
-        },
-    };
 
     const given = DeciderSpecification.for({
         decide,
@@ -51,14 +31,35 @@ describe('Property | RemoveProperty', () => {
                 },
             } as any,
         ])
-            .when(command)
-            .then([expectedEvent]);
+            .when({
+                type: 'RemoveProperty',
+                data: {
+                    propertyId: 'property-123',
+                    hostId: 'host-abc',
+                },
+                metadata: {now},
+            })
+            .then([{
+                type: 'PropertyRemoved',
+                data: {
+                    propertyId: 'property-123',
+                    hostId: 'host-abc',
+                    removedAt: now,
+                },
+            }]);
     });
 
     it('should throw if property is not listed', () => {
         const initialState = initialPropertyState();
 
-        expect(() => decide(command, initialState)).toThrow(
+        expect(() => decide({
+            type: 'RemoveProperty',
+            data: {
+                propertyId: 'property-123',
+                hostId: 'host-abc',
+            },
+            metadata: {now},
+        }, initialState)).toThrow(
             'Cannot remove a property that is not listed'
         );
     });
