@@ -1,13 +1,15 @@
 import {DeciderSpecification} from '@event-driven-io/emmett';
 import {decide} from './decide';
 import {evolve} from './evolve';
-import {initialPropertyState} from './state';
+import {initialPropertyState, PropertyState} from './state';
 import {describe, expect, it} from 'vitest';
+import {RemoveProperty} from "./commands";
+import {PropertyListed} from "../list-property/events";
+import {PropertyRemoved} from "./events";
 
 describe('Property | RemoveProperty', () => {
     const now = new Date();
-
-    const given = DeciderSpecification.for({
+    const given = DeciderSpecification.for<RemoveProperty, PropertyListed | PropertyRemoved, PropertyState>({
         decide,
         evolve,
         initialState: initialPropertyState,
@@ -29,7 +31,7 @@ describe('Property | RemoveProperty', () => {
                     amenities: ['wifi', 'kitchen'],
                     listedAt: now,
                 },
-            } as any,
+            },
         ])
             .when({
                 type: 'RemoveProperty',

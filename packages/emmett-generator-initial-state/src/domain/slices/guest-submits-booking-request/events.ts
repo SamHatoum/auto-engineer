@@ -1,6 +1,8 @@
-export type BookingRequested = {
-    type: 'BookingRequested';
-    data: {
+import type { Event } from '@event-driven-io/emmett';
+
+export type BookingRequested = Event <
+    'BookingRequested',
+    {
         bookingId: string;
         propertyId: string;
         hostId: string;
@@ -12,5 +14,5 @@ export type BookingRequested = {
         status: 'pending_host_approval';
         requestedAt: string;
         expiresAt: string;
-    };
-};
+    }
+>;

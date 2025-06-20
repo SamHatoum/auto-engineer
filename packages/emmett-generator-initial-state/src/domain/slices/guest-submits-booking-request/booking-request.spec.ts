@@ -3,8 +3,6 @@ import {DeciderSpecification} from '@event-driven-io/emmett';
 import {decide} from './decide';
 import {evolve} from './evolve';
 import {initialBookingState} from './state';
-import type {RequestBooking} from './commands';
-import type {BookingRequested} from './events';
 
 describe('Booking | RequestBooking', () => {
     const now = new Date('2025-06-10T16:30:00Z');

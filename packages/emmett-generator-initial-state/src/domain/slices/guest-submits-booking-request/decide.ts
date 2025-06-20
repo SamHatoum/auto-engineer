@@ -9,9 +9,7 @@ export const decide = (
     if (state.status !== 'Empty') {
         throw new Error('Booking already exists.');
     }
-
     const { now, bookingId } = command.metadata;
-
     return {
         type: 'BookingRequested',
         data: {

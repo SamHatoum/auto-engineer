@@ -3,7 +3,7 @@ import {CommandHandler} from '@event-driven-io/emmett';
 import {GraphQLContext} from "../context";
 import {evolve} from "../../domain/slices/list-property/evolve";
 import {initialPropertyState} from "../../domain/slices/list-property/state";
-import {ListPropertyCommandHandler} from "../../domain/slices/list-property/handler";
+import {handle} from "../../domain/slices/list-property/handle";
 
 
 @InputType()
@@ -36,10 +36,7 @@ export class ListPropertyResolver {
         @Arg('input', () => ListPropertyInput) input: ListPropertyInput,
         @Ctx() ctx: GraphQLContext
     ): Promise<ListPropertyResponse> {
-        await new ListPropertyCommandHandler(ctx.eventStore).list({
-            type: 'ListProperty',
-            data: input,
-        });
+        await handle(ctx.eventStore, {type: 'ListProperty', data: input});
         return {success: true};
     }
 }

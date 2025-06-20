@@ -1,6 +1,8 @@
-export type RequestBooking = {
-    type: 'RequestBooking';
-    data: {
+import {Command} from "@event-driven-io/emmett";
+
+export type RequestBooking = Command<
+    'RequestBooking',
+    {
         propertyId: string;
         hostId: string;
         guestId: string;
@@ -8,9 +10,9 @@ export type RequestBooking = {
         checkOut: string;
         guests: number;
         message: string;
-    };
-    metadata: {
+    },
+    {
         now: Date;
         bookingId: string;
-    };
-};
+    }
+>;
