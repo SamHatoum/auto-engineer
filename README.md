@@ -51,51 +51,156 @@ FlowLang is a declarative language for defining system behaviors through vertica
 
 ### Example Flow
 
-```yml
-Flow: Guest Books a Property
-  Slice: Guest searches for available properties
-    Frontend: Search Interface
-      A clean search interface with location input, date pickers, and guest counter.
-      
-      Rule: Search Form Validation  
-        Should require check-in and check-out dates  
-        Should validate dates are in the future  
+```typescript
+flow('PropertyBooking', () => {
 
-    Backend: Property Search  
-      Executes a search against the property index using the guest's criteria.  
-      
-      Rule: Search shows available properties
-        Example: Search by default parameters
-          Given PropertyAdded
-          ```json
-          {
-            "propertyId": "prop_123",
-            "location": "San Francisco",
-            "pricePerNight": 250,
-            "maxGuests": 4,
-            "amenities": ["WiFi", "Kitchen", "Parking"],
-            "bookedDates": []
+  slice.command('List property', () => {
+
+    frontend('A form that allows hosts to list a property', () => {
+      specs(() => {
+        should('have fields for title, description, location, address')
+        should('have price per night input')
+        should('have max guests selector')
+        should('have amenities checklist')
+      });
+    });
+
+    backend('List property', () => {
+      scenario('Host can lists a new property', () => {
+        when<ListProperty>({
+          type: "ListProperty",
+          data: {
+            propertyId: "property_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            address: "123 Market St",
+            title: "Modern Downtown Apartment",
+            description: "Beautiful apartment with city views",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen", "parking"]
           }
-          ```
-          When SearchPropertiesQuery
-          ```json
-          {
-            "location": "San Francisco",
-            "checkIn": "2025-07-15",
-            "checkOut": "2025-07-18",
-            "guests": 2,
-            "priceMax": 300
+        }).then<PropertyListed>([{
+          type: "PropertyListed",
+          data: {
+            propertyId: "property_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            address: "123 Market St",
+            title: "Modern Downtown Apartment",
+            description: "Beautiful apartment with city views",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen", "parking"],
+            listedAt: new Date("2024-01-15T10:00:00Z")
           }
-          ```
-          Then SearchResults
-          ```json
+        }]);
+      });
+    });
+  });
+
+  slice.query('Search for available properties', () => {
+
+    frontend('Property Search', () => {
+      specs(() => {
+        should('have location filter')
+        should('have price range slider')
+        should('have guest count filter')
+        should('show property cards with images')
+      });
+    });
+
+    backend('Property search projection', () => {
+      scenario('Property becomes available after being listed', () => {
+        given<PropertyListed>([
           {
-            "searchId": "search_abc123",
-            "resultsCount": 47,
-            "topResults": ["prop_123"],
-            "averagePrice": 225.00
+            type: "PropertyListed",
+            data: {
+              propertyId: "property_123",
+              hostId: "host_456",
+              location: "San Francisco",
+              address: "123 Market St",
+              title: "Modern Downtown Apartment",
+              description: "Beautiful apartment with city views",
+              pricePerNight: 250,
+              maxGuests: 4,
+              amenities: ["wifi", "kitchen", "parking"],
+              listedAt: new Date("2024-01-15T10:00:00Z")
+            }
           }
-          ```
+        ]).then<AvailableProperty>({
+          propertyId: "property_123",
+          title: "Modern Downtown Apartment",
+          location: "San Francisco",
+          pricePerNight: 250,
+          maxGuests: 4
+        });
+      });
+    });
+  });
+
+  slice.reaction('When booking request is received, notify host', () => {
+    backend('Notify host of booking request', () => {
+      scenario('Host is notified when booking request is received', () => {
+        given<BookingRequested>([
+          {
+            type: "BookingRequested",
+            data: {
+              hostId: "host_456",
+              bookingId: "booking_456",
+              propertyId: "property_123",
+              guestId: "guest_789",
+              checkIn: "2024-02-01",
+              checkOut: "2024-02-05",
+              guests: 2,
+              message: "Looking forward to our stay!",
+              status: "pending_host_approval",
+              requestedAt: "2024-01-15T14:30:00Z",
+              expiresAt: "2024-01-16T14:30:00Z"
+            }
+          }
+        ]).then<HostNotified>([{
+          type: "HostNotified",
+          data: {
+            bookingId: "booking_456",
+            hostId: "host_456",
+            notificationType: "booking_request",
+            channels: ["email", "push"],
+            notifiedAt: "2024-01-15T14:30:00Z"
+          }
+        }]);
+      });
+    });
+  });
+
+  slice.command('Notify host', () => {
+    backend('Notify host', () => {
+      uses(MailChimp).hints("be sure to use the new v2 api")
+      scenario('Host is notified when booking request is received', () => {
+        when<NotifyHost>({
+          type: "NotifyHost",
+          data: {
+            hostId: "host_456",
+            notificationType: "booking_request",
+            priority: "high",
+            channels: ["email", "push"],
+            message: "Looking forward to our stay!",
+            actionRequired: true
+          }
+        }).then<HostNotified>([{
+          type: "HostNotified",
+          data: {
+            bookingId: "booking_456",
+            hostId: "host_456",
+            notificationType: "booking_request",
+            channels: ["email", "push"],
+            notifiedAt: "2024-01-15T14:30:00Z"
+          }
+        }]);
+      });
+    });
+  });
+});
 ```
 
 This approach enables:
