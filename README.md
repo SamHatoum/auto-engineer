@@ -39,9 +39,9 @@ It achieves this through a combination of techniques:
 * **Built-in Regression Testing**: Maintains system integrity by preventing breaking changes
 * **Self-Documenting System**: Provides full transparency into human and AI decisions over time
 
-## 🔄 FlowLang
+## 🔄 FlowModels
 
-FlowLang is a declarative language for defining system behaviors through vertical slices. It bridges the gap between technical and non-technical stakeholders by providing a common language that:
+Information Flow Modeling is the act of expressing a system as interfaces, commands, queries, events, and state. The majority of systems lend themselves to be easily modeled using Flow Models. Flow Models define system behaviors through vertical slices, and bridges the gap between technical and non-technical stakeholders by providing a common language that:
 
 * **Describes Complete Flows**: Captures entire user journeys and system interactions
 * **Uses Vertical Slices**: Organizes functionality by domain-driven slices rather than technical layers
@@ -259,7 +259,7 @@ This project uses [commitlint](https://commitlint.js.org/) to enforce consistent
 ### Example commands and commit messages
 
 ```bash
-git commit -m "feat(packages/flowlang-modeling-agent): add new feature"
+git commit -m "feat(packages/flow-modeling-agent): add new feature"
 git commit -m "fix(apps/cli): correct CLI argument parsing"
 git commit -m "chore(global): update repository settings"
 ```
