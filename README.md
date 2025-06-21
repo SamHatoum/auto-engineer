@@ -197,6 +197,7 @@ flow('PropertyBooking', () => {
       });
     });
   });
+
   slice.reaction('When booking request is received, notify host', () => {
 
     backend('Notify host of booking request', () => {
