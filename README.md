@@ -14,55 +14,60 @@
 ## 🎯 How It Works
 
 ```console
-auto: what would you like to build?
-user: airbnb clone
+🤖 auto: what would you like to build?
+👤 user: airbnb clone
 
-auto: I'll create a property booking system
-auto: crafting an initial domain model for further exploration
-auto: building your PropertyBooking flow...
-| Flow: PropertyBooking
-├── Slice: List property
-│    ├── commands: ListProperty
-│    ├── events: PropertyListed  
-│    └── specs: form validation, business rules
+🤖 auto: crafting a FlowModel for exploration & collaboration
+🤖 auto: building your PropertyBooking flow...
+
+🔀 Flow: PropertyBooking
 ├── Slice: Search properties  
 │    ├── queries: search, filter, sort
 │    ├── projections: availability index
-│    └── specs: business rules 
+│    └── specs: filters, search behavior
 ├── Slice: Book property 
 │    ├── commands: RequestBooking
 │    ├── events: BookingConfirmed
-│    ├── reactions: payment, notifications
-│    └── specs: business rules 
+│    └── specs: booking rules
+├── Slice: Notify host of bookings
+│    ├── reactions: notifications
+│    └── specs: notifications rules
 └── Integrations
      ├── Auth0 (authentication)
      └── Google Maps (locations)
 
-✓ Generated 12 command handlers with full validation
+✓ Generated 1 command handler, 1 query
 ✓ Built React components with specs
-✓ Configured external service gateways
+✓ Configured integrations
+✓ All tests passing
 
 your app is ready at: http://localhost:3000 🚀
 visualize your flow here: http://localhost:5000 🔍
 
-user: add user reviews
+🤖 auto: what would you like to iterate on?
+👤 user: add user reviews
 
-auto: extending PropertyBooking flow...
-| Flow: PropertyBooking 
+🤖 auto: extending PropertyBooking flow...
+
+🔀 Flow: PropertyBooking 
 ├── Slice: Submit review
-│    ├── commands: SubmitReview (validates booking history)
+│    ├── commands: SubmitReview
 │    ├── events: ReviewSubmitted
-│    └── projections: ratings, review feed
 │    └── specs: only past guests, one per stay
+└── [+] Slice: View reviews
+     ├── queries: GetPropertyReviews, GetUserReviews
+     ├── projections: ratings, review feed
+     └── specs: sorting, filtering, pagination
 
-✓ No breaking changes
-✓ Integration tests pass
-✓ API backwards compatible
+✓ Generated 1 command handler, 1 query
+✓ Built React components with specs
+✓ Configured integrations
+✓ All tests passing
 
 your app is ready at: http://localhost:3000 🚀
 visualize your flow here: http://localhost:5000 🔍
 
-user: █
+👤 user: █
 ```
 
 ## ✨ Features
@@ -97,7 +102,7 @@ Information Flow Modeling is the act of expressing a system as interfaces, comma
 * **Specifies Behavior**: Defines both frontend and backend requirements in a single flow
 * **Includes Validation Rules**: Embeds business rules and acceptance criteria directly in the flow
 
-### Example Flow
+### Example Flow Model
 
 ```typescript
 flow('PropertyBooking', () => {
@@ -114,7 +119,9 @@ flow('PropertyBooking', () => {
     });
 
     backend('List property', () => {
+
       scenario('Host can lists a new property', () => {
+
         when<ListProperty>({
           type: "ListProperty",
           data: {
@@ -128,7 +135,8 @@ flow('PropertyBooking', () => {
             maxGuests: 4,
             amenities: ["wifi", "kitchen", "parking"]
           }
-        }).then<PropertyListed>([{
+        })
+        .then<PropertyListed>([{
           type: "PropertyListed",
           data: {
             propertyId: "property_123",
@@ -159,7 +167,9 @@ flow('PropertyBooking', () => {
     });
 
     backend('Property search projection', () => {
+
       scenario('Property becomes available after being listed', () => {
+
         given<PropertyListed>([
           {
             type: "PropertyListed",
@@ -176,7 +186,8 @@ flow('PropertyBooking', () => {
               listedAt: new Date("2024-01-15T10:00:00Z")
             }
           }
-        ]).then<AvailableProperty>({
+        ])
+        .then<AvailableProperty>({
           propertyId: "property_123",
           title: "Modern Downtown Apartment",
           location: "San Francisco",
@@ -186,10 +197,12 @@ flow('PropertyBooking', () => {
       });
     });
   });
-
   slice.reaction('When booking request is received, notify host', () => {
+
     backend('Notify host of booking request', () => {
+
       scenario('Host is notified when booking request is received', () => {
+
         given<BookingRequested>([
           {
             type: "BookingRequested",
@@ -207,7 +220,8 @@ flow('PropertyBooking', () => {
               expiresAt: "2024-01-16T14:30:00Z"
             }
           }
-        ]).then<HostNotified>([{
+        ])
+        .then<HostNotified>([{
           type: "HostNotified",
           data: {
             bookingId: "booking_456",
@@ -222,9 +236,13 @@ flow('PropertyBooking', () => {
   });
 
   slice.command('Notify host', () => {
+
     backend('Notify host', () => {
+
       uses(MailChimp).hints("be sure to use the new v2 api")
+
       scenario('Host is notified when booking request is received', () => {
+
         when<NotifyHost>({
           type: "NotifyHost",
           data: {
@@ -235,7 +253,8 @@ flow('PropertyBooking', () => {
             message: "Looking forward to our stay!",
             actionRequired: true
           }
-        }).then<HostNotified>([{
+        })
+        .then<HostNotified>([{
           type: "HostNotified",
           data: {
             bookingId: "booking_456",
