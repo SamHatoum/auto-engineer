@@ -12,6 +12,7 @@
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
 ##### _NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE WORKING HARD ON MAKING IT_
+Stay up to date by watching 👀☝️ and giving us a star ⭐☝️
 
 ## 🎯 How It Works
 
