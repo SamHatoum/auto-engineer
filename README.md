@@ -128,9 +128,7 @@ flow('PropertyBooking', () => {
     });
 
     backend('List property', () => {
-
       scenario('Host can lists a new property', () => {
-
         when<ListProperty>({
           type: "ListProperty",
           data: {
@@ -176,26 +174,22 @@ flow('PropertyBooking', () => {
     });
 
     backend('Property search projection', () => {
-
       scenario('Property becomes available after being listed', () => {
-
-        given<PropertyListed>([
-          {
-            type: "PropertyListed",
-            data: {
-              propertyId: "property_123",
-              hostId: "host_456",
-              location: "San Francisco",
-              address: "123 Market St",
-              title: "Modern Downtown Apartment",
-              description: "Beautiful apartment with city views",
-              pricePerNight: 250,
-              maxGuests: 4,
-              amenities: ["wifi", "kitchen", "parking"],
-              listedAt: new Date("2024-01-15T10:00:00Z")
-            }
+        given<PropertyListed>([{
+          type: "PropertyListed",
+          data: {
+            propertyId: "property_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            address: "123 Market St",
+            title: "Modern Downtown Apartment",
+            description: "Beautiful apartment with city views",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen", "parking"],
+            listedAt: new Date("2024-01-15T10:00:00Z")
           }
-        ])
+        }])
         .then<AvailableProperty>({
           propertyId: "property_123",
           title: "Modern Downtown Apartment",
@@ -210,27 +204,23 @@ flow('PropertyBooking', () => {
   slice.reaction('When booking request is received, notify host', () => {
 
     backend('Notify host of booking request', () => {
-
       scenario('Host is notified when booking request is received', () => {
-
-        given<BookingRequested>([
-          {
-            type: "BookingRequested",
-            data: {
-              hostId: "host_456",
-              bookingId: "booking_456",
-              propertyId: "property_123",
-              guestId: "guest_789",
-              checkIn: "2024-02-01",
-              checkOut: "2024-02-05",
-              guests: 2,
-              message: "Looking forward to our stay!",
-              status: "pending_host_approval",
-              requestedAt: "2024-01-15T14:30:00Z",
-              expiresAt: "2024-01-16T14:30:00Z"
-            }
+        given<BookingRequested>([{
+          type: "BookingRequested",
+          data: {
+            hostId: "host_456",
+            bookingId: "booking_456",
+            propertyId: "property_123",
+            guestId: "guest_789",
+            checkIn: "2024-02-01",
+            checkOut: "2024-02-05",
+            guests: 2,
+            message: "Looking forward to our stay!",
+            status: "pending_host_approval",
+            requestedAt: "2024-01-15T14:30:00Z",
+            expiresAt: "2024-01-16T14:30:00Z"
           }
-        ])
+        }])
         .then<HostNotified>([{
           type: "HostNotified",
           data: {
@@ -248,11 +238,9 @@ flow('PropertyBooking', () => {
   slice.command('Notify host', () => {
 
     backend('Notify host', () => {
-
       uses(MailChimp).hints("be sure to use the new v2 api")
 
       scenario('Host is notified when booking request is received', () => {
-
         when<NotifyHost>({
           type: "NotifyHost",
           data: {
@@ -277,6 +265,7 @@ flow('PropertyBooking', () => {
       });
     });
   });
+
 });
 ```
 
