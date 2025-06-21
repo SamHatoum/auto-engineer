@@ -11,8 +11,16 @@
 
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
+| NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE WORKING HARD ON MAKING IT REAL 
+
 ## 🎯 How It Works
 
+You start by running the CLI like this:
+```shell
+> npx auto-engineer start
+```
+
+Then you interact with it like this:
 ```console
 🤖 auto: what would you like to build?
 👤 user: airbnb clone
