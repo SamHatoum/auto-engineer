@@ -30,18 +30,18 @@ Then you interact with it like this:
 🤖 auto: building your PropertyBooking flow...
 
 🔀 Flow: PropertyBooking
-├── Slice: Search properties  
+├── 🍕 Slice: Search properties  
 │    ├── queries: search, filter, sort
 │    ├── projections: availability index
 │    └── specs: filters, search behavior
-├── Slice: Book property 
+├── 🍕 Slice: Book property 
 │    ├── commands: RequestBooking
 │    ├── events: BookingConfirmed
 │    └── specs: booking rules
-├── Slice: Notify host of bookings
+├── 🍕 Slice: Notify host of bookings
 │    ├── reactions: notifications
 │    └── specs: notifications rules
-└── Integrations
+└── 🧩 Integrations
      ├── Auth0 (authentication)
      └── Google Maps (locations)
 
@@ -59,11 +59,11 @@ visualize your flow here: http://localhost:5000 🔍
 🤖 auto: extending PropertyBooking flow...
 
 🔀 Flow: PropertyBooking 
-├── Slice: Submit review
+├── 🍕 Slice: Submit review
 │    ├── commands: SubmitReview
 │    ├── events: ReviewSubmitted
 │    └── specs: only past guests, one per stay
-└── [+] Slice: View reviews
+└── 🍕 Slice: View reviews
      ├── queries: GetPropertyReviews, GetUserReviews
      ├── projections: ratings, review feed
      └── specs: sorting, filtering, pagination
