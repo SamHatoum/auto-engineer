@@ -13,18 +13,66 @@
 
 ## 🎯 How It Works
 
-1. ✍️ Enter a prompt describing your application
-2. 🏗️ AI builds the app with best practices
-3. 🤝 Iterate with the AI (and your team)
-4. 🔄 Continue far beyond day 0
+```console
+auto: what would you like to build?
+user: airbnb clone
+
+auto: I'll create a property booking system
+auto: crafting an initial domain model for further exploration
+auto: building your PropertyBooking flow...
+| Flow: PropertyBooking
+├── Slice: List property
+│    ├── commands: ListProperty
+│    ├── events: PropertyListed  
+│    └── specs: form validation, business rules
+├── Slice: Search properties  
+│    ├── queries: search, filter, sort
+│    ├── projections: availability index
+│    └── specs: business rules 
+├── Slice: Book property 
+│    ├── commands: RequestBooking
+│    ├── events: BookingConfirmed
+│    ├── reactions: payment, notifications
+│    └── specs: business rules 
+└── Integrations
+     ├── Auth0 (authentication)
+     └── Google Maps (locations)
+
+✓ Generated 12 command handlers with full validation
+✓ Built React components with specs
+✓ Configured external service gateways
+
+your app is ready at: http://localhost:3000 🚀
+visualize your flow here: http://localhost:5000 🔍
+
+user: add user reviews
+
+auto: extending PropertyBooking flow...
+| Flow: PropertyBooking 
+├── Slice: Submit review
+│    ├── commands: SubmitReview (validates booking history)
+│    ├── events: ReviewSubmitted
+│    └── projections: ratings, review feed
+│    └── specs: only past guests, one per stay
+
+✓ No breaking changes
+✓ Integration tests pass
+✓ API backwards compatible
+
+your app is ready at: http://localhost:3000 🚀
+visualize your flow here: http://localhost:5000 🔍
+
+user: █
+```
 
 ## ✨ Features
 
 - 🤖 AI-powered code generation with enterprise-grade architecture & security
 - 📦 Domain-driven, slice-based design with built-in testing
-- 🔄 Continuous AI & team collaboration
+- 🤝 Continuous AI & team collaboration
 - 🎮 Fully MCP-driven (IDE, chat, custom AI control)
 - 📚 Self-documenting
+- 🔄 Continue far beyond day 0
 
 ## What Makes It Different
 
