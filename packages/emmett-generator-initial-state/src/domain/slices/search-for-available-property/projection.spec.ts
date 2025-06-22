@@ -8,10 +8,10 @@ import {
 import { projection } from './projection';
 import { AvailableProperty } from '../../shared/read-model';
 
-import type { PropertyListed } from '../list-property/events';
+import type { ListingCreated } from '../create-listing/events';
 import type { PropertyRemoved } from '../remove-property/events';
 
-type PropertyEvent = PropertyListed | PropertyRemoved;
+type PropertyEvent = ListingCreated | PropertyRemoved;
 
 describe('Available Property Projection', () => {
     let given: InMemoryProjectionSpec<PropertyEvent>;
@@ -28,7 +28,7 @@ describe('Available Property Projection', () => {
         given([])
             .when([
                 {
-                    type: 'PropertyListed',
+                    type: 'ListingCreated',
                     data: {
                         propertyId,
                         hostId: `host-${uuid()}`,
@@ -68,7 +68,7 @@ describe('Available Property Projection', () => {
         given(
             eventsInStream(propertyId, [
                 {
-                    type: 'PropertyListed',
+                    type: 'ListingCreated',
                     data: {
                         propertyId,
                         hostId: `host-${uuid()}`,

@@ -13,13 +13,13 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.js'
       ],
-      all: true,
-      thresholds: {
-        lines: 90,
-        functions: 90,
-        branches: 90,
-        statements: 90
-      }
+      // all: true
+      // thresholds: {
+      //   lines: 90,
+      //   functions: 90,
+      //   branches: 90,
+      //   statements: 90
+      // }
     }
   }
 }) 

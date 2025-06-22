@@ -1,6 +1,6 @@
 import {DeciderSpecification} from '@event-driven-io/emmett';
 import {evolve} from './evolve';
-import {initialPropertyState} from './state';
+import {initialListingState} from './state';
 import {describe, it} from 'vitest';
 import {decide} from "./decide";
 
@@ -9,13 +9,13 @@ describe('Property | ListProperty', () => {
     const given = DeciderSpecification.for({
         decide: decide,
         evolve,
-        initialState: initialPropertyState,
+        initialState: initialListingState,
     });
 
-    it('should emit PropertyListed when state is Empty', () => {
+    it('should emit ListingCreated when state is Empty', () => {
         given([])
             .when({
-                type: 'ListProperty',
+                type: 'CreateListing',
                 data: {
                     propertyId: 'property-123',
                     hostId: 'host-abc',
@@ -32,25 +32,17 @@ describe('Property | ListProperty', () => {
                 },
             })
             .then([{
-                type: 'PropertyListed',
+                type: 'ListingCreated',
                 data: {
-                    ...{
-                        type: 'ListProperty',
-                        data: {
-                            propertyId: 'property-123',
-                            hostId: 'host-abc',
-                            location: 'San Francisco',
-                            address: '123 Market St',
-                            title: 'Modern Apartment',
-                            description: 'Great place in the city',
-                            pricePerNight: 250,
-                            maxGuests: 4,
-                            amenities: ['wifi', 'kitchen'],
-                        },
-                        metadata: {
-                            now,
-                        },
-                    }.data,
+                    propertyId: 'property-123',
+                    hostId: 'host-abc',
+                    location: 'San Francisco',
+                    address: '123 Market St',
+                    title: 'Modern Apartment',
+                    description: 'Great place in the city',
+                    pricePerNight: 250,
+                    maxGuests: 4,
+                    amenities: ['wifi', 'kitchen'],
                     listedAt: now,
                 },
             }]);
@@ -59,31 +51,23 @@ describe('Property | ListProperty', () => {
     it('should throw if property already exists', () => {
         given([
             {
-                type: 'PropertyListed',
+                type: 'ListingCreated',
                 data: {
-                    ...{
-                        type: 'ListProperty',
-                        data: {
-                            propertyId: 'property-123',
-                            hostId: 'host-abc',
-                            location: 'San Francisco',
-                            address: '123 Market St',
-                            title: 'Modern Apartment',
-                            description: 'Great place in the city',
-                            pricePerNight: 250,
-                            maxGuests: 4,
-                            amenities: ['wifi', 'kitchen'],
-                        },
-                        metadata: {
-                            now,
-                        },
-                    }.data,
+                    propertyId: 'property-123',
+                    hostId: 'host-abc',
+                    location: 'San Francisco',
+                    address: '123 Market St',
+                    title: 'Modern Apartment',
+                    description: 'Great place in the city',
+                    pricePerNight: 250,
+                    maxGuests: 4,
+                    amenities: ['wifi', 'kitchen'],
                     listedAt: now,
                 },
             },
         ])
             .when({
-                type: 'ListProperty',
+                type: 'CreateListing',
                 data: {
                     propertyId: 'property-123',
                     hostId: 'host-abc',
@@ -99,6 +83,6 @@ describe('Property | ListProperty', () => {
                     now,
                 },
             })
-            .thenThrows((e) => e.message === 'Property already exists');
+            .thenThrows((e) => e.message === 'Listing already exists');
     });
 });
