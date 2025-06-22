@@ -11,20 +11,82 @@
 
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
+##### _NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE WORKING HARD ON MAKING IT_
+Stay up to date by watching 👀☝️ and giving us a star ⭐☝️
+
 ## 🎯 How It Works
 
-1. ✍️ Enter a prompt describing your application
-2. 🏗️ AI builds the app with best practices
-3. 🤝 Iterate with the AI (and your team)
-4. 🔄 Continue far beyond day 0
+You start by running the CLI like this:
+```shell
+> npx auto-engineer start
+```
+
+Then you interact with it like this:
+```console
+🤖 auto: what would you like to build?
+👤 user: airbnb clone
+
+🤖 auto: crafting a FlowModel for exploration & collaboration
+🤖 auto: building your PropertyBooking flow...
+
+🔀 Flow: PropertyBooking
+├── 🍕 Slice: Search properties  
+│    ├── queries: search, filter, sort
+│    ├── projections: availability index
+│    └── specs: filters, search behavior
+├── 🍕 Slice: Book property 
+│    ├── commands: RequestBooking
+│    ├── events: BookingConfirmed
+│    └── specs: booking rules
+├── 🍕 Slice: Notify host of bookings
+│    ├── reactions: notifications
+│    └── specs: notifications rules
+└── 🧩 Integrations
+     ├── Auth0 (authentication)
+     └── Google Maps (locations)
+
+✓ Generated 1 command handler, 1 query
+✓ Built React components with specs
+✓ Configured integrations
+✓ All tests passing
+
+your app is ready at: http://localhost:3000 🚀
+visualize your flow here: http://localhost:5000 🔍
+
+🤖 auto: what would you like to iterate on?
+👤 user: add user reviews
+
+🤖 auto: extending PropertyBooking flow...
+
+🔀 Flow: PropertyBooking 
+├── 🍕 Slice: Submit review
+│    ├── commands: SubmitReview
+│    ├── events: ReviewSubmitted
+│    └── specs: only past guests, one per stay
+└── 🍕 Slice: View reviews
+     ├── queries: GetPropertyReviews, GetUserReviews
+     ├── projections: ratings, review feed
+     └── specs: sorting, filtering, pagination
+
+✓ Generated 1 command handler, 1 query
+✓ Built React components with specs
+✓ Configured integrations
+✓ All tests passing
+
+your app is ready at: http://localhost:3000 🚀
+visualize your flow here: http://localhost:5000 🔍
+
+👤 user: █
+```
 
 ## ✨ Features
 
 - 🤖 AI-powered code generation with enterprise-grade architecture & security
 - 📦 Domain-driven, slice-based design with built-in testing
-- 🔄 Continuous AI & team collaboration
+- 🤝 Continuous AI & team collaboration
 - 🎮 Fully MCP-driven (IDE, chat, custom AI control)
 - 📚 Self-documenting
+- 🔄 Continue far beyond day 0
 
 ## What Makes It Different
 
@@ -39,9 +101,9 @@ It achieves this through a combination of techniques:
 * **Built-in Regression Testing**: Maintains system integrity by preventing breaking changes
 * **Self-Documenting System**: Provides full transparency into human and AI decisions over time
 
-## 🔄 FlowLang
+## 🔄 FlowModels
 
-FlowLang is a declarative language for defining system behaviors through vertical slices. It bridges the gap between technical and non-technical stakeholders by providing a common language that:
+Information Flow Modeling is the act of expressing a system as interfaces, commands, queries, events, and state. The majority of systems lend themselves to be easily modeled using Flow Models. Flow Models define system behaviors through vertical slices, and bridges the gap between technical and non-technical stakeholders by providing a common language that:
 
 * **Describes Complete Flows**: Captures entire user journeys and system interactions
 * **Uses Vertical Slices**: Organizes functionality by domain-driven slices rather than technical layers
@@ -49,53 +111,179 @@ FlowLang is a declarative language for defining system behaviors through vertica
 * **Specifies Behavior**: Defines both frontend and backend requirements in a single flow
 * **Includes Validation Rules**: Embeds business rules and acceptance criteria directly in the flow
 
-### Example Flow
+### Example Flow Model
 
-```yml
-Flow: Guest Books a Property
-  Slice: Guest searches for available properties
-    Frontend: Search Interface
-      A clean search interface with location input, date pickers, and guest counter.
-      
-      Rule: Search Form Validation  
-        Should require check-in and check-out dates  
-        Should validate dates are in the future  
+```typescript
+import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flow-lang';
 
-    Backend: Property Search  
-      Executes a search against the property index using the guest's criteria.  
-      
-      Rule: Search shows available properties
-        Example: Search by default parameters
-          Given PropertyAdded
-          ```json
-          {
-            "propertyId": "prop_123",
-            "location": "San Francisco",
-            "pricePerNight": 250,
-            "maxGuests": 4,
-            "amenities": ["WiFi", "Kitchen", "Parking"],
-            "bookedDates": []
-          }
-          ```
-          When SearchPropertiesQuery
-          ```json
-          {
-            "location": "San Francisco",
-            "checkIn": "2025-07-15",
-            "checkOut": "2025-07-18",
-            "guests": 2,
-            "priceMax": 300
-          }
-          ```
-          Then SearchResults
-          ```json
-          {
-            "searchId": "search_abc123",
-            "resultsCount": 47,
-            "topResults": ["prop_123"],
-            "averagePrice": 225.00
-          }
-          ```
+import type { ListingCreated } from './slices/create-listing/events';
+import type { BookingRequested } from './slices/guest-submits-booking-request/events';
+import type { HostNotified } from './slices/host-manages-booking-request/events';
+import type { PropertyRemoved } from './slices/remove-property/events';
+import type { CreateListing } from './slices/create-listing/commands';
+import type { RequestBooking } from './slices/guest-submits-booking-request/commands';
+import type { NotifyHost } from './slices/host-manages-booking-request/commands';
+import type { RemoveProperty } from './slices/remove-property/commands';
+import type { AvailableProperty } from './shared/read-model';
+
+import { MailChimp } from '@auto-engineer/mailchimp-integration';
+import { Twilio } from '@auto-engineer/twilio-integration';
+
+const { Events, Commands, State } = createBuilders()
+  .events<ListingCreated | BookingRequested | HostNotified | PropertyRemoved>()
+  .commands<CreateListing | RequestBooking | NotifyHost | RemoveProperty>()
+  .state<{ AvailableProperties: AvailableProperty }>();
+
+
+flow('Host creates a listing', () => {
+
+  commandSlice('Create listing')
+    .stream('listing-${id}')
+    .client(() => {
+      specs('A form that allows hosts to create a listing',() => {
+        should('have fields for title, description, location, address')
+        should('have price per night input')
+        should('have max guests selector')
+        should('have amenities checklist')
+        should.not('be shown to guest users')
+      });
+    })
+    .server(() => {
+      specs('Host can create a new listing', () => {
+        when(
+          Commands.CreateListing({
+            propertyId: "listing_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            address: "123 Market St",
+            title: "Modern Downtown Apartment",
+            description: "Beautiful apartment with city views",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen", "parking"]
+          })).then([
+            Events.ListingCreated({
+              propertyId: "listing_123",
+              hostId: "host_456",
+              location: "San Francisco",
+              address: "123 Market St",
+              title: "Modern Downtown Apartment",
+              description: "Beautiful apartment with city views",
+              pricePerNight: 250,
+              maxGuests: 4,
+              amenities: ["wifi", "kitchen", "parking"],
+              listedAt: new Date("2024-01-15T10:00:00Z")
+            })
+          ]);
+      });
+    });
+
+});
+
+flow('Guest books a listing', () => {
+
+  querySlice('Search for available listings')
+    .client(() => {
+      specs('Listing Search Screen', () => {
+        should('have location filter')
+        should('have price range slider')
+        should('have guest count filter')
+      });
+    })
+    .request(gql`
+      query SearchListings($location: String, $maxPrice: Float, $minGuests: Int) {
+        searchListings(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
+          propertyId
+          title
+          location
+          pricePerNight
+          maxGuests
+        }
+      }`
+    )
+    .server(() => {
+      specs('Listing becomes searchable after being created', () => {
+        when(
+          Events.ListingCreated({
+            propertyId: "listing_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            address: "123 Market St",
+            title: "Modern Downtown Apartment",
+            description: "Beautiful apartment with city views",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen", "parking"],
+            listedAt: new Date("2024-01-15T10:00:00Z")
+          })
+        ).then([
+          State.AvailableProperties({
+            propertyId: "listing_123",
+            title: "Modern Downtown Apartment",
+            location: "San Francisco",
+            pricePerNight: 250,
+            maxGuests: 4
+          })
+        ]);
+      });
+    });
+
+  reactSlice('Host is notified')
+    .server(() => {
+      specs('Host is notified when booking request is received',() => {
+        when([
+          Events.BookingRequested({
+            bookingId: "booking_456",
+            propertyId: "listing_123",
+            hostId: "host_456",
+            guestId: "guest_789",
+            checkIn: "2024-02-01",
+            checkOut: "2024-02-05",
+            guests: 2,
+            message: "Looking forward to our stay!",
+            status: "pending_host_approval",
+            requestedAt: "2024-01-15T14:30:00Z",
+            expiresAt: "2024-01-16T14:30:00Z"
+          })
+        ]).then([
+          Commands.NotifyHost({
+            hostId: "host_456",
+            notificationType: "booking_request",
+            priority: "high",
+            channels: ["email", "sms"],
+            message: "Looking forward to our stay!",
+            actionRequired: true
+          })
+        ]);
+      });
+    });
+
+  commandSlice('Notify host')
+    .via([MailChimp, Twilio])
+    .retries(3)
+    .server(() => {
+      specs('Send notification using the specified integrations', () => {
+        when(
+          Commands.NotifyHost({
+            hostId: "host_456",
+            notificationType: "booking_request",
+            priority: "high",
+            channels: ["email", "sms"],
+            message: "Looking forward to our stay!",
+            actionRequired: true
+          })).then([
+            Events.HostNotified({
+              bookingId: "booking_456",
+              hostId: "host_456",
+              notificationType: "booking_request",
+              channels: ["email", "sms"],
+              notifiedAt: "2024-01-15T14:30:00Z"
+            })
+          ]);
+      });
+    });
+});
+
 ```
 
 This approach enables:
@@ -154,7 +342,7 @@ This project uses [commitlint](https://commitlint.js.org/) to enforce consistent
 ### Example commands and commit messages
 
 ```bash
-git commit -m "feat(packages/flowlang-modeling-agent): add new feature"
+git commit -m "feat(packages/flow-lang): add new feature"
 git commit -m "fix(apps/cli): correct CLI argument parsing"
 git commit -m "chore(global): update repository settings"
 ```
