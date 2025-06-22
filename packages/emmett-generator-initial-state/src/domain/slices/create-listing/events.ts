@@ -1,7 +1,7 @@
-import type { Command } from '@event-driven-io/emmett';
+import type {Event} from '@event-driven-io/emmett';
 
-export type ListProperty = Command<
-    'ListProperty',
+export type ListingCreated = Event<
+    'ListingCreated',
     {
         propertyId: string;
         hostId: string;
@@ -12,6 +12,6 @@ export type ListProperty = Command<
         pricePerNight: number;
         maxGuests: number;
         amenities: string[];
+        listedAt: Date;
     }
 >;
-

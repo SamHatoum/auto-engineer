@@ -1,7 +1,14 @@
 import type { InMemoryEventStore } from '@event-driven-io/emmett';
-import {AvailableProperty} from "./views";
 
-export class AvailablePropertiesReadModel {
+export type AvailableProperty = {
+    propertyId: string;
+    title: string;
+    location: string;
+    pricePerNight: number;
+    maxGuests: number;
+};
+
+export class AvailableProperties {
     private collection;
 
     constructor(eventStore: InMemoryEventStore) {

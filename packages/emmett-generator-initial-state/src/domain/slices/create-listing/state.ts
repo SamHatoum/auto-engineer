@@ -1,9 +1,9 @@
-export type EmptyProperty = {
+export type EmptyListing = {
     status: 'Empty';
 };
 
-export type ListedProperty = {
-    status: 'Listed';
+export type CreatedListing = {
+    status: 'Created';
     propertyId: string;
     hostId: string;
     location: string;
@@ -15,8 +15,8 @@ export type ListedProperty = {
     amenities: string[];
 };
 
-export type PropertyState = EmptyProperty | ListedProperty;
+export type ListingState = EmptyListing | CreatedListing;
 
-export const initialPropertyState = (): PropertyState => ({
+export const initialListingState = (): ListingState => ({
     status: 'Empty',
 });

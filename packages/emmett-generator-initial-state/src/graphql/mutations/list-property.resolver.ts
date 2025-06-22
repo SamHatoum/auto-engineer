@@ -1,13 +1,13 @@
 import {Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver} from 'type-graphql';
 import {CommandHandler} from '@event-driven-io/emmett';
 import {GraphQLContext} from "../context";
-import {evolve} from "../../domain/slices/list-property/evolve";
-import {initialPropertyState} from "../../domain/slices/list-property/state";
-import {handle} from "../../domain/slices/list-property/handle";
+import {evolve} from "../../domain/slices/create-listing/evolve";
+import {initialListingState} from "../../domain/slices/create-listing/state";
+import {handle} from "../../domain/slices/create-listing/handle";
 
 
 @InputType()
-class ListPropertyInput {
+class CreateListingInput {
     @Field(() => String) propertyId!: string;
     @Field(() => String) hostId!: string;
     @Field(() => String) location!: string;
@@ -20,23 +20,23 @@ class ListPropertyInput {
 }
 
 @ObjectType()
-class ListPropertyResponse {
+class CreateListingResponse {
     @Field(() => Boolean) success!: boolean;
 }
 
 @Resolver()
-export class ListPropertyResolver {
+export class CreateListingResolver {
     private handler = CommandHandler({
         evolve: evolve,
-        initialState: initialPropertyState,
+        initialState: initialListingState,
     });
 
-    @Mutation(() => ListPropertyResponse)
-    async listProperty(
-        @Arg('input', () => ListPropertyInput) input: ListPropertyInput,
+    @Mutation(() => CreateListingResponse)
+    async createListing(
+        @Arg('input', () => CreateListingInput) input: CreateListingInput,
         @Ctx() ctx: GraphQLContext
-    ): Promise<ListPropertyResponse> {
-        await handle(ctx.eventStore, {type: 'ListProperty', data: input});
+    ): Promise<CreateListingResponse> {
+        await handle(ctx.eventStore, {type: 'CreateListing', data: input});
         return {success: true};
     }
 }

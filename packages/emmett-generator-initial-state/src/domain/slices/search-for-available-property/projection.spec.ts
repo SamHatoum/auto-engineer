@@ -6,7 +6,7 @@ import {
     newEventsInStream,
 } from '@event-driven-io/emmett';
 import { projection } from './projection';
-import { AvailableProperty } from './views';
+import { AvailableProperty } from '../../shared/read-model';
 
 import type { PropertyListed } from '../list-property/events';
 import type { PropertyRemoved } from '../remove-property/events';

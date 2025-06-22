@@ -1,14 +1,14 @@
-import { PropertyState } from './state';
-import { PropertyListed } from './events';
+import { ListingState } from './state';
+import { ListingCreated } from './events';
 
 export const evolve = (
-    state: PropertyState,
-    event: PropertyListed
-): PropertyState => {
+    state: ListingState,
+    event: ListingCreated
+): ListingState => {
     switch (event.type) {
-        case 'PropertyListed':
+        case 'ListingCreated':
             return {
-                status: 'Listed',
+                status: 'Created',
                 propertyId: event.data.propertyId,
                 hostId: event.data.hostId,
                 location: event.data.location,

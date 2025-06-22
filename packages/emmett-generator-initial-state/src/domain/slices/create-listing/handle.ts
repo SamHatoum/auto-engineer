@@ -1,17 +1,17 @@
 import { CommandHandler, type EventStore } from '@event-driven-io/emmett';
 import { evolve } from './evolve';
-import { initialPropertyState } from './state';
+import { initialListingState } from './state';
 import { decide } from "./decide";
-import type { ListProperty } from "./commands";
+import type { CreateListing } from "./commands";
 
 const commandHandler = CommandHandler({
     evolve,
-    initialState: initialPropertyState,
+    initialState: initialListingState,
 });
 
 export const handle = async (
     eventStore: EventStore,
-    command: ListProperty
+    command: CreateListing
 ): Promise<void> => {
     const streamId = `property-${command.data.propertyId}`;
     await commandHandler(eventStore, streamId, (state) =>

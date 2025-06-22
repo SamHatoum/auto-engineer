@@ -1,7 +1,7 @@
 import {Query, Resolver, Arg, Ctx, ObjectType, Field} from 'type-graphql';
 import {GraphQLContext} from "../context";
-import {AvailablePropertiesReadModel} from "../../domain/slices/search-for-available-property/read-model";
-import {AvailableProperty} from "../../domain/slices/search-for-available-property/views";
+import {AvailableProperties} from "../../domain/shared/read-model";
+import {AvailableProperty} from "../../domain/slices/search-for-available-property/entities";
 
 @ObjectType()
 export class SearchPropertiesView {
@@ -26,7 +26,7 @@ export class SearchPropertiesView {
 export class SearchQueryResolver {
     @Query(() => [SearchPropertiesView])
     async availableProperties(@Ctx() ctx: GraphQLContext): Promise<AvailableProperty[]> {
-        const model = new AvailablePropertiesReadModel(ctx.eventStore);
+        const model = new AvailableProperties(ctx.eventStore);
         return model.getAll();
     }
 
@@ -37,7 +37,7 @@ export class SearchQueryResolver {
         @Arg('maxPrice', () => Number, {nullable: true}) maxPrice?: number,
         @Arg('minGuests', () => Number, {nullable: true}) minGuests?: number
     ): Promise<AvailableProperty[]> {
-        const model = new AvailablePropertiesReadModel(ctx.eventStore);
+        const model = new AvailableProperties(ctx.eventStore);
         return model.search(location, maxPrice, minGuests);
     }
 }
