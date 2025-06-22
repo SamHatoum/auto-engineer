@@ -114,25 +114,45 @@ Information Flow Modeling is the act of expressing a system as interfaces, comma
 ### Example Flow Model
 
 ```typescript
-flow('PropertyBooking', () => {
+import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flow-lang';
 
-  slice.command('List property', () => {
+import type { ListingCreated } from './slices/create-listing/events';
+import type { BookingRequested } from './slices/guest-submits-booking-request/events';
+import type { HostNotified } from './slices/host-manages-booking-request/events';
+import type { PropertyRemoved } from './slices/remove-property/events';
+import type { CreateListing } from './slices/create-listing/commands';
+import type { RequestBooking } from './slices/guest-submits-booking-request/commands';
+import type { NotifyHost } from './slices/host-manages-booking-request/commands';
+import type { RemoveProperty } from './slices/remove-property/commands';
+import type { AvailableProperty } from './shared/read-model';
 
-    frontend('A form that allows hosts to list a property', () => {
-      specs(() => {
+import { MailChimp } from '@auto-engineer/mailchimp-integration';
+import { Twilio } from '@auto-engineer/twilio-integration';
+
+const { Events, Commands, State } = createBuilders()
+  .events<ListingCreated | BookingRequested | HostNotified | PropertyRemoved>()
+  .commands<CreateListing | RequestBooking | NotifyHost | RemoveProperty>()
+  .state<{ AvailableProperties: AvailableProperty }>();
+
+
+flow('Host creates a listing', () => {
+
+  commandSlice('Create listing')
+    .stream('listing-${id}')
+    .client(() => {
+      specs('A form that allows hosts to create a listing',() => {
         should('have fields for title, description, location, address')
         should('have price per night input')
         should('have max guests selector')
         should('have amenities checklist')
+        should.not('be shown to guest users')
       });
-    });
-
-    backend('List property', () => {
-      scenario('Host can lists a new property', () => {
-        when<ListProperty>({
-          type: "ListProperty",
-          data: {
-            propertyId: "property_123",
+    })
+    .server(() => {
+      specs('Host can create a new listing', () => {
+        when(
+          Commands.CreateListing({
+            propertyId: "listing_123",
             hostId: "host_456",
             location: "San Francisco",
             address: "123 Market St",
@@ -141,44 +161,51 @@ flow('PropertyBooking', () => {
             pricePerNight: 250,
             maxGuests: 4,
             amenities: ["wifi", "kitchen", "parking"]
-          }
-        })
-        .then<PropertyListed>([{
-          type: "PropertyListed",
-          data: {
-            propertyId: "property_123",
-            hostId: "host_456",
-            location: "San Francisco",
-            address: "123 Market St",
-            title: "Modern Downtown Apartment",
-            description: "Beautiful apartment with city views",
-            pricePerNight: 250,
-            maxGuests: 4,
-            amenities: ["wifi", "kitchen", "parking"],
-            listedAt: new Date("2024-01-15T10:00:00Z")
-          }
-        }]);
+          })).then([
+            Events.ListingCreated({
+              propertyId: "listing_123",
+              hostId: "host_456",
+              location: "San Francisco",
+              address: "123 Market St",
+              title: "Modern Downtown Apartment",
+              description: "Beautiful apartment with city views",
+              pricePerNight: 250,
+              maxGuests: 4,
+              amenities: ["wifi", "kitchen", "parking"],
+              listedAt: new Date("2024-01-15T10:00:00Z")
+            })
+          ]);
       });
     });
-  });
 
-  slice.query('Search for available properties', () => {
+});
 
-    frontend('Property Search', () => {
-      specs(() => {
+flow('Guest books a listing', () => {
+
+  querySlice('Search for available listings')
+    .client(() => {
+      specs('Listing Search Screen', () => {
         should('have location filter')
         should('have price range slider')
         should('have guest count filter')
-        should('show property cards with images')
       });
-    });
-
-    backend('Property search projection', () => {
-      scenario('Property becomes available after being listed', () => {
-        given<PropertyListed>([{
-          type: "PropertyListed",
-          data: {
-            propertyId: "property_123",
+    })
+    .request(gql`
+      query SearchListings($location: String, $maxPrice: Float, $minGuests: Int) {
+        searchListings(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
+          propertyId
+          title
+          location
+          pricePerNight
+          maxGuests
+        }
+      }`
+    )
+    .server(() => {
+      specs('Listing becomes searchable after being created', () => {
+        when(
+          Events.ListingCreated({
+            propertyId: "listing_123",
             hostId: "host_456",
             location: "San Francisco",
             address: "123 Market St",
@@ -188,29 +215,27 @@ flow('PropertyBooking', () => {
             maxGuests: 4,
             amenities: ["wifi", "kitchen", "parking"],
             listedAt: new Date("2024-01-15T10:00:00Z")
-          }
-        }])
-        .then<AvailableProperty>({
-          propertyId: "property_123",
-          title: "Modern Downtown Apartment",
-          location: "San Francisco",
-          pricePerNight: 250,
-          maxGuests: 4
-        });
+          })
+        ).then([
+          State.AvailableProperties({
+            propertyId: "listing_123",
+            title: "Modern Downtown Apartment",
+            location: "San Francisco",
+            pricePerNight: 250,
+            maxGuests: 4
+          })
+        ]);
       });
     });
-  });
 
-  slice.reaction('When booking request is received, notify host', () => {
-
-    backend('Notify host of booking request', () => {
-      scenario('Host is notified when booking request is received', () => {
-        given<BookingRequested>([{
-          type: "BookingRequested",
-          data: {
-            hostId: "host_456",
+  reactSlice('Host is notified')
+    .server(() => {
+      specs('Host is notified when booking request is received',() => {
+        when([
+          Events.BookingRequested({
             bookingId: "booking_456",
-            propertyId: "property_123",
+            propertyId: "listing_123",
+            hostId: "host_456",
             guestId: "guest_789",
             checkIn: "2024-02-01",
             checkOut: "2024-02-05",
@@ -219,54 +244,46 @@ flow('PropertyBooking', () => {
             status: "pending_host_approval",
             requestedAt: "2024-01-15T14:30:00Z",
             expiresAt: "2024-01-16T14:30:00Z"
-          }
-        }])
-        .then<HostNotified>([{
-          type: "HostNotified",
-          data: {
-            bookingId: "booking_456",
-            hostId: "host_456",
-            notificationType: "booking_request",
-            channels: ["email", "push"],
-            notifiedAt: "2024-01-15T14:30:00Z"
-          }
-        }]);
-      });
-    });
-  });
-
-  slice.command('Notify host', () => {
-
-    backend('Notify host', () => {
-      uses(MailChimp).hints("be sure to use the new v2 api")
-
-      scenario('Host is notified when booking request is received', () => {
-        when<NotifyHost>({
-          type: "NotifyHost",
-          data: {
+          })
+        ]).then([
+          Commands.NotifyHost({
             hostId: "host_456",
             notificationType: "booking_request",
             priority: "high",
-            channels: ["email", "push"],
+            channels: ["email", "sms"],
             message: "Looking forward to our stay!",
             actionRequired: true
-          }
-        })
-        .then<HostNotified>([{
-          type: "HostNotified",
-          data: {
-            bookingId: "booking_456",
-            hostId: "host_456",
-            notificationType: "booking_request",
-            channels: ["email", "push"],
-            notifiedAt: "2024-01-15T14:30:00Z"
-          }
-        }]);
+          })
+        ]);
       });
     });
-  });
 
+  commandSlice('Notify host')
+    .via([MailChimp, Twilio])
+    .retries(3)
+    .server(() => {
+      specs('Send notification using the specified integrations', () => {
+        when(
+          Commands.NotifyHost({
+            hostId: "host_456",
+            notificationType: "booking_request",
+            priority: "high",
+            channels: ["email", "sms"],
+            message: "Looking forward to our stay!",
+            actionRequired: true
+          })).then([
+            Events.HostNotified({
+              bookingId: "booking_456",
+              hostId: "host_456",
+              notificationType: "booking_request",
+              channels: ["email", "sms"],
+              notifiedAt: "2024-01-15T14:30:00Z"
+            })
+          ]);
+      });
+    });
 });
+
 ```
 
 This approach enables:
