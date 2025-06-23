@@ -1,4 +1,3 @@
-import inquirer from 'inquirer';
 import { Config } from './config.js';
 import { createOutput } from './terminal.js';
 
@@ -27,42 +26,15 @@ export class Analytics {
       return this.optedIn;
     }
 
-    // Check if already opted in via environment variable
-    if (process.env.AUTO_ENGINEER_ANALYTICS === 'true') {
-      this.optedIn = true;
-      return true;
-    }
-
+    // Check if explicitly disabled via environment variable
     if (process.env.AUTO_ENGINEER_ANALYTICS === 'false') {
       this.optedIn = false;
       return false;
     }
 
-    // Prompt user for consent
-    try {
-      const { allowAnalytics } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'allowAnalytics',
-          message: 'Would you like to share anonymous usage analytics to help improve auto-engineer?',
-          default: false,
-        },
-      ]);
-
-      this.optedIn = allowAnalytics;
-      
-      if (allowAnalytics) {
-        this.output.info('Analytics enabled. You can disable this anytime with AUTO_ENGINEER_ANALYTICS=false');
-      } else {
-        this.output.info('Analytics disabled. You can enable this anytime with AUTO_ENGINEER_ANALYTICS=true');
-      }
-
-      return allowAnalytics;
-    } catch (error) {
-      // If prompt fails (e.g., non-interactive terminal), default to false
-      this.optedIn = false;
-      return false;
-    }
+    // Analytics enabled by default
+    this.optedIn = true;
+    return true;
   }
 
   async track(data: Omit<AnalyticsData, 'timestamp' | 'version' | 'nodeVersion' | 'platform'>): Promise<void> {

@@ -2,6 +2,8 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import ora from "ora";
 
+const COLORS = [chalk.red, chalk.yellow, chalk.green, chalk.cyan, chalk.blue, chalk.magenta];
+
 export const runOraExample = async () => {
   const result = await inquirer.prompt([
     {
@@ -12,7 +14,19 @@ export const runOraExample = async () => {
     },
   ]);
 
-  const spinner = ora(`Doing ${result.choice}...`).start();
+  // Create colored spinner frames
+  const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  const coloredFrames = COLORS.map(color => 
+    spinnerFrames.map(frame => color(frame))
+  ).flat();
+
+  const spinner = ora({
+    text: `Doing ${result.choice}...`,
+    spinner: {
+      interval: 80,
+      frames: coloredFrames
+    }
+  }).start();
 
   setTimeout(() => {
     spinner.succeed(chalk.green("Done!"));

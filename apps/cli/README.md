@@ -136,7 +136,7 @@ cat file.js | auto-engineer analyze --stdin
 - `NO_COLOR=1` - Disable colored output
 - `OUTPUT_FORMAT=json` - Set output format
 - `AUTO_ENGINEER_API_TOKEN=<token>` - Set API token
-- `AUTO_ENGINEER_ANALYTICS=true` - Enable analytics
+- `AUTO_ENGINEER_ANALYTICS=false` - Disable analytics (enabled by default)
 
 ## Configuration
 
@@ -181,20 +181,24 @@ Auto-engineer uses standardized error codes for easy troubleshooting:
 
 Auto-engineer collects anonymous usage analytics to improve the tool. Analytics are:
 
-- **Strictly opt-in** - You must explicitly consent
+- **Enabled by default** - Analytics are collected to help improve the tool
 - **Anonymous** - No personal information is collected
-- **Transparent** - You can see what data is collected
+- **Transparent** - You can see what data is collected in debug mode
 - **Controllable** - You can disable anytime
-
-To enable analytics:
-```bash
-export AUTO_ENGINEER_ANALYTICS=true
-```
 
 To disable analytics:
 ```bash
 export AUTO_ENGINEER_ANALYTICS=false
 ```
+
+Analytics data includes:
+- Command usage (which commands are run)
+- Success/failure rates
+- Error codes (for debugging)
+- Platform information (Node.js version, OS)
+- Tool version
+
+This data helps us understand usage patterns and improve the tool's reliability and features.
 
 ## Development
 

@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import gradient from 'gradient-string';
 import figlet from 'figlet';
 
 import { loadConfig, validateConfig, Config } from './utils/config.js';
@@ -13,6 +14,7 @@ import { createGenerateCommand } from './commands/generate.js';
 import { createAnalyzeCommand } from './commands/analyze.js';
 import { createInitCommand } from './commands/init.js';
 import { createStartCommand } from './commands/start.js';
+import { createCyclingSpinnerCommand } from './commands/cycling-spinner.js';
 
 const VERSION = process.env.npm_package_version || '0.1.2';
 
@@ -90,7 +92,14 @@ const main = async () => {
     const output = createOutput(config);
 
     if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
-      console.log(chalk.blue(figlet.textSync('Auto Engineer', { font: 'Standard' })));
+      const asciiText = figlet.textSync('Auto Engineer', { font: 'Slant' });
+      console.log(chalk.bgBlack(gradient([
+        '#F44B4B',
+        '#FF9C1A',
+        '#F9F871',
+        '#4CD964',
+        '#4BC6F4' 
+      ])(asciiText)));
       console.log(chalk.gray(`Version ${VERSION} - Automate your development workflow\n`));
     }
 
@@ -100,6 +109,7 @@ const main = async () => {
     program.addCommand(createAnalyzeCommand(config, analytics));
     program.addCommand(createInitCommand(config, analytics));
     program.addCommand(createStartCommand(config, analytics));
+    program.addCommand(createCyclingSpinnerCommand(config, analytics));
 
     program.addHelpText('after', `
 Examples:
@@ -115,7 +125,7 @@ Environment Variables:
   NO_COLOR=1                              Disable colored output
   OUTPUT_FORMAT=json                      Set output format
   AUTO_ENGINEER_API_TOKEN=<token>         Set API token
-  AUTO_ENGINEER_ANALYTICS=true            Enable analytics
+  AUTO_ENGINEER_ANALYTICS=false           Disable analytics (enabled by default)
 
 For more information, visit: https://github.com/SamHatoum/auto-engineer
     `);
