@@ -342,7 +342,7 @@ This project uses [commitlint](https://commitlint.js.org/) to enforce consistent
 ### Example commands and commit messages
 
 ```bash
-git commit -m "feat(packages/flow-lang): add new feature"
+git commit -m "feat(packages/flow-modeling-agent): add new feature"
 git commit -m "fix(apps/cli): correct CLI argument parsing"
 git commit -m "chore(global): update repository settings"
 ```
