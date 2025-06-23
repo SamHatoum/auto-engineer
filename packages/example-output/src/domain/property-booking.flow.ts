@@ -16,20 +16,18 @@ import { Twilio } from '@auto-engineer/twilio-integration';
 const { Events, Commands, State } = createBuilders()
   .events<ListingCreated | BookingRequested | HostNotified | PropertyRemoved>()
   .commands<CreateListing | RequestBooking | NotifyHost | RemoveProperty>()
-  .state<{ AvailableProperties: AvailableProperty }>();
+  .state<{ AvailableListings: AvailableProperty }>();
 
 
 flow('Host creates a listing', () => {
-
   commandSlice('Create listing')
     .stream('listing-${id}')
     .client(() => {
-      specs('A form that allows hosts to create a listing',() => {
+      specs('A form that allows hosts to create a listing', () => {
         should('have fields for title, description, location, address')
         should('have price per night input')
         should('have max guests selector')
         should('have amenities checklist')
-        should.not('be shown to guest users')
       });
     })
     .server(() => {
@@ -45,20 +43,21 @@ flow('Host creates a listing', () => {
             pricePerNight: 250,
             maxGuests: 4,
             amenities: ["wifi", "kitchen", "parking"]
-          })).then([
-            Events.ListingCreated({
-              propertyId: "listing_123",
-              hostId: "host_456",
-              location: "San Francisco",
-              address: "123 Market St",
-              title: "Modern Downtown Apartment",
-              description: "Beautiful apartment with city views",
-              pricePerNight: 250,
-              maxGuests: 4,
-              amenities: ["wifi", "kitchen", "parking"],
-              listedAt: new Date("2024-01-15T10:00:00Z")
-            })
-          ]);
+          })
+        ).then([
+          Events.ListingCreated({
+            propertyId: "listing_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            address: "123 Market St",
+            title: "Modern Downtown Apartment",
+            description: "Beautiful apartment with city views",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen", "parking"],
+            listedAt: new Date("2024-01-15T10:00:00Z")
+          })
+        ]);
       });
     });
 
@@ -101,7 +100,7 @@ flow('Guest books a listing', () => {
             listedAt: new Date("2024-01-15T10:00:00Z")
           })
         ).then([
-          State.AvailableProperties({
+          State.AvailableListings({
             propertyId: "listing_123",
             title: "Modern Downtown Apartment",
             location: "San Francisco",

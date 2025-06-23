@@ -5,6 +5,13 @@ export { createIntegration } from './types';
 // Apollo GraphQL
 export { gql } from 'apollo-server';
 
+// HTTP GET template literal function
+export const get = (strings: TemplateStringsArray, ...values: any[]) => {
+  return strings.reduce((result, str, i) => {
+    return result + str + (values[i] || '');
+  }, '');
+};
+
 // Fluent API
 export type { 
   FluentCommandSliceBuilder, 
