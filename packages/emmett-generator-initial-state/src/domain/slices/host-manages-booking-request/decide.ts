@@ -1,4 +1,4 @@
-import type { BookingRequested } from '../guest-submits-booking-request/events';
+import type { BookingRequested } from '../guest-submits-booking-request';
 import type { HostNotified } from './events';
 import type { NotificationState } from './state';
 
@@ -17,7 +17,7 @@ export const decide = (
             hostId: event.data.hostId,
             notificationType: 'booking_request',
             channels: ['email', 'push', 'sms'],
-            notifiedAt: new Date().toISOString(),
+            notifiedAt: new Date(),
         },
     };
 };

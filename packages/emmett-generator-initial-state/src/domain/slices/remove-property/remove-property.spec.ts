@@ -4,12 +4,12 @@ import {evolve} from './evolve';
 import {initialPropertyState, PropertyState} from './state';
 import {describe, expect, it} from 'vitest';
 import {RemoveProperty} from "./commands";
-import {PropertyListed} from "../list-property/events";
+import {ListingCreated} from "../create-listing";
 import {PropertyRemoved} from "./events";
 
 describe('Property | RemoveProperty', () => {
     const now = new Date();
-    const given = DeciderSpecification.for<RemoveProperty, PropertyListed | PropertyRemoved, PropertyState>({
+    const given = DeciderSpecification.for<RemoveProperty, ListingCreated | PropertyRemoved, PropertyState>({
         decide,
         evolve,
         initialState: initialPropertyState,
@@ -18,7 +18,7 @@ describe('Property | RemoveProperty', () => {
     it('should emit PropertyRemoved when property is listed', () => {
         given([
             {
-                type: 'PropertyListed',
+                type: 'ListingCreated',
                 data: {
                     propertyId: 'property-123',
                     hostId: 'host-abc',

@@ -1,27 +1,27 @@
-import type { PropertyListed } from '../list-property/events';
-import type { PropertyRemoved } from '../remove-property/events';
+import type { PropertyRemoved } from '../remove-property';
 import type { ViewProperty } from './views';
 import {
     inMemorySingleStreamProjection,
     type ReadEvent,
     type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
+import {ListingCreated} from "../create-listing";
 
-type PropertyEvent = PropertyListed | PropertyRemoved;
+type PropertyEvent = ListingCreated | PropertyRemoved;
 
 export const viewPropertyProjection = inMemorySingleStreamProjection<
     ViewProperty,
     PropertyEvent
 >({
     collectionName: 'viewProperties',
-    canHandle: ['PropertyListed', 'PropertyRemoved'],
+    canHandle: ['ListingCreated', 'PropertyRemoved'],
     getDocumentId: (event) => event.data.propertyId,
     evolve: (
         document: ViewProperty | null,
         event: ReadEvent<PropertyEvent, InMemoryReadEventMetadata>
     ): ViewProperty | null => {
         switch (event.type) {
-            case 'PropertyListed': {
+            case 'ListingCreated': {
                 return {
                     propertyId: event.data.propertyId,
                     title: event.data.title,

@@ -7,6 +7,6 @@ export type HostNotified = Event<
         hostId: string;
         notificationType: string;
         channels: string[];
-        notifiedAt: string;
+        notifiedAt: Date;
     }
 >;

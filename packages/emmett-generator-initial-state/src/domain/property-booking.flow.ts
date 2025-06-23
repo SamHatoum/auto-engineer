@@ -1,9 +1,9 @@
 import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flow-lang';
 
-import type { ListingCreated } from './slices/create-listing/events';
-import type { BookingRequested } from './slices/guest-submits-booking-request/events';
-import type { HostNotified } from './slices/host-manages-booking-request/events';
-import type { PropertyRemoved } from './slices/remove-property/events';
+import type { ListingCreated } from './slices/create-listing';
+import type { BookingRequested } from './slices/guest-submits-booking-request';
+import type { HostNotified } from './slices/host-manages-booking-request';
+import type { PropertyRemoved } from './slices/remove-property';
 import type { CreateListing } from './slices/create-listing/commands';
 import type { RequestBooking } from './slices/guest-submits-booking-request/commands';
 import type { NotifyHost } from './slices/host-manages-booking-request/commands';
@@ -161,7 +161,7 @@ flow('Guest books a listing', () => {
               hostId: "host_456",
               notificationType: "booking_request",
               channels: ["email", "sms"],
-              notifiedAt: "2024-01-15T14:30:00Z"
+              notifiedAt: new Date("2024-01-15T14:30:00Z")
             })
           ]);
       });

@@ -1,13 +1,13 @@
 import type { PropertyState } from './state';
 import type { PropertyRemoved } from './events';
-import type { PropertyListed } from '../list-property/events';
+import {ListingCreated} from "../create-listing";
 
 export const evolve = (
     state: PropertyState,
-    event: PropertyRemoved | PropertyListed
+    event: PropertyRemoved | ListingCreated
 ): PropertyState => {
     switch (event.type) {
-        case 'PropertyListed':
+        case 'ListingCreated':
             // This slice cares that a property became "Listed"
             // because it needs to know it can be removed
             return {

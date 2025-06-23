@@ -3,7 +3,7 @@ export type NotificationState =
     | {
     status: 'Notified';
     hostId: string;
-    notifiedAt: string;
+    notifiedAt: Date;
 };
 
 export const initialNotificationState = (): NotificationState => ({
