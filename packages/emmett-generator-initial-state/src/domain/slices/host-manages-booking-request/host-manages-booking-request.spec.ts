@@ -2,7 +2,7 @@ import { DeciderSpecification } from '@event-driven-io/emmett';
 import { decide } from './decide';
 import { evolve } from './evolve';
 import { initialNotificationState } from './state';
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'vitest';
 
 import type { BookingRequested } from '../guest-submits-booking-request';
 import type { HostNotified } from './events';
