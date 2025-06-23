@@ -1,0 +1,9 @@
+{
+  "projectType": "node-js",
+  "packageManager": "yarn",
+  "testFramework": "mocha",
+  "enableLinting": true,
+  "enableGitHooks": true,
+  "initializedAt": "2025-06-23T16:38:15.958Z",
+  "version": "0.1.2"
+}
