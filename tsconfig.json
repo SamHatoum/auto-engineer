@@ -14,9 +14,6 @@
   ],
   "references": [
     { "path": "./apps/cli" },
-    { "path": "./packages/emmett-generator" },
-    { "path": "./packages/flowlang-backend-agent" },
-    { "path": "./packages/flowlang-frontend-agent" },
-    { "path": "./packages/flowlang-modeling-agent" }
+    { "path": "./packages/emmett-generator" }
   ]
 }  
