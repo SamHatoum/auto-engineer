@@ -15,9 +15,6 @@
   "references": [
     { "path": "./apps/cli" },
     { "path": "./packages/emmett-generator" },
-    { "path": "./packages/example-mcp-server" },
-    { "path": "./packages/flowlang-backend-agent" },
-    { "path": "./packages/flowlang-frontend-agent" },
-    { "path": "./packages/flowlang-modeling-agent" }
+    { "path": "./packages/example-mcp-server" }
   ]
 }  

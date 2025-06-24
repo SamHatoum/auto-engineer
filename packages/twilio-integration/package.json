@@ -10,7 +10,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@auto-engineer/flow-lang": "workspace:*"
+    "@auto-engineer/flowlang": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

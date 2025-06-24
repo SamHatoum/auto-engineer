@@ -117,9 +117,9 @@ importers:
 
   packages/example-output:
     dependencies:
-      '@auto-engineer/flow-lang':
+      '@auto-engineer/flowlang':
         specifier: workspace:*
-        version: link:../flow-lang
+        version: link:../flowlang
       '@auto-engineer/mailchimp-integration':
         specifier: workspace:*
         version: link:../mailchimp-integration
@@ -191,7 +191,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.3)(jiti@2.4.2)(tsx@4.20.3))
 
-  packages/flow-lang:
+  packages/flowlang:
     dependencies:
       apollo-server:
         specifier: ^3.12.1
@@ -204,17 +204,19 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@20.19.1)(jiti@2.4.2)(tsx@4.20.3)
 
+  packages/flowlang-agent: {}
+
   packages/mailchimp-integration:
     dependencies:
-      '@auto-engineer/flow-lang':
+      '@auto-engineer/flowlang':
         specifier: workspace:*
-        version: link:../flow-lang
+        version: link:../flowlang
 
   packages/twilio-integration:
     dependencies:
-      '@auto-engineer/flow-lang':
+      '@auto-engineer/flowlang':
         specifier: workspace:*
-        version: link:../flow-lang
+        version: link:../flowlang
 
 packages:
 

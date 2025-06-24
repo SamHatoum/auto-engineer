@@ -1,4 +1,4 @@
-# @auto-engineer/flow-lang
+# @auto-engineer/flowlang
 
 A TypeScript library for building domain-driven flows with event sourcing and CQRS patterns.
 
@@ -22,7 +22,7 @@ import {
   createBuilders,
   should, 
   when 
-} from '@auto-engineer/flow-lang';
+} from '@auto-engineer/flowlang';
 
 const { Events, Commands } = createBuilders()
   .events<PropertyListed | BookingRequested>()

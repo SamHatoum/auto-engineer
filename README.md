@@ -114,7 +114,7 @@ Information Flow Modeling is the act of expressing a system as interfaces, comma
 ### Example Flow Model
 
 ```typescript
-import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flow-lang';
+import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flowlang';
 
 import type { ListingCreated } from './slices/create-listing/events';
 import type { BookingRequested } from './slices/guest-submits-booking-request/events';
