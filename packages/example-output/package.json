@@ -15,7 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@auto-engineer/flow-lang": "workspace:*",
+    "@auto-engineer/flowlang": "workspace:*",
     "@auto-engineer/mailchimp-integration": "workspace:*",
     "@auto-engineer/twilio-integration": "workspace:*",
     "apollo-server": "^3.13.0",
