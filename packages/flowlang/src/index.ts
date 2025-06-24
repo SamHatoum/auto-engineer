@@ -3,7 +3,7 @@ export type { Integration } from './types';
 export { createIntegration } from './types';
 
 // Apollo GraphQL
-export { gql } from 'apollo-server';
+export { gql } from 'graphql-tag';
 
 // HTTP GET template literal function
 export const get = (strings: TemplateStringsArray, ...values: any[]) => {

@@ -7,7 +7,6 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit"
   },
   "keywords": [],
@@ -27,18 +26,16 @@
     "reflect-metadata": "^0.2.2",
     "type-graphql": "^2.0.0-rc.2",
     "uuid": "^11.1.0",
-    "vitest": "^3.2.3",
     "web-streams-polyfill": "^4.1.0"
   },
   "devDependencies": {
     "@event-driven-io/emmett": "^0.38.2",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.0.1",
+    "@types/node": "^20.0.0",
     "@types/uuid": "^10.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4"
   }

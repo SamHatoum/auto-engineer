@@ -7,9 +7,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "test": "turbo run test:coverage",
+    "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "test:coverage": "turbo run test:coverage",
     "clean": "tsx scripts/clean.ts",
     "changeset": "changeset",
     "version": "changeset version",
@@ -38,5 +37,8 @@
   "packageManager": "pnpm@10.12.1",
   "resolutions": {
     "punycode": "^2.3.1"
+  },
+  "dependencies": {
+    "graphql-tag": "^2.12.6"
   }
 }

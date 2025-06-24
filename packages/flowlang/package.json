@@ -10,17 +10,14 @@
     }
   },
   "dependencies": {
-    "apollo-server": "^3.12.1"
+    "@event-driven-io/emmett": "^0.38.3"
   },
   "devDependencies": {
-    "vitest": "^3.2.4",
-    "@types/node": "^20.0.0"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run"
   },
   "publishConfig": {
     "access": "public"
