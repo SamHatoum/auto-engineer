@@ -1,4 +1,4 @@
-import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '../../../flowlang/src';
+import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flowlang';
 
 import type { ListingCreated } from './slices/create-listing';
 import type { BookingRequested } from './slices/guest-submits-booking-request';
