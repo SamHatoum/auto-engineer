@@ -8,6 +8,20 @@
     "dev": "tsc --watch",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@auto-engineer/flowlang": "workspace:*",
+    "apollo-server": "^3.13.0",
+    "apollo-server-express": "^3.13.0",
+    "express": "^4.21.2",
+    "@event-driven-io/emmett": "^0.38.2",
+    "fast-glob": "^3.3.3",
+    "graphql": "^16.11.0",
+    "graphql-scalars": "^1.24.2",
+    "reflect-metadata": "^0.2.2",
+    "type-graphql": "^2.0.0-rc.2",
+    "uuid": "^11.1.0",
+    "web-streams-polyfill": "^4.1.0"
+  },
   "publishConfig": {
     "access": "public"
   }
