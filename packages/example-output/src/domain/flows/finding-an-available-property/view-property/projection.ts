@@ -1,15 +1,15 @@
-import type { PropertyRemoved } from '../remove-property';
+import type { PropertyRemoved } from '../../host-manages-listings/remove-property';
 import type { ViewProperty } from './views';
 import {
     inMemorySingleStreamProjection,
     type ReadEvent,
     type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
-import {ListingCreated} from "../create-listing";
+import {ListingCreated} from "../../host-manages-listings/create-listing";
 
 type PropertyEvent = ListingCreated | PropertyRemoved;
 
-export const viewPropertyProjection = inMemorySingleStreamProjection<
+export const projection = inMemorySingleStreamProjection<
     ViewProperty,
     PropertyEvent
 >({

@@ -1,9 +1,9 @@
 import {Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver} from 'type-graphql';
 import {CommandHandler} from '@event-driven-io/emmett';
-import {GraphQLContext} from "../context";
-import {evolve} from "../../domain/slices/create-listing/evolve";
-import {initialListingState} from "../../domain/slices/create-listing/state";
-import {handle} from "../../domain/slices/create-listing/handle";
+import {evolve} from "./evolve";
+import {initialListingState} from "./state";
+import {handle} from "./handle";
+import {GraphQLContext} from "../../../shared";
 
 
 @InputType()

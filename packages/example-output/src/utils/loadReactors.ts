@@ -6,8 +6,8 @@ export type reactorSetup = {
     setup: (eventStore: EventStore, commandSender: CommandSender) => Promise<any>;
 };
 
-export async function loadReactors(): Promise<reactorSetup[]> {
-    const files = await fg('src/domain/slices/**/reactor.{ts,js}', {
+export async function loadReactors(source: string): Promise<reactorSetup[]> {
+    const files = await fg(source, {
         absolute: true,
     });
     console.log('🔍 Found workflow files:', files);
@@ -29,16 +29,15 @@ export async function loadReactors(): Promise<reactorSetup[]> {
     return validModules as reactorSetup[];
 }
 
-export async function setupWorkflowReactors(
+export async function setupReactors(
     workflows: reactorSetup[],
     eventStore: EventStore,
     commandSender: CommandSender
 ): Promise<any[]> {
-    console.log('🚀 Setting up', workflows.length, 'workflow reactors');
+    console.log('🚀 Setting up', workflows.length, 'reactors');
 
     return Promise.all(
         workflows.map((workflow, index) => {
-            console.log('⚙️ Setting up workflow', index, typeof workflow.setup);
             return workflow.setup(eventStore, commandSender);
         })
     );

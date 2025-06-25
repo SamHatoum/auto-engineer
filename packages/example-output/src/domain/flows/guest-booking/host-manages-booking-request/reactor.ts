@@ -8,7 +8,7 @@ import {
 } from '@event-driven-io/emmett';
 import type {BookingRequested} from '../guest-submits-booking-request';
 import {handleNotifyHost} from './external-system';
-import {ReactorContext} from "../../shared";
+import {ReactorContext} from "../../../shared";
 import {handle} from "./handle";
 
 
