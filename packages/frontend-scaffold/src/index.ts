@@ -5,7 +5,7 @@ export async function main(appName: string, flows: string[]) {
   const builder = new FrontendScaffoldBuilder();
   await builder.cloneStarter();
   await builder.processFlowsWithAI(flows);
-  await builder.build(`./${appName}`);
+  await builder.build(`../example-output/${appName}`);
   return 'Frontend Scaffold is running!';
 }
 
