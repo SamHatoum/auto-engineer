@@ -11,73 +11,12 @@
 
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
-##### _NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE WORKING HARD ON MAKING IT_
+##### _NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE DOING README-DRIVEN-DEVELOPMENT AND WORKING HARD ON MAKING IT HAPPEN_
 Stay up to date by watching 👀☝️ and giving us a star ⭐☝️
 
 ## 🎯 How It Works
 
-You start by running the CLI like this:
-```shell
-> npx auto-engineer start
-```
-
-Then you interact with it like this:
-```console
-🤖 auto: what would you like to build?
-👤 user: airbnb clone
-
-🤖 auto: crafting a FlowModel for exploration & collaboration
-🤖 auto: building your PropertyBooking flow...
-
-🔀 Flow: PropertyBooking
-├── 🍕 Slice: Search properties  
-│    ├── queries: search, filter, sort
-│    ├── projections: availability index
-│    └── specs: filters, search behavior
-├── 🍕 Slice: Book property 
-│    ├── commands: RequestBooking
-│    ├── events: BookingConfirmed
-│    └── specs: booking rules
-├── 🍕 Slice: Notify host of bookings
-│    ├── reactions: notifications
-│    └── specs: notifications rules
-└── 🧩 Integrations
-     ├── Auth0 (authentication)
-     └── Google Maps (locations)
-
-✓ Generated 1 command handler, 1 query
-✓ Built React components with specs
-✓ Configured integrations
-✓ All tests passing
-
-your app is ready at: http://localhost:3000 🚀
-visualize your flow here: http://localhost:5000 🔍
-
-🤖 auto: what would you like to iterate on?
-👤 user: add user reviews
-
-🤖 auto: extending PropertyBooking flow...
-
-🔀 Flow: PropertyBooking 
-├── 🍕 Slice: Submit review
-│    ├── commands: SubmitReview
-│    ├── events: ReviewSubmitted
-│    └── specs: only past guests, one per stay
-└── 🍕 Slice: View reviews
-     ├── queries: GetPropertyReviews, GetUserReviews
-     ├── projections: ratings, review feed
-     └── specs: sorting, filtering, pagination
-
-✓ Generated 1 command handler, 1 query
-✓ Built React components with specs
-✓ Configured integrations
-✓ All tests passing
-
-your app is ready at: http://localhost:3000 🚀
-visualize your flow here: http://localhost:5000 🔍
-
-👤 user: █
-```
+<img width="1090" alt="Screenshot 2025-06-24 at 9 57 44 PM" src="https://github.com/user-attachments/assets/38db71d1-4c2d-4c79-b4e0-57323bd4a4d2" />
 
 ## ✨ Features
 
