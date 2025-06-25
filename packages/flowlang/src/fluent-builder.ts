@@ -1,6 +1,13 @@
 import type { Integration } from './types';
+import {
+  getCurrentFlow,
+  getCurrentSlice,
+  startClientBlock,
+  endClientBlock,
+  startServerBlock,
+  endServerBlock,
+} from './flow-context';
 
-// Base interfaces for the fluent API
 export interface FluentCommandSliceBuilder {
   stream(name: string): FluentCommandSliceBuilder;
   client(fn: () => void): FluentCommandSliceBuilder;
@@ -26,168 +33,145 @@ export interface FluentReactionSliceBuilder {
   retries(count: number): FluentReactionSliceBuilder;
 }
 
-// Internal state tracking
-interface CommandSliceState {
-  name: string;
-  stream?: string;
-  integration?: Integration | Integration[];
-  retries?: number;
-  client?: {
-    description: string;
-    fn: () => void;
-  };
-  server?: {
-    description: string;
-    fn: () => void;
-  };
-}
-
-interface QuerySliceState {
-  name: string;
-  client?: {
-    description: string;
-    fn: () => void;
-    request?: any;
-  };
-  server?: {
-    description: string;
-    fn: () => void;
-  };
-}
-
-interface ReactionSliceState {
-  name: string;
-  integration?: Integration | Integration[];
-  retries?: number;
-  server?: {
-    description: string;
-    fn: () => void;
-  };
-}
-
-// Implementation
 class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
-  private state: CommandSliceState;
-
   constructor(name: string) {
-    this.state = { name };
+    getCurrentFlow()?.slices.push({ type: 'command', name });
   }
 
   stream(name: string): FluentCommandSliceBuilder {
-    this.state.stream = name;
+    getCurrentSlice().stream = name;
     return this;
   }
 
   client(fn: () => void): FluentCommandSliceBuilder;
   client(description: string, fn: () => void): FluentCommandSliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentCommandSliceBuilder {
-    if (typeof descriptionOrFn === 'string' && fn) {
-      this.state.client = { description: descriptionOrFn, fn };
-    } else if (typeof descriptionOrFn === 'function') {
-      this.state.client = { description: '', fn: descriptionOrFn };
+    const slice = getCurrentSlice();
+    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+    const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
+
+    if (callback) {
+      startClientBlock(slice, description);
+      callback();
+      endClientBlock();
     }
+
     return this;
   }
 
   server(fn: () => void): FluentCommandSliceBuilder;
   server(description: string, fn: () => void): FluentCommandSliceBuilder;
   server(descriptionOrFn: string | (() => void), fn?: () => void): FluentCommandSliceBuilder {
-    if (typeof descriptionOrFn === 'string' && fn) {
-      this.state.server = { description: descriptionOrFn, fn };
-    } else if (typeof descriptionOrFn === 'function') {
-      this.state.server = { description: '', fn: descriptionOrFn };
+    const slice = getCurrentSlice();
+    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+    const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
+
+    if (callback) {
+      startServerBlock(slice, description);
+      callback();
+      endServerBlock();
     }
+
     return this;
   }
 
   via(integration: Integration | Integration[]): FluentCommandSliceBuilder {
-    this.state.integration = integration;
+    const currentSlice = getCurrentSlice();
+    if(currentSlice) {
+      currentSlice.integration = Array.isArray(integration) ? integration.map(i => i.name) : [integration.name];
+    }
     return this;
   }
 
   retries(count: number): FluentCommandSliceBuilder {
-    this.state.retries = count;
+    getCurrentSlice().retries = count;
     return this;
   }
-
 }
 
 class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
-  private state: QuerySliceState;
-
   constructor(name: string) {
-    this.state = { name };
+    getCurrentFlow()?.slices.push({ type: 'query', name });
   }
 
   client(fn: () => void): FluentQuerySliceBuilder;
   client(description: string, fn: () => void): FluentQuerySliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentQuerySliceBuilder {
-    if (typeof descriptionOrFn === 'string' && fn) {
-      this.state.client = { description: descriptionOrFn, fn };
-    } else if (typeof descriptionOrFn === 'function') {
-      this.state.client = { description: '', fn: descriptionOrFn };
+    const slice = getCurrentSlice();
+    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+    const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
+
+    if (callback) {
+      startClientBlock(slice, description);
+      callback();
+      endClientBlock();
     }
+
     return this;
   }
 
   server(fn: () => void): FluentQuerySliceBuilder;
   server(description: string, fn: () => void): FluentQuerySliceBuilder;
   server(descriptionOrFn: string | (() => void), fn?: () => void): FluentQuerySliceBuilder {
-    if (typeof descriptionOrFn === 'string' && fn) {
-      this.state.server = { description: descriptionOrFn, fn };
-    } else if (typeof descriptionOrFn === 'function') {
-      this.state.server = { description: '', fn: descriptionOrFn };
+    const slice = getCurrentSlice();
+    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+    const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
+
+    if (callback) {
+      startServerBlock(slice, description);
+      callback();
+      endServerBlock();
     }
+
     return this;
   }
 
   request(query: any): FluentQuerySliceBuilder {
-    if (this.state.client) {
-      this.state.client.request = query;
-    }
+    getCurrentSlice().request = query;
     return this;
   }
-
 }
 
 class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
-  private state: ReactionSliceState;
-
   constructor(name: string) {
-    this.state = { name };
+    getCurrentFlow()?.slices.push({ type: 'reaction', name });
   }
 
   server(fn: () => void): FluentReactionSliceBuilder;
   server(description: string, fn: () => void): FluentReactionSliceBuilder;
   server(descriptionOrFn: string | (() => void), fn?: () => void): FluentReactionSliceBuilder {
-    if (typeof descriptionOrFn === 'string' && fn) {
-      this.state.server = { description: descriptionOrFn, fn };
-    } else if (typeof descriptionOrFn === 'function') {
-      this.state.server = { description: '', fn: descriptionOrFn };
+    const slice = getCurrentSlice();
+    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+    const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
+
+    if (callback) {
+      startServerBlock(slice, description);
+      callback();
+      endServerBlock();
     }
+
     return this;
   }
 
   via(integration: Integration | Integration[]): FluentReactionSliceBuilder {
-    this.state.integration = integration;
+    const slice = getCurrentSlice();
+    if(slice) {
+      slice.integration = Array.isArray(integration) ? integration.map(i => i.name) : [integration.name];
+    }
     return this;
   }
 
   retries(count: number): FluentReactionSliceBuilder {
-    this.state.retries = count;
+    getCurrentSlice().retries = count;
     return this;
   }
 }
 
-// Factory functions
-export const commandSlice = (name: string): FluentCommandSliceBuilder => {
-  return new CommandSliceBuilderImpl(name);
-};
+export const commandSlice = (name: string): FluentCommandSliceBuilder =>
+    new CommandSliceBuilderImpl(name);
 
-export const querySlice = (name: string): FluentQuerySliceBuilder => {
-  return new QuerySliceBuilderImpl(name);
-};
+export const querySlice = (name: string): FluentQuerySliceBuilder =>
+    new QuerySliceBuilderImpl(name);
 
-export const reactSlice = (name: string): FluentReactionSliceBuilder => {
-  return new ReactionSliceBuilderImpl(name);
-}; 
+export const reactSlice = (name: string): FluentReactionSliceBuilder =>
+    new ReactionSliceBuilderImpl(name);

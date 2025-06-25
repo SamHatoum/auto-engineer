@@ -9,8 +9,7 @@ export function startFlow(name: string): FlowSchema {
     return currentFlow;
 }
 
-export function getCurrentFlow(): FlowSchema {
-    if (!currentFlow) throw new Error('No active flow');
+export function getCurrentFlow(): FlowSchema | null {
     return currentFlow;
 }
 
@@ -18,8 +17,9 @@ export function clearCurrentFlow(): void {
     currentFlow = null;
 }
 
-export function getCurrentSlice(): any {
+export function getCurrentSlice(): any | null {
     const flow = getCurrentFlow();
+    if (!flow) return null;
     if (flow.slices.length === 0) {
         const newSlice = { type: 'command', name: '', client: {}, server: {} };
         flow.slices.push(newSlice);
