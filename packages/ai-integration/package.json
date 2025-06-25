@@ -1,22 +1,22 @@
 {
-  "name": "@auto-engineer/flowlang-agent",
+  "name": "@auto-engineer/ai-integration",
   "version": "0.1.0",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "tsx -r dotenv/config src/index.ts",
     "test": "vitest run"
   },
   "dependencies": {
-    "@auto-engineer/ai-integration": "workspace:*",
-    "dotenv": "^16.4.5"
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@ai-sdk/google": "^1.2.19",
+    "@ai-sdk/openai": "^1.3.22",
+    "@ai-sdk/xai": "^1.2.16",
+    "ai": "^4.3.16"
   },
-  "devDependencies": {
-    "tsx": "^4.19.2"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   }
-}
+} 

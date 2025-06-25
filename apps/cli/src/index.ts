@@ -5,16 +5,13 @@ import chalk from 'chalk';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
 
-import { loadConfig, validateConfig, Config } from './utils/config.js';
+import { loadConfig, validateConfig } from './utils/config.js';
 import { handleError } from './utils/errors.js';
 import { createOutput, supportsColor } from './utils/terminal.js';
 import { Analytics } from './utils/analytics.js';
 
-import { createGenerateCommand } from './commands/generate.js';
-import { createAnalyzeCommand } from './commands/analyze.js';
 import { createInitCommand } from './commands/init.js';
 import { createStartCommand } from './commands/start.js';
-import { createCyclingSpinnerCommand } from './commands/cycling-spinner.js';
 
 const VERSION = process.env.npm_package_version || '0.1.2';
 
@@ -27,6 +24,13 @@ const checkNodeVersion = () => {
     console.error(chalk.yellow('Auto-engineer requires Node.js 18.0.0 or higher.'));
     console.error(chalk.blue('Please upgrade Node.js and try again.'));
     process.exit(1);
+  }
+};
+
+const clearConsole = () => {
+  if (process.stdout.isTTY) {
+    // Clear console for TTY environments
+    process.stdout.write('\x1Bc');
   }
 };
 
@@ -72,6 +76,8 @@ const main = async () => {
   try {
     checkNodeVersion();
 
+    clearConsole();
+
     setupSignalHandlers();
 
     const program = createCLI();
@@ -100,16 +106,13 @@ const main = async () => {
         '#4CD964',
         '#4BC6F4' 
       ])(asciiText)));
-      console.log(chalk.gray(`Version ${VERSION} - Automate your development workflow\n`));
+      console.log(chalk.gray(`Version ${VERSION}\n`));
     }
 
     const analytics = new Analytics(config);
 
-    program.addCommand(createGenerateCommand(config, analytics));
-    program.addCommand(createAnalyzeCommand(config, analytics));
     program.addCommand(createInitCommand(config, analytics));
     program.addCommand(createStartCommand(config, analytics));
-    program.addCommand(createCyclingSpinnerCommand(config, analytics));
 
     program.addHelpText('after', `
 Examples:
