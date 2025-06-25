@@ -1,8 +1,7 @@
 export interface Flow {
   id: string;
   name: string;
-  steps: any[]; // You might want to define a more specific type for steps
-  // Add other flow properties as needed
+  steps: any[];
 }
 
 export interface UXSchema {
@@ -19,5 +18,4 @@ export interface UXSchema {
 export interface AIAgentOutput {
   generatedComponents: any[];
   layout: any;
-  // Add other output properties as needed
 } 
