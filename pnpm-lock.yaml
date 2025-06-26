@@ -54,6 +54,8 @@ importers:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@20.19.1)(jiti@2.4.2)(tsx@4.20.3)
 
+  apps/api: {}
+
   apps/cli:
     dependencies:
       chalk:
@@ -263,6 +265,9 @@ importers:
       '@auto-engineer/ai-integration':
         specifier: workspace:*
         version: link:../ai-integration
+      '@auto-engineer/api':
+        specifier: workspace:*
+        version: link:../../apps/api
       dotenv:
         specifier: ^16.4.5
         version: 16.5.0
