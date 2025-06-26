@@ -1,10 +1,6 @@
-import { generateTextStreamingWithAI, type AIProvider, type AIOptions, loadConfig, validateConfig } from '@auto-engineer/ai-integration';
-import type { CommandHandler, BaseCommand, AckNackResponse, BaseEvent } from '@auto-engineer/api';
-import { server } from '@auto-engineer/api';
 import 'dotenv/config';
-
-const config = loadConfig();
-validateConfig(config);
+import { generateTextStreamingWithAI, type AIProvider } from '@auto-engineer/ai-integration';
+import { type CommandHandler, type BaseCommand, type AckNackResponse, type BaseEvent, server } from '@auto-engineer/api';
 
 export type CreateFlowCommand = BaseCommand & {
   prompt: string;
@@ -16,20 +12,13 @@ export type FlowCreatedEvent = BaseEvent & {
   flow: string;
 }
 
-export const createFlowHandler: CommandHandler<CreateFlowCommand> = {
+export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
   name: 'CreateFlow',
   handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
-    const prompt = command.prompt;
-    const provider = 'openai' as AIProvider; // 'openai', 'anthropic', 'google', 'xai'
-    const options: AIOptions = {
-      model: undefined, // undefined to use default model for provider
-      temperature: 0.7,
-      maxTokens: 1000,
-      streamCallback: command.streamCallback
-    };
-
     try {
-      const flow = await generateTextStreamingWithAI(prompt, provider, options);
+      const flow = await generateTextStreamingWithAI(
+        command.prompt,
+        'openai' as AIProvider, { streamCallback: command.streamCallback });
       const event: FlowCreatedEvent = {
         type: 'FlowCreated',
         flow: flow,
