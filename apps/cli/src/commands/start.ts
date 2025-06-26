@@ -9,15 +9,20 @@ import { Analytics } from '../utils/analytics.js';
 import markedTerminal from 'marked-terminal';
 import { marked } from 'marked';
 
-// Rainbow gradient colors matching the image: red, orange, yellow, green, cyan, blue
-const GRADIENT_COLORS = [
-  chalk.hex('#FF4136'), // red
-  chalk.hex('#FF851B'), // orange
-  chalk.hex('#FFDC00'), // yellow
-  chalk.hex('#2ECC40'), // green
-  chalk.hex('#7FDBFF'), // cyan
-  chalk.hex('#0074D9'), // blue
-];
+// Color constants
+const COLORS = {
+  SPECS_TEXT: chalk.hex('#A0A0A0'),
+  SPECS_LABEL: chalk.italic,
+  EVENTS: chalk.hex('#FFA500'),
+  COMMANDS: chalk.hex('#7FDBFF'),
+  STATE: chalk.green,
+  FLOW_TEXT: chalk.bold.blue,
+  STREAM_BRACKETS: chalk.yellow,
+  INTEGRATIONS_BRACKETS: chalk.magenta,
+  SOURCE_BRACKETS: chalk.gray,
+  SLICE_TEXT: chalk.white.bold,
+  CLIENT_SERVER: chalk.hex('#4ECDC4'),
+};
 
 // Configure marked to use marked-terminal with custom styles
 marked.setOptions({
@@ -32,41 +37,102 @@ marked.setOptions({
 });
 
 function renderFlowSummary(lines: string[]): string {
-  return lines.map(line => {
-    if (/^#\s*\*\*?Flow[:]?.*/i.test(line)) {
-      return chalk.bold.blue(line.replace(/^#\s*/, '').replace(/\*\*/g, ''));
+  return lines.map((line, idx, arr) => {
+
+    // Specs lines: always nest under nearest previous Client/Server line
+    if (/\*\s*_+Specs:_+/.test(line)) {
+      let parentIndent = '      '; // Default to 6 spaces (nested under Client/Server which are at 4 spaces)
+      for (let i = idx - 1; i >= 0; i--) {
+        if (/^\s*\*\s*\*\*?(Client|Server)[:]?.*/i.test(arr[i])) {
+          // Client/Server lines are at 4 spaces, so Specs should be at 6 spaces
+          parentIndent = '      ';
+          break;
+        }
+      }
+      const noBullet = line.replace(/^\s*\*\s*/, '');
+      let specsLine = noBullet.replace(/_+Specs:_+/, COLORS.SPECS_LABEL('Specs:'));
+      // Color Events, Commands, State in specs
+      specsLine = specsLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+      specsLine = specsLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+      specsLine = specsLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+      return COLORS.SPECS_TEXT(parentIndent + specsLine.trimStart());
     }
+    if (/^#\s*\*\*?Flow[:]?.*/i.test(line)) {
+      const match = line.match(/(.*?)(\[[^\]]+\])/i);
+      if (match) {
+                let before = match[1].replace(/^#\s*/, '').replace(/\*\*/g, '');
+        const bracket = match[2];
+        // Color Events, Commands, State in the text part
+        before = before.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+        before = before.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+        before = before.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+        if (/^\[stream:/i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.STREAM_BRACKETS(bracket);
+        if (/^\[integrations:/i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.INTEGRATIONS_BRACKETS(bracket);
+        if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.SOURCE_BRACKETS(bracket);
+        return COLORS.FLOW_TEXT(before) + COLORS.SOURCE_BRACKETS(bracket);
+      }
+      let cleanLine = line.replace(/^#\s*/, '').replace(/\*\*/g, '');
+      // Color Events, Commands, State
+      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+      return COLORS.FLOW_TEXT(cleanLine);
+    }
+    // Slice: white bold text + magenta brackets + colored Events/Commands/State
     if (/^\*\s*\*\*?Slice[:]?.*/i.test(line)) {
-      return chalk.green('  ' + line.replace(/^\*\s*/, '').replace(/\*\*/g, ''));
+      let cleanLine = line.replace(/^\*\s*/, '').replace(/\*\*/g, '');
+            // Color brackets
+      cleanLine = cleanLine.replace(/\[[^\]]+\]/gi, (bracket) => {
+        if (/^\[stream:/i.test(bracket)) return COLORS.STREAM_BRACKETS(bracket);
+        if (/^\[integrations:/i.test(bracket)) return COLORS.INTEGRATIONS_BRACKETS(bracket);
+        if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.SOURCE_BRACKETS(bracket);
+        return COLORS.SOURCE_BRACKETS(bracket);
+      });
+      // Color Events, Commands, State
+      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+      return COLORS.SLICE_TEXT('  ' + cleanLine);
     }
     if (/^\s*\*\s*\*\*?Client[:]?.*/i.test(line)) {
-      return chalk.cyan('    ' + line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, ''));
+      let cleanLine = line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, '');
+      // Color Events, Commands, State
+      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+      return COLORS.CLIENT_SERVER.italic('    ' + cleanLine);
     }
     if (/^\s*\*\s*\*\*?Server[:]?.*/i.test(line)) {
-      return chalk.cyan('    ' + line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, ''));
+      let cleanLine = line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, '');
+      // Color Events, Commands, State
+      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+      return COLORS.CLIENT_SERVER.italic('    ' + cleanLine);
     }
-    if (/^\s*\*\s*\*\*?Via[:]?.*/i.test(line)) {
-      return chalk.magenta('    ' + line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, ''));
-    }
-    if (/^\s*[-*]\s*_?Specs:?_?/i.test(line)) {
-      return chalk.gray('      ' + line.replace(/^\s*[-*]\s*/, '').replace(/_|\*/g, ''));
-    }
-    if (/Time:|Cost:/i.test(line)) {
-      return chalk.yellow(line);
-    }
-    return line;
+        let coloredLine = line.replace(/\[[^\]]+\]/gi, (bracket) => {
+      if (/^\[stream:/i.test(bracket)) return COLORS.STREAM_BRACKETS(bracket);
+      if (/^\[integrations:/i.test(bracket)) return COLORS.INTEGRATIONS_BRACKETS(bracket);
+      if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.SOURCE_BRACKETS(bracket);
+      return COLORS.SOURCE_BRACKETS(bracket);
+    });
+    // Color Events, Commands, State
+    coloredLine = coloredLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
+    coloredLine = coloredLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
+    coloredLine = coloredLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+    return coloredLine;
   }).join('\n');
 }
 
 export const createStartCommand = (config: Config, analytics: Analytics) => {
   const output = createOutput(config);
-  
+
   return new Command('start')
     .description('Start interactive mode to build something')
     .action(async () => {
       try {
         output.debug('Start command initiated');
-        
+
         // eslint-disable-next-line no-constant-condition
         while (true) {
           const { buildPrompt } = await inquirer.prompt([
@@ -86,12 +152,13 @@ export const createStartCommand = (config: Config, analytics: Analytics) => {
               transformer: (input: string) => input.trim(),
             },
           ]);
-          
+
           output.debug(`User wants to build: ${buildPrompt}`);
-                
+
           const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+          const spinnerColors = [COLORS.EVENTS, COLORS.COMMANDS, COLORS.STATE, COLORS.CLIENT_SERVER, COLORS.STREAM_BRACKETS, COLORS.INTEGRATIONS_BRACKETS];
           const coloredFrames = spinnerFrames.map((frame, i) => {
-            const color = GRADIENT_COLORS[i % GRADIENT_COLORS.length];
+            const color = spinnerColors[i % spinnerColors.length];
             return color(frame);
           });
 
@@ -102,34 +169,43 @@ export const createStartCommand = (config: Config, analytics: Analytics) => {
               frames: coloredFrames
             }
           }).start();
-          
+
           // Simulate thinking time
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 100));
           spinner.stop();
-          
+
+          console.log();
+
           const buildSummaryLines = [
-            '# **Flow: Host creates a listing**',
-            '* **Slice:** Create listing [Stream: listing-${id}]',
-            '  * **Client:** A form that allows hosts to create a listing',
-            '  * **Server:** Host can create a new listing',
-            '    * _Specs:_ When Commands.CreateListing => Then Events.ListingCreated',
-            '',
-            '# **Flow: Guest books a listing**',
-            '* **Slice:** Search for available listings',
+            '# **Flow: Guest books a listing** [source: <root>/src/flows/guest-booking-flow.ts]',
+            '* **Slice:** Search for available listings [stream: listing]',
             '  * **Client:** Listing Search Screen',
-            '  * **Server:** Listing becomes searchable after being created',
-            '    * _Specs:_ When Events.ListingCreated => Then State.AvailableListings',
+            '      should have location filter',
+            '      should have price range slider',
+            '      should have guest count filter',
+            '  * **Server:** Search listings by location and price',
+            '      Events.ListingCreated => State.AvailableListings',
+            '',
+            '* **Slice:** Book listing [stream: booking]',
+            '  * **Client:** Booking Form',
+            '      should have check-in & checkout date picker',
+            '      should have guest count selector',
+            '  * **Server:** Process booking request',
+            '      Commands.BookListing => Events.BookingConfirmed',
+            '',
             '* **Slice:** Host is notified',
             '  * **Server:** Host is notified when booking request is received',
-            '    * _Specs:_ When Events.BookingRequested => Then Commands.NotifyHost',
-            '* **Slice:** Notify host',
-            '  * **Via:** MailChimp, Twilio',
-            '  * **Server:** Send notification using the specified integrations',
-            '    * _Specs:_ When Commands.NotifyHost => Then Events.HostNotified',
+            '      Events.BookingConfirmed => Commands.NotifyHost',
             '',
-            '⏱️  Time: ~2-3 min | 💰 Cost: ~$4',
+            '* **Slice:** Notify host [integrations: MailChimp, Twilio]',
+            '  * **Server:** Send notification using the specified integrations',
+            '      Commands.NotifyHost => Events.HostNotified',
+            '',
+            '⏱️ Time: ~2-3 min | 💰 Cost: ~$2',
           ];
           console.log(renderFlowSummary(buildSummaryLines));
+
+          console.log(); // Add blank line
 
           const { confirm } = await inquirer.prompt([
             {
@@ -152,7 +228,7 @@ export const createStartCommand = (config: Config, analytics: Analytics) => {
               frames: coloredFrames
             }
           }).start();
-          
+
           await new Promise(resolve => setTimeout(resolve, 2000));
           spinner2.stop();
 
@@ -182,9 +258,9 @@ export const createStartCommand = (config: Config, analytics: Analytics) => {
         }
 
         await analytics.trackCommand('start', true);
-        
+
         output.debug('Start command completed successfully');
-        
+
       } catch (error: unknown) {
         await analytics.trackCommand('start', false, error instanceof Error ? error.message : 'unknown');
         if (error instanceof Error) {

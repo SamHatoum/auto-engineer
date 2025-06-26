@@ -98,7 +98,7 @@ const main = async () => {
     const output = createOutput(config);
 
     if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
-      const asciiText = figlet.textSync('Auto Engineer', { font: 'Slant' });
+      const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
       console.log(chalk.bgBlack(gradient([
         '#F44B4B',
         '#FF9C1A',
