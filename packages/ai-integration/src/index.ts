@@ -11,6 +11,7 @@ export interface AIOptions {
   model?: string;
   temperature?: number;
   maxTokens?: number;
+  streamCallback?: (token: string) => void;
 }
 
 // Export config types and functions
@@ -91,6 +92,34 @@ export async function *streamTextWithAI(
   for await (const chunk of stream.textStream) {
     yield chunk;
   }
+}
+
+/**
+ * Generates text using streaming and collects the full response.
+ * Optionally calls a stream callback for each token if provided.
+ * Always returns the complete collected response.
+ */
+export async function generateTextStreamingWithAI(
+  prompt: string,
+  provider: AIProvider,
+  options: AIOptions = {}
+): Promise<string> {
+  const finalOptions = { ...defaultOptions, ...options };
+  let collectedResult = '';
+
+  const stream = streamTextWithAI(prompt, provider, finalOptions);
+  
+  for await (const token of stream) {
+    // Collect all tokens for the final result
+    collectedResult += token;
+    
+    // Call the stream callback if provided
+    if (finalOptions.streamCallback) {
+      finalOptions.streamCallback(token);
+    }
+  }
+
+  return collectedResult;
 }
 
 export function getAvailableProviders(): AIProvider[] {
