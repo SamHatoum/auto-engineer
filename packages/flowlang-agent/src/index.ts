@@ -1,55 +1,56 @@
-import { generateTextWithAI, streamTextWithAI, type AIProvider, type AIOptions, loadConfig, validateConfig } from '@auto-engineer/ai-integration';
+import { generateTextStreamingWithAI, type AIProvider, type AIOptions, loadConfig, validateConfig } from '@auto-engineer/ai-integration';
+import type { CommandHandler, BaseCommand, AckNackResponse, BaseEvent } from '@auto-engineer/api';
+import { server } from '@auto-engineer/api';
 import 'dotenv/config';
 
-// Load and validate config once
 const config = loadConfig();
 validateConfig(config);
 
-// Re-export the main functions from ai-integration
-export { generateTextWithAI as generateText, streamTextWithAI as streamText } from '@auto-engineer/ai-integration';
+export type CreateFlowCommand = BaseCommand & {
+  prompt: string;
+  streamCallback?: (token: string) => void;
+}
 
-// Main function that takes prompt from console and sends to a specific provider
-export async function main() {
-  const prompt = "what's the weather in sf in the summer? be very concise";
-  console.log(`Sending prompt: "${prompt}"`);
-  
-  const provider = 'xai' as AIProvider; // 'openai', 'anthropic', 'google', 'xai'
-  console.log(`Using provider: ${provider}\n`);
+export type FlowCreatedEvent = BaseEvent & {
+  type: 'FlowCreated';
+  flow: string;
+}
 
-  const options: AIOptions = {
-    model: undefined, // undefined to use default model for provider
-    temperature: 0.7,
-    maxTokens: 1000,
-  };
+export const createFlowHandler: CommandHandler<CreateFlowCommand> = {
+  name: 'CreateFlow',
+  handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
+    const prompt = command.prompt;
+    const provider = 'openai' as AIProvider; // 'openai', 'anthropic', 'google', 'xai'
+    const options: AIOptions = {
+      model: undefined, // undefined to use default model for provider
+      temperature: 0.7,
+      maxTokens: 1000,
+      streamCallback: command.streamCallback
+    };
 
-  try {
-    // Example 1: Regular generation
-    console.log('=== Regular Generation ===');
-    const result = await generateTextWithAI(prompt, provider, options);
-    console.log('Response:');
-    console.log('='.repeat(50));
-    console.log(result);
-    console.log('\n');
+    try {
+      const flow = await generateTextStreamingWithAI(prompt, provider, options);
+      const event: FlowCreatedEvent = {
+        type: 'FlowCreated',
+        flow: flow,
+        timestamp: new Date(),
+        requestId: command.requestId
+      };
+      server.publishEvent(event);
 
-    // Example 2: Streaming generation
-    console.log('=== Streaming Generation ===');
-    console.log('Response:');
-    console.log('='.repeat(50));
-    
-    const stream = streamTextWithAI(prompt, provider);
-    for await (const token of stream) {
-      process.stdout.write(token);
+      return {
+        status: 'ack',
+        message: `Flow created successfully`,
+        timestamp: new Date(),
+        requestId: command.requestId
+      };
+    } catch (error) {
+      return {
+        status: 'nack',
+        error: error instanceof Error ? error.message : 'Unknown error occurred while creating flow',
+        timestamp: new Date(),
+        requestId: command.requestId
+      };
     }
-    console.log('\n');
-    console.log('Streaming completed!');
-    
-  } catch (error) {
-    console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
   }
-
-  process.exit(0);
-}
-
-if (require.main === module) {
-  main().catch(console.error);
-}
+};
