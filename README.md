@@ -16,7 +16,7 @@ Stay up to date by watching 👀☝️ and giving us a star ⭐☝️
 
 ## 🎯 How It Works
 
-<img width="1090" alt="Screenshot 2025-06-24 at 9 57 44 PM" src="https://github.com/user-attachments/assets/38db71d1-4c2d-4c79-b4e0-57323bd4a4d2" />
+<img width="1193" alt="Screenshot 2025-06-25 at 7 17 19 PM" src="https://github.com/user-attachments/assets/0e06f49e-8308-448c-b04f-422135be0368" />
 
 ## ✨ Features
 
