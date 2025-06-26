@@ -14,171 +14,280 @@ The Fluent API provides better developer ergonomics for the Flow Language DSL wi
 - Less cognitive load tracking closing braces
 - Easier to reorder or extract sections
 
-### Consistent Pattern
-Everything follows the same pattern:
+### Type-Safe Event/Command/State Builders
+- Use `createBuilders()` for fully typed events, commands, and state
+- Automatic TypeScript inference for event/command payloads
+- IDE autocomplete for all event and command types
+
+## Core API
+
+### Flow Definition
+```typescript
+import { flow } from '@auto-engineer/flowlang';
+
+flow('Flow name', () => {
+  // Define your slices here
+});
+```
+
+### Slice Builders
+
+#### Command Slices
 ```typescript
 commandSlice('Action name')
-  .client('Client description', () => {
-    specs(() => {...})
-  })
-  .server('Server description', () => {
-    specs('Server behavior', () => {...})
-  })
-  .validate();
+  .stream('stream-${id}')              // Optional: specify event stream
+  .client(() => { /* or */ })          // Optional: client implementation
+  .client('Description', () => { })    // Optional: with description
+  .server(() => { /* or */ })          // Optional: server implementation
+  .server('Description', () => { })    // Optional: with description
+  .via(Integration)                    // Optional: single integration
+  .via([Integration1, Integration2])   // Optional: multiple integrations
+  .retries(3)                         // Optional: retry count
 ```
 
-### Optional Chaining
-Skip parts that aren't needed:
+#### Query Slices
 ```typescript
-commandSlice('Internal cleanup')
-  .server('Cleanup old data', () => {
-    specs(() => {...})
-  })
-  .validate();
-// No client needed? Just don't add it
+querySlice('Query name')
+  .client(() => { /* or */ })          // Optional: client implementation
+  .client('Description', () => { })    // Optional: with description
+  .request(gql`...`)                   // Optional: GraphQL query
+  .server(() => { /* or */ })          // Optional: server implementation
+  .server('Description', () => { })    // Optional: with description
 ```
 
-## Usage Examples
-
-### Commands
+#### Reaction Slices
 ```typescript
-commandSlice('List property')
-  .stream('property-${id}')
-  .client('A form that allows hosts to list a property', () => {
-    specs(() => {
-      should('have fields for title, description, location, address')
-      should('have price per night input')
-      should('have max guests selector')
-      should('have amenities checklist')
-      should.not('show for guest users')
+reactSlice('Reaction name')
+  .server(() => { /* or */ })          // Required: server implementation
+  .server('Description', () => { })    // Or with description
+  .via(Integration)                    // Optional: integration
+  .retries(3)                         // Optional: retry count
+```
+
+### Type-Safe Builders
+
+Create strongly-typed event and command builders:
+
+```typescript
+import { createBuilders } from '@auto-engineer/flowlang';
+
+// Define your event and command types
+type PropertyListed = Event<'PropertyListed', { propertyId: string, ... }>;
+type ListProperty = Command<'ListProperty', { propertyId: string, ... }>;
+type AvailableProperty = { propertyId: string, title: string, ... };
+
+// Create typed builders
+const { Events, Commands, State } = createBuilders()
+  .events<PropertyListed | BookingRequested>()
+  .commands<ListProperty | RequestBooking>()
+  .state<{ AvailableListings: AvailableProperty }>();
+
+// Use with full type safety
+Events.PropertyListed({ propertyId: "123", ... })
+Commands.ListProperty({ propertyId: "123", ... })
+State.AvailableListings({ propertyId: "123", title: "..." })
+```
+
+### Testing Utilities
+
+Within specs blocks, use the testing helpers:
+
+```typescript
+import { specs, should, when } from '@auto-engineer/flowlang';
+
+specs('Specification name', () => {
+  // UI specifications
+  should('have input field for email')
+  should('display error on invalid input')
+  should.not('allow submission without required fields')
+  
+  // Behavior specifications
+  when(Commands.CreateListing({ ... }))
+    .then([Events.ListingCreated({ ... })])
+});
+```
+
+### GraphQL Integration
+
+Use the `gql` template literal for GraphQL queries:
+
+```typescript
+import { gql } from '@auto-engineer/flowlang';
+
+querySlice('Search listings')
+  .request(gql`
+    query SearchListings($location: String) {
+      searchListings(location: $location) {
+        propertyId
+        title
+      }
+    }
+  `)
+```
+
+## Complete Examples
+
+### Command with Client and Server
+
+```typescript
+import { flow, commandSlice, specs, should, when, createBuilders } from '@auto-engineer/flowlang';
+
+const { Events, Commands } = createBuilders()
+  .events<ListingCreated>()
+  .commands<CreateListing>()
+  .state<{}>()
+
+flow('Host manages listings', () => {
+  commandSlice('Create listing')
+    .stream('listing-${id}')
+    .client('A form that allows hosts to create a listing', () => {
+      specs(() => {
+        should('have fields for title, description, location, address')
+        should('have price per night input')
+        should('have max guests selector')
+        should('have amenities checklist')
+      });
+    })
+    .server('Create listing handler', () => {
+      specs('Host can create a new listing', () => {
+        when(
+          Commands.CreateListing({
+            propertyId: "listing_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            title: "Modern Downtown Apartment",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen"]
+          })
+        ).then([
+          Events.ListingCreated({
+            propertyId: "listing_123",
+            hostId: "host_456",
+            location: "San Francisco",
+            title: "Modern Downtown Apartment",
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ["wifi", "kitchen"],
+            listedAt: new Date()
+          })
+        ]);
+      });
     });
-  })
-  .server('List property', () => {
-    specs('Host can lists a new property', () => {
-      when(Commands.ListProperty({...}))
-        .then([Events.PropertyListed({...})])
-    });
-  })
-  .validate();
+});
 ```
 
-### Queries
+### Query with GraphQL
+
 ```typescript
-querySlice('Search for available properties')
-  .client('Property Search', () => {
+querySlice('Search for available listings')
+  .client('Listing Search Screen', () => {
     specs(() => {
       should('have location filter')
       should('have price range slider')
       should('have guest count filter')
     });
   })
-  .request(gql`...`)
-  .server('Property search projection', () => {
-    specs('Property becomes available', () => {...})
-  })
-  .validate();
-```
-
-### Reactions
-```typescript
-reactionSlice('When booking request then notify host')
-  .server('Notify host of booking request', () => {
-    specs('Host is notified', () => {...})
-  })
-  .validate();
-```
-
-### With Integrations and Retries
-```typescript
-commandSlice('Notify host')
-  .via(MailChimp)
-  .retries(3)
-  .server('Notify host', () => {
-    specs('Host is notified', () => {...})
-  })
-  .validate();
-```
-
-## Composition Patterns
-
-### Reusable Builders
-```typescript
-const withStandardAuth = (builder) => 
-  builder
-    .client('Auth required', () => {
-      specs(() => should('require authentication'))
-    });
-
-commandSlice('Delete property')
-  .apply(withStandardAuth)
-  .server('Delete', () => {
-    specs(() => {...})
-  })
-  .validate();
-```
-
-## Validation
-
-The `.validate()` method ensures:
-- Commands have server implementations
-- Queries have at least client or server implementations
-- Reactions have server implementations
-- All specs are executed
-
-## Migration from Legacy API
-
-### Before (Legacy)
-```typescript
-slice
-  .stream('property-${id}')
-  .command('List property', () => {
-    client('A form that allows hosts to list a property', () => {
-      specs(() => {
-        should('have fields for title, description, location, address')
-      });
-    });
-    server('List property', () => {
-      specs('Host can lists a new property', () => {
-        when(Commands.ListProperty({...}))
-          .then([Events.PropertyListed({...})])
-      });
+  .request(gql`
+    query SearchListings($location: String, $maxPrice: Float, $minGuests: Int) {
+      searchListings(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
+        propertyId
+        title
+        location
+        pricePerNight
+        maxGuests
+      }
+    }
+  `)
+  .server('Search projection', () => {
+    specs('Listing becomes searchable', () => {
+      when(Events.ListingCreated({ ... }))
+        .then([State.AvailableListings({ ... })])
     });
   });
 ```
 
-### After (Fluent)
+### Reaction with External Integration
+
 ```typescript
-commandSlice('List property')
-  .stream('property-${id}')
-  .client('A form that allows hosts to list a property', () => {
-    specs(() => {
-      should('have fields for title, description, location, address')
+import { MailChimp, Twilio } from '@auto-engineer/integrations';
+
+reactSlice('When booking request then notify host')
+  .server('Send notification to host', () => {
+    specs('Host is notified when booking request is received', () => {
+      when([Events.BookingRequested({ ... })])
+        .then([Commands.NotifyHost({ ... })])
     });
-  })
-  .server('List property', () => {
-    specs('Host can lists a new property', () => {
-      when(Commands.ListProperty({...}))
-        .then([Events.PropertyListed({...})])
+  });
+
+commandSlice('Notify host')
+  .via([MailChimp, Twilio])
+  .retries(3)
+  .server('Send notifications', () => {
+    specs('Send notification using integrations', () => {
+      when(Commands.NotifyHost({ ... }))
+        .then([Events.HostNotified({ ... })])
     });
-  })
-  .validate();
+  });
 ```
 
-## Type Safety
+## Integration Support
 
-The fluent API provides full TypeScript support:
-- Method chaining is type-safe
-- Invalid combinations are caught at compile time
-- Autocomplete shows only valid next steps
-- Return types are properly inferred
+Define integrations using the type-safe integration pattern:
 
-## Error Handling
-
-The API provides helpful error messages:
 ```typescript
-commandSlice('Missing server')
-  .client('Form', () => {
-    specs(() => {...})
-  })
-  .validate(); // Throws: "Command 'Missing server' requires server implementation"
-``` 
+import { createIntegration } from '@auto-engineer/flowlang';
+
+export const MailChimp = createIntegration('email', 'MailChimp');
+export const Twilio = createIntegration('sms', 'Twilio');
+```
+
+## Migration from Non-Fluent API
+
+### Before (Function-based)
+```typescript
+flow('PropertyBooking', () => {
+  slice
+    .stream('property-${id}')
+    .command('List property', () => {
+      client('A form that allows hosts to list a property', () => {
+        specs(() => {
+          should('have fields for title, description')
+        });
+      });
+      server('List property', () => {
+        specs('Host can list a new property', () => {
+          when(command({...}))
+            .then([event({...})])
+        });
+      });
+    });
+});
+```
+
+### After (Fluent)
+```typescript
+flow('PropertyBooking', () => {
+  commandSlice('List property')
+    .stream('property-${id}')
+    .client('A form that allows hosts to list a property', () => {
+      specs(() => {
+        should('have fields for title, description')
+      });
+    })
+    .server('List property', () => {
+      specs('Host can list a new property', () => {
+        when(Commands.ListProperty({...}))
+          .then([Events.PropertyListed({...})])
+      });
+    });
+});
+```
+
+## Best Practices
+
+1. **Use createBuilders() for type safety**: Always define your events, commands, and state types upfront
+2. **Keep specs focused**: Each spec should test one specific behavior
+3. **Use descriptive names**: Both for slices and specifications
+4. **Group related flows**: Use the flow() wrapper to organize related slices
+5. **Leverage optional chaining**: Only add the parts you need (client, server, integrations) 
