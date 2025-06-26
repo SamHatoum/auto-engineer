@@ -15,7 +15,6 @@ export interface AIOptions {
 }
 
 export type { AIConfig } from './config';
-configureAIProvider();
 
 const defaultOptions: AIOptions = {
   temperature: 0.7,
