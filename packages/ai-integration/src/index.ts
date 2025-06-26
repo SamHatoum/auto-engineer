@@ -3,7 +3,7 @@ import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { xai } from '@ai-sdk/xai';
-import { loadConfig } from './config';
+import { configureAIProvider } from './config';
 
 export type AIProvider = 'openai' | 'anthropic' | 'google' | 'xai';
 
@@ -14,9 +14,8 @@ export interface AIOptions {
   streamCallback?: (token: string) => void;
 }
 
-// Export config types and functions
 export type { AIConfig } from './config';
-export { loadConfig, validateConfig } from './config';
+configureAIProvider();
 
 const defaultOptions: AIOptions = {
   temperature: 0.7,
@@ -123,7 +122,7 @@ export async function generateTextStreamingWithAI(
 }
 
 export function getAvailableProviders(): AIProvider[] {
-  const config = loadConfig();
+  const config = configureAIProvider();
   const providers: AIProvider[] = [];
   if (config.openai) providers.push('openai');
   if (config.anthropic) providers.push('anthropic');
