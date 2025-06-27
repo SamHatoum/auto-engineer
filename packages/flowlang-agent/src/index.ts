@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { generateTextStreamingWithAI, type AIProvider } from '@auto-engineer/ai-integration';
 import { type CommandHandler, type BaseCommand, type AckNackResponse, type BaseEvent, server } from '@auto-engineer/api';
+import { prompt } from './prompt';
 
 export type CreateFlowCommand = BaseCommand & {
   prompt: string;
@@ -17,7 +18,7 @@ export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
   handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
     try {
       const flow = await generateTextStreamingWithAI(
-        command.prompt,
+        `system: ${prompt}\nuser: ${command.prompt}`,
         'openai' as AIProvider, { streamCallback: command.streamCallback });
       const event: FlowCreatedEvent = {
         type: 'FlowCreated',
@@ -26,7 +27,6 @@ export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
         requestId: command.requestId
       };
       server.publishEvent(event);
-
       return {
         status: 'ack',
         message: `Flow created successfully`,
