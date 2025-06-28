@@ -1,9 +1,10 @@
-import { generateText, streamText } from 'ai';
+import { generateText, streamText, generateObject, streamObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
+import { z } from 'zod';
 
 export type AIProvider = 'openai' | 'anthropic' | 'google' | 'xai';
 
@@ -12,6 +13,16 @@ export interface AIOptions {
   temperature?: number;
   maxTokens?: number;
   streamCallback?: (token: string) => void;
+}
+
+export interface StructuredAIOptions<T> extends Omit<AIOptions, 'streamCallback'> {
+  schema: z.ZodSchema<T>;
+  schemaName?: string;
+  schemaDescription?: string;
+}
+
+export interface StreamStructuredAIOptions<T> extends StructuredAIOptions<T> {
+  onPartialObject?: (partialObject: any) => void;
 }
 
 export type { AIConfig } from './config';
@@ -128,4 +139,57 @@ export function getAvailableProviders(): AIProvider[] {
   if (config.google) providers.push('google');
   if (config.xai) providers.push('xai');
   return providers;
-} 
+}
+
+export async function generateStructuredDataWithAI<T>(
+  prompt: string,
+  provider: AIProvider,
+  options: StructuredAIOptions<T>
+): Promise<T> {
+  const model = getModel(provider, options.model);
+  
+  const result = await generateObject({
+    model,
+    prompt,
+    schema: options.schema,
+    schemaName: options.schemaName,
+    schemaDescription: options.schemaDescription,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
+  });
+  
+  return result.object;
+}
+
+export async function streamStructuredDataWithAI<T>(
+  prompt: string,
+  provider: AIProvider,
+  options: StreamStructuredAIOptions<T>
+): Promise<T> {
+  const model = getModel(provider, options.model);
+  
+  const result = streamObject({
+    model,
+    prompt,
+    schema: options.schema,
+    schemaName: options.schemaName,
+    schemaDescription: options.schemaDescription,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
+  });
+
+  // Stream partial objects if callback provided
+  if (options.onPartialObject) {
+    (async () => {
+      for await (const partialObject of result.partialObjectStream) {
+        options.onPartialObject!(partialObject);
+      }
+    })();
+  }
+
+  // Return the final complete object
+  return await result.object;
+}
+
+// Export zod for convenience
+export { z }; 
