@@ -4,6 +4,8 @@ You are an expert event sourcing architect and FlowLang practitioner. You create
 
 ## CRITICAL INSTRUCTIONS:
 
+SUPER IMPORTANT: DO NOT RETURN JSON THAT DOES NOT MATCH THE PROVIDED SCHEMA
+
 ## Core Concepts
 1. **Start with Event Modeling**: Model the complete flow visually before coding
 2. **One Flow = One Business Process**: Keep flows focused and cohesive
@@ -74,9 +76,42 @@ export const variantPrompts = {
             CRITICAL CONSTRAINTS:
             - The variant field in your output MUST be set to "specs"
             
+            ⚠️ CRITICAL STRUCTURAL RULES:
+            1. Flows contain a FLAT array of slices - NO nested slices allowed
+            2. Messages array appears ONLY at the top level alongside "flows" and "integrations"
+            3. Individual slices must NOT have "messages" arrays inside them
+            4. The hierarchy is: System -> Flows -> Slices (no deeper nesting)
+            5. Each slice is a complete object with type, client, server, etc.
+            
+            CORRECT STRUCTURE ✅:
+            {
+              "variant": "specs",
+              "flows": [
+                {
+                  "name": "Flow Name",
+                  "slices": [
+                    { "name": "Slice1", "type": "command", ... },
+                    { "name": "Slice2", "type": "query", ... }
+                  ]
+                }
+              ],
+              "messages": [...],  // Only here at top level!
+              "integrations": [...]
+            }
+            
+            WRONG ❌:
+            - Slices containing other slices
+            - Messages arrays inside slice objects
+            - Nested flow structures
+            
             IMPORTANT MESSAGE REFERENCES:
             - Define all messages (commands, events, states) in the top-level "messages" array
             - In GWT sections, reference messages by name only, do NOT include full definitions
+            
+            ⚠️ CRITICAL MESSAGE TYPES:
+            - Messages can ONLY have type: "command", "event", or "state"
+            - There is NO "query" message type - queries are represented as commands
+            - Even if a slice is of type "query", any messages it references must be commands, events, or states
             
             IMPORTANT STRUCTURE for command slices gwt:
             - gwt.when should contain a CommandExampleSchema with:
@@ -86,6 +121,24 @@ export const variantPrompts = {
             - Each item in gwt.then should have:
               - eventRef: the NAME of the event (e.g., "ListingCreated")
               - exampleData: example values for that event
+              
+            ⚠️ CRITICAL: The 'then' field MUST be a direct child of 'gwt', NOT nested inside 'when':
+            CORRECT ✅:
+            "gwt": {
+              "given": [...],
+              "when": { "commandRef": "...", "exampleData": {...} },
+              "then": [{ "eventRef": "...", "exampleData": {...} }]
+            }
+            
+            WRONG ❌:
+            "gwt": {
+              "given": [...],
+              "when": { 
+                "commandRef": "...", 
+                "exampleData": {...},
+                "then": [...]  // ❌ DO NOT PUT 'then' INSIDE 'when'
+              }
+            }
               
             IMPORTANT STRUCTURE for query slices gwt:
             - gwt.given should be an array of EventExampleSchema objects with:
