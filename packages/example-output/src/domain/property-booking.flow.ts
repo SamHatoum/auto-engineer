@@ -143,7 +143,6 @@ flow('Guest books a listing', () => {
 
   commandSlice('Notify host')
     .via([MailChimp, Twilio])
-    .retries(3)
     .server(() => {
       specs('Send notification using the specified integrations', () => {
         when(
