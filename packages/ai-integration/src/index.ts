@@ -168,27 +168,66 @@ export async function streamStructuredDataWithAI<T>(
 ): Promise<T> {
   const model = getModel(provider, options.model);
   
-  const result = streamObject({
-    model,
-    prompt,
-    schema: options.schema,
-    schemaName: options.schemaName,
-    schemaDescription: options.schemaDescription,
-    temperature: options.temperature,
-    maxTokens: options.maxTokens,
-  });
+  try {
+    const result = streamObject({
+      model,
+      prompt,
+      schema: options.schema,
+      schemaName: options.schemaName,
+      schemaDescription: options.schemaDescription,
+      temperature: options.temperature,
+      maxTokens: options.maxTokens,
+    });
 
-  // Stream partial objects if callback provided
-  if (options.onPartialObject) {
-    (async () => {
-      for await (const partialObject of result.partialObjectStream) {
-        options.onPartialObject!(partialObject);
+    // Stream partial objects if callback provided
+    if (options.onPartialObject) {
+      (async () => {
+        try {
+          for await (const partialObject of result.partialObjectStream) {
+            options.onPartialObject!(partialObject);
+          }
+        } catch (streamError) {
+          console.error('Error in partial object stream:', streamError);
+        }
+      })();
+    }
+
+    // Return the final complete object
+    return await result.object;
+  } catch (error) {
+    // Enhance error with more details
+    if (error instanceof Error) {
+      const enhancedError = new Error(error.message);
+      
+      // Copy all properties from the original error
+      Object.assign(enhancedError, error);
+      
+      // Add additional context
+      const errorObj = error as any;
+      if (errorObj.cause || errorObj.issues || errorObj.errors) {
+        (enhancedError as any).validationDetails = {
+          cause: errorObj.cause,
+          issues: errorObj.issues,
+          errors: errorObj.errors,
+        };
       }
-    })();
+      
+      // If it's a Zod validation error, extract the details
+      if (error.message.includes('response did not match schema') && errorObj.cause) {
+        try {
+          // The cause might contain the actual validation errors
+          if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
+            (enhancedError as any).zodIssues = errorObj.cause.issues;
+          }
+        } catch (parseError) {
+          // Ignore parsing errors
+        }
+      }
+      
+      throw enhancedError;
+    }
+    throw error;
   }
-
-  // Return the final complete object
-  return await result.object;
 }
 
 // Export zod for convenience
