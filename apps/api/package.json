@@ -8,7 +8,9 @@
     "dev": "tsc --watch",
     "test": "vitest run"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@auto-engineer/message-bus": "workspace:*"
+  },
   "devDependencies": {},
   "publishConfig": {
     "access": "public"

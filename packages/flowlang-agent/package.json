@@ -14,6 +14,7 @@
     "@auto-engineer/ai-integration": "workspace:*",
     "@auto-engineer/api": "workspace:*",
     "@auto-engineer/flowlang": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "dotenv": "^16.4.5",
     "vitest": "^3.2.4",
     "zod": "^3.25.67",
