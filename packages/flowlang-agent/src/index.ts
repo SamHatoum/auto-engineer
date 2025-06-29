@@ -30,7 +30,6 @@ export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
   handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
     try {
       const variant = command.variant || 'flow-names';
-      console.log('variant', variant);
 
       const systemData = await generateSystemData(variant, command.prompt, command.streamCallback);
 

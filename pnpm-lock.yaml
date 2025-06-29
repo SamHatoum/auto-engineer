@@ -72,6 +72,18 @@ importers:
 
   apps/cli:
     dependencies:
+      '@auto-engineer/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+      '@auto-engineer/flowlang-agent':
+        specifier: workspace:*
+        version: link:../../packages/flowlang-agent
+      '@auto-engineer/message-bus':
+        specifier: workspace:*
+        version: link:../../packages/message-bus
       chalk:
         specifier: ^5.3.0
         version: 5.4.1
@@ -301,9 +313,6 @@ importers:
       '@auto-engineer/ai-integration':
         specifier: workspace:*
         version: link:../ai-integration
-      '@auto-engineer/api':
-        specifier: workspace:*
-        version: link:../../apps/api
       '@auto-engineer/flowlang':
         specifier: workspace:*
         version: link:../flowlang

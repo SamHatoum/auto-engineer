@@ -23,6 +23,9 @@ When generating specs variant outputs:
   - Use "stateRef" (not "state") with the message name for states
 - Example: { "eventRef": "UserRegistered", "exampleData": { ... } }
 - Never include the full message definition inside GWT sections
+
+- Do not start with boring flows like user registration and login. Focus instead on the most interesting flows.
+- Do not automatically assume CRUD slices. Instead think about the domain and the journeys users take not the data lifecycle.
 `;
 
 export const variantPrompts = {

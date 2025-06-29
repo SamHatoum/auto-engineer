@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import '@auto-engineer/config';
 
 import { Command } from 'commander';
 import chalk from 'chalk';
@@ -12,6 +13,7 @@ import { Analytics } from './utils/analytics.js';
 
 import { createInitCommand } from './commands/init.js';
 import { createStartCommand } from './commands/start.js';
+import { createFlowCommand } from './commands/flow.js';
 
 const VERSION = process.env.npm_package_version || '0.1.2';
 
@@ -113,11 +115,13 @@ const main = async () => {
 
     program.addCommand(createInitCommand(config, analytics));
     program.addCommand(createStartCommand(config, analytics));
+    program.addCommand(createFlowCommand(config, analytics));
 
     program.addHelpText('after', `
 Examples:
   $ auto-engineer start                   Start interactive mode
   $ ag start                              Start interactive mode (short alias)
+  $ auto-engineer flow                    Create flows interactively using AI
   $ auto-engineer init                    Initialize configuration
   $ auto-engineer generate --type code    Generate code templates
   $ auto-engineer analyze --format json   Analyze code in JSON format
