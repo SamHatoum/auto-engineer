@@ -39,5 +39,6 @@
     "punycode": "^2.3.1"
   },
   "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }

@@ -6,10 +6,13 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "start": "tsx src/app.ts"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "workspace:*"
+    "@auto-engineer/config": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/flowlang-agent": "workspace:*"
   },
   "devDependencies": {},
   "publishConfig": {

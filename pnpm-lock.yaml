@@ -10,6 +10,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.5.0
     devDependencies:
       '@changesets/changelog-github':
         specifier: ^0.5.1
@@ -56,6 +60,12 @@ importers:
 
   apps/api:
     dependencies:
+      '@auto-engineer/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@auto-engineer/flowlang-agent':
+        specifier: workspace:*
+        version: link:../../packages/flowlang-agent
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../../packages/message-bus
@@ -129,6 +139,19 @@ importers:
       zod:
         specifier: ^3.25.67
         version: 3.25.67
+
+  packages/config:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.5.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.19
+        version: 20.19.1
+      typescript:
+        specifier: ^5.3.3
+        version: 5.5.4
 
   packages/emmett-generator:
     dependencies:
@@ -287,9 +310,6 @@ importers:
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../message-bus
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.5.0
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.0.3)(jiti@2.4.2)(tsx@4.20.3)
@@ -306,9 +326,6 @@ importers:
 
   packages/frontend-scaffold:
     dependencies:
-      dotenv:
-        specifier: ^16.5.0
-        version: 16.5.0
       openai:
         specifier: ^4.104.0
         version: 4.104.0(zod@3.25.67)

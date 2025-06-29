@@ -10,11 +10,13 @@ import {
 } from './types';
 
 export class MessageBus {
-  private commandHandlers: Record<string, CommandHandler> = {};
+  private commandHandlers: Record<string, CommandHandler<any>> = {};
   private eventHandlers: Record<string, EventHandler> = {};
   private queryHandlers: Record<string, QueryHandler> = {};
 
-  registerCommandHandler(commandHandler: CommandHandler): void {
+  registerCommandHandler<TCommand extends BaseCommand>(
+    commandHandler: CommandHandler<TCommand>
+  ): void {
     this.commandHandlers[commandHandler.name] = commandHandler;
   }
 

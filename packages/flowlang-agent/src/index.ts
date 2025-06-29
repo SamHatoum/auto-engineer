@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { streamStructuredDataWithAI, type AIProvider } from '@auto-engineer/ai-integration';
 import { type CommandHandler, type BaseCommand, type AckNackResponse, type BaseEvent } from '@auto-engineer/message-bus';
 import { variantPrompts } from './prompt';
@@ -12,6 +11,7 @@ import {
 import { z } from 'zod';
 
 export type CreateFlowCommand = BaseCommand & {
+  type: 'CreateFlow';
   prompt: string;
   variant?: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs';
   streamCallback?: (partialData: any) => void;
@@ -24,6 +24,40 @@ export type FlowCreatedEvent = BaseEvent & {
 }
 
 const provider = 'openai' as AIProvider;
+
+export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
+  name: 'CreateFlow',
+  handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
+    try {
+      const variant = command.variant || 'flow-names';
+      console.log('variant', variant);
+
+      const systemData = await generateSystemData(variant, command.prompt, command.streamCallback);
+
+      const event: FlowCreatedEvent = {
+        type: 'FlowCreated',
+        systemData: systemData,
+        timestamp: new Date(),
+        requestId: command.requestId
+      };
+
+      return {
+        status: 'ack',
+        message: JSON.stringify(event),
+        timestamp: new Date(),
+        requestId: command.requestId
+      };
+    } catch (error) {
+      return {
+        status: 'nack',
+        error: error instanceof Error ? error.message : 'Unknown error occurred while creating flow',
+        timestamp: new Date(),
+        requestId: command.requestId
+      };
+    }
+  }
+};
+
 
 // Helper function to extract detailed error information
 function extractErrorDetails(error: any): string {
@@ -139,36 +173,3 @@ async function generateSystemData(
     throw error;
   }
 }
-
-export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
-  name: 'CreateFlow',
-  handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
-    try {
-      const variant = command.variant || 'flow-names';
-      console.log('variant', variant);
-
-      const systemData = await generateSystemData(variant, command.prompt, command.streamCallback);
-
-      const event: FlowCreatedEvent = {
-        type: 'FlowCreated',
-        systemData: systemData,
-        timestamp: new Date(),
-        requestId: command.requestId
-      };
-
-      return {
-        status: 'ack',
-        message: JSON.stringify(event),
-        timestamp: new Date(),
-        requestId: command.requestId
-      };
-    } catch (error) {
-      return {
-        status: 'nack',
-        error: error instanceof Error ? error.message : 'Unknown error occurred while creating flow',
-        timestamp: new Date(),
-        requestId: command.requestId
-      };
-    }
-  }
-};
