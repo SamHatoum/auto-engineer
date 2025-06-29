@@ -39,4 +39,31 @@ export {
 } from './builders';
 
 // Testing helpers
-export { createFlowSpec, given, when } from './testing'; 
+export { createFlowSpec, given, when } from './testing';
+
+// Schema definitions for progressive flow creation
+export { 
+  FlowNamesSchema as FlowNamesSystemSchema,
+  SliceNamesSchema as SliceNamesSystemSchema,
+  ClientServerNamesSchema as ClientServerNamesSystemSchema,
+  SpecsSchema as SpecsSystemSchema,
+  type SpecsSchema,
+  type Message,
+  type Command,
+  type Event,
+  type State,
+  type Slice,
+  type Flow,
+  type Integration as SchemaIntegration,
+  type MessageField,
+  type CommandExample,
+  type EventExample,
+  type StateExample,
+  type CommandSlice,
+  type QuerySlice,
+  type ReactSlice,
+  type FlowNamesSchema as FlowNames,
+  type SliceNamesSchema as SliceNames,
+  type ClientServerNamesSchema as ClientServerNames,
+  type AppSchema
+} from './schema'; 

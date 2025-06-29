@@ -1,18 +1,21 @@
 {
   "name": "@auto-engineer/flowlang",
   "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
     }
   },
   "dependencies": {
     "@event-driven-io/emmett": "^0.38.3",
     "fast-glob": "^3.3.3",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.22.3"
   },
   "scripts": {
     "build": "tsc",
