@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import '@auto-engineer/config';
 
 import { Command } from 'commander';
 import chalk from 'chalk';
@@ -11,6 +12,7 @@ import { createOutput, supportsColor } from './utils/terminal.js';
 import { Analytics } from './utils/analytics.js';
 
 import { createInitCommand } from './commands/init.js';
+import { createDemoCommand } from './commands/demo.js';
 import { createStartCommand } from './commands/start.js';
 
 const VERSION = process.env.npm_package_version || '0.1.2';
@@ -98,7 +100,7 @@ const main = async () => {
     const output = createOutput(config);
 
     if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
-      const asciiText = figlet.textSync('Auto Engineer', { font: 'Slant' });
+      const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
       console.log(chalk.bgBlack(gradient([
         '#F44B4B',
         '#FF9C1A',
@@ -112,12 +114,14 @@ const main = async () => {
     const analytics = new Analytics(config);
 
     program.addCommand(createInitCommand(config, analytics));
+    program.addCommand(createDemoCommand(config, analytics));
     program.addCommand(createStartCommand(config, analytics));
 
     program.addHelpText('after', `
 Examples:
-  $ auto-engineer start                   Start interactive mode
-  $ ag start                              Start interactive mode (short alias)
+  $ auto-engineer start                   Create flows interactively using AI
+  $ ag start                              Create flows interactively using AI (short alias)
+  $ auto-engineer demo                    Start demo mode
   $ auto-engineer init                    Initialize configuration
   $ auto-engineer generate --type code    Generate code templates
   $ auto-engineer analyze --format json   Analyze code in JSON format

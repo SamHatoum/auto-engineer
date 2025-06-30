@@ -11,73 +11,18 @@
 
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
-##### _NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE WORKING HARD ON MAKING IT_
-Stay up to date by watching 👀☝️ and giving us a star ⭐☝️
+##### _NOTE THIS IS AN EARLY PREVIEW - WE ARE WORKING HARD ON MAKING IT HAPPEN_
+Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the Discord for conversations.
+
+```bash
+# clone and cd into the repo 
+# setup your .env var to use your AI key (supports all models, openai current default)
+pnpm i & pnpm start
+```
 
 ## 🎯 How It Works
 
-You start by running the CLI like this:
-```shell
-> npx auto-engineer start
-```
-
-Then you interact with it like this:
-```console
-🤖 auto: what would you like to build?
-👤 user: airbnb clone
-
-🤖 auto: crafting a FlowModel for exploration & collaboration
-🤖 auto: building your PropertyBooking flow...
-
-🔀 Flow: PropertyBooking
-├── 🍕 Slice: Search properties  
-│    ├── queries: search, filter, sort
-│    ├── projections: availability index
-│    └── specs: filters, search behavior
-├── 🍕 Slice: Book property 
-│    ├── commands: RequestBooking
-│    ├── events: BookingConfirmed
-│    └── specs: booking rules
-├── 🍕 Slice: Notify host of bookings
-│    ├── reactions: notifications
-│    └── specs: notifications rules
-└── 🧩 Integrations
-     ├── Auth0 (authentication)
-     └── Google Maps (locations)
-
-✓ Generated 1 command handler, 1 query
-✓ Built React components with specs
-✓ Configured integrations
-✓ All tests passing
-
-your app is ready at: http://localhost:3000 🚀
-visualize your flow here: http://localhost:5000 🔍
-
-🤖 auto: what would you like to iterate on?
-👤 user: add user reviews
-
-🤖 auto: extending PropertyBooking flow...
-
-🔀 Flow: PropertyBooking 
-├── 🍕 Slice: Submit review
-│    ├── commands: SubmitReview
-│    ├── events: ReviewSubmitted
-│    └── specs: only past guests, one per stay
-└── 🍕 Slice: View reviews
-     ├── queries: GetPropertyReviews, GetUserReviews
-     ├── projections: ratings, review feed
-     └── specs: sorting, filtering, pagination
-
-✓ Generated 1 command handler, 1 query
-✓ Built React components with specs
-✓ Configured integrations
-✓ All tests passing
-
-your app is ready at: http://localhost:3000 🚀
-visualize your flow here: http://localhost:5000 🔍
-
-👤 user: █
-```
+<img width="1193" alt="Screenshot 2025-06-25 at 7 26 44 PM" src="https://github.com/user-attachments/assets/873e96bf-ffd5-40cf-81a7-82caf195ee4a" />
 
 ## ✨ Features
 
@@ -114,7 +59,7 @@ Information Flow Modeling is the act of expressing a system as interfaces, comma
 ### Example Flow Model
 
 ```typescript
-import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flowlang';
+import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flow-lang';
 
 import type { ListingCreated } from './slices/create-listing/events';
 import type { BookingRequested } from './slices/guest-submits-booking-request/events';

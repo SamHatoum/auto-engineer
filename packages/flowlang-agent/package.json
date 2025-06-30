@@ -7,11 +7,16 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "tsx -r dotenv/config src/index.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "cli-test": "tsx -r dotenv/config src/cli.ts"
   },
   "dependencies": {
     "@auto-engineer/ai-integration": "workspace:*",
-    "dotenv": "^16.4.5"
+    "@auto-engineer/flowlang": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
+    "vitest": "^3.2.4",
+    "zod": "^3.25.67",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "tsx": "^4.19.2"

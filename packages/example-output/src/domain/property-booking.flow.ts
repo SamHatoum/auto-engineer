@@ -1,13 +1,13 @@
 import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flowlang';
 
-import type { ListingCreated } from './slices/create-listing';
-import type { BookingRequested } from './slices/guest-submits-booking-request';
-import type { HostNotified } from './slices/host-manages-booking-request';
-import type { PropertyRemoved } from './slices/remove-property';
-import type { CreateListing } from './slices/create-listing/commands';
-import type { RequestBooking } from './slices/guest-submits-booking-request/commands';
-import type { NotifyHost } from './slices/host-manages-booking-request/commands';
-import type { RemoveProperty } from './slices/remove-property/commands';
+import type { ListingCreated } from './flows/host-manages-listings/create-listing';
+import type { BookingRequested } from './flows/guest-booking/guest-submits-booking-request';
+import type { HostNotified } from './flows/guest-booking/host-manages-booking-request';
+import type { PropertyRemoved } from './flows/host-manages-listings/remove-property';
+import type { CreateListing } from './flows/host-manages-listings/create-listing/commands';
+import type { RequestBooking } from './flows/guest-booking/guest-submits-booking-request/commands';
+import type { NotifyHost } from './flows/guest-booking/host-manages-booking-request/commands';
+import type { RemoveProperty } from './flows/host-manages-listings/remove-property/commands';
 import type { AvailableProperty } from './shared/read-model';
 
 import { MailChimp } from '@auto-engineer/mailchimp-integration';
@@ -143,7 +143,6 @@ flow('Guest books a listing', () => {
 
   commandSlice('Notify host')
     .via([MailChimp, Twilio])
-    .retries(3)
     .server(() => {
       specs('Send notification using the specified integrations', () => {
         when(
