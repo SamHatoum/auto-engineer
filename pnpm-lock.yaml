@@ -234,6 +234,21 @@ importers:
         specifier: ^4.19.2
         version: 4.20.3
 
+  packages/frontend-implementation:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.13.1
+        version: 1.13.1
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.5.0
+      openai:
+        specifier: ^5.7.0
+        version: 5.7.0(zod@3.25.67)
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.67
+
   packages/frontend-scaffold:
     dependencies:
       dotenv:

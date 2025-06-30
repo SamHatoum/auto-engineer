@@ -1,0 +1,22 @@
+{
+  "name": "@auto-engineer/frontend-implementation",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "ai-agent": "tsx src/agent-cli.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.1",
+    "dotenv": "^16.5.0",
+    "openai": "^5.7.0",
+    "zod": "^3.25.67"
+  }
+}
