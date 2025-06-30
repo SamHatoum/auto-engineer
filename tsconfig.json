@@ -6,17 +6,26 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["**/src/**/*"],
+  "include": [
+    "**/src/**/*"
+  ],
   "exclude": [
     "**/dist/**",
     "**/node_modules/**",
     "**/*.specs.ts"
   ],
   "references": [
-    { "path": "./apps/cli" },
-    { "path": "./packages/emmett-generator" },
-    { "path": "./packages/flowlang-backend-agent" },
-    { "path": "./packages/flowlang-frontend-agent" },
-    { "path": "./packages/flowlang-modeling-agent" }
+    {
+      "path": "./apps/cli"
+    },
+    {
+      "path": "./packages/emmett-generator"
+    },
+    {
+      "path": "./packages/example-mcp-server"
+    },
+    {
+      "path": "./packages/frontend-scaffold"
+    },
   ]
-}  
+}

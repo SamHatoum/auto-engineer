@@ -1,0 +1,19 @@
+{
+  "name": "@auto-engineer/frontend-scaffold",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "openai": "^4.104.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@auto-engineer/message-bus",
+  "version": "0.0.1",
+  "description": "Message bus for handling commands, events, and queries",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["message-bus", "event-driven", "cqrs"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+} 

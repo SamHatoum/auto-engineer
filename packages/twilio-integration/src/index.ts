@@ -1,4 +1,4 @@
-import { createIntegration } from '@auto-engineer/flow-lang';
+import { createIntegration } from '@auto-engineer/flowlang';
 
 export const Twilio = createIntegration('twilio', 'Twilio');
 

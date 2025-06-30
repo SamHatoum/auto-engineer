@@ -11,8 +11,14 @@
 
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
-##### _NOTE THIS IS AN EARLY PREVIEW OF THE FUNCTIONALITY - WE ARE DOING README-DRIVEN-DEVELOPMENT AND WORKING HARD ON MAKING IT HAPPEN_
-Stay up to date by watching 👀☝️ and giving us a star ⭐☝️
+##### _NOTE THIS IS AN EARLY PREVIEW - WE ARE WORKING HARD ON MAKING IT HAPPEN_
+Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the Discord for conversations.
+
+```bash
+# clone and cd into the repo 
+# setup your .env var to use your AI key (supports all models, openai current default)
+pnpm i & pnpm start
+```
 
 ## 🎯 How It Works
 

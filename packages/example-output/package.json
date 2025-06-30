@@ -7,7 +7,6 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit"
   },
   "keywords": [],
@@ -15,30 +14,28 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@auto-engineer/flow-lang": "workspace:*",
+    "@auto-engineer/flowlang": "workspace:*",
     "@auto-engineer/mailchimp-integration": "workspace:*",
     "@auto-engineer/twilio-integration": "workspace:*",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",
     "express": "^4.21.2",
+    "@event-driven-io/emmett": "^0.38.2",
     "fast-glob": "^3.3.3",
     "graphql": "^16.11.0",
     "graphql-scalars": "^1.24.2",
     "reflect-metadata": "^0.2.2",
     "type-graphql": "^2.0.0-rc.2",
     "uuid": "^11.1.0",
-    "vitest": "^3.2.3",
     "web-streams-polyfill": "^4.1.0"
   },
   "devDependencies": {
-    "@event-driven-io/emmett": "^0.38.2",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.0.1",
+    "@types/node": "^20.0.0",
     "@types/uuid": "^10.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4"
   }
