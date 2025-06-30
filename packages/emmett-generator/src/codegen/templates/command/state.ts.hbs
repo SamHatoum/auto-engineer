@@ -1,0 +1,23 @@
+{{#if firstEvent}}
+    import type { State } from './state';
+    import type { {{firstEvent.type}} } from './events';
+
+    export const evolve = (state: State, event: {{firstEvent.type}}): State => {
+    switch (event.type) {
+    case '{{firstEvent.type}}':
+    return {
+    ...state,
+    ...event.data,
+    };
+    default:
+    return state;
+    }
+    };
+{{else}}
+    import type { State } from './state';
+
+    export const evolve = (state: State, event: any): State => {
+    // No events defined for this slice yet
+    return state;
+    };
+{{/if}}
