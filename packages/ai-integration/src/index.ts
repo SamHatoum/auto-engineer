@@ -146,19 +146,87 @@ export async function generateStructuredDataWithAI<T>(
   provider: AIProvider,
   options: StructuredAIOptions<T>
 ): Promise<T> {
-  const model = getModel(provider, options.model);
+  const maxSchemaRetries = 3;
+  let lastError: any;
   
-  const result = await generateObject({
-    model,
-    prompt,
-    schema: options.schema,
-    schemaName: options.schemaName,
-    schemaDescription: options.schemaDescription,
-    temperature: options.temperature,
-    maxTokens: options.maxTokens,
-  });
+  for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
+    try {
+      const model = getModel(provider, options.model);
+      
+      // Enhance prompt with error feedback on retry attempts
+      let enhancedPrompt = prompt;
+      if (attempt > 0 && lastError) {
+        const errorDetails = lastError.zodIssues 
+          ? JSON.stringify(lastError.zodIssues, null, 2)
+          : lastError.validationDetails?.cause?.issues 
+          ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
+          : lastError.message;
+        
+        enhancedPrompt = `${prompt}\n\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\n${errorDetails}\n\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
+      }
+      
+      const result = await generateObject({
+        model,
+        prompt: enhancedPrompt,
+        schema: options.schema,
+        schemaName: options.schemaName,
+        schemaDescription: options.schemaDescription,
+        temperature: options.temperature,
+        maxTokens: options.maxTokens,
+      });
+      
+      return result.object;
+    } catch (error) {
+      lastError = error;
+      
+      // Check if it's a schema validation error
+      const isSchemaError = error instanceof Error && (
+        error.message.includes('response did not match schema') ||
+        error.message.includes('TypeValidationError') ||
+        (error as any).name === 'AI_TypeValidationError'
+      );
+      
+      // Only retry on schema validation errors and if we have retries left
+      if (isSchemaError && attempt < maxSchemaRetries - 1) {
+        console.log(`Schema validation failed on attempt ${attempt + 1}/${maxSchemaRetries}, retrying...`);
+        
+        // Enhance error with validation details for better debugging
+        if (error instanceof Error) {
+          const enhancedError = new Error(error.message);
+          Object.assign(enhancedError, error);
+          
+          const errorObj = error as any;
+          if (errorObj.cause || errorObj.issues || errorObj.errors) {
+            (enhancedError as any).validationDetails = {
+              cause: errorObj.cause,
+              issues: errorObj.issues,
+              errors: errorObj.errors,
+            };
+          }
+          
+          if (error.message.includes('response did not match schema') && errorObj.cause) {
+            try {
+              if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
+                (enhancedError as any).zodIssues = errorObj.cause.issues;
+              }
+            } catch (parseError) {
+              // Ignore parsing errors
+            }
+          }
+          
+          lastError = enhancedError;
+        }
+        
+        continue; // Try again
+      }
+      
+      // For non-schema errors or final attempt, throw
+      throw error;
+    }
+  }
   
-  return result.object;
+  // If we exhausted all retries, throw the last error
+  throw lastError;
 }
 
 export async function streamStructuredDataWithAI<T>(
@@ -166,68 +234,126 @@ export async function streamStructuredDataWithAI<T>(
   provider: AIProvider,
   options: StreamStructuredAIOptions<T>
 ): Promise<T> {
-  const model = getModel(provider, options.model);
+  const maxSchemaRetries = 3;
+  let lastError: any;
   
-  try {
-    const result = streamObject({
-      model,
-      prompt,
-      schema: options.schema,
-      schemaName: options.schemaName,
-      schemaDescription: options.schemaDescription,
-      temperature: options.temperature,
-      maxTokens: options.maxTokens,
-    });
-
-    // Stream partial objects if callback provided
-    if (options.onPartialObject) {
-      (async () => {
-        try {
-          for await (const partialObject of result.partialObjectStream) {
-            options.onPartialObject!(partialObject);
-          }
-        } catch (streamError) {
-          console.error('Error in partial object stream:', streamError);
-        }
-      })();
-    }
-
-    // Return the final complete object
-    return await result.object;
-  } catch (error) {
-    // Enhance error with more details
-    if (error instanceof Error) {
-      const enhancedError = new Error(error.message);
+  for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
+    try {
+      const model = getModel(provider, options.model);
       
-      // Copy all properties from the original error
-      Object.assign(enhancedError, error);
-      
-      // Add additional context
-      const errorObj = error as any;
-      if (errorObj.cause || errorObj.issues || errorObj.errors) {
-        (enhancedError as any).validationDetails = {
-          cause: errorObj.cause,
-          issues: errorObj.issues,
-          errors: errorObj.errors,
-        };
+      // Enhance prompt with error feedback on retry attempts
+      let enhancedPrompt = prompt;
+      if (attempt > 0 && lastError) {
+        const errorDetails = lastError.zodIssues 
+          ? JSON.stringify(lastError.zodIssues, null, 2)
+          : lastError.validationDetails?.cause?.issues 
+          ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
+          : lastError.message;
+        
+        enhancedPrompt = `${prompt}\n\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\n${errorDetails}\n\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
       }
       
-      // If it's a Zod validation error, extract the details
-      if (error.message.includes('response did not match schema') && errorObj.cause) {
-        try {
-          // The cause might contain the actual validation errors
-          if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
-            (enhancedError as any).zodIssues = errorObj.cause.issues;
+      const result = streamObject({
+        model,
+        prompt: enhancedPrompt,
+        schema: options.schema,
+        schemaName: options.schemaName,
+        schemaDescription: options.schemaDescription,
+        temperature: options.temperature,
+        maxTokens: options.maxTokens,
+      });
+
+      // Stream partial objects if callback provided
+      if (options.onPartialObject) {
+        (async () => {
+          try {
+            for await (const partialObject of result.partialObjectStream) {
+              options.onPartialObject!(partialObject);
+            }
+          } catch (streamError) {
+            console.error('Error in partial object stream:', streamError);
           }
-        } catch (parseError) {
-          // Ignore parsing errors
+        })();
+      }
+
+      // Return the final complete object
+      return await result.object;
+    } catch (error) {
+      lastError = error;
+      
+      // Check if it's a schema validation error
+      const isSchemaError = error instanceof Error && (
+        error.message.includes('response did not match schema') ||
+        error.message.includes('TypeValidationError') ||
+        (error as any).name === 'AI_TypeValidationError'
+      );
+      
+      // Only retry on schema validation errors and if we have retries left
+      if (isSchemaError && attempt < maxSchemaRetries - 1) {
+        console.log(`Schema validation failed on attempt ${attempt + 1}/${maxSchemaRetries}, retrying...`);
+        
+        // Enhance error with validation details for better debugging
+        if (error instanceof Error) {
+          const enhancedError = new Error(error.message);
+          Object.assign(enhancedError, error);
+          
+          const errorObj = error as any;
+          if (errorObj.cause || errorObj.issues || errorObj.errors) {
+            (enhancedError as any).validationDetails = {
+              cause: errorObj.cause,
+              issues: errorObj.issues,
+              errors: errorObj.errors,
+            };
+          }
+          
+          if (error.message.includes('response did not match schema') && errorObj.cause) {
+            try {
+              if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
+                (enhancedError as any).zodIssues = errorObj.cause.issues;
+              }
+            } catch (parseError) {
+              // Ignore parsing errors
+            }
+          }
+          
+          lastError = enhancedError;
         }
+        
+        continue; // Try again
       }
       
-      throw enhancedError;
+      // For non-schema errors or final attempt, enhance and throw
+      if (error instanceof Error) {
+        const enhancedError = new Error(error.message);
+        Object.assign(enhancedError, error);
+        
+        const errorObj = error as any;
+        if (errorObj.cause || errorObj.issues || errorObj.errors) {
+          (enhancedError as any).validationDetails = {
+            cause: errorObj.cause,
+            issues: errorObj.issues,
+            errors: errorObj.errors,
+          };
+        }
+        
+        if (error.message.includes('response did not match schema') && errorObj.cause) {
+          try {
+            if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
+              (enhancedError as any).zodIssues = errorObj.cause.issues;
+            }
+          } catch (parseError) {
+            // Ignore parsing errors
+          }
+        }
+        
+        throw enhancedError;
+      }
+      throw error;
     }
-    throw error;
   }
+  
+  // If we exhausted all retries, throw the last error
+  throw lastError;
 }
 
 // Export zod for convenience
