@@ -1,7 +1,30 @@
+/**
+* ## IMPLEMENTATION INSTRUCTIONS ##
+*
+* Define the shape of your domain state below. This state should only include
+* values that are used to make decisions in command handlers (decide.ts).
+*
+* You should:
+* - Add only fields that are **read** during command validation
+* - Avoid adding fields that are only useful for projections or queries
+* - Prefer primitive types (string, number, boolean, etc.) unless structure is required
+* - Use optional fields if values are derived incrementally from multiple events
+*
+* Do NOT include:
+* - Redundant data already stored in events unless needed for logic
+* - Any state that is not referenced in business rules
+*/
+
 export type State = {
 // TODO: Define the shape of your domain state
 };
 
+/**
+* ## IMPLEMENTATION INSTRUCTIONS ##
+*
+* Provide a safe initial state value. This is the starting state before any events
+* are applied. Initialize with default or empty values as appropriate.
+*/
 export const initialState: State = {
 // TODO: Provide the initial state values
 };

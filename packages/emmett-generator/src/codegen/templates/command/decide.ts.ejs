@@ -1,13 +1,15 @@
-import { IllegalStateError } from '@event-driven-io/emmett';
+import {
+IllegalStateError<% if (usedErrors.includes('ValidationError')) { %>, ValidationError<% } %><% if (usedErrors.includes('NotFoundError')) { %>, NotFoundError<% } %>
+} from '@event-driven-io/emmett';
 import type { State } from './state';
-import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './commands';
+import type { <%= Object.keys(gwtMapping).map(pascalCase).join(', ') %> } from './commands';
 <% const uniqueEventTypes = [...new Set(events.map(e => pascalCase(e.type)))]; -%>
 <% if (uniqueEventTypes.length > 0) { -%>
     import type { <%= uniqueEventTypes.join(', ') %> } from './events';
 <% } -%>
 
 export const decide = (
-command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>,
+command: <%= Object.keys(gwtMapping).map(pascalCase).join(' | ') %>,
 state: State
 ): <%= uniqueEventTypes.length === 0
         ? 'never'
@@ -15,27 +17,50 @@ state: State
                 ? uniqueEventTypes[0]
                 : `(${uniqueEventTypes.join(' | ')}) | (${uniqueEventTypes.join(' | ')})[]` %> => {
 switch (command.type) {
-<% for (const command of commands) {
-    const expected = gwtMapping?.[command.type] ?? [];
-
-if (expected.length === 0) { -%>
-    case '<%= command.type %>': {
-    return [];
-    }
-<% } else if (expected.length === 1) { -%>
-    case '<%= command.type %>': {
+<% for (const command of Object.keys(gwtMapping)) {
+    const scenarios = gwtMapping?.[command] ?? [];
+    const hasGivenEvents = scenarios.some(s => s.given?.length > 0);
+-%>
+case '<%= command %>': {
+<% if (hasGivenEvents) { -%>
+    /**
+    * ## IMPLEMENTATION INSTRUCTIONS ##
+    *
+    * This command requires evaluating prior state to determine if it can proceed.
+    * You should:
+    * - Inspect the current state (built from past events)
+    * - Decide whether the command is allowed based on that state
+    * - Throw an error if the command is invalid in the current state
+    * - Otherwise return one or more events
+    */
+<% } -%>
+<% for (const gwt of scenarios) {
+    const error = gwt.then.find(t => 'errorType' in t);
+if (error && gwt.failingFields?.length) {
+    const condition = gwt.failingFields.map(field => `command.data.${field} === ''`).join(' || ');
+-%>
+if (<%- condition %>) {
+throw new <%= error.errorType %>('<%- error.message ?? 'Validation failed' %>');
+}
+<% } } -%>
+<%
+    const fallbackEvents = scenarios.flatMap(s => s.then.filter(t => 'eventRef' in t));
+    const fallbackEventTypes = [...new Set(fallbackEvents.map(e => e.eventRef))];
+if (fallbackEventTypes.length === 1) {
+-%>
     return {
-    type: '<%= expected[0] %>',
+    type: '<%= fallbackEventTypes[0] %>',
     data: { ...command.data },
     };
-    }
-<% } else { -%>
-    case '<%= command.type %>': {
+<% } else if (fallbackEventTypes.length > 1) { -%>
     return [
-    <%= expected.map(e => `        { type: '${e}', data: { ...command.data } }`).join(',\n') %>
+    <%- fallbackEventTypes.map(e => `        { type: '${e}', data: { ...command.data } }`).join(',\n') %>
     ];
-    }
-<% } } -%>
+<% } else { -%>
+    throw new IllegalStateError('Unhandled command: ' + command.type);
+<% } -%>
+}
+<% } -%>
 default:
 throw new IllegalStateError('Unexpected command type: ' + command.type);
 }

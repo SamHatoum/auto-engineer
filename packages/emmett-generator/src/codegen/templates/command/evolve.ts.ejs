@@ -4,22 +4,33 @@
         import type { <%= pascalCase(event.type) %> } from './events';
     <% }); -%>
 
+    /**
+    * ## IMPLEMENTATION INSTRUCTIONS ##
+    *
+    * Define how each event updates the domain state.
+    * - Only update the parts of state necessary for command decision logic.
+    * - Ignore fields in `event.data` that are not required in `decide`.
+    * - If the event does not affect state, return state as-is.
+    * - Avoid merging all of `event.data` unless intentional.
+    */
+
     export const evolve = (
     state: State,
     event: <%= events.map(e => pascalCase(e.type)).join(' | ') %>
     ): State => {
     switch (event.type) {
     <% events.forEach(event => { -%>
-        case '<%= event.type %>':
+        case '<%= event.type %>': {
+        // TODO: Update state based on <%= event.type %>
         return {
-        ...state,
-        ...event.data,
+        ...state
         };
+        }
     <% }); -%>
     default:
     return state;
     }
     };
 <% } else { -%>
-    // No events defined for this slice. Evolve logic will be generated once events exist.
+    // No events defined yet. Evolve logic will be generated once events exist.
 <% } -%>
