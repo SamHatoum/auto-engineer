@@ -64,6 +64,15 @@ const BaseSliceSchema = z.object({
   via: z.array(z.string()).optional().describe('Integration names used by this slice')
 }).describe('Base properties shared by all slice types');
 
+const ErrorExampleSchema = z.object({
+  errorType: z.enum([
+    'IllegalStateError',
+    'ValidationError',
+    'NotFoundError',
+  ]).describe('Expected error'),
+  message: z.string().optional().describe('Optional error message'),
+}).describe('Error outcome');
+
 const CommandSliceSchema = BaseSliceSchema.extend({
   type: z.literal('command'),
   stream: z.string().describe('Stream pattern (e.g., listing-${id})').optional(),
@@ -76,7 +85,7 @@ const CommandSliceSchema = BaseSliceSchema.extend({
     gwt: z.object({
       given: z.array(EventExampleSchema).describe('Given events').optional(),
       when: CommandExampleSchema.describe('When command is received'),
-      then: z.array(EventExampleSchema).describe('Then emit events')
+      then: z.array(z.union([EventExampleSchema, ErrorExampleSchema])).describe('Then emit event(s) or error(s)')
     })
   })
 }).describe('Command slice handling user actions and business logic');

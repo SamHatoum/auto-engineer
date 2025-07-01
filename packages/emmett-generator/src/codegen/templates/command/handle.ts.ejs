@@ -2,7 +2,7 @@ import { CommandHandler, type EventStore } from '@event-driven-io/emmett';
 import { evolve } from './evolve';
 import { initialState } from './state';
 import { decide } from './decide';
-import type { {{commands.[0].type}} } from './commands';
+import type { <%= pascalCase(commands[0].type) %> } from './commands';
 
 const commandHandler = CommandHandler({
 evolve,
@@ -11,10 +11,11 @@ initialState,
 
 export const handle = async (
 eventStore: EventStore,
-command: {{commands.[0].type}}
+command: <%= pascalCase(commands[0].type) %>
 ): Promise<void> => {
-    const streamId = `{{slice.stream}}-${command.data.{{slice.streamIdField}}}`;
+    const streamId = '<%= streamId %>';
+
     await commandHandler(eventStore, streamId, (state) =>
-    decide(command, state),
+    decide(command, state)
     );
     };

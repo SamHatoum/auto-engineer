@@ -1,7 +1,0 @@
-{{#each commands}}
-    export type {{pascalCase type}} = Command<'{{type}}', {
-    {{#each fields}}
-        {{name}}: {{{tsType}}};
-    {{/each}}
-    }>;
-{{/each}}

@@ -1,25 +1,25 @@
-{{#if events.length}}
+<% if (events.length) { -%>
     import type { State } from './state';
-    {{#each events}}
-        import type { {{this.type}} } from './events';
-    {{/each}}
+    <% events.forEach(event => { -%>
+        import type { <%= pascalCase(event.type) %> } from './events';
+    <% }); -%>
 
     export const evolve = (
     state: State,
-    event: {{#if events.length}}{{events.[0].type}}{{/if}}
+    event: <%= events.map(e => pascalCase(e.type)).join(' | ') %>
     ): State => {
     switch (event.type) {
-    {{#each events}}
-        case '{{this.type}}':
+    <% events.forEach(event => { -%>
+        case '<%= event.type %>':
         return {
         ...state,
         ...event.data,
         };
-    {{/each}}
+    <% }); -%>
     default:
     return state;
     }
     };
-{{else}}
+<% } else { -%>
     // No events defined for this slice. Evolve logic will be generated once events exist.
-{{/if}}
+<% } -%>

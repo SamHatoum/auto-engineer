@@ -1,0 +1,42 @@
+import { IllegalStateError } from '@event-driven-io/emmett';
+import type { State } from './state';
+import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './commands';
+<% const uniqueEventTypes = [...new Set(events.map(e => pascalCase(e.type)))]; -%>
+<% if (uniqueEventTypes.length > 0) { -%>
+    import type { <%= uniqueEventTypes.join(', ') %> } from './events';
+<% } -%>
+
+export const decide = (
+command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>,
+state: State
+): <%= uniqueEventTypes.length === 0
+        ? 'never'
+        : uniqueEventTypes.length === 1
+                ? uniqueEventTypes[0]
+                : `(${uniqueEventTypes.join(' | ')}) | (${uniqueEventTypes.join(' | ')})[]` %> => {
+switch (command.type) {
+<% for (const command of commands) {
+    const expected = gwtMapping?.[command.type] ?? [];
+
+if (expected.length === 0) { -%>
+    case '<%= command.type %>': {
+    return [];
+    }
+<% } else if (expected.length === 1) { -%>
+    case '<%= command.type %>': {
+    return {
+    type: '<%= expected[0] %>',
+    data: { ...command.data },
+    };
+    }
+<% } else { -%>
+    case '<%= command.type %>': {
+    return [
+    <%= expected.map(e => `        { type: '${e}', data: { ...command.data } }`).join(',\n') %>
+    ];
+    }
+<% } } -%>
+default:
+throw new IllegalStateError('Unexpected command type: ' + command.type);
+}
+};

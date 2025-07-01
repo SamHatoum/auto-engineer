@@ -1,0 +1,10 @@
+<% for (const command of commands) { -%>
+    export type <%= pascalCase(command.type) %> = Command<
+    '<%= command.type %>',
+    {
+    <% for (const field of command.fields) { -%>
+        <%= field.name %>: <%= field.tsType %>;
+    <% } -%>
+    }
+    >;
+<% } -%>
