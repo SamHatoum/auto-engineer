@@ -1,30 +1,47 @@
 /**
 * ## IMPLEMENTATION INSTRUCTIONS ##
 *
-* Define the shape of your domain state below. This state should only include
-* values that are used to make decisions in command handlers (decide.ts).
+* Define the shape of the domain state for the current slice below. This state is used by `decide.ts`
+* to determine whether a command is valid.
 *
-* You should:
-* - Add only fields that are **read** during command validation
-* - Avoid adding fields that are only useful for projections or queries
-* - Prefer primitive types (string, number, boolean, etc.) unless structure is required
-* - Use optional fields if values are derived incrementally from multiple events
+* The state is evolved over time by applying domain events (in `evolve.ts`).
+* Each event updates the state incrementally based on business rules.
+*
+* Guidelines:
+* - Include only fields that are **read** during command validation.
+* - Use discriminated unions (e.g., `status: 'Pending' | 'Done'`) to model state transitions.
+* - Prefer primitive types: `string`, `boolean`, `number`.
+* - Use objects or maps only when structure is essential for decision logic.
 *
 * Do NOT include:
-* - Redundant data already stored in events unless needed for logic
-* - Any state that is not referenced in business rules
-*/
-
-export type State = {
-// TODO: Define the shape of your domain state
-};
-
-/**
-* ## IMPLEMENTATION INSTRUCTIONS ##
+* - Redundant data already emitted in events unless required to enforce business rules.
+* - Fields used only for projections, UI, or query purposes.
 *
-* Provide a safe initial state value. This is the starting state before any events
-* are applied. Initialize with default or empty values as appropriate.
+* ### Example (for a Task domain):
+*
+* ```ts
+* export type PendingTask = {
+*   status: 'Pending';
+* };
+*
+* export type InProgressTask = {
+*   status: 'InProgress';
+*   startedAt: string;
+* };
+*
+* export type CompletedTask = {
+*   status: 'Completed';
+*   completedAt: string;
+* };
+*
+* export type State = PendingTask | InProgressTask | CompletedTask;
+* ```
 */
-export const initialState: State = {
-// TODO: Provide the initial state values
+
+// TODO: Replace with a discriminated union of domain states for the current slice
+export type State = {};
+
+// TODO: Replace the Return with the initial domain state of the current slice
+export const initialState = (): State => {
+return {};
 };

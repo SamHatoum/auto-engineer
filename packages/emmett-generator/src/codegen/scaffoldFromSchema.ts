@@ -2,12 +2,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import ejs from 'ejs';
 import {ensureDirExists, ensureDirPath, toKebabCase} from './utils/path';
-import {pascalCase} from 'change-case';
+import {camelCase, pascalCase} from 'change-case';
 import prettier from 'prettier';
 import {CommandExample, EventExample, Flow, SpecsSchema} from '@auto-engineer/flowlang';
 
 const defaultFilesByType: Record<string, string[]> = {
-    command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs'],
+    command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
     query: ['resolver.ts.ejs', 'spec.ts.ejs'],
     react: ['reactor.ts.ejs'],
 };
@@ -92,10 +92,25 @@ function extractMessagesFromSpecs(
 async function renderTemplate(templatePath: string, data: Record<string, any>): Promise<string> {
     const content = await fs.readFile(templatePath, 'utf8');
     const template = ejs.compile(content, {async: true});
+    const graphqlType = (tsType: string): string => {
+        if (tsType === 'string') return 'String';
+        if (tsType === 'number') return 'Number';
+        if (tsType === 'boolean') return 'Boolean';
+        if (tsType === 'Date') return 'Date';
+        if (tsType === 'object') return 'Object';
+        if (tsType.endsWith('[]')) {
+            const inner = tsType.slice(0, -2);
+            return `[${graphqlType(inner)}]`;
+        }
+        return 'String';
+    };
 
     return template({
         ...data,
         pascalCase,
+        toKebabCase,
+        camelCase,
+        graphqlType
     });
 }
 
@@ -203,7 +218,6 @@ export async function generateScaffoldFilePlans(
                     streamId = resolveStreamId(streamPattern, exampleData);
                 }
                 const gwtMapping = buildGwtMapping(slice);
-                console.dir(gwtMapping, { depth: null });
                 const usedErrors = new Set<string>();
                 for (const commandName in gwtMapping) {
                     for (const gwt of gwtMapping[commandName]) {
@@ -212,12 +226,17 @@ export async function generateScaffoldFilePlans(
                         }
                     }
                 }
+
+                const uniqueCommands = Array.from(
+                    new Map(commands.map((c) => [c.type, c])).values()
+                );
+
                 const contents = await renderTemplate(templatePath, {
                     flowName: flow.name,
                     sliceName: slice.name,
                     slice,
                     streamId,
-                    commands,
+                    commands: uniqueCommands,
                     events,
                     gwtMapping,
                     usedErrors: Array.from(usedErrors),

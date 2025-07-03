@@ -1,0 +1,50 @@
+import { describe, it } from 'vitest';
+import { DeciderSpecification } from '@event-driven-io/emmett';
+import { decide } from './decide';
+import { evolve } from './evolve';
+import { initialState } from './state';
+
+describe('<%= flowName %> | <%= sliceName %>', () => {
+const given = DeciderSpecification.for({
+decide,
+evolve,
+initialState,
+});
+
+<% for (const commandName in gwtMapping) {
+    const cases = gwtMapping[commandName];
+        for (const [i, gwt] of cases.entries()) {
+    const example = gwt.when;
+    const eventResults = gwt.then.filter(t => 'eventRef' in t);
+    const errorResult = gwt.then.find(t => 'errorType' in t);
+    const testName = errorResult
+            ? `should throw ${errorResult.errorType} when ${gwt.failingFields?.join(', ') || 'invalid input'}`
+            : `should emit ${eventResults.map(e => e.eventRef).join(', ')} for valid ${commandName}`;
+%>
+it('<%- testName %>', () => {
+given([
+<%_ if (gwt.given && gwt.given.length) { _%>
+    <%- gwt.given.map(g => `{
+          type: '${g.eventRef}',
+          data: ${JSON.stringify(g.exampleData, null, 2)}
+        }`).join(',\n      ') %>
+<%_ } _%>
+])
+.when({
+type: '<%= example.commandRef %>',
+data: <%- JSON.stringify(example.exampleData, null, 2) %>,
+metadata: { now: new Date() }
+})
+<% if (errorResult) { %>
+    .thenThrows((err) => err instanceof <%= errorResult.errorType %> && err.message === '<%= errorResult.message || '' %>');
+<% } else { %>
+    .then([
+    <%- eventResults.map(e => `{
+        type: '${e.eventRef}',
+        data: ${JSON.stringify(e.exampleData, null, 2)}
+      }`).join(',\n      ') %>
+    ]);
+<% } %>
+});
+<% }} %>
+});

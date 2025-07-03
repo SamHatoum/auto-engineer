@@ -7,11 +7,14 @@
     /**
     * ## IMPLEMENTATION INSTRUCTIONS ##
     *
-    * Define how each event updates the domain state.
-    * - Only update the parts of state necessary for command decision logic.
-    * - Ignore fields in `event.data` that are not required in `decide`.
-    * - If the event does not affect state, return state as-is.
-    * - Avoid merging all of `event.data` unless intentional.
+    * This function defines how the domain state evolves in response to events.
+    *
+    * Guidelines:
+    * - Apply only the **minimal** necessary changes for future decisions in `decide.ts`.
+    * - Ignore any event fields not required for decision-making logic.
+    * - If the event doesn’t change decision-relevant state, return the existing `state`.
+    * - Prefer immutability: always return a **new state object**.
+    * - Avoid spreading all of `event.data` unless all fields are relevant.
     */
 
     export const evolve = (

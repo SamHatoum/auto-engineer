@@ -3,7 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@domain/shared/*": ["domain/shared/*"]  ,
+      "@domain/shared": ["domain/shared/index.ts"],
+    },
     "composite": true
   },
   "include": ["src/**/*"]
-} 
+}
