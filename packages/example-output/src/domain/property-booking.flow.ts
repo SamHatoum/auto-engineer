@@ -60,11 +60,8 @@ flow('Host creates a listing', () => {
         ]);
       });
     });
-
 });
-
 flow('Guest books a listing', () => {
-
   querySlice('Search for available listings')
     .client(() => {
       specs('Listing Search Screen', () => {

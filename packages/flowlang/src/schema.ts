@@ -64,6 +64,15 @@ const BaseSliceSchema = z.object({
   via: z.array(z.string()).optional().describe('Integration names used by this slice')
 }).describe('Base properties shared by all slice types');
 
+const ErrorExampleSchema = z.object({
+  errorType: z.enum([
+    'IllegalStateError',
+    'ValidationError',
+    'NotFoundError',
+  ]).describe('Expected error'),
+  message: z.string().optional().describe('Optional error message'),
+}).describe('Error outcome');
+
 const CommandSliceSchema = BaseSliceSchema.extend({
   type: z.literal('command'),
   stream: z.string().describe('Stream pattern (e.g., listing-${id})').optional(),
@@ -73,11 +82,11 @@ const CommandSliceSchema = BaseSliceSchema.extend({
   }),
   server: z.object({
     description: z.string(),
-    gwt: z.object({
-      given: z.array(EventExampleSchema).describe('Given events').optional(),
-      when: CommandExampleSchema.describe('When command is received'),
-      then: z.array(EventExampleSchema).describe('Then emit events')
-    })
+    gwt: z.array(z.object({
+      given: z.array(EventExampleSchema).optional(),
+      when: CommandExampleSchema,
+      then: z.array(z.union([EventExampleSchema, ErrorExampleSchema]))
+    }))
   })
 }).describe('Command slice handling user actions and business logic');
 
@@ -90,22 +99,19 @@ const QuerySliceSchema = BaseSliceSchema.extend({
   request: z.string().describe('Query request (GraphQL, REST endpoint, or other query format)').optional(),
   server: z.object({
     description: z.string(),
-    gwt: z.object({
+    gwt: z.array(z.object({
       given: z.array(EventExampleSchema).describe('Given events'),
       then: z.array(StateExampleSchema).describe('Then update state')
-    })
+    }))
   })
 }).describe('Query slice for reading data and maintaining projections');
 
 const ReactSliceSchema = BaseSliceSchema.extend({
   type: z.literal('react'),
-  server: z.object({
-    description: z.string(),
-    gwt: z.object({
-      when: z.array(EventExampleSchema).describe('When event(s) occur'),
-      then: z.array(CommandExampleSchema).describe('Then send command(s)'),
-    })
-  })
+  gwt: z.array(z.object({
+    when: z.array(EventExampleSchema).describe('When event(s) occur'),
+    then: z.array(CommandExampleSchema).describe('Then send command(s)')
+  }))
 }).describe('React slice for automated responses to events');
 
 const SliceSchema = z.discriminatedUnion('type', [

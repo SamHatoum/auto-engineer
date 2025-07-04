@@ -1,0 +1,14 @@
+<% if (events.length) { -%>
+    import type { Event } from '@event-driven-io/emmett';
+
+    <% for (const event of events) { -%>
+        export type <%= pascalCase(event.type) %> = Event<
+        '<%= event.type %>',
+        {
+        <% for (const field of event.fields) { -%>
+            <%= field.name %>: <%= field.tsType %>;
+        <% } -%>
+        }
+        >;
+    <% } -%>
+<% } -%>
