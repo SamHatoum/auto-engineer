@@ -68,7 +68,7 @@ const createCLI = () => {
     .option('-d, --debug', 'Enable debug mode')
     .option('--no-color', 'Disable colored output')
     .option('--json', 'Output in JSON format')
-    .option('--api-token <token>', 'API token for external services') 
+    .option('--api-token <token>', 'API token for external services')
     .option('--project-path <path>', 'Project path to work with');
 
   return program;
@@ -106,9 +106,69 @@ const main = async () => {
         '#FF9C1A',
         '#F9F871',
         '#4CD964',
-        '#4BC6F4' 
+        '#4BC6F4'
       ])(asciiText)));
-      console.log(chalk.gray(`Version ${VERSION}\n`));
+
+      // OPTION 1
+      // console.log(chalk.gray(
+      //   '┌─────────────────────────┬─────────────────────────┬─────────────────────────┐\n' +
+      //   '│        Client           │         Server          │         Flows           │\n' +
+      //   '├─────────────────────────┼─────────────────────────┼─────────────────────────┤\n' +
+      //   '│  http://localhost:3000  │  http://localhost:4000  │  http://localhost:5000  │\n' +
+      //   '└─────────────────────────┴─────────────────────────┴─────────────────────────┘'
+      // ));
+
+      // OPTION 2
+      // 🌐 Client ───────────    🚀 Server ────────────    🔄 Flows ───────────────
+      // http://localhost:3000    http://localhost:4000     http://localhost:5000
+      // ────────────────────────────────────────────────────────────────────────
+      // console.log(
+      //   chalk.cyan('  🌐 Client') + chalk.gray(' ───────────') + '  ' +
+      //   chalk.green('  🚀 Server') + chalk.gray(' ────────────') + '  ' +
+      //   chalk.magenta('  🔄 Flows') + chalk.gray(' ───────────────')
+      // );
+      // console.log(
+      //   chalk.cyan('     http://localhost:3000') + '   ' +
+      //   chalk.green(' http://localhost:4000') + '   ' +
+      //   chalk.magenta('  http://localhost:5000')
+      // );
+      // console.log(chalk.gray('     ────────────────────────────────────────────────────────────────────────'));
+
+      // OPTION 3 -  ● Client localhost:3000  ● Server localhost:4000  ● Flows localhost:5000
+      // const dot = chalk.green('●');
+      // console.log();
+      // console.log(
+      //   `  ${dot} Client ${chalk.gray('localhost:3000')}  ` +
+      //   `${dot} Server ${chalk.gray('localhost:4000')}  ` +
+      //   `${dot} Flows ${chalk.gray('localhost:5000')}`
+      // );
+
+      // OPTION 4
+      // ────────────────────────────────────────────────────────────────────────────
+      // Client @ localhost:3000 │ Server @ localhost:4000 │ Flows @ localhost:5000
+      // ────────────────────────────────────────────────────────────────────────────
+      // console.log(chalk.gray('─'.repeat(76)));
+      // console.log(
+      //   '\n',
+      //   chalk.hex('4BC6F4')(' Client') + chalk.gray(' @ localhost:3000') +
+      //   chalk.gray('  │  ') +
+      //   chalk.hex('4CD964')('Server') + chalk.gray(' @ localhost:4000') +
+      //   chalk.gray('  │  ') +
+      //   chalk.gray(`v${VERSION}`) +
+      //   '\n\n'
+      //   // chalk.magenta('Flows') + chalk.gray(' @ localhost:5000')
+      // );
+      // console.log(chalk.gray('─'.repeat(76)));
+
+      // OPTION 5
+      //  [Client]  localhost:3000   [Server]  localhost:4000   [Flows  localhost:5000
+      // console.log();
+      // console.log(
+      //   chalk.bgCyan.black(' Client ') + chalk.gray(' localhost:3000  ') +
+      //   chalk.bgGreen.black(' Server ') + chalk.gray(' localhost:4000  ') +
+      //   chalk.bgMagenta.black(' Flows ') + chalk.gray(' localhost:5000 ')
+      // );
+      console.log();
     }
 
     const analytics = new Analytics(config);
