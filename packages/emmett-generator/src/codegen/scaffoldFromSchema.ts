@@ -110,7 +110,8 @@ async function renderTemplate(templatePath: string, data: Record<string, any>): 
         pascalCase,
         toKebabCase,
         camelCase,
-        graphqlType
+        graphqlType,
+        formatTsValue
     });
 }
 
@@ -187,6 +188,32 @@ function buildGwtMapping(slice: any): Record<string, (GwtCondition & { failingFi
     return enhancedMapping;
 }
 
+function formatTsValue(value: any, tsType: string): string {
+    if (tsType === 'Date') {
+        return `new Date(${JSON.stringify(value)})`;
+    }
+    if (tsType === 'string') {
+        return JSON.stringify(value);
+    }
+    if (tsType === 'number') {
+        return value.toString();
+    }
+    if (tsType === 'boolean') {
+        return value ? 'true' : 'false';
+    }
+    if (tsType.endsWith('[]') && Array.isArray(value)) {
+        const innerType = tsType.slice(0, -2);
+        return `[${value.map((v) => formatTsValue(v, innerType)).join(', ')}]`;
+    }
+    if (tsType === 'object' && typeof value === 'object') {
+        const entries = Object.entries(value)
+            .map(([k, v]) => `${k}: ${formatTsValue(v, 'string')}`);
+        return `{ ${entries.join(', ')} }`;
+    }
+
+    return JSON.stringify(value);
+}
+
 export async function generateScaffoldFilePlans(
     flows: Flow[],
     messages: SpecsSchema['messages'],
@@ -203,7 +230,12 @@ export async function generateScaffoldFilePlans(
             const { commands, events, commandSchemasByName } = extractMessagesFromSpecs(slice, messages);
             for (const templateFile of templates) {
                 const templatePath = path.join(__dirname, './templates', slice.type, templateFile);
-                const fileName = templateFile.replace(/\.ts\.ejs$/, '.ts');
+                let fileName: string;
+                if (templateFile === 'specs.ts.ejs') {
+                    fileName = `${camelCase(slice.name)}.specs.ts`;
+                } else {
+                    fileName = templateFile.replace(/\.ts\.ejs$/, '.ts');
+                }
                 const outputPath = path.join(sliceDir, fileName);
                 let streamId: string | undefined = undefined;
                 if (slice.type === 'command') {
@@ -261,4 +293,13 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
         await fs.writeFile(outputPath, contents, 'utf8');
         console.log(`✅ Created: ${outputPath}`);
     }
+}
+
+export async function scaffoldFromSchema(
+    flows: Flow[],
+    messages: SpecsSchema['messages'],
+    baseDir = 'src/domain/flows'
+): Promise<void> {
+    const plans = await generateScaffoldFilePlans(flows, messages, baseDir);
+    await writeScaffoldFilePlans(plans);
 }

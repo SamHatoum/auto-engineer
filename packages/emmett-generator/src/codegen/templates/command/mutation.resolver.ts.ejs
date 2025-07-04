@@ -1,13 +1,12 @@
-import { Mutation, Resolver, Arg, Ctx } from 'type-graphql';
+import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
 import { handle } from './handle';
 import { GraphQLContext, MutationResponse, toMutationResponse } from '../../../shared';
-import { Field, InputType } from 'type-graphql';
 
 @InputType()
 export class <%= pascalCase(commands[0].type) %>Input {
 <% for (const field of commands[0].fields) { -%>
-    @Field(() => <%= graphqlType(field.tsType) %>)
-    <%= field.name %><%= field.required === false ? '?' : '!' %>: <%= field.tsType %>;
+    @Field(() => <%= graphqlType(field.tsType) %><%= field.required === false ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= field.required === false ? '?' : '' %><%= field.required !== false ? '!' : '' %>: <%= field.tsType %>;
 <% } -%>
 }
 

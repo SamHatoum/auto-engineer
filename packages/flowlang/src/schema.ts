@@ -102,7 +102,10 @@ const QuerySliceSchema = BaseSliceSchema.extend({
     gwt: z.array(z.object({
       given: z.array(EventExampleSchema).describe('Given events'),
       then: z.array(StateExampleSchema).describe('Then update state')
-    }))
+    })),
+    readModel: z.string().describe('Read model type name').optional(),
+    idField: z.string().describe('Field used as document ID').optional(),
+    collectionName: z.string().describe('Collection name for the projection').optional()
   })
 }).describe('Query slice for reading data and maintaining projections');
 

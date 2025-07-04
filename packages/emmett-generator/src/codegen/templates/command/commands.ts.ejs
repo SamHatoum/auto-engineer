@@ -1,4 +1,4 @@
-import { Command } from "@event-driven-io/emmett/.";
+import { Command } from "@event-driven-io/emmett";
 <% for (const command of commands) { -%>
     export type <%= pascalCase(command.type) %> = Command<
     '<%= command.type %>',

@@ -9,6 +9,7 @@ const specVariant1: SpecsSchema = {
             slices: [
                 {
                     type: 'command',
+                    stream: 'item-${itemId}',
                     name: 'Create item',
                     description: 'Handles item creation',
                     client: {

@@ -68,10 +68,9 @@ describe('mutation.resolver.ts.ejs', () => {
         const mutationFile = plans.find(p => p.outputPath.endsWith('mutation.resolver.ts'));
 
         expect(mutationFile?.contents).toMatchInlineSnapshot(`
-          "import { Mutation, Resolver, Arg, Ctx } from 'type-graphql';
+          "import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
           import { handle } from './handle';
           import { GraphQLContext, MutationResponse, toMutationResponse } from '../../../shared';
-          import { Field, InputType } from 'type-graphql';
 
           @InputType()
           export class CreateListingInput {

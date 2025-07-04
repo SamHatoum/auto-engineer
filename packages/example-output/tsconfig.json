@@ -4,8 +4,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
   },
   "include": ["src/**/*"]
 }

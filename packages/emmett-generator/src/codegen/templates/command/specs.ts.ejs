@@ -4,6 +4,40 @@ import { decide } from './decide';
 import { evolve } from './evolve';
 import { initialState } from './state';
 
+<%
+// Helper to format a value based on its TypeScript type
+function formatTsValue(value, tsType) {
+    if (tsType === 'Date') {
+        return `new Date('${value}')`;
+    }
+    if (tsType === 'string') {
+        return `'${value}'`;
+    }
+    if (tsType === 'boolean' || tsType === 'number') {
+        return String(value);
+    }
+    if (Array.isArray(value)) {
+        return `[${value.map(v => formatTsValue(v, tsType.replace('[]', ''))).join(', ')}]`;
+    }
+    if (typeof value === 'object' && value !== null) {
+        const entries = Object.entries(value)
+                .map(([k, v]) => `${k}: ${formatTsValue(v, 'string')}`);
+        return `{ ${entries.join(', ')} }`;
+    }
+    return JSON.stringify(value);
+}
+
+// Helper to format an entire data object based on its schema
+function formatDataObject(exampleData, schema) {
+    const lines = Object.entries(exampleData).map(([key, val]) => {
+        const typeDef = schema?.fields?.find((f) => f.name === key);
+        const tsType = typeDef?.tsType || 'string';
+        return `${key}: ${formatTsValue(val, tsType)}`;
+    });
+    return `{\n  ${lines.join(',\n  ')}\n}`;
+}
+%>
+
 describe('<%= flowName %> | <%= sliceName %>', () => {
 const given = DeciderSpecification.for({
 decide,
@@ -13,6 +47,7 @@ initialState,
 
 <% for (const commandName in gwtMapping) {
     const cases = gwtMapping[commandName];
+    const schema = commandSchemasByName[commandName];
         for (const [i, gwt] of cases.entries()) {
     const example = gwt.when;
     const eventResults = gwt.then.filter(t => 'eventRef' in t);
@@ -25,14 +60,14 @@ it('<%- testName %>', () => {
 given([
 <%_ if (gwt.given && gwt.given.length) { _%>
     <%- gwt.given.map(g => `{
-          type: '${g.eventRef}',
-          data: ${JSON.stringify(g.exampleData, null, 2)}
-        }`).join(',\n      ') %>
+        type: '${g.eventRef}',
+        data: ${formatDataObject(g.exampleData, events.find(e => e.type === g.eventRef))}
+      }`).join(',\n      ') %>
 <%_ } _%>
 ])
 .when({
 type: '<%= example.commandRef %>',
-data: <%- JSON.stringify(example.exampleData, null, 2) %>,
+data: <%- formatDataObject(example.exampleData, schema) %>,
 metadata: { now: new Date() }
 })
 <% if (errorResult) { %>
@@ -41,7 +76,7 @@ metadata: { now: new Date() }
     .then([
     <%- eventResults.map(e => `{
         type: '${e.eventRef}',
-        data: ${JSON.stringify(e.exampleData, null, 2)}
+        data: ${formatDataObject(e.exampleData, events.find(evt => evt.type === e.eventRef))}
       }`).join(',\n      ') %>
     ]);
 <% } %>
