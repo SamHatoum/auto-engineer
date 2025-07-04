@@ -1,0 +1,153 @@
+{
+  "generatedComponents": [
+    {
+      "type": "elements",
+      "description": "Atomic UI primitives like buttons, inputs, etc.",
+      "items": {
+        "Button": {
+          "description": "A button element for various actions like submitting forms."
+        },
+        "Input": {
+          "description": "An input element for text inputs."
+        },
+        "Slider": {
+          "description": "A slider element for selecting a range of values."
+        },
+        "Checkbox": {
+          "description": "A checkbox element for multiple selections."
+        }
+      }
+    },
+    {
+      "type": "modules",
+      "description": "Dumb components composed from elements.",
+      "items": {
+        "SearchForm": {
+          "description": "A form for filtering available listings by location, price, and guest count.",
+          "composition": {
+            "elements": [
+              "Input",
+              "Slider",
+              "Button"
+            ]
+          }
+        },
+        "ListingForm": {
+          "description": "A form that allows hosts to create a listing with various attributes.",
+          "composition": {
+            "elements": [
+              "Input",
+              "Slider",
+              "Checkbox",
+              "Button"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "sections",
+      "description": "Smart UI components with data-fetching or logic.",
+      "items": {
+        "SearchSection": {
+          "description": "A section to search for listings.",
+          "composition": {
+            "modules": [
+              "SearchForm"
+            ]
+          },
+          "data_requirements": [
+            {
+              "type": "query",
+              "description": "Fetch listings based on search criteria.",
+              "trigger": "onSubmit",
+              "details": {
+                "source": "GraphQL",
+                "gql": "query SearchListings($location: String, $maxPrice: Float, $minGuests: Int) { searchListings(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) { propertyId title location pricePerNight maxGuests } }",
+                "payload_schema": {
+                  "location": "String",
+                  "maxPrice": "Float",
+                  "minGuests": "Int"
+                }
+              }
+            }
+          ]
+        },
+        "CreateListingSection": {
+          "description": "A section for hosts to create a new listing.",
+          "composition": {
+            "modules": [
+              "ListingForm"
+            ]
+          },
+          "data_requirements": [
+            {
+              "type": "mutation",
+              "description": "Create a new listing with the provided details.",
+              "trigger": "onSubmit",
+              "details": {
+                "source": "GraphQL",
+                "gql": "mutation CreateListing($title: String!, $description: String!, $location: String!, $address: String!, $pricePerNight: Float!, $maxGuests: Int!, $amenities: [String!]!) { createListing(title: $title, description: $description, location: $location, address: $address, pricePerNight: $pricePerNight, maxGuests: $maxGuests, amenities: $amenities) { propertyId } }",
+                "payload_schema": {
+                  "title": "String!",
+                  "description": "String!",
+                  "location": "String!",
+                  "address": "String!",
+                  "pricePerNight": "Float!",
+                  "maxGuests": "Int!",
+                  "amenities": "[String!]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "pages",
+      "description": "Top-level views composed of sections, modules, and elements.",
+      "items": {
+        "SearchPage": {
+          "route": "/search",
+          "description": "A page where users can search for available listings.",
+          "layout": {
+            "sections": [
+              "SearchSection"
+            ],
+            "modules": [],
+            "elements": []
+          },
+          "navigation": [
+            {
+              "on": "searchButtonClicked",
+              "to": "/search/results"
+            }
+          ],
+          "data_requirements": []
+        },
+        "CreateListingPage": {
+          "route": "/create-listing",
+          "description": "A page for hosts to create a new listing.",
+          "layout": {
+            "sections": [
+              "CreateListingSection"
+            ],
+            "modules": [],
+            "elements": []
+          },
+          "navigation": [
+            {
+              "on": "listingFormSubmitted",
+              "to": "/host/dashboard"
+            }
+          ],
+          "data_requirements": []
+        }
+      }
+    }
+  ],
+  "layout": {
+    "SearchPage": "/search",
+    "CreateListingPage": "/create-listing"
+  }
+}

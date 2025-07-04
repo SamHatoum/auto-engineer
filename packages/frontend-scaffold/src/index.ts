@@ -9,4 +9,4 @@ export async function main(appName: string, flows: string[]) {
   return 'Frontend Scaffold is running!';
 }
 
-main("example-booking-app", [guestBooksAListingFlow, hostCreatesAListingFlow]);
+main("example-booking-app-2", [guestBooksAListingFlow, hostCreatesAListingFlow]);

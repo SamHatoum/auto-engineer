@@ -8,15 +8,18 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "ai-agent": "tsx src/agent-cli.ts"
+    "ai-agent": "tsx -r dotenv/config src/agent-cli.ts"
   },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
+    "@auto-engineer/ui-checks": "workspace:*",
+    "@auto-engineer/ai-integration": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.13.1",
-    "dotenv": "^16.5.0",
     "openai": "^5.7.0",
-    "zod": "^3.25.67"
-  }
+    "zod": "^3.25.67",
+    "vite": "^5.4.1"
+  },
+  "devDependencies": {}
 }
