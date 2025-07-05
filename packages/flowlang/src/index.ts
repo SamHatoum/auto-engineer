@@ -1,5 +1,5 @@
 // Core types and utilities
-export type { Integration } from './types';
+export type { Integration, DataSink, DataSource, DataSinkItem, DataSourceItem, DataItem, MessageTarget, Destination, Origin } from './types';
 export { createIntegration } from './types';
 
 // Apollo GraphQL
@@ -20,9 +20,14 @@ export type {
 } from './fluent-builder';
 export { commandSlice, querySlice, reactSlice } from './fluent-builder';
 
+// Data flow builders
+export { sink, source } from './data-flow-builders';
+export type { FieldSelector } from './data-flow-builders';
+
 // Flow language functions
 export { flow } from './flow';
-export { client, server, specs, should, request } from './flow';
+export { client, server, specs, should, request, data } from './flow';
+export type { SliceType, DataArray } from './flow';
 
 // Event and command builders
 export { 

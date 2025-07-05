@@ -38,7 +38,13 @@ commandSlice('Action name')
   .stream('stream-${id}')              // Optional: specify event stream
   .client(() => { /* or */ })          // Optional: client implementation
   .client('Description', () => { })    // Optional: with description
-  .server(() => { /* or */ })          // Optional: server implementation
+  .server(() => {                      // Optional: server implementation
+    data([                             // Optional: array of data sinks
+      sink().event('EventName').toStream('stream-${id}'),
+      sink().command('CmdName').toIntegration(Integration)
+    ]);
+    // server logic
+  })
   .server('Description', () => { })    // Optional: with description
   .via(Integration)                    // Optional: single integration
   .via([Integration1, Integration2])   // Optional: multiple integrations
@@ -51,14 +57,27 @@ querySlice('Query name')
   .client(() => { /* or */ })          // Optional: client implementation
   .client('Description', () => { })    // Optional: with description
   .request(gql`...`)                   // Optional: GraphQL query
-  .server(() => { /* or */ })          // Optional: server implementation
+  .server(() => {                      // Optional: server implementation
+    data([                             // Optional: array of data sources
+      source().state('StateName').fromProjection('ProjectionName'),
+      source().state('OtherState').fromDatabase('collection')
+    ]);
+    // server logic
+  })
   .server('Description', () => { })    // Optional: with description
 ```
 
 #### Reaction Slices
 ```typescript
 reactSlice('Reaction name')
-  .server(() => { /* or */ })          // Required: server implementation
+  .server(() => {                      // Required: server implementation
+    data([                             // Optional: mix of sinks and sources
+      source().state('Config').fromDatabase('config'),
+      sink().command('HandleEvent').toIntegration(Integration),
+      sink().event('EventHandled').toStream('events-${id}')
+    ]);
+    // server logic
+  })
   .server('Description', () => { })    // Or with description
   .via(Integration)                    // Optional: integration
   .retries(3)                         // Optional: retry count

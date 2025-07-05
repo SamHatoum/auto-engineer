@@ -11,6 +11,7 @@ import {
   startShouldBlock,
   endShouldBlock,
 } from './flow-context';
+import type { DataSink, DataSource, DataSinkItem, DataSourceItem, DataItem } from './types';
 
 export const flow = (name: string, fn: () => void) => {
   const ctx = startFlow(name);
@@ -19,16 +20,16 @@ export const flow = (name: string, fn: () => void) => {
   clearCurrentFlow();
 };
 
-export const client = (name: string, fn: () => void) => {
+export const client = (fn: () => void) => {
   const slice = getCurrentSlice();
-  startClientBlock(slice, name);
+  startClientBlock(slice, '');
   fn();
   endClientBlock();
 };
 
-export const server = (name: string, fn: () => void) => {
+export const server = (fn: () => void) => {
   const slice = getCurrentSlice();
-  startServerBlock(slice, name);
+  startServerBlock(slice, '');
   fn();
   endServerBlock();
 };
@@ -37,32 +38,48 @@ export const request = (query: any) => ({
   with: (..._dependencies: any[]) => { }
 });
 
-function specs(name: string, fn: () => void): () => void;
-function specs(fn: () => void): () => void;
-function specs(nameOrFn: string | (() => void), fn?: () => void): () => void {
-  const name = typeof nameOrFn === 'string' ? nameOrFn : undefined;
-  const body = typeof nameOrFn === 'function' ? nameOrFn : fn;
-
-  if (!body) return () => {};
-
-  if (name) pushSpec(name);
-  startShouldBlock();
-  body();
-  endShouldBlock();
-
-  return () => {};
-}
-export { specs };
-
-const shouldFn = (description: string) => {
+export const should = (description: string) => {
   startShouldBlock(description);
-  return {
-    with: (..._dependencies: any[]) => { }
-  };
 };
 
-shouldFn.not = (description: string) => ({
-  with: (..._dependencies: any[]) => { }
-});
+export const specs = (description: string, fn: () => void) => {
+  pushSpec(description);
+  startShouldBlock();
+  fn();
+  endShouldBlock();
+};
 
-export const should = shouldFn;
+export type SliceType = 'command' | 'query' | 'react';
+
+export type DataArray<T extends SliceType = SliceType> = 
+  T extends 'command' ? DataSinkItem[] :
+  T extends 'query' ? DataSourceItem[] :
+  T extends 'react' ? DataItem[] :
+  never;
+
+export function data<T extends SliceType>(items: DataArray<T>): void;
+export function data(items: DataItem[]): void {
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice for data configuration');
+  if (!slice.server) throw new Error('data() can only be called within a server block');
+  
+  const sliceType = slice.type as SliceType;
+  
+  // Validate items based on slice type
+  if (sliceType === 'command') {
+    const hasSource = items.some(item => '__type' in item && item.__type === 'source');
+    if (hasSource) {
+      throw new Error('Command slices cannot have data sources, only sinks');
+    }
+  }
+  
+  if (sliceType === 'query') {
+    const hasSink = items.some(item => '__type' in item && item.__type === 'sink');
+    if (hasSink) {
+      throw new Error('Query slices cannot have data sinks, only sources');
+    }
+  }
+  
+  // Store the data items
+  slice.server.data = items;
+}

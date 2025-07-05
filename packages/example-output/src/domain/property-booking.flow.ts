@@ -1,4 +1,4 @@
-import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flowlang';
+import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql, sink, source, data } from '@auto-engineer/flowlang';
 
 import type { ListingCreated } from './flows/host-manages-listings/create-listing';
 import type { BookingRequested } from './flows/guest-booking/guest-submits-booking-request';
@@ -21,7 +21,6 @@ const { Events, Commands, State } = createBuilders()
 
 flow('Host creates a listing', () => {
   commandSlice('Create listing')
-    .stream('listing-${id}')
     .client(() => {
       specs('A form that allows hosts to create a listing', () => {
         should('have fields for title, description, location, address')
@@ -31,6 +30,12 @@ flow('Host creates a listing', () => {
       });
     })
     .server(() => {
+      data([
+        sink().event(Events.ListingCreated)
+          .fields({ propertyId: true })
+          .toStream('listing-${propertyId}')
+      ]);
+      
       specs('Host can create a new listing', () => {
         when(
           Commands.CreateListing({
@@ -61,6 +66,7 @@ flow('Host creates a listing', () => {
       });
     });
 });
+
 flow('Guest books a listing', () => {
   querySlice('Search for available listings')
     .client(() => {
@@ -82,6 +88,11 @@ flow('Guest books a listing', () => {
       }`
     )
     .server(() => {
+      data([
+        source().state(State.AvailableListings)
+          .fromProjection('AvailablePropertiesProjection')
+      ]);
+      
       specs('Listing becomes searchable after being created', () => {
         when(
           Events.ListingCreated({
@@ -139,8 +150,12 @@ flow('Guest books a listing', () => {
     });
 
   commandSlice('Notify host')
-    .via([MailChimp, Twilio])
     .server(() => {
+      data([
+        sink().command(Commands.NotifyHost)
+          .toIntegration(MailChimp, Twilio)
+      ]);
+      
       specs('Send notification using the specified integrations', () => {
         when(
           Commands.NotifyHost({

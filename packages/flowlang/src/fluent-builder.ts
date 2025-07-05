@@ -1,4 +1,4 @@
-import type { Integration } from './types';
+import type { Integration, DataSink, DataSource } from './types';
 import {
   getCurrentFlow,
   getCurrentSlice,
