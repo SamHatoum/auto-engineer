@@ -20,7 +20,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint src/**/*.ts --max-warnings 0",
+    "type-check": "tsc --noEmit"
   },
   "publishConfig": {
     "access": "public"

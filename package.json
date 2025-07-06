@@ -6,9 +6,11 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
+    "lint": "turbo run lint --continue",
+    "type-check": "turbo run type-check --continue",
+    "test": "turbo run test --continue",
     "test:watch": "turbo run test:watch",
+    "check": "turbo run lint type-check test --continue",
     "clean": "tsx scripts/clean.ts",
     "changeset": "changeset",
     "version": "changeset version",

@@ -8,7 +8,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "ai-agent": "tsx -r dotenv/config src/agent-cli.ts"
+    "ai-agent": "tsx -r dotenv/config src/agent-cli.ts",
+    "lint": "eslint src/**/*.ts --max-warnings 0",
+    "type-check": "tsc --noEmit"
   },
   "publishConfig": {
     "access": "public"
