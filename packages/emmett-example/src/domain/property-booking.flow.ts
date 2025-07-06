@@ -89,6 +89,7 @@ flow('Guest books a listing', () => {
     )
     .server(() => {
       data([
+        // @ts-expect-error: Allow passing builder function for type-safe state reference
         source().state(State.AvailableListings)
           .fromProjection('AvailablePropertiesProjection')
       ]);
@@ -152,6 +153,7 @@ flow('Guest books a listing', () => {
   commandSlice('Notify host')
     .server(() => {
       data([
+        // @ts-expect-error: Allow passing builder function for type-safe command reference
         sink().command(Commands.NotifyHost)
           .toIntegration(MailChimp, Twilio)
       ]);
