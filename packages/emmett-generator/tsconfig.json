@@ -8,6 +8,6 @@
     "experimentalDecorators": true
   },
   "include": [
-    "src/**/*",
+    "src/**/*"
   ]
 }

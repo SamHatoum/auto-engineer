@@ -1,4 +1,4 @@
-import { streamStructuredDataWithAI, type AIProvider } from '@auto-engineer/ai-integration';
+import { streamStructuredDataWithAI, AIProvider } from '@auto-engineer/ai-integration';
 import { type CommandHandler, type BaseCommand, type AckNackResponse, type BaseEvent } from '@auto-engineer/message-bus';
 import { variantPrompts } from './prompt';
 import {
@@ -10,20 +10,20 @@ import {
 } from '@auto-engineer/flowlang';
 import { z } from 'zod';
 
-export type CreateFlowCommand = BaseCommand & {
+export interface CreateFlowCommand extends BaseCommand {
   type: 'CreateFlow';
   prompt: string;
   variant?: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs';
-  streamCallback?: (partialData: any) => void;
+  streamCallback?: (partialData: unknown) => void;
   useStreaming?: boolean;
 }
 
-export type FlowCreatedEvent = BaseEvent & {
+export interface FlowCreatedEvent extends BaseEvent {
   type: 'FlowCreated';
   systemData: AppSchema;
 }
 
-const provider = 'openai' as AIProvider;
+const provider = AIProvider.OpenAI;
 
 export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
   name: 'CreateFlow',
@@ -59,25 +59,28 @@ export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
 
 
 // Helper function to extract detailed error information
-function extractErrorDetails(error: any): string {
+function appendErrorDetail(details: string, key: string, value: unknown): string {
+    if (value != null) {
+        return `${details}\n${key}: ${JSON.stringify(value, null, 2)}`;
+    }
+    return details;
+}
+
+function extractErrorDetails(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'An unknown error occurred';
+  }
+
   let errorDetails = error.message;
 
-  if (error.cause) {
-    errorDetails += `\nCause: ${JSON.stringify(error.cause, null, 2)}`;
+  if (typeof error === 'object' && error !== null) {
+    errorDetails = appendErrorDetail(errorDetails, 'Cause', 'cause' in error ? error.cause : undefined);
+    errorDetails = appendErrorDetail(errorDetails, 'Validation issues', 'issues' in error ? error.issues : undefined);
+    errorDetails = appendErrorDetail(errorDetails, 'Errors', 'errors' in error ? error.errors : undefined);
+    errorDetails = appendErrorDetail(errorDetails, 'Validation Details', 'validationDetails' in error ? error.validationDetails : undefined);
+    errorDetails = appendErrorDetail(errorDetails, 'Zod Validation Issues', 'zodIssues' in error ? error.zodIssues : undefined);
   }
-  if (error.issues) {
-    errorDetails += `\nValidation issues: ${JSON.stringify(error.issues, null, 2)}`;
-  }
-  if (error.errors) {
-    errorDetails += `\nErrors: ${JSON.stringify(error.errors, null, 2)}`;
-  }
-  if (error.validationDetails) {
-    errorDetails += `\nValidation Details: ${JSON.stringify(error.validationDetails, null, 2)}`;
-  }
-  if (error.zodIssues) {
-    errorDetails += `\nZod Validation Issues: ${JSON.stringify(error.zodIssues, null, 2)}`;
-  }
-
+  
   // Try to extract Zod validation errors if they exist
   if (error.message.includes('response did not match schema')) {
     errorDetails += '\nNote: The AI response did not match the expected schema structure.';
@@ -90,17 +93,16 @@ function extractErrorDetails(error: any): string {
 async function generateSystemData(
   variant: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs',
   prompt: string,
-  streamCallback?: (partialData: any) => void
+  streamCallback?: (partialData: unknown) => void
 ): Promise<AppSchema> {
   const enhancedPrompt = variantPrompts[variant](prompt);
 
   try {
-    let result: any;
     let systemData: AppSchema;
 
     switch (variant) {
       case 'flow-names':
-        result = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI(
           enhancedPrompt,
           provider,
           {
@@ -110,11 +112,10 @@ async function generateSystemData(
             onPartialObject: streamCallback,
           }
         );
-        systemData = FlowNamesSystemSchema.parse(result);
         break;
 
       case 'slice-names':
-        result = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI(
           enhancedPrompt,
           provider,
           {
@@ -124,11 +125,10 @@ async function generateSystemData(
             onPartialObject: streamCallback,
           }
         );
-        systemData = SliceNamesSystemSchema.parse(result);
         break;
 
       case 'client-server-names':
-        result = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI(
           enhancedPrompt,
           provider,
           {
@@ -138,25 +138,23 @@ async function generateSystemData(
             onPartialObject: streamCallback,
           }
         );
-        systemData = ClientServerNamesSystemSchema.parse(result);
         break;
 
       case 'specs':
-        result = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI(
           enhancedPrompt,
-          'openai' as AIProvider,
+          AIProvider.OpenAI,
           {
             schema: SpecsSystemSchema,
             schemaName: 'SpecsSystemGeneration',
             schemaDescription: 'Generate a specs variant of the FlowLang system. The variant field MUST be set to "specs".',
             onPartialObject: streamCallback,
           }
-        );
-        systemData = SpecsSystemSchema.parse(result);
+        ) as AppSchema;
         break;
 
       default:
-        throw new Error(`Invalid variant: ${variant}`);
+        throw new Error(`Invalid variant: ${variant as string}`);
     }
 
     return systemData;

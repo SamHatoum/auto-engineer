@@ -1,4 +1,4 @@
-import { Flow, UXSchema, AIAgentOutput } from './types';
+import { AIAgentOutput } from './types';
 import { AIAgent } from './ai-agent';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -41,8 +41,12 @@ export class FrontendScaffoldBuilder {
       console.log('Number of flows processed:', flows.length);
       console.log('UX Schema title:', uxSchema.title);
       return this;
-    } catch (error) {
-      console.error('Error processing flows:', error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error processing flows:', error.message);
+      } else {
+        console.error('An unknown error occurred while processing flows');
+      }
       throw error;
     }
   }

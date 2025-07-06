@@ -4,6 +4,15 @@ import { z } from "zod";
 import * as fs from "fs/promises";
 import * as path from "path";
 
+interface Component {
+    type: string;
+    items?: Record<string, unknown>;
+}
+
+interface Scheme {
+    generatedComponents?: Component[];
+}
+
 // Helper to recursively list files
 async function listFiles(dir: string, base = dir): Promise<string[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -19,10 +28,10 @@ async function listFiles(dir: string, base = dir): Promise<string[]> {
 }
 
 // Helper to read auto-ia-scheme.json
-async function readAutoIAScheme(directory: string) {
+async function readAutoIAScheme(directory: string): Promise<Scheme> {
   const filePath = path.join(directory, "auto-ia-scheme.json");
   const content = await fs.readFile(filePath, "utf-8");
-  return JSON.parse(content);
+  return JSON.parse(content) as Scheme;
 }
 
 const server = new McpServer({
@@ -173,9 +182,9 @@ server.registerTool(
   async ({ directory }: { directory: string }) => {
     try {
       const scheme = await readAutoIAScheme(directory);
-      const entities = scheme.generatedComponents?.map((comp: any) => ({
+      const entities = scheme.generatedComponents?.map((comp) => ({
         type: comp.type,
-        items: Object.keys(comp.items || {})
+        items: Object.keys(comp.items ?? {})
       }));
       return {
         content: [{
@@ -203,8 +212,12 @@ async function cleanup() {
   process.exit(0);
 }
 
-process.on("SIGTERM", cleanup);
-process.on("SIGINT", cleanup);
+process.on("SIGTERM", () => {
+    void cleanup();
+});
+process.on("SIGINT", () => {
+    void cleanup();
+});
 
 async function startServer() {
   await server.connect(transport);

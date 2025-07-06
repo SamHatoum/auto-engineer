@@ -120,6 +120,7 @@ const StateExampleSchema = z.object({
 const BaseSliceSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
+  stream: z.string().optional().describe('Event stream pattern for this slice'),
   via: z.array(z.string()).optional().describe('Integration names used by this slice')
 }).describe('Base properties shared by all slice types');
 

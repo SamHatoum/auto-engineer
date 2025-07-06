@@ -1,14 +1,8 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "composite": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true
+    "outDir": "./dist"
   },
-  "include": [
-    "src/**/*",
-    "src/**/*.json"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": ["node_modules", "dist"]
 }

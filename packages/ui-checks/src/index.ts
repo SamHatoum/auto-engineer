@@ -1,16 +1,15 @@
 // ui-checks package
 import { chromium, Browser } from 'playwright';
 import { exec } from 'child_process';
-import * as path from 'path';
 
 class BrowserManager {
-  private static instance: BrowserManager;
+  private static instance: BrowserManager | null = null;
   private browser: Browser | null = null;
 
   private constructor() { }
 
   public static getInstance(): BrowserManager {
-    if (!BrowserManager.instance) {
+    if (BrowserManager.instance === null) {
       BrowserManager.instance = new BrowserManager();
     }
     return BrowserManager.instance;
@@ -60,7 +59,7 @@ export function getTsErrors(projectPath: string): Promise<string[]> {
     // and correctly resolves dependencies within the monorepo.
     const command = `tsc -b`;
 
-    exec(command, { cwd: projectPath }, (error, stdout, stderr) => {
+    exec(command, { cwd: projectPath }, (error, stdout, _stderr) => {
       if (error) {
         // tsc exits with an error code if there are any type errors.
         // The errors are in stdout, not stderr.
@@ -77,7 +76,7 @@ export function getTsErrors(projectPath: string): Promise<string[]> {
 export function getBuildErrors(projectPath: string): Promise<string[]> {
   return new Promise((resolve) => {
     const command = `pnpm exec vite build`;
-    exec(command, { cwd: projectPath }, (error, stdout, stderr) => {
+    exec(command, { cwd: projectPath }, (error, _stdout, stderr) => {
       if (error) {
         // Vite build errors are usually in stderr
         const errors = stderr.split('\n').filter(line => line.trim().length > 0);

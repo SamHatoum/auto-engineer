@@ -13,8 +13,7 @@
   ],
   "exclude": [
     "**/dist/**",
-    "**/node_modules/**",
-    "**/*.specs.ts"
+    "**/node_modules/**"
   ],
   "references": [
     {

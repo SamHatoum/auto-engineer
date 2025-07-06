@@ -10,14 +10,14 @@ import {
 } from './types';
 
 export class MessageBus {
-  private commandHandlers: Record<string, CommandHandler<any>> = {};
+  private commandHandlers: Record<string, CommandHandler<BaseCommand>> = {};
   private eventHandlers: Record<string, EventHandler> = {};
   private queryHandlers: Record<string, QueryHandler> = {};
 
   registerCommandHandler<TCommand extends BaseCommand>(
     commandHandler: CommandHandler<TCommand>
   ): void {
-    this.commandHandlers[commandHandler.name] = commandHandler;
+    this.commandHandlers[commandHandler.name] = commandHandler as CommandHandler<BaseCommand>;
   }
 
   registerEventHandler(eventName: string, eventHandler: EventHandler): void {
@@ -30,7 +30,7 @@ export class MessageBus {
 
   async sendCommand(command: BaseCommand): Promise<AckNackResponse> {
     const commandHandler = this.commandHandlers[command.type];
-    if (!commandHandler) {
+    if (commandHandler === undefined) {
       return {
         status: 'nack',
         error: `Command handler not found for command: ${command.type}`,
@@ -53,7 +53,7 @@ export class MessageBus {
 
   async publishEvent(event: BaseEvent): Promise<AckNackResponse> {
     const eventHandler = this.eventHandlers[event.type];
-    if (!eventHandler) {
+    if (eventHandler === undefined) {
       return {
         status: 'nack',
         error: `Event handler not found for event: ${event.type}`,
@@ -76,7 +76,7 @@ export class MessageBus {
 
   async executeQuery(query: BaseQuery): Promise<BaseResult> {
     const queryHandler = this.queryHandlers[query.type];
-    if (!queryHandler) {
+    if (queryHandler === undefined) {
       throw new Error(`Query handler not found for query: ${query.type}`);
     }
     return queryHandler.handle(query);

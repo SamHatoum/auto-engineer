@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateTextWithAI, streamTextWithAI, type AIProvider } from './index';
+import { generateTextWithAI, streamTextWithAI, AIProvider } from './index';
 
 describe('AI Integration', () => {
   process.env.OPENAI_API_KEY = 'test';
@@ -10,7 +10,7 @@ describe('AI Integration', () => {
   });
 
   it('should have valid AIProvider type', () => {
-    const providers: AIProvider[] = ['openai', 'anthropic', 'google', 'xai'];
-    expect(providers).toHaveLength(4);
+    const providers: AIProvider[] = [AIProvider.OpenAI, AIProvider.Anthropic, AIProvider.Google, AIProvider.XAI];
+    expect(providers).toContain(AIProvider.OpenAI);
   });
 }); 

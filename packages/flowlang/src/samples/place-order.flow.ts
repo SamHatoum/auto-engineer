@@ -3,7 +3,7 @@ import { commandSlice } from '../fluent-builder';
 import { when } from '../testing';
 import { createBuilders } from '../builders';
 
-export type OrderPlaced = {
+export interface OrderPlaced {
     type: 'OrderPlaced';
     data: {
         orderId: string;
@@ -11,24 +11,24 @@ export type OrderPlaced = {
         quantity: number;
         placedAt: Date;
     };
-};
+}
 
-export type PlaceOrderFlow = {
+export interface PlaceOrderFlow {
     type: 'PlaceOrder';
     data: {
         productId: string;
         quantity: number;
     };
-};
+}
 
-export type OrderSummary = {
+export interface OrderSummary {
     type: 'OrderSummary';
     data: {
         orderId: string;
         productId: string;
         quantity: number;
     };
-};
+}
 
 const { Events, Commands } = createBuilders()
     .events<OrderPlaced>()

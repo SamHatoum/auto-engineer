@@ -1,0 +1,11 @@
+    import type { Event } from '@event-driven-io/emmett';
+
+            export type ItemCreated = Event<
+        'ItemCreated',
+        {
+                    id: string;
+                    description: string;
+                    addedAt: Date;
+                }
+        >;
+    

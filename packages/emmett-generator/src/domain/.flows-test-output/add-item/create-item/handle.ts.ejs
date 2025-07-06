@@ -1,0 +1,32 @@
+import { CommandHandler, type EventStore } from '@event-driven-io/emmett';
+import { evolve } from './evolve';
+import { initialState } from './state';
+import { decide } from './decide';
+import type { CreateItem } from './commands';
+import type { HandlerResult } from '../../../shared';
+
+const commandHandler = CommandHandler({
+evolve,
+initialState,
+});
+
+export const handle = async (
+eventStore: EventStore,
+command: CreateItem
+): Promise<HandlerResult> => {
+    
+            const streamId = `item-${command.data.itemId}`;
+    
+    try {
+    await commandHandler(eventStore, streamId, (state) => decide(command, state));
+    return { success: true };
+    } catch (error: any) {
+    return {
+    success: false,
+    error: {
+    type: error?.name ?? 'UnknownError',
+    message: error?.message ?? 'An unexpected error occurred',
+    },
+    };
+    }
+    };

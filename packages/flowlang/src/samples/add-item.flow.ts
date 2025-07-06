@@ -3,30 +3,30 @@ import {flow, should, specs} from "../flow";
 import {commandSlice} from "../fluent-builder";
 import {when} from "../testing";
 
-export type ItemCreated = {
+export interface ItemCreated {
     type: 'ItemCreated';
     data: {
         id: string;
         description: string;
         addedAt: Date;
     };
-};
+}
 
-export type CreateItem = {
+export interface CreateItem {
     type: 'CreateItem';
     data: {
         itemId: string;
         description: string;
     };
-};
+}
 
-export type AvailableItems = {
+export interface AvailableItems {
     type: 'AvailableItems';
     data: {
         id: string;
         description: string;
     };
-};
+}
 
 
 const { Events, Commands } = createBuilders()

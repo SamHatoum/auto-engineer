@@ -1,5 +1,5 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-integration';
-import { Flow, UXSchema, AIAgentOutput } from './types';
+import { type UXSchema, type AIAgentOutput } from './types.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -20,7 +20,7 @@ function isJsonString(str: string): boolean {
 export class AIAgent {
   private provider: AIProvider;
 
-  constructor(provider: AIProvider = 'anthropic') {
+  constructor(provider: AIProvider = AIProvider.Anthropic) {
     this.provider = provider;
   }
 

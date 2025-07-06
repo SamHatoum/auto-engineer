@@ -24,8 +24,13 @@ async function start() {
     );
     const resolvers = await loadResolvers('src/domain/flows/**/*.resolver.{ts,js}');
     console.log('🚀 Loaded resolvers:', resolvers);
+    
+    if (resolvers.length === 0) {
+        throw new Error('No resolvers found. Cannot build GraphQL schema.');
+    }
+    
     const schema = await buildSchema({
-        resolvers,
+        resolvers: resolvers as unknown as [Function, ...Function[]],
     });
     const server = new ApolloServer({
         schema,

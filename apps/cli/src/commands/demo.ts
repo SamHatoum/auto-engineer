@@ -26,6 +26,7 @@ const COLORS = {
 
 // Configure marked to use marked-terminal with custom styles
 marked.setOptions({
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
   renderer: new (markedTerminal as any)({
     heading: chalk.hex('#00BFFF').bold,         // h1
     firstHeading: chalk.hex('#00BFFF').bold,    // h1
@@ -33,96 +34,8 @@ marked.setOptions({
     em: chalk.italic,
     listitem: chalk.hex('#90EE90'),             // bullets
     codespan: chalk.yellow,
-  }) as any
+  })
 });
-
-function renderFlowSummary(lines: string[]): string {
-  return lines.map((line, idx, arr) => {
-
-    // Specs lines: always nest under nearest previous Client/Server line
-    if (/\*\s*_+Specs:_+/.test(line)) {
-      let parentIndent = '      '; // Default to 6 spaces (nested under Client/Server which are at 4 spaces)
-      for (let i = idx - 1; i >= 0; i--) {
-        if (/^\s*\*\s*\*\*?(Client|Server)[:]?.*/i.test(arr[i])) {
-          // Client/Server lines are at 4 spaces, so Specs should be at 6 spaces
-          parentIndent = '      ';
-          break;
-        }
-      }
-      const noBullet = line.replace(/^\s*\*\s*/, '');
-      let specsLine = noBullet.replace(/_+Specs:_+/, COLORS.SPECS_LABEL('Specs:'));
-      // Color Events, Commands, State in specs
-      specsLine = specsLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-      specsLine = specsLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-      specsLine = specsLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-      return COLORS.SPECS_TEXT(parentIndent + specsLine.trimStart());
-    }
-    if (/^#\s*\*\*?Flow[:]?.*/i.test(line)) {
-      const match = line.match(/(.*?)(\[[^\]]+\])/i);
-      if (match) {
-                let before = match[1].replace(/^#\s*/, '').replace(/\*\*/g, '');
-        const bracket = match[2];
-        // Color Events, Commands, State in the text part
-        before = before.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-        before = before.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-        before = before.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-        if (/^\[stream:/i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.STREAM_BRACKETS(bracket);
-        if (/^\[integrations:/i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.INTEGRATIONS_BRACKETS(bracket);
-        if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.SOURCE_BRACKETS(bracket);
-        return COLORS.FLOW_TEXT(before) + COLORS.SOURCE_BRACKETS(bracket);
-      }
-      let cleanLine = line.replace(/^#\s*/, '').replace(/\*\*/g, '');
-      // Color Events, Commands, State
-      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-      return COLORS.FLOW_TEXT(cleanLine);
-    }
-    // Slice: white bold text + magenta brackets + colored Events/Commands/State
-    if (/^\*\s*\*\*?Slice[:]?.*/i.test(line)) {
-      let cleanLine = line.replace(/^\*\s*/, '').replace(/\*\*/g, '');
-            // Color brackets
-      cleanLine = cleanLine.replace(/\[[^\]]+\]/gi, (bracket) => {
-        if (/^\[stream:/i.test(bracket)) return COLORS.STREAM_BRACKETS(bracket);
-        if (/^\[integrations:/i.test(bracket)) return COLORS.INTEGRATIONS_BRACKETS(bracket);
-        if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.SOURCE_BRACKETS(bracket);
-        return COLORS.SOURCE_BRACKETS(bracket);
-      });
-      // Color Events, Commands, State
-      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-      return COLORS.SLICE_TEXT('  ' + cleanLine);
-    }
-    if (/^\s*\*\s*\*\*?Client[:]?.*/i.test(line)) {
-      let cleanLine = line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, '');
-      // Color Events, Commands, State
-      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-      return COLORS.CLIENT_SERVER.italic('    ' + cleanLine);
-    }
-    if (/^\s*\*\s*\*\*?Server[:]?.*/i.test(line)) {
-      let cleanLine = line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, '');
-      // Color Events, Commands, State
-      cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-      cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-      cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-      return COLORS.CLIENT_SERVER.italic('    ' + cleanLine);
-    }
-        let coloredLine = line.replace(/\[[^\]]+\]/gi, (bracket) => {
-      if (/^\[stream:/i.test(bracket)) return COLORS.STREAM_BRACKETS(bracket);
-      if (/^\[integrations:/i.test(bracket)) return COLORS.INTEGRATIONS_BRACKETS(bracket);
-      if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.SOURCE_BRACKETS(bracket);
-      return COLORS.SOURCE_BRACKETS(bracket);
-    });
-    // Color Events, Commands, State
-    coloredLine = coloredLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-    coloredLine = coloredLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-    coloredLine = coloredLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
-    return coloredLine;
-  }).join('\n');
-}
 
 export const createDemoCommand = (config: Config, analytics: Analytics) => {
   const output = createOutput(config);
@@ -133,16 +46,15 @@ export const createDemoCommand = (config: Config, analytics: Analytics) => {
       try {
         output.debug('Demo command initiated');
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
-          const { buildPrompt } = await inquirer.prompt([
+          const { buildPrompt } = await inquirer.prompt<{ buildPrompt: string }>([
             {
               type: 'input',
               name: 'buildPrompt',
               message: 'What would you like to build?',
               validate: (input: string) => {
                 if (input.trim().length === 0) {
-                  return 'Please enter something you\'d like to build';
+                  return "Please enter something you'd like to build";
                 }
                 if (input.trim().length < 3) {
                   return 'Please provide a more detailed description (at least 3 characters)';
@@ -203,11 +115,11 @@ export const createDemoCommand = (config: Config, analytics: Analytics) => {
             '',
             '⏱️ Time: ~2-3 min | 💰 Cost: ~$2',
           ];
-          console.log(renderFlowSummary(buildSummaryLines));
+          console.log(buildSummaryLines.join('\\n'));
 
           console.log(); // Add blank line
 
-          const { confirm } = await inquirer.prompt([
+          const { confirm } = await inquirer.prompt<{ confirm: boolean }>([
             {
               type: 'confirm',
               name: 'confirm',
@@ -236,7 +148,7 @@ export const createDemoCommand = (config: Config, analytics: Analytics) => {
           console.log(chalk.green('✅ Your app has been deployed!'));
           console.log(chalk.cyan('🌐 Access it at: http://localhost:3000'));
 
-          const { action } = await inquirer.prompt([
+          const { action } = await inquirer.prompt<{ action: string }>([
             {
               type: 'list',
               name: 'action',

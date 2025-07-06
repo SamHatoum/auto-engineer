@@ -144,7 +144,7 @@ flow('Guest books a listing', () => {
             channels: ["email", "sms"],
             message: "Looking forward to our stay!",
             actionRequired: true
-          })
+          }),
         ]);
       });
     });

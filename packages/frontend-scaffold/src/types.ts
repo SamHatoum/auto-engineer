@@ -1,7 +1,7 @@
 export interface Flow {
   id: string;
   name: string;
-  steps: any[];
+  steps: unknown[];
 }
 
 export interface UXSchema {
@@ -10,12 +10,12 @@ export interface UXSchema {
   description: string;
   type: string;
   properties: {
-    [key: string]: any;
+    [key: string]: unknown;
   };
   required?: string[];
 }
 
 export interface AIAgentOutput {
-  generatedComponents: any[];
-  layout: any;
+  generatedComponents: unknown[];
+  layout: unknown;
 } 
