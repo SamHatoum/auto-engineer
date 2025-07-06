@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "lint": "eslint src/**/*.ts --max-warnings 0",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

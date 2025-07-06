@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {generateScaffoldFilePlans} from '../../scaffoldFromSchema';
-import {SpecsSchema} from "@auto-engineer/flowlang";
+import {SpecsSchemaType as SpecsSchema} from "@auto-engineer/flowlang";
 
 describe('state.ts.ejs', () => {
     it('should generate an initial state', async () => {

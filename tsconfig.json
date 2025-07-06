@@ -9,7 +9,8 @@
     "experimentalDecorators": true,
   },
   "include": [
-    "**/src/**/*"
+    "**/src/**/*",
+    "eslint.config.js"
   ],
   "exclude": [
     "**/dist/**",
@@ -21,12 +22,6 @@
     },
     {
       "path": "./packages/emmett-generator"
-    },
-    {
-      "path": "./packages/example-mcp-server"
-    },
-    {
-      "path": "./packages/frontend-scaffold"
-    },
+    }
   ]
 }

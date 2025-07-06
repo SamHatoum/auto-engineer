@@ -15,7 +15,7 @@ import { createInitCommand } from './commands/init.js';
 import { createDemoCommand } from './commands/demo.js';
 import { createStartCommand } from './commands/start.js';
 
-const VERSION = process.env.npm_package_version || '0.1.2';
+const VERSION = process.env.npm_package_version ?? '0.1.2';
 
 const checkNodeVersion = () => {
   const nodeVersion = process.version;
@@ -74,110 +74,29 @@ const createCLI = () => {
   return program;
 };
 
-const main = async () => {
-  try {
-    checkNodeVersion();
+const displayBanner = (config: ReturnType<typeof loadConfig>) => {
+  if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
+    const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
+    console.log(chalk.bgBlack(gradient([
+      '#F44B4B',
+      '#FF9C1A',
+      '#F9F871',
+      '#4CD964',
+      '#4BC6F4'
+    ])(asciiText)));
+    console.log();
+  }
+};
 
-    clearConsole();
+const setupProgram = (config: ReturnType<typeof loadConfig>) => {
+  const program = createCLI();
+  const analytics = new Analytics(config);
 
-    setupSignalHandlers();
+  program.addCommand(createInitCommand(config, analytics));
+  program.addCommand(createDemoCommand(config, analytics));
+  program.addCommand(createStartCommand(config, analytics));
 
-    const program = createCLI();
-
-    program.parse(process.argv, { from: 'user' });
-    const globalOptions = program.opts();
-
-    const config = loadConfig({
-      debug: globalOptions.debug || false,
-      noColor: globalOptions.noColor || false,
-      output: globalOptions.json ? 'json' : 'text',
-      apiToken: globalOptions.apiToken,
-      projectPath: globalOptions.projectPath,
-    });
-
-    validateConfig(config);
-
-    const output = createOutput(config);
-
-    if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
-      const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
-      console.log(chalk.bgBlack(gradient([
-        '#F44B4B',
-        '#FF9C1A',
-        '#F9F871',
-        '#4CD964',
-        '#4BC6F4'
-      ])(asciiText)));
-
-      // OPTION 1
-      // console.log(chalk.gray(
-      //   '┌─────────────────────────┬─────────────────────────┬─────────────────────────┐\n' +
-      //   '│        Client           │         Server          │         Flows           │\n' +
-      //   '├─────────────────────────┼─────────────────────────┼─────────────────────────┤\n' +
-      //   '│  http://localhost:3000  │  http://localhost:4000  │  http://localhost:5000  │\n' +
-      //   '└─────────────────────────┴─────────────────────────┴─────────────────────────┘'
-      // ));
-
-      // OPTION 2
-      // 🌐 Client ───────────    🚀 Server ────────────    🔄 Flows ───────────────
-      // http://localhost:3000    http://localhost:4000     http://localhost:5000
-      // ────────────────────────────────────────────────────────────────────────
-      // console.log(
-      //   chalk.cyan('  🌐 Client') + chalk.gray(' ───────────') + '  ' +
-      //   chalk.green('  🚀 Server') + chalk.gray(' ────────────') + '  ' +
-      //   chalk.magenta('  🔄 Flows') + chalk.gray(' ───────────────')
-      // );
-      // console.log(
-      //   chalk.cyan('     http://localhost:3000') + '   ' +
-      //   chalk.green(' http://localhost:4000') + '   ' +
-      //   chalk.magenta('  http://localhost:5000')
-      // );
-      // console.log(chalk.gray('     ────────────────────────────────────────────────────────────────────────'));
-
-      // OPTION 3 -  ● Client localhost:3000  ● Server localhost:4000  ● Flows localhost:5000
-      // const dot = chalk.green('●');
-      // console.log();
-      // console.log(
-      //   `  ${dot} Client ${chalk.gray('localhost:3000')}  ` +
-      //   `${dot} Server ${chalk.gray('localhost:4000')}  ` +
-      //   `${dot} Flows ${chalk.gray('localhost:5000')}`
-      // );
-
-      // OPTION 4
-      // ────────────────────────────────────────────────────────────────────────────
-      // Client @ localhost:3000 │ Server @ localhost:4000 │ Flows @ localhost:5000
-      // ────────────────────────────────────────────────────────────────────────────
-      // console.log(chalk.gray('─'.repeat(76)));
-      // console.log(
-      //   '\n',
-      //   chalk.hex('4BC6F4')(' Client') + chalk.gray(' @ localhost:3000') +
-      //   chalk.gray('  │  ') +
-      //   chalk.hex('4CD964')('Server') + chalk.gray(' @ localhost:4000') +
-      //   chalk.gray('  │  ') +
-      //   chalk.gray(`v${VERSION}`) +
-      //   '\n\n'
-      //   // chalk.magenta('Flows') + chalk.gray(' @ localhost:5000')
-      // );
-      // console.log(chalk.gray('─'.repeat(76)));
-
-      // OPTION 5
-      //  [Client]  localhost:3000   [Server]  localhost:4000   [Flows  localhost:5000
-      // console.log();
-      // console.log(
-      //   chalk.bgCyan.black(' Client ') + chalk.gray(' localhost:3000  ') +
-      //   chalk.bgGreen.black(' Server ') + chalk.gray(' localhost:4000  ') +
-      //   chalk.bgMagenta.black(' Flows ') + chalk.gray(' localhost:5000 ')
-      // );
-      console.log();
-    }
-
-    const analytics = new Analytics(config);
-
-    program.addCommand(createInitCommand(config, analytics));
-    program.addCommand(createDemoCommand(config, analytics));
-    program.addCommand(createStartCommand(config, analytics));
-
-    program.addHelpText('after', `
+  program.addHelpText('after', `
 Examples:
   $ auto-engineer start                   Create flows interactively using AI
   $ ag start                              Create flows interactively using AI (short alias)
@@ -197,7 +116,33 @@ Environment Variables:
 For more information, visit: https://github.com/SamHatoum/auto-engineer
     `);
 
-    await program.parseAsync(process.argv);
+  return program;
+};
+
+const main = async () => {
+  try {
+    checkNodeVersion();
+    clearConsole();
+    setupSignalHandlers();
+
+    const program = createCLI();
+    program.parse(process.argv, { from: 'user' });
+    const globalOptions = program.opts();
+
+    const config = loadConfig({
+      debug: Boolean(globalOptions.debug),
+      noColor: Boolean(globalOptions.noColor),
+      output: globalOptions.json === true ? 'json' : 'text',
+      apiToken: typeof globalOptions.apiToken === 'string' ? globalOptions.apiToken : undefined,
+      projectPath: typeof globalOptions.projectPath === 'string' ? globalOptions.projectPath : undefined,
+    });
+
+    validateConfig(config);
+    createOutput(config);
+    displayBanner(config);
+
+    const fullProgram = setupProgram(config);
+    await fullProgram.parseAsync(process.argv);
 
   } catch (error: unknown) {
     if (error instanceof Error && (

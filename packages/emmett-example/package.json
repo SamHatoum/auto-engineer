@@ -1,5 +1,5 @@
 {
-  "name": "emmet-spike",
+  "name": "emmett-example",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/**/*.ts --max-warnings 0"
+    "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.spec.ts' --max-warnings 0 --config ../../eslint.config.js"
   },
   "keywords": [],
   "author": "",

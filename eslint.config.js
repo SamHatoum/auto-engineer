@@ -7,7 +7,7 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        project: true,
       },
     },
     rules: {
@@ -32,4 +32,4 @@ export default tseslint.config(
       '@typescript-eslint/unbound-method': 'error',
     },
   }
-); 
+);

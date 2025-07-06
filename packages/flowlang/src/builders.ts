@@ -1,26 +1,40 @@
 import { typedSink, typedSource } from './data-flow-builders';
 
-// Generic types for events and commands - these should be extended by consumers
-export type EventUnion = any;
-export type CommandUnion = any;
-export type StateUnion = any;
+// Generic interfaces for events and commands - these should be extended by consumers
+export interface EventUnion extends Record<string, unknown> {
+  type: string;
+  data: Record<string, unknown>;
+  // This interface should be extended by specific event types
+  __eventUnionMarker?: never;
+}
+export interface CommandUnion extends Record<string, unknown> {
+  type: string;
+  data: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  // This interface should be extended by specific command types
+  __commandUnionMarker?: never;
+}
+export interface StateUnion extends Record<string, unknown> {
+  // This interface should be extended by specific state types
+  __stateUnionMarker?: never;
+}
 
 // Type for the result of a builder call
 export interface BuilderResult {
   type: string;
-  data: any;
-  metadata?: any;
+  data: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   __messageCategory?: 'event' | 'command' | 'state';
 }
 
 // IDE-friendly event and command builders
-export const createEventBuilder = <T extends { type: string; data: any }>() => {
-  return new Proxy({} as any, {
-    get(target: any, eventType: string) {
-      return (data: any) => ({
+export const createEventBuilder = <T extends { type: string; data: Record<string, unknown> }>() => {
+  return new Proxy({} as Record<string, unknown>, {
+    get(target: Record<string, unknown>, eventType: string) {
+      return (data: Record<string, unknown>) => ({
         type: eventType,
         data,
-        __messageCategory: 'event'
+        __messageCategory: 'event' as const
       });
     }
   }) as {
@@ -30,14 +44,14 @@ export const createEventBuilder = <T extends { type: string; data: any }>() => {
   };
 };
 
-export const createCommandBuilder = <T extends { type: string; data: any; metadata?: any }>() => {
-  return new Proxy({} as any, {
-    get(target: any, commandType: string) {
-      return (data: any, metadata?: any) => ({
+export const createCommandBuilder = <T extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>() => {
+  return new Proxy({} as Record<string, unknown>, {
+    get(target: Record<string, unknown>, commandType: string) {
+      return (data: Record<string, unknown>, metadata?: Record<string, unknown>) => ({
         type: commandType,
         data,
-        ...(metadata && { metadata }),
-        __messageCategory: 'command'
+        ...(metadata !== undefined && { metadata }),
+        __messageCategory: 'command' as const
       });
     }
   }) as {
@@ -49,29 +63,34 @@ export const createCommandBuilder = <T extends { type: string; data: any; metada
 };
 
 export const createStateBuilder = <T>() => {
-  return new Proxy({} as any, {
-    get(target: any, stateType: string) {
-      return (data: any) => ({
+  return new Proxy({} as Record<string, unknown>, {
+    get(target: Record<string, unknown>, stateType: string) {
+      return (data: Record<string, unknown>) => ({
         type: stateType,
         data,
-        __messageCategory: 'state'
+        __messageCategory: 'state' as const
       });
     }
   }) as {
-    [K in keyof T]: T[K] extends new (...args: any[]) => any 
-      ? (data: any) => { type: string; data: any; __messageCategory: 'state' }
+    [K in keyof T]: T[K] extends new (...args: unknown[]) => unknown 
+      ? (data: Record<string, unknown>) => { type: string; data: Record<string, unknown>; __messageCategory: 'state' }
       : (data: T[K]) => { type: string; data: T[K]; __messageCategory: 'state' }
   };
 };
 
-// Type for sink and source functions - using any for now due to TypeScript limitations
-export type TypedSinkFunction = (builder: BuilderResult) => any;
-export type TypedSourceFunction = (builder: BuilderResult) => any;
+// Type for sink and source functions
+export interface TypedSinkFunction {
+  (builder: BuilderResult): Record<string, unknown>;
+}
+
+export interface TypedSourceFunction {
+  (builder: BuilderResult): Record<string, unknown>;
+}
 
 // Combined builder factory with fluent API
 export const createBuilders = () => ({
-  events: <E extends { type: string; data: any }>() => ({
-    commands: <C extends { type: string; data: any; metadata?: any }>() => ({
+  events: <E extends { type: string; data: Record<string, unknown> }>() => ({
+    commands: <C extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>() => ({
       state: <S>() => {
         const Events = createEventBuilder<E>();
         const Commands = createCommandBuilder<C>();
@@ -94,7 +113,7 @@ export const createBuilders = () => ({
 });
 
 // Alternative: Create explicit builders for better IDE support
-export const createTypedEventBuilder = <T extends { type: string; data: any }>() => {
+export const createTypedEventBuilder = <T extends { type: string; data: Record<string, unknown> }>() => {
   return {
     create: <K extends T['type']>(
       type: K,
@@ -102,11 +121,11 @@ export const createTypedEventBuilder = <T extends { type: string; data: any }>()
     ): Extract<T, { type: K }> => ({
       type,
       data
-    } as any)
+    } as Extract<T, { type: K }>)
   };
 };
 
-export const createTypedCommandBuilder = <T extends { type: string; data: any; metadata?: any }>() => {
+export const createTypedCommandBuilder = <T extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>() => {
   return {
     create: <K extends T['type']>(
       type: K,
@@ -115,12 +134,12 @@ export const createTypedCommandBuilder = <T extends { type: string; data: any; m
     ): Extract<T, { type: K }> => ({
       type,
       data,
-      ...(metadata && { metadata })
-    } as any)
+      ...(metadata !== undefined && { metadata })
+    } as Extract<T, { type: K }>)
   };
 };
 
-export const createTypedStateBuilder = <T extends { type: string; data: any }>() => {
+export const createTypedStateBuilder = <T extends { type: string; data: Record<string, unknown> }>() => {
   return {
     create: <K extends T['type']>(
       type: K,
@@ -128,7 +147,7 @@ export const createTypedStateBuilder = <T extends { type: string; data: any }>()
     ): Extract<T, { type: K }> => ({
       type,
       data
-    } as any)
+    } as Extract<T, { type: K }>)
   };
 };
 

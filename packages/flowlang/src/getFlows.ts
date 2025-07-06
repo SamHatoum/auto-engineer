@@ -24,11 +24,14 @@ export const getFlows = async () => {
 
     return {
         flows,
-        toSchema: () =>
-            JSON.parse(
-                JSON.stringify(flows, (key, val) =>
-                    val instanceof Date ? val.toISOString() : val
-                )
-            ),
+        toSchema: (): Record<string, unknown> => {
+            const serialized = JSON.stringify(flows, (_key, val) => {
+                if (val instanceof Date) {
+                    return val.toISOString();
+                }
+                return val as unknown;
+            });
+            return JSON.parse(serialized) as Record<string, unknown>;
+        },
     };
 };

@@ -31,7 +31,7 @@ flow('Host creates a listing', () => {
     })
     .server(() => {
       data([
-        sink().event(Events.ListingCreated)
+        sink().event('ListingCreated')
           .fields({ propertyId: true })
           .toStream('listing-${propertyId}')
       ]);

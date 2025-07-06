@@ -41,4 +41,4 @@ async function start() {
     console.log(`⚡ Loaded ${loadedReactors.length} workflow reactors`);
 }
 
-start();
+void start();

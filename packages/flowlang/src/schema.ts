@@ -11,7 +11,7 @@ const IntegrationSchema = z.object({
 export const MessageTargetSchema = z.object({
   type: z.enum(['Event', 'Command', 'State']).describe('Type of message to target'),
   name: z.string().describe('Name of the specific message'),
-  fields: z.record(z.any()).optional().describe('Field selector for partial message targeting')
+  fields: z.record(z.unknown()).optional().describe('Field selector for partial message targeting')
 }).describe('Target message with optional field selection');
 
 const DestinationSchema = z.discriminatedUnion('type', [
@@ -45,7 +45,7 @@ const OriginSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('database'),
     collection: z.string().describe('Database collection name'),
-    query: z.any().optional().describe('Optional query filter')
+    query: z.unknown().optional().describe('Optional query filter')
   }),
   z.object({
     type: z.literal('api'),
@@ -71,7 +71,7 @@ const MessageFieldSchema = z.object({
   type: z.string().describe('Field type (e.g., string, number, Date, UUID, etc.)'),
   required: z.boolean().default(true),
   description: z.string().optional(),
-  defaultValue: z.any().optional().describe('Default value for optional fields')
+  defaultValue: z.unknown().optional().describe('Default value for optional fields')
 }).describe('Field definition for a message');
 
 const BaseMessageSchema = z.object({
@@ -102,19 +102,19 @@ const MessageSchema = z.discriminatedUnion('type', [
   StateSchema
 ]);
 
-const EventExampleSchema = z.object({
+export const EventExampleSchema = z.object({
   eventRef: z.string().describe('Reference to event message by name'),
-  exampleData: z.record(z.any()).describe('Example data matching the event schema')
+  exampleData: z.record(z.unknown()).describe('Example data matching the event schema')
 }).describe('Event example with reference and data');
 
-const CommandExampleSchema = z.object({
+export const CommandExampleSchema = z.object({
   commandRef: z.string().describe('Reference to command message by name'),
-  exampleData: z.record(z.any()).describe('Example data matching the command schema')
+  exampleData: z.record(z.unknown()).describe('Example data matching the command schema')
 }).describe('Command example with reference and data');
 
 const StateExampleSchema = z.object({
   stateRef: z.string().describe('Reference to state message by name'),
-  exampleData: z.record(z.any()).describe('Example data matching the state schema')
+  exampleData: z.record(z.unknown()).describe('Example data matching the state schema')
 }).describe('State example with reference and data');
 
 const BaseSliceSchema = z.object({
@@ -287,28 +287,16 @@ if (require.main === module) {
   console.log(JSON.stringify(schemas, null, 2));
 }
 
-export type MessageField = z.infer<typeof MessageFieldSchema>;
-export type Message = z.infer<typeof MessageSchema>;
-export type Integration = z.infer<typeof IntegrationSchema>;
-export type Command = z.infer<typeof CommandSchema>;
-export type Event = z.infer<typeof EventSchema>;
-export type State = z.infer<typeof StateSchema>;
-export type CommandExample = z.infer<typeof CommandExampleSchema>;
-export type EventExample = z.infer<typeof EventExampleSchema>;
-export type StateExample = z.infer<typeof StateExampleSchema>;
-export type CommandSlice = z.infer<typeof CommandSliceSchema>;
-export type QuerySlice = z.infer<typeof QuerySliceSchema>;
-export type ReactSlice = z.infer<typeof ReactSliceSchema>;
-export type Slice = z.infer<typeof SliceSchema>;
-export type Flow = z.infer<typeof FlowSchema>;
-export type FlowNamesSchema = z.infer<typeof FlowNamesSchema>;
-export type SliceNamesSchema = z.infer<typeof SliceNamesSchema>;
-export type ClientServerNamesSchema = z.infer<typeof ClientServerNamesSchema>;
-export type SpecsSchema = z.infer<typeof SpecsSchema>;
-export type AppSchema = z.infer<typeof AppSchema>;
-
-export type MessageTarget = z.infer<typeof MessageTargetSchema>;
-export type Destination = z.infer<typeof DestinationSchema>;
-export type Origin = z.infer<typeof OriginSchema>;
-export type DataSink = z.infer<typeof DataSinkSchema>;
-export type DataSource = z.infer<typeof DataSourceSchema>;
+// Re-export schemas for external usage
+export {
+  MessageFieldSchema,
+  MessageSchema,
+  CommandSchema,
+  EventSchema,
+  StateSchema,
+  CommandSliceSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+  SliceSchema,
+  FlowSchema
+};

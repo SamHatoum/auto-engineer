@@ -9,7 +9,7 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src/**/*.ts --max-warnings 0",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
     "type-check": "tsc --noEmit"
   },
   "keywords": ["message-bus", "event-driven", "cqrs"],

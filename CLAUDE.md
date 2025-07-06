@@ -88,3 +88,7 @@ The emmett-generator package creates:
 - BDD-style specifications using Given-When-Then
 - Specification by Example embedded in flows
 - Test files use `*.specs.ts` pattern
+
+## Linting
+- You are not allowed to relax lint rules
+- You must fix the underlying issues rather than just make the checks pass

@@ -1,16 +1,16 @@
-import type { DataSink, DataSource, DataSinkItem, DataSourceItem, MessageTarget, Destination, Origin, Integration } from './types';
+import type { DataSinkItem, DataSourceItem, MessageTarget, Integration } from './types';
 
-// Field selector type for partial object selection
-export type FieldSelector<T> = {
-  [K in keyof T]?: boolean | FieldSelector<T[K]>;
-};
+// Field selector interface for partial object selection
+export interface FieldSelector {
+  [key: string]: boolean | FieldSelector;
+}
 
 // Base builder for message targeting
 abstract class MessageTargetBuilder<TResult> {
   protected target: Partial<MessageTarget> = {};
   
-  fields<T>(selector: FieldSelector<T>): this {
-    this.target.fields = selector as any;
+  fields(selector: FieldSelector): this {
+    this.target.fields = selector as Record<string, unknown>;
     return this;
   }
   
@@ -148,7 +148,7 @@ export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
     };
   }
   
-  fromDatabase(collection: string, query?: any): DataSourceItem {
+  fromDatabase(collection: string, query?: Record<string, unknown>): DataSourceItem {
     return {
       target: this.target as MessageTarget,
       origin: { type: 'database', collection, query },
@@ -170,40 +170,56 @@ export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
 }
 
 // Main builder factories
+interface BuilderResult {
+  type: string;
+  __messageCategory: 'event' | 'command' | 'state';
+}
+
+function isValidBuilderResult(obj: unknown): obj is BuilderResult {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    '__messageCategory' in obj &&
+    typeof (obj as Record<string, unknown>).type === 'string' &&
+    ['event', 'command', 'state'].includes((obj as Record<string, unknown>).__messageCategory as string)
+  );
+}
+
 export class DataSinkBuilder {
-  event(nameOrBuilder: string | any): EventSinkBuilder {
+  event(nameOrBuilder: string | BuilderResult): EventSinkBuilder {
     if (typeof nameOrBuilder === 'string') {
       return new EventSinkBuilder(nameOrBuilder);
     }
     
     // Handle event builder function
-    if (nameOrBuilder && nameOrBuilder.type && nameOrBuilder.__messageCategory === 'event') {
+    if (isValidBuilderResult(nameOrBuilder) && nameOrBuilder.__messageCategory === 'event') {
       return new EventSinkBuilder(nameOrBuilder.type);
     }
     
     throw new Error('Invalid event parameter - must be a string or event builder function');
   }
   
-  command(nameOrBuilder: string | any): CommandSinkBuilder {
+  command(nameOrBuilder: string | BuilderResult): CommandSinkBuilder {
     if (typeof nameOrBuilder === 'string') {
       return new CommandSinkBuilder(nameOrBuilder);
     }
     
     // Handle command builder function
-    if (nameOrBuilder && nameOrBuilder.type && nameOrBuilder.__messageCategory === 'command') {
+    if (isValidBuilderResult(nameOrBuilder) && nameOrBuilder.__messageCategory === 'command') {
       return new CommandSinkBuilder(nameOrBuilder.type);
     }
     
     throw new Error('Invalid command parameter - must be a string or command builder function');
   }
   
-  state(nameOrBuilder: string | any): StateSinkBuilder {
+  state(nameOrBuilder: string | BuilderResult): StateSinkBuilder {
     if (typeof nameOrBuilder === 'string') {
       return new StateSinkBuilder(nameOrBuilder);
     }
     
     // Handle state builder function
-    if (nameOrBuilder && nameOrBuilder.type && nameOrBuilder.__messageCategory === 'state') {
+    if (isValidBuilderResult(nameOrBuilder) && nameOrBuilder.__messageCategory === 'state') {
       return new StateSinkBuilder(nameOrBuilder.type);
     }
     
@@ -212,13 +228,13 @@ export class DataSinkBuilder {
 }
 
 export class DataSourceBuilder {
-  state(nameOrBuilder: string | any): StateSourceBuilder {
+  state(nameOrBuilder: string | BuilderResult): StateSourceBuilder {
     if (typeof nameOrBuilder === 'string') {
       return new StateSourceBuilder(nameOrBuilder);
     }
     
     // Handle state builder function
-    if (nameOrBuilder && nameOrBuilder.type && nameOrBuilder.__messageCategory === 'state') {
+    if (isValidBuilderResult(nameOrBuilder) && nameOrBuilder.__messageCategory === 'state') {
       return new StateSourceBuilder(nameOrBuilder.type);
     }
     
@@ -230,12 +246,10 @@ export class DataSourceBuilder {
 export const sink = () => new DataSinkBuilder();
 export const source = () => new DataSourceBuilder();
 
-// Union type that includes all common methods
-type AnySinkBuilder = EventSinkBuilder | CommandSinkBuilder | StateSinkBuilder;
 
 // Type-safe sink function that accepts builder results
-export function typedSink(builderResult: any): AnySinkBuilder {
-  if (!builderResult || !builderResult.type || !builderResult.__messageCategory) {
+export function typedSink(builderResult: BuilderResult): EventSinkBuilder | CommandSinkBuilder | StateSinkBuilder {
+  if (!isValidBuilderResult(builderResult)) {
     throw new Error('Invalid builder result - must be from Events, Commands, or State builders');
   }
   
@@ -248,14 +262,16 @@ export function typedSink(builderResult: any): AnySinkBuilder {
       return new CommandSinkBuilder(messageName);
     case 'state':
       return new StateSinkBuilder(messageName);
-    default:
-      throw new Error(`Unknown message category: ${__messageCategory}`);
+    default: {
+      const category: never = __messageCategory;
+      throw new Error(`Unknown message category: ${String(category)}`);
+    }
   }
 }
 
 // Type-safe source function that accepts builder results
-export function typedSource(builderResult: any): StateSourceBuilder {
-  if (!builderResult || !builderResult.type || !builderResult.__messageCategory) {
+export function typedSource(builderResult: BuilderResult): StateSourceBuilder {
+  if (!isValidBuilderResult(builderResult)) {
     throw new Error('Invalid builder result - must be from State builders');
   }
   

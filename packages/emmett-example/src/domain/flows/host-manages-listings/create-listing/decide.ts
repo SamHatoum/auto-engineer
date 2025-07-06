@@ -1,4 +1,4 @@
-import {Command, IllegalStateError} from '@event-driven-io/emmett';
+import {IllegalStateError} from '@event-driven-io/emmett';
 import type { ListingState } from './state';
 import type { CreateListing } from './commands';
 import {ListingCreated} from "./events";

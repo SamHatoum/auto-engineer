@@ -1,8 +1,8 @@
-export type Integration<T extends string = string> = {
+export interface Integration<T extends string = string> {
   readonly __brand: 'Integration';
   readonly type: T;
   readonly name: string;
-};
+}
 
 export const createIntegration = <T extends string>(type: T, name: string): Integration<T> => ({
   __brand: 'Integration' as const,
@@ -14,20 +14,79 @@ export const createIntegration = <T extends string>(type: T, name: string): Inte
 export interface MessageTarget {
   type: 'Event' | 'Command' | 'State';
   name: string;
-  fields?: Record<string, any>;
+  fields?: Record<string, unknown>;
 }
 
-export type Destination = 
-  | { type: 'stream'; pattern: string }
-  | { type: 'integration'; systems: string[] }
-  | { type: 'database'; collection: string }
-  | { type: 'topic'; name: string };
+export interface StreamDestination {
+  type: 'stream';
+  pattern: string;
+}
 
-export type Origin = 
-  | { type: 'projection'; name: string }
-  | { type: 'readModel'; name: string }
-  | { type: 'database'; collection: string; query?: any }
-  | { type: 'api'; endpoint: string; method?: string };
+export interface IntegrationDestination {
+  type: 'integration';
+  systems: string[];
+}
+
+export interface DatabaseDestination {
+  type: 'database';
+  collection: string;
+}
+
+export interface TopicDestination {
+  type: 'topic';
+  name: string;
+}
+
+export interface Destination {
+  type: string;
+  pattern?: string;
+  systems?: string[];
+  collection?: string;
+  name?: string;
+}
+
+// Helper functions to create destinations
+export const createStreamDestination = (pattern: string): StreamDestination => ({ type: 'stream', pattern });
+export const createIntegrationDestination = (systems: string[]): IntegrationDestination => ({ type: 'integration', systems });
+export const createDatabaseDestination = (collection: string): DatabaseDestination => ({ type: 'database', collection });
+export const createTopicDestination = (name: string): TopicDestination => ({ type: 'topic', name });
+
+export interface ProjectionOrigin {
+  type: 'projection';
+  name: string;
+}
+
+export interface ReadModelOrigin {
+  type: 'readModel';
+  name: string;
+}
+
+export interface DatabaseOrigin {
+  type: 'database';
+  collection: string;
+  query?: Record<string, unknown>;
+}
+
+export interface ApiOrigin {
+  type: 'api';
+  endpoint: string;
+  method?: string;
+}
+
+export interface Origin {
+  type: string;
+  name?: string;
+  collection?: string;
+  query?: Record<string, unknown>;
+  endpoint?: string;
+  method?: string;
+}
+
+// Helper functions to create origins
+export const createProjectionOrigin = (name: string): ProjectionOrigin => ({ type: 'projection', name });
+export const createReadModelOrigin = (name: string): ReadModelOrigin => ({ type: 'readModel', name });
+export const createDatabaseOrigin = (collection: string, query?: Record<string, unknown>): DatabaseOrigin => ({ type: 'database', collection, query });
+export const createApiOrigin = (endpoint: string, method?: string): ApiOrigin => ({ type: 'api', endpoint, method });
 
 export interface DataSink {
   target: MessageTarget;
@@ -42,6 +101,14 @@ export interface DataSource {
 }
 
 // Branded types for type safety in arrays
-export type DataSinkItem = DataSink & { readonly __type: 'sink' };
-export type DataSourceItem = DataSource & { readonly __type: 'source' };
-export type DataItem = DataSinkItem | DataSourceItem; 
+export interface DataSinkItem extends DataSink {
+  readonly __type: 'sink';
+}
+
+export interface DataSourceItem extends DataSource {
+  readonly __type: 'source';
+}
+
+export interface DataItem {
+  __type: 'sink' | 'source';
+} 

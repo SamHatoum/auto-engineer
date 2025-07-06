@@ -2,43 +2,43 @@ import { recordWhen, recordThen } from './flow-context';
 // Typesafe flow testing helpers
 export const createFlowSpec = () => {
   return {
-    given: (events: any[]) => ({
-      when: (command: any) => ({
-        then: (expectedEvents: any[]) => {
-          recordWhen(command);
-          recordThen(...expectedEvents);
+    given: (_events: unknown[]) => ({
+      when: (command: unknown) => ({
+        then: (expectedEvents: unknown[]) => {
+          recordWhen(command as Record<string, unknown>);
+          recordThen(...(expectedEvents as Record<string, unknown>[])); 
         },
-        thenThrows: (errorMatcher: (error: Error) => boolean) => {
+        thenThrows: (_errorMatcher: (error: Error) => boolean) => {
         }
       }),
-      then: (expectedData: any) => {
+      then: (_expectedData: unknown) => {
       }
     }),
-    when: (command: any) => ({
-      then: (expectedEvents: any[]) => {
-        recordWhen(command);
-        recordThen(...expectedEvents);
+    when: (command: unknown) => ({
+      then: (expectedEvents: unknown[]) => {
+        recordWhen(command as Record<string, unknown>);
+        recordThen(...(expectedEvents as Record<string, unknown>[])); 
       },
-      thenThrows: (errorMatcher: (error: Error) => boolean) => {
+      thenThrows: (_errorMatcher: (error: Error) => boolean) => {
       }
     })
   };
 };
 
-export const given = (events: any[]) => createFlowSpec().given(events);
-export const when = (command: any) => createFlowSpec().when(command);
+export const given = (events: unknown[]) => createFlowSpec().given(events);
+export const when = (command: unknown) => createFlowSpec().when(command);
 
 // GraphQL query testing helper
 export const gqlQuery = (query: string) => ({
   query,
-  then: (expectedResponse: any) => {
+  then: (_expectedResponse: unknown) => {
 
   }
 });
 
 // Alternative when function for GraphQL queries
-export const whenQuery = (query: any) => ({
-  then: (expectedResponse: any) => {
+export const whenQuery = (_query: unknown) => ({
+  then: (_expectedResponse: unknown) => {
 
   }
 });

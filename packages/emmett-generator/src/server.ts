@@ -30,7 +30,8 @@ async function start() {
     }
     
     const schema = await buildSchema({
-        resolvers: resolvers as unknown as [Function, ...Function[]],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolvers: resolvers as unknown as [(...args: any[]) => any, ...Array<(...args: any[]) => any>],
     });
     const server = new ApolloServer({
         schema,
@@ -46,4 +47,4 @@ async function start() {
     console.log(`⚡ Loaded ${loadedReactors.length} workflow reactors`);
 }
 
-start();
+void start();

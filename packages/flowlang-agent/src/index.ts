@@ -31,11 +31,11 @@ export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
     try {
       const variant = command.variant || 'flow-names';
 
-      const systemData = await generateSystemData(variant, command.prompt, command.streamCallback);
+      const systemData: AppSchema = await generateSystemData(variant, command.prompt, command.streamCallback);
 
       const event: FlowCreatedEvent = {
         type: 'FlowCreated',
-        systemData: systemData,
+        systemData,
         timestamp: new Date(),
         requestId: command.requestId
       };
@@ -102,7 +102,7 @@ async function generateSystemData(
 
     switch (variant) {
       case 'flow-names':
-        systemData = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI<AppSchema>(
           enhancedPrompt,
           provider,
           {
@@ -115,7 +115,7 @@ async function generateSystemData(
         break;
 
       case 'slice-names':
-        systemData = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI<AppSchema>(
           enhancedPrompt,
           provider,
           {
@@ -128,7 +128,7 @@ async function generateSystemData(
         break;
 
       case 'client-server-names':
-        systemData = await streamStructuredDataWithAI(
+        systemData = await streamStructuredDataWithAI<AppSchema>(
           enhancedPrompt,
           provider,
           {
@@ -141,7 +141,7 @@ async function generateSystemData(
         break;
 
       case 'specs':
-        systemData = await streamStructuredDataWithAI(
+        systemData = (await streamStructuredDataWithAI(
           enhancedPrompt,
           AIProvider.OpenAI,
           {
@@ -150,7 +150,7 @@ async function generateSystemData(
             schemaDescription: 'Generate a specs variant of the FlowLang system. The variant field MUST be set to "specs".',
             onPartialObject: streamCallback,
           }
-        ) as AppSchema;
+        )) as AppSchema;
         break;
 
       default:

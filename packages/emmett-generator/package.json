@@ -9,7 +9,7 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "type-check": "tsc --noEmit --project tsconfig.json",
-    "lint": "eslint src/**/*.ts --max-warnings 0"
+    "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.flows-test-output/**' --max-warnings 0 --config ../../eslint.config.js"
   },
   "dependencies": {
     "@auto-engineer/flowlang": "workspace:*",

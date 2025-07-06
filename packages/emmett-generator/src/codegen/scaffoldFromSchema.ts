@@ -4,7 +4,7 @@ import ejs from 'ejs';
 import {ensureDirExists, ensureDirPath, toKebabCase} from './utils/path';
 import {camelCase, pascalCase} from 'change-case';
 import prettier from 'prettier';
-import {CommandExample, EventExample, Flow, SpecsSchema, Slice} from '@auto-engineer/flowlang';
+import {CommandExample, EventExample, Flow, SpecsSchemaType, Slice} from '@auto-engineer/flowlang';
 
 const defaultFilesByType: Record<string, string[]> = {
     command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
@@ -28,6 +28,20 @@ interface Message {
     fields: Field[];
 }
 
+interface MessageDefinition {
+    type: 'command' | 'event' | 'state';
+    name: string;
+    fields?: Array<{
+        name: string;
+        type: string;
+        required?: boolean;
+        description?: string;
+        defaultValue?: unknown;
+    }>;
+    metadata?: unknown;
+    description?: string;
+}
+
 
 interface GwtCondition {
     given?: EventExample[];
@@ -37,7 +51,7 @@ interface GwtCondition {
 
 function extractMessagesFromSpecs(
     slice: Slice,
-    allMessages: SpecsSchema['messages']
+    allMessages: MessageDefinition[]
 ): {
     commands: Message[];
     events: Message[];
@@ -57,7 +71,7 @@ function extractMessagesFromSpecs(
         .map((gwt) => gwt.when)
         .filter((cmd): cmd is CommandExample => cmd != null)
         .map((cmd) => {
-            const messageDef = allMessages.find((m) => m.type === 'command' && m.name === cmd.commandRef);
+            const messageDef = allMessages.find((m: MessageDefinition) => m.type === 'command' && m.name === cmd.commandRef);
             const fields =
                 messageDef?.fields?.map((f) => ({
                     name: f.name,
@@ -78,7 +92,7 @@ function extractMessagesFromSpecs(
         .flatMap((gwt) => gwt.then ?? [])
         .filter((t: unknown): t is EventExample => typeof t === 'object' && t != null && 'eventRef' in t)
         .map((event) => {
-            const messageDef = allMessages.find((m) => m.type === 'event' && m.name === event.eventRef);
+            const messageDef = allMessages.find((m: MessageDefinition) => m.type === 'event' && m.name === event.eventRef);
             return {
                 type: event.eventRef,
                 fields:
@@ -225,7 +239,7 @@ function formatTsValue(value: unknown, tsType: string): string {
 // eslint-disable-next-line complexity
 export async function generateScaffoldFilePlans(
     flows: Flow[],
-    messages: SpecsSchema['messages'],
+    messages: SpecsSchemaType['messages'],
     baseDir = 'src/domain/flows'
 ): Promise<FilePlan[]> {
     const plans: FilePlan[] = [];
@@ -303,7 +317,7 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
 
 export async function scaffoldFromSchema(
     flows: Flow[],
-    messages: SpecsSchema['messages'],
+    messages: SpecsSchemaType['messages'],
     baseDir = 'src/domain/flows'
 ): Promise<void> {
     const plans = await generateScaffoldFilePlans(flows, messages, baseDir);

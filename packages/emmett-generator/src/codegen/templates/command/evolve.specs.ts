@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {SpecsSchema} from "@auto-engineer/flowlang";
+import {SpecsSchemaType as SpecsSchema} from "@auto-engineer/flowlang";
 import {generateScaffoldFilePlans} from "../../scaffoldFromSchema";
 
 describe('evolve.ts.ejs', () => {
