@@ -48,7 +48,7 @@ export class AIAgent {
 
   private constructPrompt(flows: string[], uxSchema: UXSchema): string {
     return `
-Please analyze these flows and UX schema to generate appropriate UI components:
+You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 
 Flows:
 ${JSON.stringify(flows, null, 2)}
@@ -56,16 +56,67 @@ ${JSON.stringify(flows, null, 2)}
 UX Schema:
 ${JSON.stringify(uxSchema, null, 2)}
 
-Generate a UI component structure that:
-1. Creates components for each flow
-2. Organizes them in a logical layout
-3. Follows the UX schema guidelines
-4. Ensures good user experience and navigation
+Instructions:
 
-Respond ONLY with a JSON object, no explanation, no markdown, no text before or after.
-Return the response as a JSON object with:
-1. generatedComponents: Array of component definitions
-2. layout: Layout configuration for the components
+- Respond ONLY with a JSON object, no explanation, no markdown, no text before or after.
+- The JSON should have two main sections: "components" and "pages".
+- In "components", define composite UI elements (analogous to elements, modules, sections) with:
+    - A description
+    - A "composition" field listing the building blocks used, grouped by type:
+        - "elements": for atomic UI primitives (e.g., Button, Text, InputField)
+        - "modules": for reusable, mid-level components (e.g., SearchComponent, ListingCard)
+        - "sections": for larger layout or page sections (e.g., FilterBar, TopNavBar)
+    - Example:
+      "composition": {
+        "elements": ["Button", "Text"],
+        "modules": ["SearchComponent"],
+        "sections": ["TopNavBar"]
+      }
+- In "pages", define each page as a key, with:
+    - route (URL path)
+    - description
+    - layout (listing the components used)
+    - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
+    - data_requirements (array, as above, for page-level data fetching)
+
+Use the following structure as a template for your response:
+----
+{
+  "components": {
+    "ComponentName": {
+      "description": "What this component does.",
+      "composition": { "primitives": ["Primitive1", "Primitive2"] },
+      "data_requirements": [
+        {
+          "type": "query",
+          "description": "What data is fetched.",
+          "trigger": "When the query runs.",
+          "details": {
+            "source": "Where the data comes from.",
+            "gql": "GraphQL query or subscription"
+          }
+        }
+      ]
+    }
+    // ... more components
+  },
+  "pages": {
+    "PageName": {
+      "route": "/route",
+      "description": "What this page does.",
+      "layout": { "components": ["Component1", "Component2"] },
+      "navigation": [{ "on": "Event", "to": "TargetPage" }],
+      "data_requirements": [
+        // ... as above
+      ]
+    }
+    // ... more pages
+  }
+}
+----
+
+Be concise but thorough. Use the flows and UX schema to infer the necessary components, their composition, and data requirements.
+Do not include any text, explanation, or markdown—only the JSON object as described.
 `;
   }
-} 
+}

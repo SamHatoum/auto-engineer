@@ -15,7 +15,7 @@ function extractJsonArray(text: string): string {
 
 async function callAI(prompt: string, options?: { temperature?: number, maxTokens?: number }) {
   const temperature = options?.temperature ?? 0.2;
-  const maxTokens = options?.maxTokens ?? 2048;
+  const maxTokens = options?.maxTokens ?? 4000;
   return (await generateTextWithAI(prompt, provider, { temperature, maxTokens })).trim();
 }
 
@@ -23,7 +23,7 @@ async function getProjectContext(projectDir: string) {
   const schemePath = path.join(projectDir, "auto-ia-scheme.json");
   const scheme = JSON.parse(await fs.readFile(schemePath, "utf-8"));
   const files = await listFiles(projectDir);
-  const shadcnComponents = files.filter(f => f.startsWith("src/components/ui/") && f.endsWith(".tsx")).map(f => path.basename(f, ".tsx"));
+  const shadcnComponents = files.filter(f => f.startsWith("src/components/elements/") && f.endsWith(".tsx")).map(f => path.basename(f, ".tsx"));
   const keyFiles = files.filter(f => f.startsWith("src/pages/") || ["src/App.tsx", "src/routes.tsx", "src/main.tsx"].includes(f));
   const keyFileContents: Record<string, string> = {};
   for (const file of keyFiles) {
@@ -31,7 +31,7 @@ async function getProjectContext(projectDir: string) {
   }
   const fileTreeSummary = [
     ...files.filter(f => f.startsWith("src/pages/") || ["src/App.tsx", "src/routes.tsx", "src/main.tsx"].includes(f)),
-    `src/components/ui/ (shadcn components: ${shadcnComponents.join(", ")})`
+    `src/components/elements/ (shadcn components: ${shadcnComponents.join(", ")})`
   ];
   return { scheme, files, shadcnComponents, keyFileContents, fileTreeSummary };
 }
@@ -65,11 +65,12 @@ async function listFiles(dir: string, base = dir): Promise<string[]> {
 function makeBasePrompt(ctx: ReturnType<typeof getProjectContext> extends Promise<infer T> ? T : never) {
   return `You are Auto, an AI software engineer that helps users build web applications.
 
-Your job: Plan and implement all necessary changes to make the project match the schema. 
-- Reuse existing components where possible (especially shadcn components in src/components/ui, which you can treat as standard shadcn components).
+Your job: Plan and implement all necessary changes to make the project match the schema
+- Make the app look beautiful, and do some basic branding work to feel like a unique app across pages
+- Reuse existing components where possible (especially shadcn components in src/components/elements, which you can treat as standard shadcn components, other components are located under src/components/modules and src/components/sections, always check if they exist first before creating).
 - Only create new files if they do not exist.
 - Update routing and navigation as needed.
-- only import as relative path, and make sure to chose between named or default exports per file
+- only import as relative path and named imports, and make sure to always use named exports when creating new files
 - Output a JSON array of planned changes, each with:
   - action: "create" | "update"
   - file: relative file path
@@ -122,21 +123,50 @@ async function fixErrorsLoop(ctx: any, projectDir: string) {
   for (let i = 0; i < maxIterations; ++i) {
     const tsErrors = await getTsErrors(projectDir);
     if (tsErrors.length) {
-      const errorFiles = Array.from(new Set(tsErrors.map(line => {
-        const match = line.match(/([^\s\(\)]+\.tsx?)/);
-        return match ? match[1] : null;
-      }))).filter((f): f is string => Boolean(f));
-      const errorFeedback = tsErrors.join("\n");
-      const fixupPrompt = `${makeBasePrompt(ctx)}\nAfter your previous changes, the application produced the following TypeScript errors:\n\n${errorFeedback}\n\nYou must fix ALL errors in the list above. If there are multiple errors in a file, fix them all in one go.\nOutput a JSON array of planned changes, each with:\n  - action: \"update\"\n  - file: relative file path\n  - description: \"Fix TypeScript errors\"\n  - content: the full new code for the file\n\nRespond with only a JSON array, no explanation, no markdown, no code block.`;
-      const fixupPlanText = await callAI(fixupPrompt);
-      let fixupPlan: { action: string, file: string, content: string }[] = [];
-      try { fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)); } catch { console.error("Could not parse TS fixup plan from LLM:", fixupPlanText); }
-      for (const fix of fixupPlan) {
-        if (fix.action === 'update' && fix.file && fix.content) {
-          const outPath = path.join(projectDir, fix.file);
-          await fs.mkdir(path.dirname(outPath), { recursive: true });
-          await fs.writeFile(outPath, fix.content, "utf-8");
-          console.log(`Fixed ${fix.file} for TS errors`);
+      const errorDetails: Array<{
+        file: string;
+        line: number;
+        message: string;
+      }> = tsErrors.map(line => {
+        // Example error: src/components/Foo.tsx(42,13): error TS2345: ...
+        const match = line.match(/([^\s\(\)]+\.tsx?)\((\d+),\d+\): (.+)/);
+        if (match) {
+          return {
+            file: match[1],
+            line: parseInt(match[2], 10),
+            message: match[3].trim(),
+          };
+        }
+        // fallback: try to extract file and message
+        const fallback = line.match(/([^\s\(\)]+\.tsx?): (.+)/);
+        return {
+          file: fallback ? fallback[1] : 'unknown',
+          line: 1,
+          message: fallback ? fallback[2].trim() : line,
+        };
+      }).filter(e => e.file !== 'unknown');
+
+      for (const error of errorDetails) {
+        const filePath = path.join(projectDir, error.file);
+        let fileLines: string[] = [];
+        try {
+          const fileContent = await fs.readFile(filePath, "utf-8");
+          fileLines = fileContent.split("\n");
+        } catch { }
+        // Get the error line and optionally one before/after for context
+        const idx = error.line - 1;
+        const contextLines = [
+          fileLines[idx - 1] || '',
+          fileLines[idx] || '',
+          fileLines[idx + 1] || ''
+        ];
+        const contextStr = contextLines.map((l, i) => `Line ${error.line - 1 + i}:\n${l}`).join("\n");
+        const fixupPrompt = `File: ${error.file}\n${contextStr}\n\nTypeScript Error:\n${error.message}\n\nPlease suggest a fix for Line ${error.line} only. Respond with the corrected line of code, no explanation, no markdown.`;
+        const fix = await callAI(fixupPrompt);
+        if (fix && fileLines[idx] !== undefined) {
+          fileLines[idx] = fix.trim();
+          await fs.writeFile(filePath, fileLines.join("\n"), "utf-8");
+          console.log(`Fixed ${error.file} line ${error.line}`);
         }
       }
       continue;
@@ -186,8 +216,8 @@ export async function runAIAgent(projectDir: string) {
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);
-  await fixConsoleErrors(ctx, projectDir);
-  await closeBrowser();
+  // await fixConsoleErrors(ctx, projectDir);
+  // await closeBrowser();
   console.log('AI project implementation complete!');
 }
 

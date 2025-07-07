@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "React Application Scaffold Schema",
-  "description": "A schema defining the structure of a frontend React application based on elements, modules, sections, and pages.",
+  "description": "A schema defining the structure and UX of a frontend React application based on elements, modules, sections, and pages.",
   "type": "object",
   "properties": {
     "schema_description": {
@@ -103,7 +103,19 @@
                 "composition": {
                   "type": "object",
                   "properties": {
+                    "elements": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "modules": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sections": {
                       "type": "array",
                       "items": {
                         "type": "string"
