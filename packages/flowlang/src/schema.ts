@@ -36,7 +36,8 @@ const DestinationSchema = z.discriminatedUnion('type', [
 const OriginSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('projection'),
-    name: z.string().describe('Projection name')
+    name: z.string(),
+    idField: z.string().describe('Field from event used as the projection’s unique identifier')
   }),
   z.object({
     type: z.literal('readModel'),
@@ -164,9 +165,6 @@ const QuerySliceSchema = BaseSliceSchema.extend({
       given: z.array(EventExampleSchema).describe('Given events'),
       then: z.array(StateExampleSchema).describe('Then update state')
     })),
-    readModel: z.string().describe('Read model type name').optional(),
-    idField: z.string().describe('Field used as document ID').optional(),
-    collectionName: z.string().describe('Collection name for the projection').optional()
   })
 }).describe('Query slice for reading data and maintaining projections');
 
