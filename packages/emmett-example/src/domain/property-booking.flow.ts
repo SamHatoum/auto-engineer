@@ -8,7 +8,7 @@ import type { CreateListing } from './flows/host-manages-listings/create-listing
 import type { RequestBooking } from './flows/guest-booking/guest-submits-booking-request/commands';
 import type { NotifyHost } from './flows/guest-booking/host-manages-booking-request/commands';
 import type { RemoveProperty } from './flows/host-manages-listings/remove-property/commands';
-import type { AvailableProperty } from './shared/read-model';
+import type { AvailableProperty } from './flows/finding-an-available-property/search-for-available-property/read-model';
 
 import { MailChimp } from '@auto-engineer/mailchimp-integration';
 import { Twilio } from '@auto-engineer/twilio-integration';

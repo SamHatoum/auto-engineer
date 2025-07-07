@@ -2,7 +2,7 @@ import {DeciderSpecification} from '@event-driven-io/emmett';
 import {decide} from './decide';
 import {evolve} from './evolve';
 import {initialPropertyState, PropertyState} from './state';
-import {describe, expect, it} from 'vitest';
+import {describe, it} from 'vitest';
 import {RemoveProperty} from "./commands";
 import {ListingCreated} from "../create-listing";
 import {PropertyRemoved} from "./events";
@@ -52,17 +52,15 @@ describe('Property | RemoveProperty', () => {
     });
 
     it('should throw if property is not listed', () => {
-        const initialState = initialPropertyState();
-
-        expect(() => decide({
-            type: 'RemoveProperty',
-            data: {
-                propertyId: 'property-123',
-                hostId: 'host-abc',
-            },
-            metadata: {now},
-        }, initialState)).toThrow(
-            'Cannot remove a property that is not listed'
-        );
+        given([])
+            .when({
+                type: 'RemoveProperty',
+                data: {
+                    propertyId: 'property-123',
+                    hostId: 'host-abc',
+                },
+                metadata: {now},
+            })
+            .thenThrows((error: Error) => error.message === 'Cannot remove a property that is not listed');
     });
 });

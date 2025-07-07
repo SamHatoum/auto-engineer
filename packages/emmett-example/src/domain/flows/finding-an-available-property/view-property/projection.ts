@@ -1,11 +1,11 @@
 import type { PropertyRemoved } from '../../host-manages-listings/remove-property';
-import type { ViewProperty } from './views';
 import {
     inMemorySingleStreamProjection,
     type ReadEvent,
     type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
 import {ListingCreated} from "../../host-manages-listings/create-listing";
+import {ViewProperty} from "./readmodel";
 
 type PropertyEvent = ListingCreated | PropertyRemoved;
 

@@ -27,8 +27,8 @@ export class AvailableProperties {
         return this.collection.find((property) => {
             if (location && !property.location.toLowerCase().includes(location.toLowerCase())) return false;
             if (maxPrice && property.pricePerNight > maxPrice) return false;
-            if (minGuests && property.maxGuests < minGuests) return false;
-            return true;
+            return !(minGuests && property.maxGuests < minGuests);
+
         });
     }
 }

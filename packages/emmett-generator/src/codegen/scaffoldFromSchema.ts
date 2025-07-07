@@ -4,7 +4,7 @@ import ejs from 'ejs';
 import {ensureDirExists, ensureDirPath, toKebabCase} from './utils/path';
 import {camelCase, pascalCase} from 'change-case';
 import prettier from 'prettier';
-import {CommandExample, EventExample, Flow, SpecsSchemaType, Slice} from '@auto-engineer/flowlang';
+import {CommandExample, EventExample, Flow, Slice, SpecsSchemaType} from '@auto-engineer/flowlang';
 
 const defaultFilesByType: Record<string, string[]> = {
     command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
@@ -62,8 +62,7 @@ function extractMessagesFromSpecs(
         return { commands: [], events: [], commandSchemasByName: {} };
     }
 
-    const commandSlice = slice;
-    const gwtSpecs = commandSlice.server?.gwt ?? [];
+    const gwtSpecs = slice.server?.gwt ?? [];
 
     const commandSchemasByName: Record<string, Message> = {};
 
@@ -129,7 +128,8 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
         toKebabCase,
         camelCase,
         graphqlType,
-        formatTsValue
+        formatTsValue,
+        formatDataObject
     });
 }
 
@@ -164,8 +164,7 @@ function buildGwtMapping(slice: Slice): Record<string, (GwtCondition & { failing
         return {};
     }
 
-    const commandSlice = slice;
-    const gwtSpecs = commandSlice.server?.gwt ?? [];
+    const gwtSpecs = slice.server?.gwt ?? [];
 
     const mapping: Record<string, GwtCondition[]> = {};
 
@@ -190,7 +189,7 @@ function buildGwtMapping(slice: Slice): Record<string, (GwtCondition & { failing
             gwt.then.some(t => typeof t === 'object' && t != null && 'eventRef' in t)
         )?.when.exampleData ?? {};
 
-        const enriched = merged.map((gwt) => {
+        enhancedMapping[command] = merged.map((gwt) => {
             const hasError = gwt.then.some((t) => typeof t === 'object' && t != null && 'errorType' in t);
             if (!hasError) return gwt;
 
@@ -200,10 +199,8 @@ function buildGwtMapping(slice: Slice): Record<string, (GwtCondition & { failing
                 })
                 .map(([key]) => key);
 
-            return { ...gwt, failingFields: invalidKeys };
+            return {...gwt, failingFields: invalidKeys};
         });
-
-        enhancedMapping[command] = enriched;
     }
 
     return enhancedMapping;
@@ -235,6 +232,16 @@ function formatTsValue(value: unknown, tsType: string): string {
 
     return JSON.stringify(value);
 }
+
+function formatDataObject(exampleData: Record<string, unknown>, schema: Message | undefined): string {
+    const lines = Object.entries(exampleData).map(([key, val]) => {
+        const typeDef = schema?.fields?.find((f) => f.name === key);
+        const tsType = typeDef?.tsType ?? 'string';
+        return `${key}: ${formatTsValue(val, tsType)}`;
+    });
+    return `{\n  ${lines.join(',\n  ')}\n}`;
+}
+
 
 // eslint-disable-next-line complexity
 export async function generateScaffoldFilePlans(

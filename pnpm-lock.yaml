@@ -45,6 +45,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4(@types/node@20.19.1)(jiti@2.4.2)(tsx@4.20.3))
+      eslint:
+        specifier: ^9.30.1
+        version: 9.30.1(jiti@2.4.2)
       husky:
         specifier: ^9.0.11
         version: 9.1.7

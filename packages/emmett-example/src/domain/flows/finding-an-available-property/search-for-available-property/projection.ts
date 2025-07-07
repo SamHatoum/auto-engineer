@@ -3,9 +3,9 @@ import {
     type ReadEvent,
     type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
-import type { AvailableProperty } from '../../../shared/read-model';
-import type { ListingCreated } from '../../host-manages-listings/create-listing/events';
-import type { PropertyRemoved } from '../../host-manages-listings/remove-property/events';
+import type { AvailableProperty } from './read-model';
+import type { ListingCreated } from '../../host-manages-listings/create-listing';
+import type { PropertyRemoved } from '../../host-manages-listings/remove-property';
 
 type PropertyEvent = ListingCreated | PropertyRemoved;
 

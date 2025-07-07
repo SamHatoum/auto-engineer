@@ -6,10 +6,10 @@ import {
     newEventsInStream,
 } from '@event-driven-io/emmett';
 import { projection } from './projection';
-import { AvailableProperty } from '../../../shared/read-model';
+import { AvailableProperty } from './read-model';
 
-import type { ListingCreated } from '../../host-manages-listings/create-listing/events';
-import type { PropertyRemoved } from '../../host-manages-listings/remove-property/events';
+import type { ListingCreated } from '../../host-manages-listings/create-listing';
+import type { PropertyRemoved } from '../../host-manages-listings/remove-property';
 
 type PropertyEvent = ListingCreated | PropertyRemoved;
 

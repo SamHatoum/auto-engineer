@@ -4,40 +4,6 @@ import { decide } from './decide';
 import { evolve } from './evolve';
 import { initialState } from './state';
 
-<%
-// Helper to format a value based on its TypeScript type
-function formatTsValue(value, tsType) {
-    if (tsType === 'Date') {
-        return `new Date('${value}')`;
-    }
-    if (tsType === 'string') {
-        return `'${value}'`;
-    }
-    if (tsType === 'boolean' || tsType === 'number') {
-        return String(value);
-    }
-    if (Array.isArray(value)) {
-        return `[${value.map(v => formatTsValue(v, tsType.replace('[]', ''))).join(', ')}]`;
-    }
-    if (typeof value === 'object' && value !== null) {
-        const entries = Object.entries(value)
-                .map(([k, v]) => `${k}: ${formatTsValue(v, 'string')}`);
-        return `{ ${entries.join(', ')} }`;
-    }
-    return JSON.stringify(value);
-}
-
-// Helper to format an entire data object based on its schema
-function formatDataObject(exampleData, schema) {
-    const lines = Object.entries(exampleData).map(([key, val]) => {
-        const typeDef = schema?.fields?.find((f) => f.name === key);
-        const tsType = typeDef?.tsType || 'string';
-        return `${key}: ${formatTsValue(val, tsType)}`;
-    });
-    return `{\n  ${lines.join(',\n  ')}\n}`;
-}
-%>
-
 describe('<%= flowName %> | <%= sliceName %>', () => {
 const given = DeciderSpecification.for({
 decide,
