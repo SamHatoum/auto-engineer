@@ -23,7 +23,7 @@ export interface FluentQuerySliceBuilder {
   client(description: string, fn: () => void): FluentQuerySliceBuilder;
   server(fn: () => void): FluentQuerySliceBuilder;
   server(description: string, fn: () => void): FluentQuerySliceBuilder;
-  request(query: any): FluentQuerySliceBuilder;
+  request(query: unknown): FluentQuerySliceBuilder;
 }
 
 export interface FluentReactionSliceBuilder {
@@ -39,7 +39,10 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   }
 
   stream(name: string): FluentCommandSliceBuilder {
-    getCurrentSlice().stream = name;
+    const slice = getCurrentSlice();
+    if (slice) {
+      slice.stream = name;
+    }
     return this;
   }
 
@@ -50,7 +53,7 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback) {
+    if (callback && slice) {
       startClientBlock(slice, description);
       callback();
       endClientBlock();
@@ -66,7 +69,7 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback) {
+    if (callback && slice) {
       startServerBlock(slice, description);
       callback();
       endServerBlock();
@@ -84,7 +87,10 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   }
 
   retries(count: number): FluentCommandSliceBuilder {
-    getCurrentSlice().retries = count;
+    const slice = getCurrentSlice();
+    if (slice) {
+      slice.retries = count;
+    }
     return this;
   }
 }
@@ -101,7 +107,7 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback) {
+    if (callback && slice) {
       startClientBlock(slice, description);
       callback();
       endClientBlock();
@@ -117,7 +123,7 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback) {
+    if (callback && slice) {
       startServerBlock(slice, description);
       callback();
       endServerBlock();
@@ -126,8 +132,11 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
     return this;
   }
 
-  request(query: any): FluentQuerySliceBuilder {
-    getCurrentSlice().request = query;
+  request(query: unknown): FluentQuerySliceBuilder {
+    const slice = getCurrentSlice();
+    if (slice) {
+      slice.request = query;
+    }
     return this;
   }
 }
@@ -144,7 +153,7 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback) {
+    if (callback && slice) {
       startServerBlock(slice, description);
       callback();
       endServerBlock();
@@ -162,7 +171,10 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   }
 
   retries(count: number): FluentReactionSliceBuilder {
-    getCurrentSlice().retries = count;
+    const slice = getCurrentSlice();
+    if (slice) {
+      slice.retries = count;
+    }
     return this;
   }
 }

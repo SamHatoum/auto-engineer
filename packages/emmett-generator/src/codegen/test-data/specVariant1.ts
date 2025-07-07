@@ -1,4 +1,4 @@
-import { SpecsSchema } from '@auto-engineer/flowlang';
+import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flowlang';
 
 const specVariant1: SpecsSchema = {
     variant: 'specs',
@@ -9,6 +9,7 @@ const specVariant1: SpecsSchema = {
             slices: [
                 {
                     type: 'command',
+                    stream: 'item-${itemId}',
                     name: 'Create item',
                     description: 'Handles item creation',
                     client: {

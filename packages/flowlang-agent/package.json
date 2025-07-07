@@ -8,7 +8,9 @@
     "dev": "tsc --watch",
     "start": "tsx -r dotenv/config src/index.ts",
     "test": "vitest run",
-    "cli-test": "tsx -r dotenv/config src/cli.ts"
+    "cli-test": "tsx -r dotenv/config src/cli.ts",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@auto-engineer/ai-integration": "workspace:*",

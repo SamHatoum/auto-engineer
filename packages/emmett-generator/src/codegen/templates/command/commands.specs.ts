@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {SpecsSchema} from "@auto-engineer/flowlang";
+import {SpecsSchemaType as SpecsSchema} from "@auto-engineer/flowlang";
 import {generateScaffoldFilePlans} from "../../scaffoldFromSchema";
 
 describe('commands.ts.ejs', () => {
@@ -66,7 +66,7 @@ describe('commands.ts.ejs', () => {
         const commandFile = plans.find((p) => p.outputPath.endsWith('commands.ts'));
 
         expect(commandFile?.contents).toMatchInlineSnapshot(`
-          "import { Command } from '@event-driven-io/emmett/.';
+          "import { Command } from '@event-driven-io/emmett';
           export type CreateListing = Command<
             'CreateListing',
             {

@@ -13,6 +13,7 @@ initialState,
 
 <% for (const commandName in gwtMapping) {
     const cases = gwtMapping[commandName];
+    const schema = commandSchemasByName[commandName];
         for (const [i, gwt] of cases.entries()) {
     const example = gwt.when;
     const eventResults = gwt.then.filter(t => 'eventRef' in t);
@@ -25,14 +26,14 @@ it('<%- testName %>', () => {
 given([
 <%_ if (gwt.given && gwt.given.length) { _%>
     <%- gwt.given.map(g => `{
-          type: '${g.eventRef}',
-          data: ${JSON.stringify(g.exampleData, null, 2)}
-        }`).join(',\n      ') %>
+        type: '${g.eventRef}',
+        data: ${formatDataObject(g.exampleData, events.find(e => e.type === g.eventRef))}
+      }`).join(',\n      ') %>
 <%_ } _%>
 ])
 .when({
 type: '<%= example.commandRef %>',
-data: <%- JSON.stringify(example.exampleData, null, 2) %>,
+data: <%- formatDataObject(example.exampleData, schema) %>,
 metadata: { now: new Date() }
 })
 <% if (errorResult) { %>
@@ -41,7 +42,7 @@ metadata: { now: new Date() }
     .then([
     <%- eventResults.map(e => `{
         type: '${e.eventRef}',
-        data: ${JSON.stringify(e.exampleData, null, 2)}
+        data: ${formatDataObject(e.exampleData, events.find(evt => evt.type === e.eventRef))}
       }`).join(',\n      ') %>
     ]);
 <% } %>

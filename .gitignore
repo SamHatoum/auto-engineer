@@ -38,6 +38,7 @@ Thumbs.db
 # Testing
 coverage
 .nyc_output
+.flows-test-output
 
 # Changesets
 !.changeset/config.json

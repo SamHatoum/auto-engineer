@@ -6,7 +6,31 @@ import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
 import { z } from 'zod';
 
-export type AIProvider = 'openai' | 'anthropic' | 'google' | 'xai';
+interface AIToolValidationError extends Error {
+  cause?: {
+    issues?: unknown[];
+    [key: string]: unknown;
+  };
+  issues?: unknown[];
+  errors?: unknown[];
+  zodIssues?: unknown[];
+  validationDetails?: {
+    cause?: {
+      issues?: unknown[];
+    };
+    issues?: unknown[];
+    errors?: unknown[];
+  };
+  schemaDescription?: string;
+  [key: string]: unknown;
+}
+
+export enum AIProvider {
+  OpenAI = 'openai',
+  Anthropic = 'anthropic',
+  Google = 'google',
+  XAI = 'xai',
+}
 
 export interface AIOptions {
   model?: string;
@@ -22,10 +46,8 @@ export interface StructuredAIOptions<T> extends Omit<AIOptions, 'streamCallback'
 }
 
 export interface StreamStructuredAIOptions<T> extends StructuredAIOptions<T> {
-  onPartialObject?: (partialObject: any) => void;
+  onPartialObject?: (partialObject: unknown) => void;
 }
-
-export type { AIConfig } from './config';
 
 const defaultOptions: AIOptions = {
   temperature: 0.7,
@@ -34,33 +56,34 @@ const defaultOptions: AIOptions = {
 
 function getDefaultModel(provider: AIProvider): string {
   switch (provider) {
-    case 'openai':
+    case AIProvider.OpenAI:
       return 'gpt-4o-mini';
-    case 'anthropic':
+    case AIProvider.Anthropic:
       return 'claude-sonnet-4-20250514';
-    case 'google':
+    case AIProvider.Google:
       return 'gemini-2.5-pro';
-    case 'xai':
+    case AIProvider.XAI:
       return 'grok-3';
     default:
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`Unknown provider: ${provider}`);
   }
 }
 
 function getModel(provider: AIProvider, model?: string) {
-  const modelName = model || getDefaultModel(provider);
+  const modelName = model ?? getDefaultModel(provider);
   
   switch (provider) {
-    case 'openai':
+    case AIProvider.OpenAI:
       return openai(modelName);
-    case 'anthropic':
+    case AIProvider.Anthropic:
       return anthropic(modelName);
-    case 'google':
-      return google(modelName as string);
-    case 'xai':
-      return xai(modelName as string);
+    case AIProvider.Google:
+      return google(modelName);
+    case AIProvider.XAI:
+      return xai(modelName);
     default:
-      throw new Error(`Unknown provider: ${provider}`);
+      throw new Error(`Unknown provider: ${provider as string}`);
   }
 }
 
@@ -70,7 +93,7 @@ export async function generateTextWithAI(
   options: AIOptions = {}
 ): Promise<string> {
   const finalOptions = { ...defaultOptions, ...options };
-  const model = finalOptions.model || getDefaultModel(provider);
+  const model = finalOptions.model ?? getDefaultModel(provider);
   const modelInstance = getModel(provider, model);
   
   const result = await generateText({
@@ -134,37 +157,78 @@ export async function generateTextStreamingWithAI(
 export function getAvailableProviders(): AIProvider[] {
   const config = configureAIProvider();
   const providers: AIProvider[] = [];
-  if (config.openai) providers.push('openai');
-  if (config.anthropic) providers.push('anthropic');
-  if (config.google) providers.push('google');
-  if (config.xai) providers.push('xai');
+  if (config.openai != null) providers.push(AIProvider.OpenAI);
+  if (config.anthropic != null) providers.push(AIProvider.Anthropic);
+  if (config.google != null) providers.push(AIProvider.Google);
+  if (config.xai != null) providers.push(AIProvider.XAI);
   return providers;
+}
+
+function getEnhancedPrompt(prompt: string, lastError: AIToolValidationError): string {
+  const errorDetails = lastError.zodIssues
+    ? JSON.stringify(lastError.zodIssues, null, 2)
+    : lastError.validationDetails?.cause?.issues
+    ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
+    : lastError.message;
+
+  return `${prompt}\\n\\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\\n${errorDetails}\\n\\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
+}
+
+function isSchemaError(error: Error): boolean {
+  return (
+    error.message.includes('response did not match schema') ||
+    error.message.includes('TypeValidationError') ||
+    error.name === 'AI_TypeValidationError'
+  );
+}
+
+function enhanceValidationError(error: AIToolValidationError): AIToolValidationError {
+  const enhancedError = new Error(error.message) as AIToolValidationError;
+  Object.assign(enhancedError, error);
+
+  if (error.cause !== undefined || error.issues !== undefined || error.errors !== undefined) {
+    enhancedError.validationDetails = {
+      cause: error.cause,
+      issues: error.issues,
+      errors: error.errors,
+    };
+  }
+
+  if (error.message.includes('response did not match schema') && 'cause' in error && typeof error.cause === 'object' && error.cause !== null && 'issues' in error.cause) {
+    enhancedError.zodIssues = error.cause.issues as unknown[];
+  }
+  return enhancedError;
+}
+
+function handleFailedRequest(
+  lastError: AIToolValidationError | undefined,
+  maxRetries: number,
+  attempt: number,
+): { shouldRetry: boolean; enhancedError?: AIToolValidationError } {
+  if (!lastError || !isSchemaError(lastError) || attempt >= maxRetries - 1) {
+    return { shouldRetry: false, enhancedError: lastError };
+  }
+
+  console.log(`Schema validation failed on attempt ${attempt + 1}/${maxRetries}, retrying...`);
+  const enhancedError = enhanceValidationError(lastError);
+
+  return { shouldRetry: true, enhancedError };
 }
 
 export async function generateStructuredDataWithAI<T>(
   prompt: string,
   provider: AIProvider,
-  options: StructuredAIOptions<T>
+  options: StructuredAIOptions<T>,
 ): Promise<T> {
   const maxSchemaRetries = 3;
-  let lastError: any;
-  
+  let lastError: AIToolValidationError | undefined;
+
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
       const model = getModel(provider, options.model);
-      
-      // Enhance prompt with error feedback on retry attempts
-      let enhancedPrompt = prompt;
-      if (attempt > 0 && lastError) {
-        const errorDetails = lastError.zodIssues 
-          ? JSON.stringify(lastError.zodIssues, null, 2)
-          : lastError.validationDetails?.cause?.issues 
-          ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
-          : lastError.message;
-        
-        enhancedPrompt = `${prompt}\n\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\n${errorDetails}\n\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
-      }
-      
+
+      const enhancedPrompt = attempt > 0 && lastError ? getEnhancedPrompt(prompt, lastError) : prompt;
+
       const result = await generateObject({
         model,
         prompt: enhancedPrompt,
@@ -174,57 +238,23 @@ export async function generateStructuredDataWithAI<T>(
         temperature: options.temperature,
         maxTokens: options.maxTokens,
       });
-      
+
       return result.object;
-    } catch (error) {
-      lastError = error;
-      
-      // Check if it's a schema validation error
-      const isSchemaError = error instanceof Error && (
-        error.message.includes('response did not match schema') ||
-        error.message.includes('TypeValidationError') ||
-        (error as any).name === 'AI_TypeValidationError'
-      );
-      
-      // Only retry on schema validation errors and if we have retries left
-      if (isSchemaError && attempt < maxSchemaRetries - 1) {
-        console.log(`Schema validation failed on attempt ${attempt + 1}/${maxSchemaRetries}, retrying...`);
-        
-        // Enhance error with validation details for better debugging
-        if (error instanceof Error) {
-          const enhancedError = new Error(error.message);
-          Object.assign(enhancedError, error);
-          
-          const errorObj = error as any;
-          if (errorObj.cause || errorObj.issues || errorObj.errors) {
-            (enhancedError as any).validationDetails = {
-              cause: errorObj.cause,
-              issues: errorObj.issues,
-              errors: errorObj.errors,
-            };
-          }
-          
-          if (error.message.includes('response did not match schema') && errorObj.cause) {
-            try {
-              if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
-                (enhancedError as any).zodIssues = errorObj.cause.issues;
-              }
-            } catch (parseError) {
-              // Ignore parsing errors
-            }
-          }
-          
-          lastError = enhancedError;
-        }
-        
-        continue; // Try again
+    } catch (error: unknown) {
+      lastError =
+        error instanceof Error
+          ? (error as AIToolValidationError)
+          : (new Error('An unknown error occurred') as AIToolValidationError);
+
+      const { shouldRetry, enhancedError } = handleFailedRequest(lastError, maxSchemaRetries, attempt);
+      lastError = enhancedError;
+
+      if (!shouldRetry) {
+        throw lastError;
       }
-      
-      // For non-schema errors or final attempt, throw
-      throw error;
     }
   }
-  
+
   // If we exhausted all retries, throw the last error
   throw lastError;
 }
@@ -232,27 +262,17 @@ export async function generateStructuredDataWithAI<T>(
 export async function streamStructuredDataWithAI<T>(
   prompt: string,
   provider: AIProvider,
-  options: StreamStructuredAIOptions<T>
+  options: StreamStructuredAIOptions<T>,
 ): Promise<T> {
   const maxSchemaRetries = 3;
-  let lastError: any;
-  
+  let lastError: AIToolValidationError | undefined;
+
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
       const model = getModel(provider, options.model);
-      
-      // Enhance prompt with error feedback on retry attempts
-      let enhancedPrompt = prompt;
-      if (attempt > 0 && lastError) {
-        const errorDetails = lastError.zodIssues 
-          ? JSON.stringify(lastError.zodIssues, null, 2)
-          : lastError.validationDetails?.cause?.issues 
-          ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
-          : lastError.message;
-        
-        enhancedPrompt = `${prompt}\n\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\n${errorDetails}\n\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
-      }
-      
+
+      const enhancedPrompt = attempt > 0 && lastError ? getEnhancedPrompt(prompt, lastError) : prompt;
+
       const result = streamObject({
         model,
         prompt: enhancedPrompt,
@@ -265,10 +285,10 @@ export async function streamStructuredDataWithAI<T>(
 
       // Stream partial objects if callback provided
       if (options.onPartialObject) {
-        (async () => {
+        void (async () => {
           try {
             for await (const partialObject of result.partialObjectStream) {
-              options.onPartialObject!(partialObject);
+              options.onPartialObject?.(partialObject);
             }
           } catch (streamError) {
             console.error('Error in partial object stream:', streamError);
@@ -278,80 +298,21 @@ export async function streamStructuredDataWithAI<T>(
 
       // Return the final complete object
       return await result.object;
-    } catch (error) {
-      lastError = error;
-      
-      // Check if it's a schema validation error
-      const isSchemaError = error instanceof Error && (
-        error.message.includes('response did not match schema') ||
-        error.message.includes('TypeValidationError') ||
-        (error as any).name === 'AI_TypeValidationError'
-      );
-      
-      // Only retry on schema validation errors and if we have retries left
-      if (isSchemaError && attempt < maxSchemaRetries - 1) {
-        console.log(`Schema validation failed on attempt ${attempt + 1}/${maxSchemaRetries}, retrying...`);
-        
-        // Enhance error with validation details for better debugging
-        if (error instanceof Error) {
-          const enhancedError = new Error(error.message);
-          Object.assign(enhancedError, error);
-          
-          const errorObj = error as any;
-          if (errorObj.cause || errorObj.issues || errorObj.errors) {
-            (enhancedError as any).validationDetails = {
-              cause: errorObj.cause,
-              issues: errorObj.issues,
-              errors: errorObj.errors,
-            };
-          }
-          
-          if (error.message.includes('response did not match schema') && errorObj.cause) {
-            try {
-              if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
-                (enhancedError as any).zodIssues = errorObj.cause.issues;
-              }
-            } catch (parseError) {
-              // Ignore parsing errors
-            }
-          }
-          
-          lastError = enhancedError;
-        }
-        
-        continue; // Try again
+    } catch (error: unknown) {
+      lastError =
+        error instanceof Error
+          ? (error as AIToolValidationError)
+          : (new Error('An unknown error occurred') as AIToolValidationError);
+
+      const { shouldRetry, enhancedError } = handleFailedRequest(lastError, maxSchemaRetries, attempt);
+      lastError = enhancedError;
+
+      if (!shouldRetry) {
+        throw lastError;
       }
-      
-      // For non-schema errors or final attempt, enhance and throw
-      if (error instanceof Error) {
-        const enhancedError = new Error(error.message);
-        Object.assign(enhancedError, error);
-        
-        const errorObj = error as any;
-        if (errorObj.cause || errorObj.issues || errorObj.errors) {
-          (enhancedError as any).validationDetails = {
-            cause: errorObj.cause,
-            issues: errorObj.issues,
-            errors: errorObj.errors,
-          };
-        }
-        
-        if (error.message.includes('response did not match schema') && errorObj.cause) {
-          try {
-            if (typeof errorObj.cause === 'object' && errorObj.cause.issues) {
-              (enhancedError as any).zodIssues = errorObj.cause.issues;
-            }
-          } catch (parseError) {
-            // Ignore parsing errors
-          }
-        }
-        
-        throw enhancedError;
-      }
-      throw error;
     }
   }
-  
+
   // If we exhausted all retries, throw the last error
   throw lastError;
 }

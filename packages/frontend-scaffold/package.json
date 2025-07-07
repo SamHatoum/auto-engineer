@@ -8,7 +8,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "type-check": "tsc --noEmit"
   },
   "publishConfig": {
     "access": "public"

@@ -4,7 +4,7 @@ import ejs from 'ejs';
 import {ensureDirExists, ensureDirPath, toKebabCase} from './utils/path';
 import {camelCase, pascalCase} from 'change-case';
 import prettier from 'prettier';
-import {CommandExample, EventExample, Flow, SpecsSchema} from '@auto-engineer/flowlang';
+import {CommandExample, EventExample, Flow, Slice, SpecsSchemaType} from '@auto-engineer/flowlang';
 
 const defaultFilesByType: Record<string, string[]> = {
     command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
@@ -17,48 +17,65 @@ export interface FilePlan {
     contents: string;
 }
 
-type Field = {
+interface Field {
     name: string;
     tsType: string;
-};
+    required: boolean;
+}
 
-type Message = {
+interface Message {
     type: string;
     fields: Field[];
-};
+}
 
-type GwtCondition = {
+interface MessageDefinition {
+    type: 'command' | 'event' | 'state';
+    name: string;
+    fields?: Array<{
+        name: string;
+        type: string;
+        required?: boolean;
+        description?: string;
+        defaultValue?: unknown;
+    }>;
+    metadata?: unknown;
+    description?: string;
+}
+
+
+interface GwtCondition {
     given?: EventExample[];
     when: CommandExample;
     then: Array<EventExample | { errorType: string; message?: string }>;
-};
+}
 
 function extractMessagesFromSpecs(
-    slice: any,
-    allMessages: SpecsSchema['messages']
+    slice: Slice,
+    allMessages: MessageDefinition[]
 ): {
     commands: Message[];
     events: Message[];
     commandSchemasByName: Record<string, Message>;
 } {
-    const gwtSpecs = Array.isArray(slice.server?.gwt)
-        ? slice.server.gwt
-        : slice.server?.gwt
-            ? [slice.server.gwt]
-            : [];
+    // Only process command slices for messages
+    if (slice.type !== 'command') {
+        return { commands: [], events: [], commandSchemasByName: {} };
+    }
+
+    const gwtSpecs = slice.server?.gwt ?? [];
 
     const commandSchemasByName: Record<string, Message> = {};
 
     const commands: Message[] = gwtSpecs
-        .map((gwt: { when: CommandExample }) => gwt.when)
-        .filter(Boolean)
-        .map((cmd: { commandRef: string }) => {
-            const messageDef = allMessages.find((m) => m.type === 'command' && m.name === cmd.commandRef);
+        .map((gwt) => gwt.when)
+        .filter((cmd): cmd is CommandExample => cmd != null)
+        .map((cmd) => {
+            const messageDef = allMessages.find((m: MessageDefinition) => m.type === 'command' && m.name === cmd.commandRef);
             const fields =
                 messageDef?.fields?.map((f) => ({
                     name: f.name,
                     tsType: f.type,
-                    required: f.required,
+                    required: f.required ?? true,
                 })) ?? [];
             commandSchemasByName[cmd.commandRef] = {
                 type: cmd.commandRef,
@@ -71,17 +88,17 @@ function extractMessagesFromSpecs(
         });
 
     const events: Message[] = gwtSpecs
-        .flatMap((gwt: { then: Array<EventExample | { errorType: string }> }) => gwt.then || [])
-        .filter((t: any): t is EventExample => 'eventRef' in t)
-        .map((event: { eventRef: string }) => {
-            const messageDef = allMessages.find((m) => m.type === 'event' && m.name === event.eventRef);
+        .flatMap((gwt) => gwt.then ?? [])
+        .filter((t: unknown): t is EventExample => typeof t === 'object' && t != null && 'eventRef' in t)
+        .map((event) => {
+            const messageDef = allMessages.find((m: MessageDefinition) => m.type === 'event' && m.name === event.eventRef);
             return {
                 type: event.eventRef,
                 fields:
                     messageDef?.fields?.map((f) => ({
                         name: f.name,
                         tsType: f.type,
-                        required: f.required,
+                        required: f.required ?? true,
                     })) ?? [],
             };
         });
@@ -89,7 +106,7 @@ function extractMessagesFromSpecs(
     return { commands, events, commandSchemasByName };
 }
 
-async function renderTemplate(templatePath: string, data: Record<string, any>): Promise<string> {
+async function renderTemplate(templatePath: string, data: Record<string, unknown>): Promise<string> {
     const content = await fs.readFile(templatePath, 'utf8');
     const template = ejs.compile(content, {async: true});
     const graphqlType = (tsType: string): string => {
@@ -110,12 +127,14 @@ async function renderTemplate(templatePath: string, data: Record<string, any>): 
         pascalCase,
         toKebabCase,
         camelCase,
-        graphqlType
+        graphqlType,
+        formatTsValue,
+        formatDataObject
     });
 }
 
-function resolveStreamId(stream: string, exampleData: Record<string, any>): string {
-    return stream.replace(/\$\{([^}]+)\}/g, (_, key) => exampleData?.[key] ?? `unknown`);
+function resolveStreamId(stream: string, exampleData: Record<string, unknown>): string {
+    return stream.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(exampleData?.[key] ?? 'unknown'));
 }
 
 function mergeGwtConditions(gwts: GwtCondition[]): GwtCondition[] {
@@ -123,7 +142,7 @@ function mergeGwtConditions(gwts: GwtCondition[]): GwtCondition[] {
 
     for (const gwt of gwts) {
         const key = JSON.stringify(gwt.when.exampleData);
-        const existing = map.get(key) || [];
+        const existing = map.get(key) ?? [];
         map.set(key, [...existing, gwt]);
     }
 
@@ -138,19 +157,21 @@ function mergeGwtConditions(gwts: GwtCondition[]): GwtCondition[] {
     });
 }
 
-function buildGwtMapping(slice: any): Record<string, (GwtCondition & { failingFields?: string[] })[]> {
-    const gwtSpecs = Array.isArray(slice.server?.gwt)
-        ? slice.server.gwt
-        : slice.server?.gwt
-            ? [slice.server.gwt]
-            : [];
+// eslint-disable-next-line complexity
+function buildGwtMapping(slice: Slice): Record<string, (GwtCondition & { failingFields?: string[] })[]> {
+    // Only process command slices for GWT mapping
+    if (slice.type !== 'command') {
+        return {};
+    }
+
+    const gwtSpecs = slice.server?.gwt ?? [];
 
     const mapping: Record<string, GwtCondition[]> = {};
 
     for (const gwt of gwtSpecs) {
         const command = gwt.when?.commandRef;
-        if (command) {
-            mapping[command] = mapping[command] || [];
+        if (command != null) {
+            mapping[command] = mapping[command] ?? [];
             mapping[command].push({
                 given: gwt.given,
                 when: gwt.when,
@@ -165,11 +186,11 @@ function buildGwtMapping(slice: any): Record<string, (GwtCondition & { failingFi
         const merged = mergeGwtConditions(mapping[command]);
 
         const successful = merged.find(gwt =>
-            gwt.then.some(t => 'eventRef' in t)
+            gwt.then.some(t => typeof t === 'object' && t != null && 'eventRef' in t)
         )?.when.exampleData ?? {};
 
-        const enriched = merged.map((gwt) => {
-            const hasError = gwt.then.some((t) => 'errorType' in t);
+        enhancedMapping[command] = merged.map((gwt) => {
+            const hasError = gwt.then.some((t) => typeof t === 'object' && t != null && 'errorType' in t);
             if (!hasError) return gwt;
 
             const invalidKeys = Object.entries(gwt.when.exampleData)
@@ -178,18 +199,54 @@ function buildGwtMapping(slice: any): Record<string, (GwtCondition & { failingFi
                 })
                 .map(([key]) => key);
 
-            return { ...gwt, failingFields: invalidKeys };
+            return {...gwt, failingFields: invalidKeys};
         });
-
-        enhancedMapping[command] = enriched;
     }
 
     return enhancedMapping;
 }
 
+// eslint-disable-next-line complexity
+function formatTsValue(value: unknown, tsType: string): string {
+    if (tsType === 'Date') {
+        return `new Date(${JSON.stringify(value)})`;
+    }
+    if (tsType === 'string') {
+        return JSON.stringify(value);
+    }
+    if (tsType === 'number') {
+        return String(value);
+    }
+    if (tsType === 'boolean') {
+        return value === true ? 'true' : 'false';
+    }
+    if (tsType.endsWith('[]') && Array.isArray(value)) {
+        const innerType = tsType.slice(0, -2);
+        return `[${value.map((v) => formatTsValue(v, innerType)).join(', ')}]`;
+    }
+    if (tsType === 'object' && typeof value === 'object' && value != null) {
+        const entries = Object.entries(value as Record<string, unknown>)
+            .map(([k, v]) => `${k}: ${formatTsValue(v, 'string')}`);
+        return `{ ${entries.join(', ')} }`;
+    }
+
+    return JSON.stringify(value);
+}
+
+function formatDataObject(exampleData: Record<string, unknown>, schema: Message | undefined): string {
+    const lines = Object.entries(exampleData).map(([key, val]) => {
+        const typeDef = schema?.fields?.find((f) => f.name === key);
+        const tsType = typeDef?.tsType ?? 'string';
+        return `${key}: ${formatTsValue(val, tsType)}`;
+    });
+    return `{\n  ${lines.join(',\n  ')}\n}`;
+}
+
+
+// eslint-disable-next-line complexity
 export async function generateScaffoldFilePlans(
     flows: Flow[],
-    messages: SpecsSchema['messages'],
+    messages: SpecsSchemaType['messages'],
     baseDir = 'src/domain/flows'
 ): Promise<FilePlan[]> {
     const plans: FilePlan[] = [];
@@ -199,20 +256,22 @@ export async function generateScaffoldFilePlans(
         for (const slice of flow.slices) {
             const sliceDir = ensureDirPath(flowDir, toKebabCase(slice.name));
             const templates = defaultFilesByType[slice.type];
-            if (!templates) continue;
+            if (templates == null) continue;
             const { commands, events, commandSchemasByName } = extractMessagesFromSpecs(slice, messages);
             for (const templateFile of templates) {
                 const templatePath = path.join(__dirname, './templates', slice.type, templateFile);
-                const fileName = templateFile.replace(/\.ts\.ejs$/, '.ts');
+                let fileName: string;
+                if (templateFile === 'specs.ts.ejs') {
+                    fileName = `${camelCase(slice.name)}.specs.ts`;
+                } else {
+                    fileName = templateFile.replace(/\.ts\.ejs$/, '.ts');
+                }
                 const outputPath = path.join(sliceDir, fileName);
                 let streamId: string | undefined = undefined;
                 if (slice.type === 'command') {
+                    const commandSlice = slice as Extract<Slice, { type: 'command' }>;
                     const streamPattern = slice.stream ?? `${toKebabCase(slice.name)}-\${id}`;
-                    const gwtSpecs = Array.isArray(slice.server?.gwt)
-                        ? slice.server.gwt
-                        : slice.server?.gwt
-                            ? [slice.server.gwt]
-                            : [];
+                    const gwtSpecs = commandSlice.server?.gwt ?? [];
 
                     const exampleData = gwtSpecs[0]?.when?.exampleData ?? {};
                     streamId = resolveStreamId(streamPattern, exampleData);
@@ -222,7 +281,7 @@ export async function generateScaffoldFilePlans(
                 for (const commandName in gwtMapping) {
                     for (const gwt of gwtMapping[commandName]) {
                         for (const t of gwt.then) {
-                            if ('errorType' in t) usedErrors.add(t.errorType);
+                            if (typeof t === 'object' && t != null && 'errorType' in t) usedErrors.add(t.errorType);
                         }
                     }
                 }
@@ -261,4 +320,13 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
         await fs.writeFile(outputPath, contents, 'utf8');
         console.log(`✅ Created: ${outputPath}`);
     }
+}
+
+export async function scaffoldFromSchema(
+    flows: Flow[],
+    messages: SpecsSchemaType['messages'],
+    baseDir = 'src/domain/flows'
+): Promise<void> {
+    const plans = await generateScaffoldFilePlans(flows, messages, baseDir);
+    await writeScaffoldFilePlans(plans);
 }

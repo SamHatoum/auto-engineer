@@ -1,20 +1,20 @@
-{
+       {
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
   },
   "include": [
-    "**/src/**/*"
+    "**/src/**/*",
+    "eslint.config.js"
   ],
   "exclude": [
     "**/dist/**",
-    "**/node_modules/**",
-    "**/*.specs.ts"
+    "**/node_modules/**"
   ],
   "references": [
     {
@@ -22,12 +22,6 @@
     },
     {
       "path": "./packages/emmett-generator"
-    },
-    {
-      "path": "./packages/example-mcp-server"
-    },
-    {
-      "path": "./packages/frontend-scaffold"
-    },
+    }
   ]
 }

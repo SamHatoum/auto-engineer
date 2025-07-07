@@ -1,7 +1,7 @@
-export type FlowSchema = {
+export interface FlowSchema {
     name: string;
-    slices: any[];
-};
+    slices: Record<string, unknown>[];
+}
 
 class FlowRegistry {
     private flows: FlowSchema[] = [];

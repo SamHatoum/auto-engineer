@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {generateScaffoldFilePlans} from '../../scaffoldFromSchema';
-import {SpecsSchema} from "@auto-engineer/flowlang";
+import {SpecsSchemaType as SpecsSchema} from "@auto-engineer/flowlang";
 
 describe('generateScaffoldFilePlans', () => {
     it('should generate a valid handle file', async () => {

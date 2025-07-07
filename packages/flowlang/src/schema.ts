@@ -7,12 +7,72 @@ const IntegrationSchema = z.object({
   source: z.string().describe('integration module source (e.g., @auto-engineer/mailchimp-integration)')
 }).describe('External service integration configuration');
 
+// Data flow schemas for unified architecture
+export const MessageTargetSchema = z.object({
+  type: z.enum(['Event', 'Command', 'State']).describe('Type of message to target'),
+  name: z.string().describe('Name of the specific message'),
+  fields: z.record(z.unknown()).optional().describe('Field selector for partial message targeting')
+}).describe('Target message with optional field selection');
+
+const DestinationSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('stream'),
+    pattern: z.string().describe('Stream pattern with interpolation (e.g., listing-${propertyId})')
+  }),
+  z.object({
+    type: z.literal('integration'),
+    systems: z.array(z.string()).describe('Integration names to send to')
+  }),
+  z.object({
+    type: z.literal('database'),
+    collection: z.string().describe('Database collection name')
+  }),
+  z.object({
+    type: z.literal('topic'),
+    name: z.string().describe('Message topic/queue name')
+  })
+]).describe('Destination for outbound data');
+
+const OriginSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('projection'),
+    name: z.string(),
+    idField: z.string().describe('Field from event used as the projection’s unique identifier')
+  }),
+  z.object({
+    type: z.literal('readModel'),
+    name: z.string().describe('Read model name')
+  }),
+  z.object({
+    type: z.literal('database'),
+    collection: z.string().describe('Database collection name'),
+    query: z.unknown().optional().describe('Optional query filter')
+  }),
+  z.object({
+    type: z.literal('api'),
+    endpoint: z.string().describe('API endpoint URL'),
+    method: z.string().optional().describe('HTTP method (defaults to GET)')
+  })
+]).describe('Origin for inbound data');
+
+export const DataSinkSchema = z.object({
+  target: MessageTargetSchema,
+  destination: DestinationSchema,
+  transform: z.string().optional().describe('Optional transformation function name')
+}).describe('Data sink configuration for outbound data flow');
+
+export const DataSourceSchema = z.object({
+  target: MessageTargetSchema,
+  origin: OriginSchema,
+  transform: z.string().optional().describe('Optional transformation function name')
+}).describe('Data source configuration for inbound data flow');
+
 const MessageFieldSchema = z.object({
   name: z.string(),
   type: z.string().describe('Field type (e.g., string, number, Date, UUID, etc.)'),
   required: z.boolean().default(true),
   description: z.string().optional(),
-  defaultValue: z.any().optional().describe('Default value for optional fields')
+  defaultValue: z.unknown().optional().describe('Default value for optional fields')
 }).describe('Field definition for a message');
 
 const BaseMessageSchema = z.object({
@@ -43,24 +103,25 @@ const MessageSchema = z.discriminatedUnion('type', [
   StateSchema
 ]);
 
-const EventExampleSchema = z.object({
+export const EventExampleSchema = z.object({
   eventRef: z.string().describe('Reference to event message by name'),
-  exampleData: z.record(z.any()).describe('Example data matching the event schema')
+  exampleData: z.record(z.unknown()).describe('Example data matching the event schema')
 }).describe('Event example with reference and data');
 
-const CommandExampleSchema = z.object({
+export const CommandExampleSchema = z.object({
   commandRef: z.string().describe('Reference to command message by name'),
-  exampleData: z.record(z.any()).describe('Example data matching the command schema')
+  exampleData: z.record(z.unknown()).describe('Example data matching the command schema')
 }).describe('Command example with reference and data');
 
 const StateExampleSchema = z.object({
   stateRef: z.string().describe('Reference to state message by name'),
-  exampleData: z.record(z.any()).describe('Example data matching the state schema')
+  exampleData: z.record(z.unknown()).describe('Example data matching the state schema')
 }).describe('State example with reference and data');
 
 const BaseSliceSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
+  stream: z.string().optional().describe('Event stream pattern for this slice'),
   via: z.array(z.string()).optional().describe('Integration names used by this slice')
 }).describe('Base properties shared by all slice types');
 
@@ -75,13 +136,13 @@ const ErrorExampleSchema = z.object({
 
 const CommandSliceSchema = BaseSliceSchema.extend({
   type: z.literal('command'),
-  stream: z.string().describe('Stream pattern (e.g., listing-${id})').optional(),
   client: z.object({
     description: z.string(),
     specs: z.array(z.string()).describe('UI specifications (should statements)')
   }),
   server: z.object({
     description: z.string(),
+    data: z.array(DataSinkSchema).optional().describe('Data sinks for command slices'),
     gwt: z.array(z.object({
       given: z.array(EventExampleSchema).optional(),
       when: CommandExampleSchema,
@@ -99,19 +160,24 @@ const QuerySliceSchema = BaseSliceSchema.extend({
   request: z.string().describe('Query request (GraphQL, REST endpoint, or other query format)').optional(),
   server: z.object({
     description: z.string(),
+    data: z.array(DataSourceSchema).optional().describe('Data sources for query slices'),
     gwt: z.array(z.object({
       given: z.array(EventExampleSchema).describe('Given events'),
       then: z.array(StateExampleSchema).describe('Then update state')
-    }))
+    })),
   })
 }).describe('Query slice for reading data and maintaining projections');
 
 const ReactSliceSchema = BaseSliceSchema.extend({
   type: z.literal('react'),
-  gwt: z.array(z.object({
-    when: z.array(EventExampleSchema).describe('When event(s) occur'),
-    then: z.array(CommandExampleSchema).describe('Then send command(s)')
-  }))
+  server: z.object({
+    description: z.string().optional(),
+    data: z.array(z.union([DataSinkSchema, DataSourceSchema])).optional().describe('Data items for react slices (mix of sinks and sources)'),
+    gwt: z.array(z.object({
+      when: z.array(EventExampleSchema).describe('When event(s) occur'),
+      then: z.array(CommandExampleSchema).describe('Then send command(s)')
+    }))
+  })
 }).describe('React slice for automated responses to events');
 
 const SliceSchema = z.discriminatedUnion('type', [
@@ -219,22 +285,16 @@ if (require.main === module) {
   console.log(JSON.stringify(schemas, null, 2));
 }
 
-export type MessageField = z.infer<typeof MessageFieldSchema>;
-export type Message = z.infer<typeof MessageSchema>;
-export type Integration = z.infer<typeof IntegrationSchema>;
-export type Command = z.infer<typeof CommandSchema>;
-export type Event = z.infer<typeof EventSchema>;
-export type State = z.infer<typeof StateSchema>;
-export type CommandExample = z.infer<typeof CommandExampleSchema>;
-export type EventExample = z.infer<typeof EventExampleSchema>;
-export type StateExample = z.infer<typeof StateExampleSchema>;
-export type CommandSlice = z.infer<typeof CommandSliceSchema>;
-export type QuerySlice = z.infer<typeof QuerySliceSchema>;
-export type ReactSlice = z.infer<typeof ReactSliceSchema>;
-export type Slice = z.infer<typeof SliceSchema>;
-export type Flow = z.infer<typeof FlowSchema>;
-export type FlowNamesSchema = z.infer<typeof FlowNamesSchema>;
-export type SliceNamesSchema = z.infer<typeof SliceNamesSchema>;
-export type ClientServerNamesSchema = z.infer<typeof ClientServerNamesSchema>;
-export type SpecsSchema = z.infer<typeof SpecsSchema>;
-export type AppSchema = z.infer<typeof AppSchema>;
+// Re-export schemas for external usage
+export {
+  MessageFieldSchema,
+  MessageSchema,
+  CommandSchema,
+  EventSchema,
+  StateSchema,
+  CommandSliceSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+  SliceSchema,
+  FlowSchema
+};

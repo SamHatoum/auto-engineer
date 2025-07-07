@@ -1,6 +1,6 @@
 import '@auto-engineer/config';
 import { MessageBus } from '@auto-engineer/message-bus';
-import { createFlowCommandHandler, CreateFlowCommand, FlowCreatedEvent } from '@auto-engineer/flowlang-agent';
+import { createFlowCommandHandler, CreateFlowCommand } from '@auto-engineer/flowlang-agent';
 
 const messageBus = new MessageBus();
 
@@ -15,12 +15,21 @@ const testMessageBus = async () => {
   console.clear();
   console.log('=== Testing Message Bus ===\n');
   
+  const isFlowVariant = (value: string): value is NonNullable<CreateFlowCommand['variant']> => {
+    return ['flow-names', 'slice-names', 'client-server-names', 'specs'].includes(value);
+  }
+
+  const variantValue = process.argv[3] || 'flow-names';
+  if (!isFlowVariant(variantValue)) {
+      throw new Error(`Invalid variant: ${variantValue}`);
+  }
+
   const command: CreateFlowCommand = {
     type: 'CreateFlow',
     requestId: `req-${Date.now()}`,
     timestamp: new Date(),
     prompt: process.argv[2] || 'Create a simple todo flow',
-    variant: (process.argv[3] || 'flow-names') as any,
+    variant: variantValue,
     useStreaming: true,
     streamCallback: (partialData) => {
       // Clear screen and show streaming output
@@ -48,5 +57,8 @@ const testMessageBus = async () => {
 if (require.main === module) {
   (async () => {
     await testMessageBus();
-  })();
+  })().catch((err) => {
+    console.error('Unhandled error in test:', err);
+    process.exit(1);
+  });
 }

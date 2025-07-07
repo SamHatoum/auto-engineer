@@ -17,7 +17,7 @@ export function clearCurrentFlow(): void {
     currentFlow = null;
 }
 
-export function getCurrentSlice(): any | null {
+export function getCurrentSlice(): Record<string, unknown> | null {
     const flow = getCurrentFlow();
     if (!flow) return null;
     if (flow.slices.length === 0) {
@@ -27,7 +27,7 @@ export function getCurrentSlice(): any | null {
     return flow.slices[flow.slices.length - 1];
 }
 
-export function startClientBlock(slice: any, description: string): void {
+export function startClientBlock(slice: Record<string, unknown>, description: string): void {
     slice.client = { specs: [] };
     slice.clientDescription = description;
     currentSpecTarget = 'client';
@@ -37,7 +37,7 @@ export function endClientBlock(): void {
     currentSpecTarget = null;
 }
 
-export function startServerBlock(slice: any, description: string): void {
+export function startServerBlock(slice: Record<string, unknown>, description: string): void {
     slice.server = { specs: [] };
     slice.serverDescription = description;
     currentSpecTarget = 'server';
@@ -51,13 +51,20 @@ export function pushSpec(description: string): void {
     const slice = getCurrentSlice();
     const target = currentSpecTarget;
     if (!target) throw new Error('No active spec target');
-    if (!slice[target]) slice[target] = { specs: [] };
-    slice[target].specs.push({ description, should: [] });
-    currentShouldList = slice[target].specs[slice[target].specs.length - 1].should;
+    if (!slice) throw new Error('No active slice');
+    
+    const sliceTarget = slice[target] as Record<string, unknown>;
+    if (typeof sliceTarget !== 'object' || sliceTarget === null) {
+        slice[target] = { specs: [] };
+    }
+    
+    const targetWithSpecs = slice[target] as { specs: Array<{ description: string; should: string[] }> };
+    targetWithSpecs.specs.push({ description, should: [] });
+    currentShouldList = targetWithSpecs.specs[targetWithSpecs.specs.length - 1].should;
 }
 
 export function startShouldBlock(description?: string): void {
-    if (description && currentShouldList) {
+    if (typeof description === 'string' && currentShouldList !== null) {
         currentShouldList.push(description);
     }
 }
@@ -67,16 +74,18 @@ export function endShouldBlock(): void {
 }
 
 
-export function recordWhen(command: any) {
+export function recordWhen(command: Record<string, unknown>) {
     const slice = getCurrentSlice();
-    const specs = slice?.server?.specs;
-    if (!specs || specs.length === 0) throw new Error('No active server spec to attach `when`');
+    const server = slice?.server as Record<string, unknown>;
+    const specs = server?.specs as Array<Record<string, unknown>>;
+    if (!Array.isArray(specs) || specs.length === 0) throw new Error('No active server spec to attach `when`');
     specs[specs.length - 1].when = command;
 }
 
-export function recordThen(...events: any[]) {
+export function recordThen(...events: Record<string, unknown>[]) {
     const slice = getCurrentSlice();
-    const specs = slice?.server?.specs;
-    if (!specs || specs.length === 0) throw new Error('No active server spec to attach `then`');
+    const server = slice?.server as Record<string, unknown>;
+    const specs = server?.specs as Array<Record<string, unknown>>;
+    if (!Array.isArray(specs) || specs.length === 0) throw new Error('No active server spec to attach `then`');
     specs[specs.length - 1].then = events;
 }

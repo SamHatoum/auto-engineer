@@ -149,20 +149,3 @@ flow('Host creates a listing', () => {
 
 });
 `;
-
-const newPrompt = `
-  Guest books a listing:
-  - Search for available listings (get)
-    - should have location filter
-    - should have price range slider
-    - should have guest count filter
-  - Host is notified
-
-  Host creates a listing:
-  - Create listing (post)
-    - should have fields for title, description, location, address
-    - should have price per night input 
-    - should have max guests selector
-    - should have amenities checklist
-`
-// use claude or geminine

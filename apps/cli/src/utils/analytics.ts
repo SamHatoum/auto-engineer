@@ -26,15 +26,19 @@ export class Analytics {
       return this.optedIn;
     }
 
-    // Check if explicitly disabled via environment variable
-    if (process.env.AUTO_ENGINEER_ANALYTICS === 'false') {
-      this.optedIn = false;
-      return false;
-    }
+    const isDisabled = process.env.AUTO_ENGINEER_ANALYTICS === 'false';
+    this.optedIn = !isDisabled;
+    return this.optedIn;
+  }
 
-    // Analytics enabled by default
-    this.optedIn = true;
-    return true;
+  private prepareAnalyticsData(data: Omit<AnalyticsData, 'timestamp' | 'version' | 'nodeVersion' | 'platform'>): AnalyticsData {
+    return {
+      ...data,
+      timestamp: Date.now(),
+      version: process.env.npm_package_version ?? '0.1.2',
+      nodeVersion: process.version,
+      platform: process.platform,
+    };
   }
 
   async track(data: Omit<AnalyticsData, 'timestamp' | 'version' | 'nodeVersion' | 'platform'>): Promise<void> {
@@ -44,16 +48,7 @@ export class Analytics {
       return;
     }
 
-    const analyticsData: AnalyticsData = {
-      ...data,
-      timestamp: Date.now(),
-      version: process.env.npm_package_version || '0.1.2',
-      nodeVersion: process.version,
-      platform: process.platform,
-    };
-
-    // In a real implementation, you would send this data to your analytics service
-    // For now, we'll just log it in debug mode
+    const analyticsData = this.prepareAnalyticsData(data);
     this.output.debug(`Analytics: ${JSON.stringify(analyticsData)}`);
   }
 
