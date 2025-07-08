@@ -30,7 +30,7 @@ async function getProjectContext(projectDir: string): Promise<ProjectContext> {
   const schemePath = path.join(projectDir, "auto-ia-scheme.json");
   const scheme = JSON.parse(await fs.readFile(schemePath, "utf-8")) as unknown;
   const files = await listFiles(projectDir);
-  const shadcnComponents = files.filter(f => f.startsWith("src/components/elements/") && f.endsWith(".tsx")).map(f => path.basename(f, ".tsx"));
+  const shadcnComponents = files.filter(f => f.startsWith("src/components/atoms/") && f.endsWith(".tsx")).map(f => path.basename(f, ".tsx"));
   const keyFiles = files.filter(f => f.startsWith("src/pages/") || ["src/App.tsx", "src/routes.tsx", "src/main.tsx"].includes(f));
   const keyFileContents: Record<string, string> = {};
   for (const file of keyFiles) {
@@ -41,8 +41,8 @@ async function getProjectContext(projectDir: string): Promise<ProjectContext> {
     }
   }
   const fileTreeSummary = [
-    ...files.filter(f => f.startsWith("src/pages/") || ["src/App.tsx", "src/routes.tsx", "src/main.tsx"].includes(f)),
-    `src/components/elements/ (shadcn components: ${shadcnComponents.join(", ")})`
+    ...files.filter(f => f.startsWith("src/pages/") || f.startsWith("src/hooks/") || f.startsWith("src/lib/") || ["src/App.tsx", "src/routes.tsx", "src/main.tsx"].includes(f)),
+    `src/components/atoms/ (shadcn components: ${shadcnComponents.join(", ")})`
   ];
   return { scheme, files, shadcnComponents, keyFileContents, fileTreeSummary };
 }
@@ -78,10 +78,11 @@ function makeBasePrompt(ctx: ProjectContext) {
 
 Your job: Plan and implement all necessary changes to make the project match the schema
 - Make the app look beautiful, and do some basic branding work to feel like a unique app across pages
-- Reuse existing components where possible (especially shadcn components in src/components/elements, which you can treat as standard shadcn components, other components are located under src/components/modules and src/components/sections, always check if they exist first before creating).
+- Reuse existing components where possible (especially shadcn components in src/components/atoms, which you can treat as standard shadcn components, other components are located under src/components/molecules and src/components/organisms, always check if they exist first before creating).
 - Only create new files if they do not exist.
 - Update routing and navigation as needed.
-- only import as relative path and named imports, and make sure to always use named exports when creating new files
+- when creating new components always use named exports, not defaults
+- when importing local and in project component and functions, always use named imports AND relative paths
 - Output a JSON array of planned changes, each with:
   - action: "create" | "update"
   - file: relative file path

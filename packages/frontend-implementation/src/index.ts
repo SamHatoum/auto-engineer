@@ -5,12 +5,28 @@ import * as fs from "fs/promises";
 import * as path from "path";
 
 interface Component {
-    type: string;
-    items?: Record<string, unknown>;
+  type: string;
+  items?: Record<string, unknown>;
 }
 
 interface Scheme {
-    generatedComponents?: Component[];
+  generatedComponents?: Component[];
+  atoms?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
+  molecules?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
+  organisms?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
+  pages?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
 }
 
 // Helper to recursively list files
@@ -32,6 +48,15 @@ async function readAutoIAScheme(directory: string): Promise<Scheme> {
   const filePath = path.join(directory, "auto-ia-scheme.json");
   const content = await fs.readFile(filePath, "utf-8");
   return JSON.parse(content) as Scheme;
+}
+
+function buildEntities(scheme: Scheme) {
+  const entities = [];
+  if (scheme.atoms) entities.push({ type: 'atoms', items: Object.keys(scheme.atoms.items ?? {}) });
+  if (scheme.molecules) entities.push({ type: 'molecules', items: Object.keys(scheme.molecules.items ?? {}) });
+  if (scheme.organisms) entities.push({ type: 'organisms', items: Object.keys(scheme.organisms.items ?? {}) });
+  if (scheme.pages) entities.push({ type: 'pages', items: Object.keys(scheme.pages.items ?? {}) });
+  return entities;
 }
 
 const server = new McpServer({
@@ -174,7 +199,7 @@ server.registerTool(
   "listAutoIASchemeEntities",
   {
     title: "List Entities from auto-ia-scheme.json",
-    description: "List all components, modules, sections, and pages defined in auto-ia-scheme.json.",
+    description: "List all atoms, molecules, organisms, and pages defined in auto-ia-scheme.json.",
     inputSchema: {
       directory: z.string().min(1, "Directory is required")
     }
@@ -182,10 +207,7 @@ server.registerTool(
   async ({ directory }: { directory: string }) => {
     try {
       const scheme = await readAutoIAScheme(directory);
-      const entities = scheme.generatedComponents?.map((comp) => ({
-        type: comp.type,
-        items: Object.keys(comp.items ?? {})
-      }));
+      const entities = buildEntities(scheme);
       return {
         content: [{
           type: "text",
@@ -213,10 +235,10 @@ async function cleanup() {
 }
 
 process.on("SIGTERM", () => {
-    void cleanup();
+  void cleanup();
 });
 process.on("SIGINT", () => {
-    void cleanup();
+  void cleanup();
 });
 
 async function startServer() {

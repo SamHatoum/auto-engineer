@@ -1,14 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "React Application Scaffold Schema",
-  "description": "A schema defining the structure and UX of a frontend React application based on elements, modules, sections, and pages.",
+  "title": "React Application Scaffold Schema (Atomic Design)",
+  "description": "A schema defining the structure and UX of a frontend React application based on atoms, molecules, organisms, and pages.",
   "type": "object",
   "properties": {
     "schema_description": {
       "description": "A high-level description of the schema's purpose.",
       "type": "string"
     },
-    "elements": {
+    "atoms": {
       "description": "Atomic UI primitives like buttons, inputs, etc., usually generated from shadcn.",
       "type": "object",
       "properties": {
@@ -37,8 +37,8 @@
         "items"
       ]
     },
-    "modules": {
-      "description": "Dumb components composed from elements. Stateless and reusable.",
+    "molecules": {
+      "description": "Components composed from atoms. Stateless and reusable.",
       "type": "object",
       "properties": {
         "description": {
@@ -56,19 +56,16 @@
                 "composition": {
                   "type": "object",
                   "properties": {
-                    "elements": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "modules": {
+                    "atoms": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       }
                     }
-                  }
+                  },
+                  "required": [
+                    "atoms"
+                  ]
                 }
               },
               "required": [
@@ -84,8 +81,8 @@
         "items"
       ]
     },
-    "sections": {
-      "description": "Smart UI components with data-fetching or logic. Composed of modules.",
+    "organisms": {
+      "description": "Smart UI components with data-fetching or logic. Composed of molecules only.",
       "type": "object",
       "properties": {
         "description": {
@@ -103,19 +100,7 @@
                 "composition": {
                   "type": "object",
                   "properties": {
-                    "elements": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "modules": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "sections": {
+                    "molecules": {
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -123,7 +108,7 @@
                     }
                   },
                   "required": [
-                    "modules"
+                    "molecules"
                   ]
                 },
                 "data_requirements": {
@@ -191,7 +176,7 @@
       ]
     },
     "pages": {
-      "description": "Top-level views composed of sections, modules, and elements. Tied to routes.",
+      "description": "Top-level views composed of organisms, molecules, and atoms. Tied to routes.",
       "type": "object",
       "properties": {
         "description": {
@@ -212,25 +197,16 @@
                 "layout": {
                   "type": "object",
                   "properties": {
-                    "sections": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "modules": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "elements": {
+                    "organisms": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       }
                     }
-                  }
+                  },
+                  "required": [
+                    "organisms"
+                  ]
                 },
                 "navigation": {
                   "type": "array",
@@ -318,9 +294,9 @@
   },
   "required": [
     "schema_description",
-    "elements",
-    "modules",
-    "sections",
+    "atoms",
+    "molecules",
+    "organisms",
     "pages"
   ]
 }

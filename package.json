@@ -17,7 +17,9 @@
     "release": "changeset publish",
     "prepare": "husky",
     "start": "pnpm --filter @auto-engineer/cli start",
-    "frontend-generation": "pnpm --filter @auto-engineer/frontend-scaffold start && pnpm --filter @auto-engineer/frontend-implementation ai-agent ../emmett-example/example-booking-app"
+    "frontend-scaffold": "pnpm --filter @auto-engineer/frontend-scaffold start && cd ./packages/emmett-example/example-booking-app && yarn",
+    "frontend-implementation": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../emmett-example/example-booking-app",
+    "frontend-generation": "pnpm frontend-scaffold && pnpm frontend-implementation"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

@@ -60,22 +60,22 @@ Instructions:
 
 - Respond ONLY with a JSON object, no explanation, no markdown, no text before or after.
 - The JSON should have two main sections: "components" and "pages".
-- In "components", define composite UI elements (analogous to elements, modules, sections) with:
+- In "components", define composite UI elements (atoms, molecules, organisms) with:
     - A description
     - A "composition" field listing the building blocks used, grouped by type:
-        - "elements": for atomic UI primitives (e.g., Button, Text, InputField)
-        - "modules": for reusable, mid-level components (e.g., SearchComponent, ListingCard)
-        - "sections": for larger layout or page sections (e.g., FilterBar, TopNavBar)
+        - "atoms": for atomic UI primitives (e.g., Button, Text, InputField)
+        - "molecules": for reusable, mid-level components (composed of atoms)
+        - "organisms": for larger, smart UI components (composed of molecules)
     - Example:
       "composition": {
-        "elements": ["Button", "Text"],
-        "modules": ["SearchComponent"],
-        "sections": ["TopNavBar"]
+        "atoms": ["Button", "Text"],
+        "molecules": ["SearchBar"],
+        "organisms": ["TopNavBar"]
       }
 - In "pages", define each page as a key, with:
     - route (URL path)
     - description
-    - layout (listing the components used)
+    - layout (listing the organisms used)
     - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
     - data_requirements (array, as above, for page-level data fetching)
 
@@ -104,7 +104,7 @@ Use the following structure as a template for your response:
     "PageName": {
       "route": "/route",
       "description": "What this page does.",
-      "layout": { "components": ["Component1", "Component2"] },
+      "layout": { "organisms": ["Organism1", "Organism2"] },
       "navigation": [{ "on": "Event", "to": "TargetPage" }],
       "data_requirements": [
         // ... as above
