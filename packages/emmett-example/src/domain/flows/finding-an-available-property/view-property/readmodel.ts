@@ -1,13 +1,5 @@
 import type { InMemoryEventStore } from '@event-driven-io/emmett';
-
-export type ViewProperty = {
-    propertyId: string;
-    title: string;
-    location: string;
-    address: string;
-    description: string;
-    amenities: string[];
-};
+import {ViewProperty} from "./state";
 
 export class ViewPropertyReadModel {
     private collection;

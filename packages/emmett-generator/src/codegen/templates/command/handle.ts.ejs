@@ -2,7 +2,7 @@ import { CommandHandler, type EventStore } from '@event-driven-io/emmett';
 import { evolve } from './evolve';
 import { initialState } from './state';
 import { decide } from './decide';
-import type { <%= commands.map(c => pascalCase(c.type)).join(' | ') %> } from './commands';
+import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './commands';
 import type { HandlerResult } from '../../../shared';
 
 const commandHandler = CommandHandler({

@@ -41,6 +41,60 @@ const specVariant1: SpecsSchema = {
                         ],
                     },
                 },
+                {
+                    type: 'query',
+                    name: 'Get available items',
+                    description: 'Projection of available items',
+                    client: {
+                        description: 'Show available items',
+                        specs: [],
+                    },
+                    server: {
+                        description: 'Project items based on ItemCreated',
+                        data: [
+                            {
+                                origin: {
+                                    type: 'projection',
+                                    name: 'ItemCreated',
+                                    idField: 'id',
+                                },
+                                target: {
+                                    type: 'State',
+                                    name: 'AvailableItems',
+                                    fields: {
+                                        id: { type: 'string' },
+                                        description: { type: 'string' },
+                                        addedAt: { type: 'Date' },
+                                    },
+                                },
+                            },
+                        ],
+                        gwt: [
+                            {
+                                given: [
+                                    {
+                                        eventRef: 'ItemCreated',
+                                        exampleData: {
+                                            id: 'item_123',
+                                            description: 'A new item',
+                                            addedAt: '2024-01-15T10:00:00.000Z',
+                                        },
+                                    },
+                                ],
+                                then: [
+                                    {
+                                        stateRef: 'AvailableItems',
+                                        exampleData: {
+                                            id: 'item_123',
+                                            description: 'A new item',
+                                            addedAt: '2024-01-15T10:00:00.000Z',
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
             ],
         },
     ],
@@ -62,6 +116,19 @@ const specVariant1: SpecsSchema = {
             name: 'ItemCreated',
             description: 'Event emitted when an item is created',
             source: 'internal',
+            fields: [
+                { name: 'id', type: 'string', required: true },
+                { name: 'description', type: 'string', required: true },
+                { name: 'addedAt', type: 'Date', required: true },
+            ],
+            metadata: {
+                version: 1,
+            },
+        },
+        {
+            type: 'state',
+            name: 'AvailableItems',
+            description: 'State representing available items in the system',
             fields: [
                 { name: 'id', type: 'string', required: true },
                 { name: 'description', type: 'string', required: true },

@@ -3,7 +3,12 @@ IllegalStateError<% if (usedErrors.includes('ValidationError')) { %>, Validation
 } from '@event-driven-io/emmett';
 import type { State } from './state';
 import type { <%= Object.keys(gwtMapping).map(pascalCase).join(', ') %> } from './commands';
-<% const uniqueEventTypes = [...new Set(events.map(e => pascalCase(e.type)))]; -%>
+<%
+const fallbackEvents = Object.values(gwtMapping).flatMap(scenarios =>
+        scenarios.flatMap(s => s.then?.filter(t => 'eventRef' in t) || [])
+);
+const uniqueEventTypes = [...new Set(fallbackEvents.map(e => pascalCase(e.eventRef)))];
+-%>
 <% if (uniqueEventTypes.length > 0) { -%>
     import type { <%= uniqueEventTypes.join(', ') %> } from './events';
 <% } -%>

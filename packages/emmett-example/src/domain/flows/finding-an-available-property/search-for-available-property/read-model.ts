@@ -1,12 +1,5 @@
 import type { InMemoryEventStore } from '@event-driven-io/emmett';
-
-export type AvailableProperty = {
-    propertyId: string;
-    title: string;
-    location: string;
-    pricePerNight: number;
-    maxGuests: number;
-};
+import {AvailableProperty} from "./state";
 
 export class AvailableProperties {
     private collection;
