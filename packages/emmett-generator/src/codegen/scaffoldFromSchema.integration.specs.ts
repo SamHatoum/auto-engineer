@@ -23,7 +23,7 @@ async function findTestFiles(dir: string): Promise<string[]> {
 }
 
 describe('Scaffold integration test', () => {
-    it.skip('should generate valid TypeScript code and only fail on "Not yet implemented" tests', async () => {
+    it('should generate valid TypeScript code and only fail on "Not yet implemented" tests', async () => {
         const outputDir = path.join(__dirname, '..', 'domain', '/.flows-test-output');
         await scaffoldFromSchema(testSpec.flows, testSpec.messages, outputDir);
         const testFiles = await findTestFiles(outputDir);
@@ -66,6 +66,6 @@ describe('Scaffold integration test', () => {
         if (notYetImplementedMatches.length > 0) {
             console.warn(`ℹ️ Ignored test files awaiting implementation:\n${notYetImplementedMatches.join('\n')}`);
         }
-        //await rm(outputDir, { recursive: true, force: true });
+        await rm(outputDir, { recursive: true, force: true });
     });
 });

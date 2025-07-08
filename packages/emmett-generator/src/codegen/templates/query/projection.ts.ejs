@@ -3,10 +3,27 @@ inMemorySingleStreamProjection,
 type ReadEvent,
 type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
-import type { <%= pascalCase(slice.server?.data?.[0]?.target?.name || 'UnknownState') %> } from './read-model';
-<% if (events.length > 0) { -%>
-    import type { <%= events.map(e => e.type).join(', ') %> } from './events';
-<% } -%>
+import type { <%= pascalCase(slice.server?.data?.[0]?.target?.name || 'UnknownState') %> } from './state';<%
+if (events.length > 0) {
+    const importGroups = new Map();
+    for (const event of events) {
+        const fromSameFlow = event.sourceFlowName === flowName;
+        const basePath = fromSameFlow
+                ? `../${toKebabCase(event.sourceSliceName ?? 'unknown')}/events`
+                : `../${toKebabCase(event.sourceFlowName ?? 'unknown')}/${toKebabCase(event.sourceSliceName ?? 'unknown')}/events`;
+
+        if (!importGroups.has(basePath)) {
+            importGroups.set(basePath, []);
+        }
+        importGroups.get(basePath).push(event.type);
+    }
+
+        for (const [importPath, typeNames] of importGroups.entries()) {
+%>
+    import type { <%= typeNames.join(', ') %> } from '<%= importPath %>';
+<%
+}
+} -%>
 
 type AllEvents = <%= events.length > 0 ? events.map(e => e.type).join(' | ') : 'never' %>;
 
@@ -24,43 +41,32 @@ event: ReadEvent<AllEvents, InMemoryReadEventMetadata>
 switch (event.type) {
 <% for (const event of events) {
     const targetName = slice.server?.data?.[0]?.target?.name;
-
-    // For query slices, find the GWT spec where this event is in the 'given' section
     const queryGwt = slice.type === 'query'
             ? queryGwtMapping.find(gwt =>
                     gwt.given.some(g => g.eventRef === event.type)
             )
             : undefined;
-
-    // Get the example data from the matching GWT spec
     const example = slice.type === 'query'
             ? queryGwt?.then.find(t => t.stateRef === targetName)?.exampleData
             : gwtMapping[event.type]?.[0]?.then?.[0]?.exampleData;
-
     const targetFields = slice.server?.data?.[0]?.target?.fields;
-
     let usedFields = [];
     let isRemovalEvent = false;
-
     if (typeof example !== 'undefined') {
         if (example && Object.keys(example).length > 0) {
             usedFields = Object.keys(example);
         } else {
-            // Empty object {} indicates removal/deletion
             isRemovalEvent = true;
         }
     } else if (targetFields) {
         usedFields = Object.keys(targetFields);
     }
-
-    // Also check if event name suggests removal
     const eventNameSuggestsRemoval = event.type.toLowerCase().includes('remove') ||
             event.type.toLowerCase().includes('delete');
 %>
 case '<%= event.type %>': {
 /**
 * ## IMPLEMENTATION INSTRUCTIONS ##
-*
 <% if (isRemovalEvent || eventNameSuggestsRemoval) { -%>
     * This event might indicate removal of a <%= targetName || 'document' %>.
     *
@@ -82,7 +88,7 @@ case '<%= event.type %>': {
     <% for (let i = 0; i < usedFields.length; i++) {
         const field = usedFields[i];
         const isLast = i === usedFields.length - 1;
-    %>                    <%= field %>: event.data.<%= field %><%= isLast ? '' : ',' %>
+    %>          <%= field %>: event.data.<%= field %><%= isLast ? '' : ',' %>
     <% } -%>
     };
 <% } -%>

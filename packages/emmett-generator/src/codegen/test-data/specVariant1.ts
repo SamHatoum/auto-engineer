@@ -94,7 +94,7 @@ const specVariant1: SpecsSchema = {
                             },
                         ],
                     },
-                }
+                },
             ],
         },
     ],
@@ -116,6 +116,19 @@ const specVariant1: SpecsSchema = {
             name: 'ItemCreated',
             description: 'Event emitted when an item is created',
             source: 'internal',
+            fields: [
+                { name: 'id', type: 'string', required: true },
+                { name: 'description', type: 'string', required: true },
+                { name: 'addedAt', type: 'Date', required: true },
+            ],
+            metadata: {
+                version: 1,
+            },
+        },
+        {
+            type: 'state',
+            name: 'AvailableItems',
+            description: 'State representing available items in the system',
             fields: [
                 { name: 'id', type: 'string', required: true },
                 { name: 'description', type: 'string', required: true },

@@ -8,7 +8,7 @@ import {CommandExample, EventExample, Flow, Slice, SpecsSchemaType} from '@auto-
 
 const defaultFilesByType: Record<string, string[]> = {
     command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
-    query: ['projection.ts.ejs'],
+    query: ['projection.ts.ejs', 'state.ts.ejs'],
     react: ['reactor.ts.ejs'],
 };
 
@@ -27,6 +27,8 @@ interface Message {
     type: string;
     fields: Field[];
     source?: 'when' | 'given' | 'then';
+    sourceFlowName?: string;
+    sourceSliceName?: string;
 }
 
 interface MessageDefinition {
@@ -64,6 +66,12 @@ interface ExtractedMessages {
 
 interface HasOrigin {
     origin: unknown;
+}
+
+interface ProjectionOrigin {
+    type: 'projection';
+    idField?: string;
+    name?: string;
 }
 
 function extractFieldsFromMessage(
@@ -175,12 +183,6 @@ function extractMessagesForCommand(
     };
 }
 
-interface ProjectionOrigin {
-    type: 'projection';
-    idField?: string;
-    name?: string;
-}
-
 function isProjectionOrigin(origin: unknown): origin is ProjectionOrigin {
     if (typeof origin !== 'object' || origin === null) {
         return false;
@@ -209,18 +211,14 @@ function hasOrigin(dataSource: unknown): dataSource is HasOrigin {
     return typeof dataSource === 'object' && dataSource !== null && 'origin' in dataSource;
 }
 
-function extractStatesFromQueryThen(
-    thenItems: Array<{ stateRef: string; exampleData: Record<string, unknown> }>,
-    allMessages: MessageDefinition[]
-): Message[] {
-    return thenItems
-        .map((then): Message | undefined => {
-            if (!then.stateRef) return undefined;
+function extractStatesFromTarget(slice: Slice, allMessages: MessageDefinition[]): Message[] {
+    const targets = slice.server?.data?.map(d => d.target?.name).filter(Boolean) as string[];
+    const uniqueTargets = Array.from(new Set(targets));
 
-            const fields = extractFieldsFromMessage(then.stateRef, 'state', allMessages);
-            return { type: then.stateRef, fields, source: 'then' };
-        })
-        .filter((state): state is Message => state !== undefined);
+    return uniqueTargets.map((name) => ({
+        type: name,
+        fields: extractFieldsFromMessage(name, 'state', allMessages),
+    }));
 }
 
 function extractMessagesForQuery(
@@ -238,11 +236,8 @@ function extractMessagesForQuery(
         extractEventsFromGiven(gwt.given, allMessages)
     );
 
-    const states: Message[] = gwtSpecs.flatMap((gwt) =>
-        extractStatesFromQueryThen(gwt.then, allMessages)
-    );
+    const states: Message[] = extractStatesFromTarget(slice, allMessages);
 
-    // Deduplicate events
     const uniqueEventsMap = new Map<string, Message>();
     for (const event of events) {
         if (!uniqueEventsMap.has(event.type)) {
@@ -250,18 +245,10 @@ function extractMessagesForQuery(
         }
     }
 
-    // Deduplicate states
-    const uniqueStatesMap = new Map<string, Message>();
-    for (const state of states) {
-        if (!uniqueStatesMap.has(state.type)) {
-            uniqueStatesMap.set(state.type, state);
-        }
-    }
-
     return {
         commands: [],
         events: Array.from(uniqueEventsMap.values()),
-        states: Array.from(uniqueStatesMap.values()),
+        states,
         commandSchemasByName: {},
         projectionIdField,
     };
@@ -498,7 +485,7 @@ function extractUsedErrors(gwtMapping: Record<string, (GwtCondition & { failingF
     for (const commandName in gwtMapping) {
         for (const gwt of gwtMapping[commandName]) {
             for (const t of gwt.then) {
-                if (typeof t === 'object' && t !== null && 'errorType' in t && typeof t.errorType === 'string') {
+                if (typeof t === 'object' && t !== null && 'errorType' in t) {
                     usedErrors.add(t.errorType);
                 }
             }
@@ -552,38 +539,63 @@ async function prepareTemplateData(
     };
 }
 
+function annotateEventSources(
+    events: Message[],
+    flows: Flow[],
+    fallbackFlowName: string,
+    fallbackSliceName: string
+): void {
+    for (const event of events) {
+        const match = findEventSource(flows, event.type);
+        event.sourceFlowName = match?.flowName ?? fallbackFlowName;
+        event.sourceSliceName = match?.sliceName ?? fallbackSliceName;
+    }
+}
+
+function findEventSource(flows: Flow[], eventType: string): { flowName: string; sliceName: string } | null {
+    for (const flow of flows) {
+        for (const slice of flow.slices) {
+            if (!['command', 'react'].includes(slice.type)) continue;
+
+            const gwt = slice.server?.gwt ?? [];
+            if (gwt.some(g => g.then.some(t => 'eventRef' in t && t.eventRef === eventType))) {
+                return { flowName: flow.name, sliceName: slice.name };
+            }
+        }
+    }
+    return null;
+}
+
 async function generateFilesForSlice(
     slice: Slice,
     flow: Flow,
     sliceDir: string,
-    messages: MessageDefinition[]
+    messages: MessageDefinition[],
+    flows: Flow[]
 ): Promise<FilePlan[]> {
     const templates = defaultFilesByType[slice.type];
-    if (templates === undefined || templates.length === 0) return [];
+    if (!templates?.length) return [];
 
-    const { commands, events, states, commandSchemasByName, projectionIdField } =
-        extractMessagesFromSpecs(slice, messages);
+    const extracted = extractMessagesFromSpecs(slice, messages);
+    annotateEventSources(extracted.events, flows, flow.name, slice.name);
 
-    const plans: FilePlan[] = [];
     const templateData = await prepareTemplateData(
         slice,
         flow,
-        commands,
-        events,
-        states,
-        commandSchemasByName,
-        projectionIdField
+        extracted.commands,
+        extracted.events,
+        extracted.states,
+        extracted.commandSchemasByName,
+        extracted.projectionIdField
     );
 
-    for (const templateFile of templates) {
-        const plan = await generateFileForTemplate(templateFile, slice, sliceDir, templateData);
-        plans.push(plan);
-    }
-
-    console.log('Resolved projection events for', slice.name, ':', events.map(e => e.type));
-
-    return plans;
+    return Promise.all(
+        templates.map(template =>
+            generateFileForTemplate(template, slice, sliceDir, templateData)
+        )
+    );
 }
+
 
 export async function generateScaffoldFilePlans(
     flows: Flow[],
@@ -597,7 +609,7 @@ export async function generateScaffoldFilePlans(
 
         for (const slice of flow.slices) {
             const sliceDir = ensureDirPath(flowDir, toKebabCase(slice.name));
-            const plans = await generateFilesForSlice(slice, flow, sliceDir, messages);
+            const plans = await generateFilesForSlice(slice, flow, sliceDir, messages, flows);
             allPlans.push(...plans);
         }
     }
