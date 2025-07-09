@@ -1,0 +1,71 @@
+<%_
+const idField = projectionIdField ?? 'id';
+const projectionType = states[0]?.type ?? 'UnknownState';
+const projectionCollection = toKebabCase(projectionName ?? 'unknown-collection');
+const testCases = queryGwtMapping ?? [];
+const eventTypes = Array.from(new Set(events.map(e => e.type)));
+_%>
+
+import { describe, it, beforeEach, expect } from 'vitest';
+import {
+InMemoryProjectionSpec,
+} from '@event-driven-io/emmett';
+import { projection } from './projection';
+import type { <%= eventTypes.join(', ') %> } from '../<%= toKebabCase(events[0]?.sourceSliceName || 'unknown') %>/events';
+import { <%= projectionType %> } from './state';
+
+<% if (eventTypes.length > 0) { -%>
+    type ProjectionEvent = <%= eventTypes.join(' | ') %>;
+<% } else { -%>
+    type ProjectionEvent = never;
+<% } -%>
+
+describe('<%= projectionName %> Projection', () => {
+let given: InMemoryProjectionSpec<ProjectionEvent>;
+
+    beforeEach(() => {
+    given = InMemoryProjectionSpec.for({ projection });
+    });
+
+    <%_ for (const [index, gwt] of testCases.entries()) {
+        const isRemoval = gwt.then[0]?.exampleData && Object.keys(gwt.then[0].exampleData).length === 0;
+        const expectedIdValue = JSON.stringify(gwt.then[0]?.exampleData?.[idField] ?? 'unknown-id');
+    _%>
+    it('<%= isRemoval ? 'removes' : 'creates or updates' %> <%= projectionType %> document - case <%= index + 1 %>', () =>
+    given([
+    <%_ for (const event of gwt.given) { _%>
+        {
+        type: '<%= event.eventRef %>',
+        data: {
+        <%_ for (const [key, val] of Object.entries(event.exampleData || {})) { _%>
+            <%= key %>: <%- formatTsValue(val, (events.find(e => e.type === event.eventRef)?.fields.find(f => f.name === key)?.tsType || 'string')) %>,
+        <%_ } _%>
+        },
+        metadata: {
+        streamName: 'ignored-stream',
+        streamPosition: 1n,
+        globalPosition: 1n,
+        },
+        },
+    <%_ } _%>
+    ])
+    .when([])
+    .then(async (state) => {
+    const document = await state.database
+    .collection<<%= projectionType %>>('<%= projectionCollection %>')
+    .findOne((doc) => doc.<%= idField %> === <%- expectedIdValue %>);
+
+    <%_ if (isRemoval) { _%>
+    expect(document).toBeNull();
+    <%_ } else { _%>
+        const expected: <%= projectionType %> = {
+        <%_ for (const [key, val] of Object.entries(gwt.then[0].exampleData || {})) { _%>
+            <%= key %>: <%- formatTsValue(val, (states[0]?.fields.find(f => f.name === key)?.tsType || 'string')) %>,
+        <%_ } _%>
+        };
+
+        expect(document).toMatchObject(expected);
+    <%_ } _%>
+    }));
+    <%_ } _%>
+    });

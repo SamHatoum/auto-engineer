@@ -12,7 +12,7 @@ import {Message, MessageDefinition, GwtCondition} from "./types";
 
 const defaultFilesByType: Record<string, string[]> = {
     command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
-    query: ['projection.ts.ejs', 'state.ts.ejs'],
+    query: ['projection.ts.ejs', 'state.ts.ejs', 'projection.specs.ts.ejs'],
     react: ['reactor.ts.ejs'],
 };
 
