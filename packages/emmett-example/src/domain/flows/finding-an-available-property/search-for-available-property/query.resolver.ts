@@ -1,6 +1,7 @@
 import {Query, Resolver, Arg, Ctx, ObjectType, Field} from 'type-graphql';
 import {GraphQLContext} from "../../../shared";
-import {AvailableProperties, AvailableProperty} from "./read-model";
+import {AvailableProperty} from "./state";
+import {AvailableProperties} from "./read-model";
 
 @ObjectType()
 export class SearchPropertiesView {
