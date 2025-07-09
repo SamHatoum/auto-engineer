@@ -9,10 +9,11 @@ import {
     buildCommandGwtMapping, buildQueryGwtMapping, extractMessagesFromSpecs, extractProjectionName,
 } from "./extract";
 import {Message, MessageDefinition, GwtCondition} from "./types";
+import { parseGraphQlRequest} from "./extract/graphql";
 
 const defaultFilesByType: Record<string, string[]> = {
     command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'specs.ts.ejs'],
-    query: ['projection.ts.ejs', 'state.ts.ejs', 'projection.specs.ts.ejs'],
+    query: ['projection.ts.ejs', 'state.ts.ejs', 'projection.specs.ts.ejs', 'query.resolver.ts.ejs'],
     react: ['reactor.ts.ejs'],
 };
 
@@ -21,11 +22,11 @@ export interface FilePlan {
     contents: string;
 }
 
-
 async function renderTemplate(templatePath: string, data: Record<string, unknown>): Promise<string> {
     const content = await fs.readFile(templatePath, 'utf8');
     const template = ejs.compile(content, {async: true});
     const graphqlType = (tsType: string): string => {
+        if(!tsType) return 'String';
         if (tsType === 'string') return 'String';
         if (tsType === 'number') return 'Number';
         if (tsType === 'boolean') return 'Boolean';
@@ -45,14 +46,15 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
         camelCase,
         graphqlType,
         formatTsValue,
-        formatDataObject
+        formatDataObject,
+        messages: data.messages,
+        message: data.message,
     });
 }
 
 function resolveStreamId(stream: string, exampleData: Record<string, unknown>): string {
     return stream.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(exampleData?.[key] ?? 'unknown'));
 }
-
 
 function formatTsValueSimple(value: unknown, tsType: string): string {
     if (tsType === 'Date') {
@@ -91,9 +93,10 @@ function formatDataObject(exampleData: Record<string, unknown>, schema: Message 
         const tsType = typeDef?.tsType ?? 'string';
         return `${key}: ${formatTsValue(val, tsType)}`;
     });
-    return `{\n  ${lines.join(',\n  ')}\n}`;
+    return `{
+  ${lines.join(',\n  ')}
+}`;
 }
-
 
 async function generateFileForTemplate(
     templateFile: string,
@@ -139,6 +142,7 @@ function extractUsedErrors(gwtMapping: Record<string, (GwtCondition & { failingF
     return Array.from(usedErrors);
 }
 
+// eslint-disable-next-line complexity
 async function prepareTemplateData(
     slice: Slice,
     flow: Flow,
@@ -146,16 +150,17 @@ async function prepareTemplateData(
     events: Message[],
     states: Message[],
     commandSchemasByName: Record<string, Message>,
-    projectionIdField: string | undefined
+    projectionIdField: string | undefined,
+    allMessages?: MessageDefinition[]
 ): Promise<Record<string, unknown>> {
     let streamId: string | undefined = undefined;
-
     if (slice.type === 'command') {
         const streamPattern = slice.stream ?? `${toKebabCase(slice.name)}-\${id}`;
         const gwtSpecs = slice.server?.gwt ?? [];
         const exampleData = gwtSpecs[0]?.when?.exampleData ?? {};
         streamId = resolveStreamId(streamPattern, exampleData);
     }
+
 
     const gwtMapping = buildCommandGwtMapping(slice);
     const queryGwtMapping = buildQueryGwtMapping(slice);
@@ -180,6 +185,12 @@ async function prepareTemplateData(
         commandSchemasByName,
         projectionIdField,
         projectionName,
+        projectionType: (projectionName != null) ? pascalCase(projectionName) : undefined,
+        parsedRequest: slice.type==='query' && (slice.request != null) ? parseGraphQlRequest(slice.request) : undefined ,
+        messages: allMessages,
+        message: (slice.type === 'query' && allMessages)
+            ? allMessages.find(m => m.name === slice?.server?.data?.[0]?.target?.name)
+            : undefined,
     };
 }
 
@@ -230,7 +241,8 @@ async function generateFilesForSlice(
         extracted.events,
         extracted.states,
         extracted.commandSchemasByName,
-        extracted.projectionIdField
+        extracted.projectionIdField,
+        messages
     );
 
     return Promise.all(
@@ -239,7 +251,6 @@ async function generateFilesForSlice(
         )
     );
 }
-
 
 export async function generateScaffoldFilePlans(
     flows: Flow[],
