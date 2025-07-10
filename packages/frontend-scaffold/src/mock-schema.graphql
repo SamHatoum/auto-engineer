@@ -1,0 +1,11 @@
+type Query {
+    searchListings(location: String, maxPrice: Float, minGuests: Int): [Listing!]!
+}
+
+type Listing {
+    propertyId: ID!
+    title: String!
+    location: String!
+    pricePerNight: Float!
+    maxGuests: Int!
+}
