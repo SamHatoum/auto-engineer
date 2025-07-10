@@ -164,6 +164,17 @@ Component Architecture Guidelines:
 - Component names must not conflict with TypeScript built-in/global types.
 - When typing component props, always use the format \`<ComponentName>Props\`. For example: \`BookingCardProps\`, \`SearchFormProps\`.
 
+Code & File Standards:
+- Use TypeScript across the entire project.
+- Use **named exports and named imports only** — default exports are strictly disallowed across the entire codebase.
+- Every file must use \`export const <name>\` or \`export function <name>\`, and import using \`{ <name> }\`.
+- Use relative imports for all local/internal modules.
+- Favor compositional and declarative coding patterns.
+- Avoid prop drilling unless absolutely necessary — prefer context or prop co-location.
+- Abstract and reuse shared logic, styles, and components to avoid duplication.
+- Maintain a clean, modular folder structure aligned with atomic design principles.
+- You **must remember every file you generate**, so subsequent updates can refer to or reuse them accurately.
+
 GraphQL Integration Guidelines:
 - Use only GraphQL operations from \`src/graphql/queries.ts\` and \`src/graphql/mutations.ts\`.
 - Use Apollo Client only: \`useQuery\`, \`useMutation\`, \`useLazyQuery\`.
@@ -171,15 +182,6 @@ GraphQL Integration Guidelines:
 - GraphQL operations must only be used inside \`molecules\` or \`organisms\`. Never use them inside \`atoms\`.
 - Do not modify the contents of the \`src/graphql/\` directory under any circumstances — these files are strictly read-only.
 - If the structure of a GraphQL query doesn’t perfectly match the UI need, adapt the UI — do not rewrite the query.
-
-Code & File Standards:
-- Use TypeScript across the entire project.
-- Use named exports and named imports only — default exports are not allowed.
-- Use relative imports for all local/internal modules.
-- Favor compositional and declarative coding patterns.
-- Avoid prop drilling unless absolutely necessary — prefer context or prop co-location.
-- Abstract and reuse shared logic, styles, and components to avoid duplication.
-- Maintain a clean, modular folder structure aligned with atomic design principles.
 
 GraphQL Restrictions:
 You are not allowed to modify the following files under any circumstances:
