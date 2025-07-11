@@ -43,6 +43,18 @@ describe('generateScaffoldFilePlans', () => {
                                         },
                                     ],
                                 }],
+                                data: [
+                                    {
+                                        target: {
+                                            type: 'Event',
+                                            name: 'ListingCreated',
+                                        },
+                                        destination: {
+                                            type: 'stream',
+                                            pattern: 'listings-${propertyId}',
+                                        },
+                                    },
+                                ],
                             },
                         },
                     ],
@@ -64,7 +76,13 @@ describe('generateScaffoldFilePlans', () => {
                     type: 'event',
                     name: 'ListingCreated',
                     source: 'internal',
-                    fields: [],
+                    fields: [
+                        {name: 'propertyId', type: 'string', required: true},
+                        {name: 'title', type: 'string', required: true},
+                        {name: 'listedAt', type: 'Date', required: true},
+                        {name: 'rating', type: 'number', required: true},
+                        {name: 'metadata', type: 'object', required: true},
+                    ],
                 },
             ],
         };
@@ -86,8 +104,7 @@ describe('generateScaffoldFilePlans', () => {
           });
 
           export const handle = async (eventStore: EventStore, command: CreateListing): Promise<HandlerResult> => {
-            const streamId = \`listing-\${command.data.propertyId}\`;
-
+            const streamId = \`listings-\${command.data.propertyId}\`;
             try {
               await commandHandler(eventStore, streamId, (state) => decide(command, state));
               return { success: true };

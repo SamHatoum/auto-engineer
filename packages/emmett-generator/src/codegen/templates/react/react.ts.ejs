@@ -1,0 +1,60 @@
+<%
+const gwt = slice.server?.gwt?.[0];
+const when = Array.isArray(gwt?.when) ? gwt.when[0] : gwt?.when;
+const then = Array.isArray(gwt?.then) ? gwt.then[0] : gwt?.then;
+
+const eventType = when?.eventRef;
+const commandType = then?.commandRef;
+%>
+import {
+type CommandSender,
+type EventStore,
+type InMemoryReadEventMetadata,
+type MessageHandlerResult,
+reactor,
+} from '@event-driven-io/emmett';
+import type { <%= pascalCase(eventType) %> } from '../<%= toKebabCase(eventType) %>';
+import { ReactorContext } from '../../../shared';
+
+export const setup = async (eventStore: EventStore, commandSender: CommandSender) => {
+const context: ReactorContext = {
+eventStore,
+commandSender,
+};
+
+const policyReactor = reactor<<%= pascalCase(eventType) %>, InMemoryReadEventMetadata, ReactorContext>({
+processorId: '<%= toKebabCase(flowName) %>-<%= toKebabCase(slice.name) %>',
+canHandle: ['<%= eventType %>'],
+eachMessage: async (event, context): Promise<MessageHandlerResult> => {
+    try {
+    /**
+    * ## IMPLEMENTATION INSTRUCTIONS ##
+    *
+    * You may need to transform event data before passing to command
+    * Update the command structure below if needed
+    */
+    await context.commandSender.send({
+    type: '<%= commandType %>',
+    kind: 'Command',
+    data: {
+    ...event.data,
+    // TODO: Add or transform fields here if needed
+    },
+    });
+    return;
+    } catch (error) {
+    return {
+    type: 'SKIP',
+    reason: `Failed with error: ${error}`,
+    };
+    }
+    },
+    });
+
+    await policyReactor.start(context);
+    console.log('<%= pascalCase(slice.name) %> reactor started');
+
+    return {
+    policyReactor,
+    };
+    };

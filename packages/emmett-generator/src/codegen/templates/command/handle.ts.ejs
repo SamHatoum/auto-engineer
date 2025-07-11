@@ -14,13 +14,11 @@ export const handle = async (
 eventStore: EventStore,
 command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>
 ): Promise<HandlerResult> => {
-    <% const streamTemplate = slice.stream ?? `${toKebabCase(slice.name)}-\${id}`; %>
-    <% if (streamTemplate.includes('${')) { -%>
-        const streamId = `<%= streamTemplate.replace(/\$\{([^}]+)\}/g, (_, key) => `\${command.data.${key}}`) %>`;
+    <% if (stream?.pattern?.includes('${')) { -%>
+        const streamId = `<%= stream.pattern.replace(/\$\{([^}]+)\}/g, (_, key) => `\${command.data.${key}}`) %>`;
     <% } else { -%>
-        const streamId = '<%= streamTemplate %>';
+        const streamId = '<%= stream?.pattern ?? 'unknown-stream' %>';
     <% } -%>
-
     try {
     await commandHandler(eventStore, streamId, (state) => decide(command, state));
     return { success: true };
