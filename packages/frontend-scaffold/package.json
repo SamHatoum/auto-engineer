@@ -16,7 +16,8 @@
     "access": "public"
   },
   "dependencies": {
-    "openai": "^4.104.0",
-    "@auto-engineer/ai-integration": "workspace:*"
+    "@auto-engineer/ai-integration": "workspace:*",
+    "graphql": "^16.11.0",
+    "openai": "^4.104.0"
   }
 }
