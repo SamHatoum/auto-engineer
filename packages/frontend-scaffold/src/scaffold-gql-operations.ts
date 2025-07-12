@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-type GqlOperation = {
+interface GqlOperation {
   operationType: 'query' | 'mutation';
   operationName: string;
   raw: string;
-};
+}
 
 function extractGqlOperations(flow: string): GqlOperation[] {
   const gqlRegex = /gql`([\s\S]*?)`/g;
