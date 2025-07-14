@@ -1,7 +1,7 @@
 import { Mutation, Resolver, Arg, Ctx } from 'type-graphql';
-import { handle } from './handle';
-import { GraphQLContext, MutationResponse, toMutationResponse } from '../../../shared';
+import { GraphQLContext, MutationResponse } from '../../../shared';
 import { Field, InputType } from 'type-graphql';
+import {sendCommand} from "../../../shared";
 
 @InputType()
 export class CreateListingInput {
@@ -41,10 +41,10 @@ export class CreateListingResolver {
         @Arg('input', () => CreateListingInput) input: CreateListingInput,
         @Ctx() ctx: GraphQLContext
     ): Promise<MutationResponse> {
-        const result = await handle(ctx.eventStore, {
+        return await sendCommand(ctx.messageBus, {
             type: 'CreateListing',
-            data: input,
+            kind: 'Command',
+            data: { ...input },
         });
-        return toMutationResponse(result);
     }
 }

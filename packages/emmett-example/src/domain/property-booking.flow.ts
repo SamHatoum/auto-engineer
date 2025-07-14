@@ -14,8 +14,8 @@ import {
 } from '@auto-engineer/flowlang';
 
 import type {ListingCreated} from './flows/host-manages-listings/create-listing';
-import type {BookingRequested} from './flows/guest-booking/guest-submits-booking-request';
-import type {PropertyRemoved} from './flows/host-manages-listings/remove-property';
+import type {BookingRequested} from './flows/guest-booking/guest-submits-booking-request/events';
+import type {PropertyRemoved} from './flows/host-manages-listings/remove-property/events';
 import type {CreateListing} from './flows/host-manages-listings/create-listing/commands';
 import type {RequestBooking} from './flows/guest-booking/guest-submits-booking-request/commands';
 import type {NotifyHost} from './flows/guest-booking/notify-host/commands';

@@ -17,6 +17,6 @@ export type CreatedListing = {
 
 export type ListingState = EmptyListing | CreatedListing;
 
-export const initialListingState = (): ListingState => ({
+export const initialState = (): ListingState => ({
     status: 'Empty',
 });

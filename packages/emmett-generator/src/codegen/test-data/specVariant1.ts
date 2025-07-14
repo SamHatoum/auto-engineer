@@ -95,6 +95,37 @@ const specVariant1: SpecsSchema = {
                         ],
                     },
                 },
+                {
+                    type: 'react',
+                    name: 'Notify on new item',
+                    description: 'Sends a notification command when a new item is created',
+                    server: {
+                        description: 'Triggers NotifyNewItem command in response to ItemCreated',
+                        gwt: [
+                            {
+                                when: [
+                                    {
+                                        eventRef: 'ItemCreated',
+                                        exampleData: {
+                                            id: 'item_123',
+                                            description: 'A new item',
+                                            addedAt: '2024-01-15T10:00:00.000Z',
+                                        },
+                                    },
+                                ],
+                                then: [
+                                    {
+                                        commandRef: 'NotifyNewItem',
+                                        exampleData: {
+                                            itemId: 'item_123',
+                                            message: 'A new item was added to the system.',
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                },
             ],
         },
     ],
@@ -106,6 +137,18 @@ const specVariant1: SpecsSchema = {
             fields: [
                 { name: 'itemId', type: 'string', required: true },
                 { name: 'description', type: 'string', required: true },
+            ],
+            metadata: {
+                version: 1,
+            },
+        },
+        {
+            type: 'command',
+            name: 'NotifyNewItem',
+            description: 'Command to notify other systems when a new item is created',
+            fields: [
+                { name: 'itemId', type: 'string', required: true },
+                { name: 'message', type: 'string', required: true },
             ],
             metadata: {
                 version: 1,

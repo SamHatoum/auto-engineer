@@ -4,6 +4,7 @@ import {Field, ObjectType} from "type-graphql";
 export interface ReactorContext {
     eventStore: InMemoryEventStore;
     commandSender: CommandSender;
+    [key: string]: unknown;
 }
 
 export interface GraphQLContext {
