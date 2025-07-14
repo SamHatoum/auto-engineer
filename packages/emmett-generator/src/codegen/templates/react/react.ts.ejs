@@ -8,54 +8,47 @@ const commandType = then?.commandRef;
 const event = events.find(e => e.type === eventType);
 %>
 import {
-CommandSender,
-InMemoryEventStore,
-InMemoryReadEventMetadata,
-MessageHandlerResult,
+type InMemoryReadEventMetadata,
+type MessageHandlerResult,
 reactor,
+IllegalStateError,
 } from '@event-driven-io/emmett';
-import type { <%= pascalCase(eventType) %> } from '../<%=toKebabCase(event.sourceSliceName ?? 'unknown') %>/events%>';
-import { ReactorContext } from '../../../shared';
+import type { <%= pascalCase(eventType) %> } from '../<%= toKebabCase(event.sourceSliceName ?? 'unknown') %>/events';
+import type { ReactorContext } from '../../../shared';
 
-export const setup = async (eventStore: InMemoryEventStore, commandSender: CommandSender) => {
-const context: ReactorContext = {
-eventStore,
-commandSender,
-};
-
-const policyReactor = reactor<<%= pascalCase(eventType) %>, InMemoryReadEventMetadata, ReactorContext>({
+export const react = () =>
+reactor<<%= pascalCase(eventType) %>, InMemoryReadEventMetadata, ReactorContext>({
 processorId: '<%= toKebabCase(flowName) %>-<%= toKebabCase(slice.name) %>',
 canHandle: ['<%= eventType %>'],
 eachMessage: async (event, context): Promise<MessageHandlerResult> => {
-    try {
     /**
     * ## IMPLEMENTATION INSTRUCTIONS ##
     *
-    * You may need to transform event data before passing to command
-    * Update the command structure below if needed
+    * - Inspect event data to determine if the command should be sent.
+    * - Replace the placeholder logic and `throw` below with real implementation.
+    * - Send one or more commands via: context.commandSender.send({...})
+    * - Optionally return a MessageHandlerResult for SKIP or error cases.
     */
-    await context.commandSender.send({
-    type: '<%= commandType %>',
-    kind: 'Command',
-    data: {
-    ...event.data,
-    // TODO: Add or transform fields here if needed
+
+    throw new IllegalStateError('Not yet implemented: react in response to <%= eventType %>');
+
+    // Example:
+    // if (event.data.status !== 'expected') {
+    //   return {
+    //     type: 'SKIP',
+    //     reason: 'Condition not met',
+    //   };
+    // }
+
+    // await context.commandSender.send({
+    //   type: '<%= commandType %>',
+    //   kind: 'Command',
+    //   data: {
+    //     // Map event fields to command fields here
+    //     // e.g., userId: event.data.userId,
+    //   },
+    // });
+
+    // return;
     },
     });
-    return;
-    } catch (error) {
-    return {
-    type: 'SKIP',
-    reason: `Failed with error: ${error}`,
-    };
-    }
-    },
-    });
-
-    await policyReactor.start(context);
-    console.log('<%= pascalCase(slice.name) %> reactor started');
-
-    return {
-    policyReactor,
-    };
-    };

@@ -18,7 +18,7 @@ export class ReadModel<T extends { [key: string]: any }> {
         return this.collection.findOne((doc) => doc[idField] === id);
     }
 
-    async search(filterFn: (item: T) => boolean): Promise<T[]> {
+    async find(filterFn: (item: T) => boolean): Promise<T[]> {
         return this.collection.find(filterFn);
     }
 

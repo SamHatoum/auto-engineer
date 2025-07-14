@@ -1,6 +1,6 @@
 import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
-import { handle } from './handle';
-import { GraphQLContext, MutationResponse, toMutationResponse } from '../../../shared';
+import { GraphQLContext, MutationResponse } from '../../../shared';
+import { sendCommand } from '../../../shared';
 
 @InputType()
 export class <%= pascalCase(commands[0].type) %>Input {
@@ -17,10 +17,10 @@ async <%= camelCase(commands[0].type) %>(
 @Arg('input', () => <%= pascalCase(commands[0].type) %>Input) input: <%= pascalCase(commands[0].type) %>Input,
 @Ctx() ctx: GraphQLContext
 ): Promise<MutationResponse> {
-    const result = await handle(ctx.eventStore, {
+    return await sendCommand(ctx.messageBus, {
     type: '<%= commands[0].type %>',
-    data: input,
+    kind: 'Command',
+    data: { ...input },
     });
-    return toMutationResponse(result);
     }
     }

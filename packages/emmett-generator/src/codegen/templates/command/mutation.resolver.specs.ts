@@ -69,8 +69,8 @@ describe('mutation.resolver.ts.ejs', () => {
 
         expect(mutationFile?.contents).toMatchInlineSnapshot(`
           "import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
-          import { handle } from './handle';
-          import { GraphQLContext, MutationResponse, toMutationResponse } from '../../../shared';
+          import { GraphQLContext, MutationResponse } from '../../../shared';
+          import { sendCommand } from '../../../shared';
 
           @InputType()
           export class CreateListingInput {
@@ -103,11 +103,11 @@ describe('mutation.resolver.ts.ejs', () => {
               @Arg('input', () => CreateListingInput) input: CreateListingInput,
               @Ctx() ctx: GraphQLContext,
             ): Promise<MutationResponse> {
-              const result = await handle(ctx.eventStore, {
+              return await sendCommand(ctx.messageBus, {
                 type: 'CreateListing',
-                data: input,
+                kind: 'Command',
+                data: { ...input },
               });
-              return toMutationResponse(result);
             }
           }
           "

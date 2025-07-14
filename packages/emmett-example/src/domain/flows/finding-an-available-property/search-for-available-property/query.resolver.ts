@@ -38,7 +38,7 @@ export class SearchQueryResolver {
         @Arg('minGuests', () => Number, { nullable: true }) minGuests?: number
     ): Promise<AvailableProperty[]> {
         const model = new ReadModel<AvailableProperty>(ctx.eventStore, 'availableProperties');
-        return model.search((property) => {
+        return model.find((property) => {
             if (location && !property.location.toLowerCase().includes(location.toLowerCase())) return false;
             if (maxPrice && property.pricePerNight > maxPrice) return false;
             return !(minGuests && property.maxGuests < minGuests);

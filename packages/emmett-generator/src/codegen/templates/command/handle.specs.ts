@@ -91,30 +91,27 @@ describe('generateScaffoldFilePlans', () => {
         const handleFile = plans.find((p) => p.outputPath.endsWith('handle.ts'));
 
         expect(handleFile?.contents).toMatchInlineSnapshot(`
-          "import { CommandHandler, type EventStore } from '@event-driven-io/emmett';
+          "import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
           import { evolve } from './evolve';
           import { initialState } from './state';
           import { decide } from './decide';
           import type { CreateListing } from './commands';
-          import type { HandlerResult } from '../../../shared';
 
-          const commandHandler = CommandHandler({
+          const handler = CommandHandler({
             evolve,
             initialState,
           });
 
-          export const handle = async (eventStore: EventStore, command: CreateListing): Promise<HandlerResult> => {
+          export const handle = async (eventStore: EventStore, command: CreateListing): Promise<MessageHandlerResult> => {
             const streamId = \`listings-\${command.data.propertyId}\`;
+
             try {
-              await commandHandler(eventStore, streamId, (state) => decide(command, state));
-              return { success: true };
+              await handler(eventStore, streamId, (state) => decide(command, state));
+              return; // success (returns void)
             } catch (error: any) {
               return {
-                success: false,
-                error: {
-                  type: error?.name ?? 'UnknownError',
-                  message: error?.message ?? 'An unexpected error occurred',
-                },
+                type: 'SKIP',
+                reason: \`Command failed: \${error?.message ?? 'Unknown'}\`,
               };
             }
           };

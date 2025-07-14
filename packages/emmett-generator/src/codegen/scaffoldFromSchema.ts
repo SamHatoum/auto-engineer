@@ -16,9 +16,9 @@ import { parseGraphQlRequest} from "./extract/graphql";
 import {getStreamFromSink} from "./extract/data-sink";
 
 const defaultFilesByType: Record<string, string[]> = {
-    command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'decide.specs.ts.ejs'],
+    command: ['commands.ts.ejs', 'events.ts.ejs', 'state.ts.ejs', 'decide.ts.ejs', 'evolve.ts.ejs', 'handle.ts.ejs', 'mutation.resolver.ts.ejs', 'decide.specs.ts.ejs', 'register.ts.ejs'],
     query: ['projection.ts.ejs', 'state.ts.ejs', 'projection.specs.ts.ejs', 'query.resolver.ts.ejs'],
-    react: ['react.ts.ejs'],
+    react: ['react.ts.ejs', 'react.specs.ts.ejs'],
 };
 
 export interface FilePlan {

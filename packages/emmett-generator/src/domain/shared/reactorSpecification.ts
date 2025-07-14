@@ -15,13 +15,14 @@ interface ErrorCheck<ErrorType> {
     (error: ErrorType): boolean;
 }
 
+/* eslint-disable @typescript-eslint/no-type-alias -- needed for union of callback types */
 export type ThenThrows<ErrorType extends Error> =
     | (() => void)
     | ((errorConstructor: ErrorConstructor<ErrorType>) => void)
     | ((errorCheck: ErrorCheck<ErrorType>) => void)
     | ((
     errorConstructor: ErrorConstructor<ErrorType>,
-    errorCheck?: ErrorCheck<ErrorType>,
+    errorCheck?: ErrorCheck<ErrorType>
 ) => void);
 
 
