@@ -371,6 +371,9 @@ importers:
       '@auto-engineer/ai-integration':
         specifier: workspace:*
         version: link:../ai-integration
+      graphql:
+        specifier: ^16.11.0
+        version: 16.11.0
       openai:
         specifier: ^4.104.0
         version: 4.104.0(zod@3.25.67)

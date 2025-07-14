@@ -74,13 +74,13 @@ export {
 } from './schema';
 
 // Export the AppSchema type
-import { 
+import {
   AppSchema as ImportedAppSchema,
-  CommandExampleSchema,
+  CommandExampleSchema, ErrorExampleSchema,
   EventExampleSchema,
   FlowSchema,
   SliceSchema,
-  SpecsSchema
+  SpecsSchema, StateExampleSchema
 } from './schema';
 export type AppSchema = z.infer<typeof ImportedAppSchema>;
 
@@ -89,4 +89,6 @@ export type CommandExample = z.infer<typeof CommandExampleSchema>;
 export type EventExample = z.infer<typeof EventExampleSchema>;
 export type Flow = z.infer<typeof FlowSchema>;
 export type Slice = z.infer<typeof SliceSchema>;
-export type SpecsSchemaType = z.infer<typeof SpecsSchema>; 
+export type SpecsSchemaType = z.infer<typeof SpecsSchema>;
+export type StateExample = z.infer<typeof StateExampleSchema>;
+export type ErrorExample = z.infer<typeof ErrorExampleSchema>;

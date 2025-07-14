@@ -3,6 +3,7 @@ export type NotifyHost = Command<
     'NotifyHost',
     {
         hostId: string;
+        bookingId: string;
         notificationType: 'booking_request';
         priority: 'high';
         channels: ('email' | 'push' | 'sms')[];

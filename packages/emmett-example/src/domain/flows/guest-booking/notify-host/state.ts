@@ -6,6 +6,6 @@ export type NotificationState =
     notifiedAt: Date;
 };
 
-export const initialNotificationState = (): NotificationState => ({
+export const initialState = (): NotificationState => ({
     status: 'Initial'
 });

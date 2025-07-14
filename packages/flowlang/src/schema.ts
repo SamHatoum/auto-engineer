@@ -172,7 +172,7 @@ const ReactSliceSchema = BaseSliceSchema.extend({
   type: z.literal('react'),
   server: z.object({
     description: z.string().optional(),
-    data: z.array(z.union([DataSinkSchema, DataSourceSchema])).optional().describe('Data items for react slices (mix of sinks and sources)'),
+      data: z.array(z.union([DataSinkSchema, DataSourceSchema])).optional().describe('Data items for react slices (mix of sinks and sources)'),
     gwt: z.array(z.object({
       when: z.array(EventExampleSchema).describe('When event(s) occur'),
       then: z.array(CommandExampleSchema).describe('Then send command(s)')
@@ -287,7 +287,9 @@ if (require.main === module) {
 
 // Re-export schemas for external usage
 export {
+  StateExampleSchema,
   MessageFieldSchema,
+  ErrorExampleSchema,
   MessageSchema,
   CommandSchema,
   EventSchema,
@@ -296,5 +298,5 @@ export {
   QuerySliceSchema,
   ReactSliceSchema,
   SliceSchema,
-  FlowSchema
+  FlowSchema,
 };
