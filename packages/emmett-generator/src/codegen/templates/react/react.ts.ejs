@@ -5,18 +5,19 @@ const then = Array.isArray(gwt?.then) ? gwt.then[0] : gwt?.then;
 
 const eventType = when?.eventRef;
 const commandType = then?.commandRef;
+const event = events.find(e => e.type === eventType);
 %>
 import {
-type CommandSender,
-type EventStore,
-type InMemoryReadEventMetadata,
-type MessageHandlerResult,
+CommandSender,
+InMemoryEventStore,
+InMemoryReadEventMetadata,
+MessageHandlerResult,
 reactor,
 } from '@event-driven-io/emmett';
-import type { <%= pascalCase(eventType) %> } from '../<%= toKebabCase(eventType) %>';
+import type { <%= pascalCase(eventType) %> } from '../<%=toKebabCase(event.sourceSliceName ?? 'unknown') %>/events%>';
 import { ReactorContext } from '../../../shared';
 
-export const setup = async (eventStore: EventStore, commandSender: CommandSender) => {
+export const setup = async (eventStore: InMemoryEventStore, commandSender: CommandSender) => {
 const context: ReactorContext = {
 eventStore,
 commandSender,

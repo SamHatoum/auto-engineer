@@ -8,6 +8,7 @@ export type ReactorContext = {
 
 export interface GraphQLContext {
     eventStore: InMemoryEventStore;
+    messageBus: CommandSender;
 }
 
 export type HandlerResult =

@@ -3,7 +3,7 @@ import {SpecsSchemaType as SpecsSchema} from '@auto-engineer/flowlang';
 import {generateScaffoldFilePlans} from '../../scaffoldFromSchema';
 
 describe('handle.ts.ejs (react slice)', () => {
-    it.skip('should generate correct react.ts', async () => {
+    it('should generate correct react.ts', async () => {
         const spec: SpecsSchema = {
             variant: 'specs',
             flows: [
@@ -198,6 +198,60 @@ describe('handle.ts.ejs (react slice)', () => {
         );
         const handleFile = plans.find((p) => p.outputPath.endsWith('react.ts'));
 
-        expect(handleFile?.contents).toMatchInlineSnapshot(``);
+        expect(handleFile?.contents).toMatchInlineSnapshot(`
+          "import {
+            CommandSender,
+            InMemoryEventStore,
+            InMemoryReadEventMetadata,
+            MessageHandlerResult,
+            reactor,
+          } from '@event-driven-io/emmett';
+          import type { BookingRequested } from '../guest-submits-booking-request/events';
+          import { ReactorContext } from '../../../shared';
+
+          export const setup = async (eventStore: InMemoryEventStore, commandSender: CommandSender) => {
+            const context: ReactorContext = {
+              eventStore,
+              commandSender,
+            };
+
+            const policyReactor = reactor<BookingRequested, InMemoryReadEventMetadata, ReactorContext>({
+              processorId: 'manage-bookings-send-notification-to-host',
+              canHandle: ['BookingRequested'],
+              eachMessage: async (event, context): Promise<MessageHandlerResult> => {
+                try {
+                  /**
+                   * ## IMPLEMENTATION INSTRUCTIONS ##
+                   *
+                   * You may need to transform event data before passing to command
+                   * Update the command structure below if needed
+                   */
+                  await context.commandSender.send({
+                    type: 'NotifyHost',
+                    kind: 'Command',
+                    data: {
+                      ...event.data,
+                      // TODO: Add or transform fields here if needed
+                    },
+                  });
+                  return;
+                } catch (error) {
+                  return {
+                    type: 'SKIP',
+                    reason: \`Failed with error: \${error}\`,
+                  };
+                }
+              },
+            });
+
+            await policyReactor.start(context);
+            console.log('SendNotificationToHost reactor started');
+
+            return {
+              policyReactor,
+            };
+          };
+          "
+        `);
     });
 });
