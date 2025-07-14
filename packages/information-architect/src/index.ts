@@ -1,5 +1,5 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-integration';
-import { type UXSchema, type AIAgentOutput } from './types.js';
+import { type UXSchema, type AIAgentOutput } from './types';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,15 +17,15 @@ function isJsonString(str: string): boolean {
   }
 }
 
-export class AIAgent {
+export class InformationArchitectAgent {
   private provider: AIProvider;
 
   constructor(provider: AIProvider = AIProvider.Anthropic) {
     this.provider = provider;
   }
 
-  async generateUXComponents(flows: string[], uxSchema: UXSchema): Promise<AIAgentOutput> {
-    const prompt = this.constructPrompt(flows, uxSchema);
+  async generateUXComponents(flows: string[], uxSchema: UXSchema, existingSchema?: object, atoms?: { name: string, props: { name: string, type: string }[] }[]): Promise<AIAgentOutput> {
+    const prompt = this.constructPrompt(flows, uxSchema, existingSchema, atoms);
     try {
       const response = await generateTextWithAI(
         prompt,
@@ -46,16 +46,20 @@ export class AIAgent {
     }
   }
 
-  private constructPrompt(flows: string[], uxSchema: UXSchema): string {
+  private constructPrompt(flows: string[], uxSchema: UXSchema, existingSchema?: object, atoms?: { name: string, props: { name: string, type: string }[] }[]): string {
     return `
 You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 
+IMPORTANT: Only generate pages and components that are directly referenced in the provided flows. Do NOT add any extra pages or components, and do NOT make assumptions outside the flows. If something is not mentioned in the flows, it should NOT appear in the output.
+
+$${atoms ? `Here is a list of available atomic components (atoms) from the design system. Use these atoms and their props as much as possible. Only create new atoms if absolutely necessary.\n\nAtoms:\n${JSON.stringify(atoms, null, 2)}\n` : ''}
 Flows:
 ${JSON.stringify(flows, null, 2)}
 
 UX Schema:
 ${JSON.stringify(uxSchema, null, 2)}
 
+${existingSchema ? `Here is the current IA schema. Only add, update, or remove what is necessary based on the new flows and UX schema. Preserve what is still relevant and do not make unnecessary changes.\n\nCurrent IA Schema:\n${JSON.stringify(existingSchema, null, 2)}\n` : ''}
 Instructions:
 
 - Respond ONLY with a JSON object, no explanation, no markdown, no text before or after.
@@ -119,4 +123,9 @@ Be concise but thorough. Use the flows and UX schema to infer the necessary comp
 Do not include any text, explanation, or markdown—only the JSON object as described.
 `;
   }
+}
+
+export async function processFlowsWithAI(flows: string[], uxSchema: UXSchema, existingSchema?: object, atoms?: { name: string, props: { name: string, type: string }[] }[]): Promise<AIAgentOutput> {
+  const agent = new InformationArchitectAgent();
+  return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms);
 }
