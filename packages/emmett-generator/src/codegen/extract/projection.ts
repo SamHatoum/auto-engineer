@@ -10,12 +10,9 @@ interface HasOrigin {
     origin: unknown;
 }
 
-
-
 function hasOrigin(dataSource: unknown): dataSource is HasOrigin {
     return typeof dataSource === 'object' && dataSource !== null && 'origin' in dataSource;
 }
-
 
 function isProjectionOrigin(origin: unknown): origin is ProjectionOrigin {
     if (typeof origin !== 'object' || origin === null) {
@@ -26,32 +23,28 @@ function isProjectionOrigin(origin: unknown): origin is ProjectionOrigin {
     return obj.type === 'projection';
 }
 
-export function extractProjectionIdField(slice: Slice): string | undefined {
+function extractProjectionField<K extends keyof ProjectionOrigin>(
+    slice: Slice,
+    fieldName: K
+): string | undefined {
     const dataSource = slice.server?.data?.[0];
     if (!hasOrigin(dataSource)) return undefined;
 
     const origin = dataSource.origin;
     if (isProjectionOrigin(origin)) {
-        const idField = origin.idField;
-        if (typeof idField === 'string') {
-            return idField;
+        const value = origin[fieldName];
+        if (typeof value === 'string') {
+            return value;
         }
     }
 
     return undefined;
 }
 
+export function extractProjectionIdField(slice: Slice): string | undefined {
+    return extractProjectionField(slice, 'idField');
+}
+
 export function extractProjectionName(slice: Slice): string | undefined {
-    const dataSource = slice.server?.data?.[0];
-    if (!hasOrigin(dataSource)) return undefined;
-
-    const origin = dataSource.origin;
-    if (isProjectionOrigin(origin)) {
-        const name = origin.name;
-        if (typeof name === 'string') {
-            return name;
-        }
-    }
-
-    return undefined;
+    return extractProjectionField(slice, 'name');
 }

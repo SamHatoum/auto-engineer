@@ -2,6 +2,69 @@ import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-integration';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { getTsErrors, getBuildErrors } from '@auto-engineer/ui-checks';
+import * as ts from 'typescript';
+
+// Utility to extract props from interface
+function extractPropsFromInterface(node: ts.InterfaceDeclaration, sourceFile: ts.SourceFile): { name: string, type: string }[] {
+  return node.members
+    .filter(ts.isPropertySignature)
+    .map(member => {
+      const name = member.name.getText(sourceFile);
+      const type = member.type ? member.type.getText(sourceFile) : 'any';
+      return { name, type };
+    });
+}
+
+// Utility to extract props from type alias
+function extractPropsFromTypeAlias(node: ts.TypeAliasDeclaration, sourceFile: ts.SourceFile): { name: string, type: string }[] {
+  if (!ts.isTypeLiteralNode(node.type)) return [];
+  return node.type.members
+    .filter(ts.isPropertySignature)
+    .map(member => {
+      const name = member.name.getText(sourceFile);
+      const type = member.type ? member.type.getText(sourceFile) : 'any';
+      return { name, type };
+    });
+}
+
+// Extract atoms and their props from src/components/atoms
+async function getAtomsWithProps(projectDir: string): Promise<{ name: string, props: { name: string, type: string }[] }[]> {
+  const atomsDir = path.join(projectDir, 'src/components/atoms');
+  let files: string[] = [];
+  try {
+    files = (await fs.readdir(atomsDir)).filter(f => f.endsWith('.tsx'));
+  } catch {
+    return [];
+  }
+  const atoms: { name: string, props: { name: string, type: string }[] }[] = [];
+  for (const file of files) {
+    const filePath = path.join(atomsDir, file);
+    const content = await fs.readFile(filePath, 'utf-8');
+    const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
+    let componentName = file.replace(/\.tsx$/, '');
+    componentName = componentName.charAt(0).toUpperCase() + componentName.slice(1);
+    let props: { name: string, type: string }[] = [];
+    ts.forEachChild(sourceFile, node => {
+      if (
+        ts.isInterfaceDeclaration(node) &&
+        node.name.text.toLowerCase().includes(componentName.toLowerCase()) &&
+        (node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) === true
+      ) {
+        props = extractPropsFromInterface(node, sourceFile);
+      }
+      if (
+        ts.isTypeAliasDeclaration(node) &&
+        node.name.text.toLowerCase().includes(componentName.toLowerCase()) &&
+        (node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) === true
+      ) {
+        props = extractPropsFromTypeAlias(node, sourceFile);
+      }
+    });
+    atoms.push({ name: componentName, props });
+  }
+  return atoms;
+}
+
 const provider = AIProvider.Anthropic;
 
 function extractJsonArray(text: string): string {
@@ -21,7 +84,7 @@ async function callAI(prompt: string, options?: { temperature?: number; maxToken
 interface ProjectContext {
   scheme: unknown;
   files: string[];
-  shadcnComponents: string[];
+  atoms: { name: string, props: { name: string, type: string }[] }[];
   keyFileContents: Record<string, string>;
   fileTreeSummary: string[];
   graphqlOperations: Record<string, string>;
@@ -29,11 +92,17 @@ interface ProjectContext {
 
 async function getProjectContext(projectDir: string): Promise<ProjectContext> {
   const schemePath = path.join(projectDir, 'auto-ia-scheme.json');
-  const scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as unknown;
+  let scheme: unknown = undefined;
+  try {
+    scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as unknown;
+  } catch (err: unknown) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
+      throw err;
+    }
+    // If file does not exist, just continue with scheme as undefined
+  }
   const files = await listFiles(projectDir);
-  const shadcnComponents = files
-    .filter((f) => f.startsWith('src/components/atoms/') && f.endsWith('.tsx'))
-    .map((f) => path.basename(f, '.tsx'));
+  const atoms = await getAtomsWithProps(projectDir);
   const graphqlOperationsFilesPath = files.filter((f) => f.startsWith('src/graphql/') && f.endsWith('.ts'));
   const graphqlOperations: Record<string, string> = {};
   for (const filePath of graphqlOperationsFilesPath) {
@@ -65,12 +134,12 @@ async function getProjectContext(projectDir: string): Promise<ProjectContext> {
         f.startsWith('src/lib/') ||
         ['src/App.tsx', 'src/routes.tsx', 'src/main.tsx'].includes(f),
     ),
-    `src/components/atoms/ (shadcn components: ${shadcnComponents.join(', ')})`,
+    `src/components/atoms/ (atoms: ${atoms.map(a => a.name).join(', ')})`,
   ];
   return {
     scheme,
     files,
-    shadcnComponents,
+    atoms,
     keyFileContents,
     fileTreeSummary,
     graphqlOperations,
@@ -156,9 +225,10 @@ Design and Implementation Rules:
 
 Component Architecture Guidelines:
 - Reuse components where possible:
-  - Treat components in \`src/components/atoms\` as [shadcn/ui](https://ui.shadcn.com) primitives.
+  - Treat components in \`src/components/atoms\` as general atoms (they can be either [shadcn/ui](https://ui.shadcn.com) or custom design system).
   - Prefer existing \`molecules\` or \`organisms\` before introducing new components.
-  - Only create new components when no reusable equivalent exists.
+  - Only create new components when no reusable equivalent exists
+  - When creating new components (specifically atoms) try to match along with the rest of component names, styles, themes and colors to match the design system
 - Every component must reside in its own file.
 - File names must be consistent across the codebase, using either PascalCase or kebab-case as defined in the existing structure.
 - Component names must not conflict with TypeScript built-in/global types.
@@ -201,8 +271,8 @@ Respond with only a JSON array. Do not include explanations, markdown, or code b
 Here is a summary of the file tree:
 ${JSON.stringify(ctx.fileTreeSummary, null, 2)}
 
-Here are the names of all available shadcn UI components:
-${JSON.stringify(ctx.shadcnComponents, null, 2)}
+Here are the available atoms and their props:
+${JSON.stringify(ctx.atoms, null, 2)}
 
 Here are the contents of key files:
 ${keyFileContents}
@@ -242,9 +312,8 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
-      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });

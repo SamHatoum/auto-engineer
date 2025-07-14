@@ -1,4 +1,4 @@
-import type { PropertyRemoved } from '../../host-manages-listings/remove-property';
+import type { PropertyRemoved } from '../../host-manages-listings/remove-property/events';
 import {
     inMemorySingleStreamProjection,
     type ReadEvent,

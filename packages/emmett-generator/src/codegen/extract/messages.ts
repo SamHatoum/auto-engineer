@@ -1,9 +1,9 @@
-import {extractCommandsFromGwt} from "./commands";
-import {Slice} from "@auto-engineer/flowlang";
+import {extractCommandsFromGwt, extractCommandsFromThen} from "./commands";
+import {CommandExample, ErrorExample, EventExample, Slice, StateExample} from "@auto-engineer/flowlang";
 import {Message, MessageDefinition} from "../types";
-import {extractEventsFromGiven, extractEventsFromThen} from "./events";
+import {extractEventsFromGiven, extractEventsFromThen, extractEventsFromWhen} from "./events";
 import {extractProjectionIdField} from "./projection";
-import {extractStatesFromTarget} from "./states";
+import {extractStatesFromData, extractStatesFromTarget} from "./states";
 
 export interface ExtractedMessages {
     commands: Message[];
@@ -13,12 +13,46 @@ export interface ExtractedMessages {
     projectionIdField?: string;
 }
 
-export function extractMessagesForCommand(
+export interface ReactGwtSpec {
+    when: EventExample[];
+    then: CommandExample[];
+}
+
+export interface CommandGwtSpec  {
+    given?: EventExample[];
+    when: CommandExample;
+    then: Array<EventExample | ErrorExample>;
+};
+
+
+export interface QueryGwtSpec  {
+    given: EventExample[];
+    then: StateExample[];
+};
+
+const EMPTY_EXTRACTED_MESSAGES: ExtractedMessages = {
+    commands: [],
+    events: [],
+    states: [],
+    commandSchemasByName: {}
+};
+
+function deduplicateMessages<T extends Message>(messages: T[]): T[] {
+    const uniqueMap = new Map<string, T>();
+    for (const message of messages) {
+        if (!uniqueMap.has(message.type)) {
+            uniqueMap.set(message.type, message);
+        }
+    }
+    return Array.from(uniqueMap.values());
+}
+
+function extractMessagesForCommand(
     slice: Slice,
     allMessages: MessageDefinition[]
 ): ExtractedMessages {
     if (slice.type !== 'command') {
-        return { commands: [], events: [], states: [], commandSchemasByName: {} };
+        return EMPTY_EXTRACTED_MESSAGES;
     }
 
     const gwtSpecs = slice.server?.gwt ?? [];
@@ -30,27 +64,20 @@ export function extractMessagesForCommand(
         return [...givenEvents, ...thenEvents];
     });
 
-    const uniqueEventsMap = new Map<string, Message>();
-    for (const event of events) {
-        if (!uniqueEventsMap.has(event.type)) {
-            uniqueEventsMap.set(event.type, event);
-        }
-    }
-
     return {
         commands,
-        events: Array.from(uniqueEventsMap.values()),
+        events: deduplicateMessages(events),
         states: [],
         commandSchemasByName,
     };
 }
 
-export function extractMessagesForQuery(
+function extractMessagesForQuery(
     slice: Slice,
     allMessages: MessageDefinition[]
 ): ExtractedMessages {
     if (slice.type !== 'query') {
-        return { commands: [], events: [], states: [], commandSchemasByName: {} };
+        return EMPTY_EXTRACTED_MESSAGES;
     }
 
     const gwtSpecs = slice.server?.gwt ?? [];
@@ -62,19 +89,33 @@ export function extractMessagesForQuery(
 
     const states: Message[] = extractStatesFromTarget(slice, allMessages);
 
-    const uniqueEventsMap = new Map<string, Message>();
-    for (const event of events) {
-        if (!uniqueEventsMap.has(event.type)) {
-            uniqueEventsMap.set(event.type, event);
-        }
-    }
-
     return {
         commands: [],
-        events: Array.from(uniqueEventsMap.values()),
+        events: deduplicateMessages(events),
         states,
         commandSchemasByName: {},
         projectionIdField,
+    };
+}
+
+function extractMessagesForReact(
+    slice: Slice,
+    allMessages: MessageDefinition[]
+): ExtractedMessages {
+    if (slice.type !== 'react') {
+        return EMPTY_EXTRACTED_MESSAGES;
+    }
+
+    const gwtSpecs = slice.server?.gwt ?? [];
+    const events = extractEventsFromWhen(gwtSpecs, allMessages);
+    const { commands, commandSchemasByName } = extractCommandsFromThen(gwtSpecs, allMessages);
+    const states = extractStatesFromData(slice, allMessages);
+
+    return {
+        commands,
+        events: deduplicateMessages(events),
+        states,
+        commandSchemasByName,
     };
 }
 
@@ -88,9 +129,8 @@ export function extractMessagesFromSpecs(
         case 'query':
             return extractMessagesForQuery(slice, allMessages);
         case 'react':
-            // TODO: Implement react slice message extraction
-            return { commands: [], events: [], states: [], commandSchemasByName: {} };
+            return extractMessagesForReact(slice, allMessages);
         default:
-            return { commands: [], events: [], states: [], commandSchemasByName: {} };
+            return EMPTY_EXTRACTED_MESSAGES;
     }
 }

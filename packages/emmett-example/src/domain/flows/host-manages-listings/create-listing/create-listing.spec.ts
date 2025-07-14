@@ -1,6 +1,6 @@
 import {DeciderSpecification} from '@event-driven-io/emmett';
 import {evolve} from './evolve';
-import {initialListingState} from './state';
+import {initialState} from './state';
 import {describe, it} from 'vitest';
 import {decide} from "./decide";
 
@@ -9,7 +9,7 @@ describe('Property | ListProperty', () => {
     const given = DeciderSpecification.for({
         decide: decide,
         evolve,
-        initialState: initialListingState,
+        initialState: initialState,
     });
 
     it('should emit ListingCreated when state is Empty', () => {

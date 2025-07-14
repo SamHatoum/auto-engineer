@@ -1,22 +1,39 @@
-import { AIAgentOutput } from './types';
-import { AIAgent } from './ai-agent';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import uxSchema from './auto-ux-schema.json';
 
 export class FrontendScaffoldBuilder {
-  private uxSchemaOutput: AIAgentOutput | null = null;
-  private aiAgent: AIAgent;
   private starterFiles: Map<string, Buffer> = new Map();
 
-  constructor() {
-    this.aiAgent = new AIAgent();
-  }
-
-  async cloneStarter(): Promise<this> {
+  async cloneStarter(customDesignSystemDir?: string): Promise<this> {
     console.log('Cloning starter project...');
     const starterDir = path.resolve(__dirname, '../react-graphql-starter');
     await this.collectFiles(starterDir, '');
+
+    if (customDesignSystemDir != null && customDesignSystemDir !== '') {
+      const atomsDir = path.join(customDesignSystemDir, 'design-system');
+      try {
+        const stat = await fs.stat(atomsDir);
+        if (stat.isDirectory()) {
+          const atomsTarget = 'src/components/atoms';
+          const files = (await fs.readdir(atomsDir)).filter(f => f.endsWith('.tsx'));
+          if (files.length > 0) {
+            // Remove all starter atoms from starterFiles
+            for (const key of Array.from(this.starterFiles.keys())) {
+              if (key.startsWith(atomsTarget + '/')) {
+                this.starterFiles.delete(key);
+              }
+            }
+            // Add custom atoms
+            for (const file of files) {
+              const content = await fs.readFile(path.join(atomsDir, file));
+              this.starterFiles.set(path.join(atomsTarget, file), content);
+            }
+          }
+        }
+      } catch {
+        // If custom design-system doesn't exist, do nothing
+      }
+    }
     return this;
   }
 
@@ -34,27 +51,6 @@ export class FrontendScaffoldBuilder {
     }
   }
 
-  async processFlowsWithAI(flows: string[]): Promise<this> {
-    try {
-      this.uxSchemaOutput = await this.aiAgent.generateUXComponents(flows, uxSchema);
-      console.log('Processed flows with AI agent', this.uxSchemaOutput);
-      console.log('Number of flows processed:', flows.length);
-      console.log('UX Schema title:', uxSchema.title);
-      return this;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Error processing flows:', error.message);
-      } else {
-        console.error('An unknown error occurred while processing flows');
-      }
-      throw error;
-    }
-  }
-
-  getUXSchemaOutput(): AIAgentOutput | null {
-    return this.uxSchemaOutput;
-  }
-
   async build(outputDir: string): Promise<void> {
     if (!this.starterFiles.size) {
       throw new Error('Starter files not loaded. Call cloneStarter() first.');
@@ -64,11 +60,6 @@ export class FrontendScaffoldBuilder {
       const outPath = path.join(outputDir, relPath);
       await fs.mkdir(path.dirname(outPath), { recursive: true });
       await fs.writeFile(outPath, content);
-    }
-
-    if (this.uxSchemaOutput) {
-      const schemaPath = path.join(outputDir, 'auto-ia-scheme.json');
-      await fs.writeFile(schemaPath, JSON.stringify(this.uxSchemaOutput, null, 2));
     }
     console.log(`Build complete. Output at: ${outputDir}`);
   }

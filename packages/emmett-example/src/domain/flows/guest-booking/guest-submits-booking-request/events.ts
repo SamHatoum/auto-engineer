@@ -11,7 +11,7 @@ export type BookingRequested = Event <
         checkOut: string;
         guests: number;
         message: string;
-        status: 'pending_host_approval';
+        status: 'pending_host_approval' | 'confirmed' | 'cancelled';
         requestedAt: string;
         expiresAt: string;
     }

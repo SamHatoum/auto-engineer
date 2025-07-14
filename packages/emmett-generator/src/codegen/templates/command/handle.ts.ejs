@@ -1,11 +1,10 @@
-import { CommandHandler, type EventStore } from '@event-driven-io/emmett';
+import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
 import { evolve } from './evolve';
 import { initialState } from './state';
 import { decide } from './decide';
 import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './commands';
-import type { HandlerResult } from '../../../shared';
 
-const commandHandler = CommandHandler({
+const handler = CommandHandler({
 evolve,
 initialState,
 });
@@ -13,24 +12,20 @@ initialState,
 export const handle = async (
 eventStore: EventStore,
 command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>
-): Promise<HandlerResult> => {
-    <% const streamTemplate = slice.stream ?? `${toKebabCase(slice.name)}-\${id}`; %>
-    <% if (streamTemplate.includes('${')) { -%>
-        const streamId = `<%= streamTemplate.replace(/\$\{([^}]+)\}/g, (_, key) => `\${command.data.${key}}`) %>`;
+): Promise<MessageHandlerResult> => {
+    <% if (stream?.pattern?.includes('${')) { -%>
+        const streamId = `<%= stream.pattern.replace(/\$\{([^}]+)\}/g, (_, key) => `\${command.data.${key}}`) %>`;
     <% } else { -%>
-        const streamId = '<%= streamTemplate %>';
+        const streamId = '<%= stream?.pattern ?? 'unknown-stream' %>';
     <% } -%>
 
     try {
-    await commandHandler(eventStore, streamId, (state) => decide(command, state));
-    return { success: true };
+    await handler(eventStore, streamId, (state) => decide(command, state));
+    return; // success (returns void)
     } catch (error: any) {
     return {
-    success: false,
-    error: {
-    type: error?.name ?? 'UnknownError',
-    message: error?.message ?? 'An unexpected error occurred',
-    },
+    type: 'SKIP',
+    reason: `Command failed: ${error?.message ?? 'Unknown'}`,
     };
     }
     };
