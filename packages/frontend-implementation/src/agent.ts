@@ -29,7 +29,15 @@ interface ProjectContext {
 
 async function getProjectContext(projectDir: string): Promise<ProjectContext> {
   const schemePath = path.join(projectDir, 'auto-ia-scheme.json');
-  const scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as unknown;
+  let scheme: unknown = undefined;
+  try {
+    scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as unknown;
+  } catch (err: unknown) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
+      throw err;
+    }
+    // If file does not exist, just continue with scheme as undefined
+  }
   const files = await listFiles(projectDir);
   const shadcnComponents = files
     .filter((f) => f.startsWith('src/components/atoms/') && f.endsWith('.tsx'))
@@ -242,9 +250,8 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
-      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });

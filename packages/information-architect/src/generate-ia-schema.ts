@@ -26,8 +26,19 @@ function extractPropsFromTypeAlias(node: ts.TypeAliasDeclaration, sourceFile: ts
     });
 }
 
-async function getAtomsList(): Promise<{ name: string, props: { name: string, type: string }[] }[]> {
-  const atomsDir = path.join(__dirname, '../design-system-starter');
+async function getAtomsList(baseDir: string): Promise<{ name: string, props: { name: string, type: string }[] }[]> {
+  let atomsDir: string;
+  const customDesignSystem = path.join(baseDir, 'design-system');
+  try {
+    const stat = await fs.stat(customDesignSystem);
+    if (stat.isDirectory()) {
+      atomsDir = customDesignSystem;
+    } else {
+      atomsDir = path.join(__dirname, '../design-system-starter');
+    }
+  } catch {
+    atomsDir = path.join(__dirname, '../design-system-starter');
+  }
   const files = (await fs.readdir(atomsDir)).filter(f => f.endsWith('.tsx'));
   const atoms: { name: string, props: { name: string, type: string }[] }[] = [];
 
@@ -112,12 +123,15 @@ async function main() {
   try {
     existingSchema = JSON.parse(await fs.readFile(outPath, 'utf-8')) as object;
     console.log('Existing IA schema found and will be taken into account.');
-  } catch (err) {
-    console.error('Error reading existing IA schema:', err);
-    process.exit(1);
+  } catch (err: unknown) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
+      console.error('Error reading existing IA schema:', err);
+      process.exit(1);
+    }
+    // If file does not exist, just continue with existingSchema as undefined
   }
 
-  const atoms = await getAtomsList();
+  const atoms = await getAtomsList(outputDir);
 
   // processFlowsWithAI only accepts three arguments
   const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms);
@@ -129,4 +143,4 @@ async function main() {
 main().catch(err => {
   console.error('Failed to generate IA schema:', err);
   process.exit(1);
-}); 
+});
