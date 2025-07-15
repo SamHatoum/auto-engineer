@@ -1,3 +1,2 @@
 npx --no -- commitlint --edit ${1}
-pnpm turbo type-check
-pnpm turbo test
+pnpm turbo run type-check test

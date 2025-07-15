@@ -1,3 +1,2 @@
-pnpm turbo run format:fix
-pnpm turbo lint:fix
+pnpm turbo run format:fix lint:fix
 git add -A
