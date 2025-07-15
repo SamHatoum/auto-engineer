@@ -6,14 +6,14 @@ import { writeGqlOperationsToFolder } from './scaffold-gql-operations';
 import { generateSchemaFile } from './write-graphql-schema';
 
 export async function main(appName: string, flows: string[]) {
-  // deleteDirectory(`../emmett-example/${appName}`);
+  // deleteDirectory(`../../../${appName}`);
 
   const builder = new FrontendScaffoldBuilder();
-  await builder.cloneStarter(`../emmett-example/${appName}`);
-  await builder.build(`../emmett-example/${appName}`);
-  writeGqlOperationsToFolder(flows, `../emmett-example/${appName}/src`);
-  generateSchemaFile(`../emmett-example/${appName}`);
-  runCodegen(`../emmett-example/${appName}`);
+  await builder.cloneStarter(`../../../${appName}`);
+  await builder.build(`../../../${appName}`);
+  writeGqlOperationsToFolder(flows, `../../../${appName}/src`);
+  generateSchemaFile(`../../../${appName}`);
+  runCodegen(`../../../${appName}`);
   return 'Frontend Scaffold is running!';
 }
 
