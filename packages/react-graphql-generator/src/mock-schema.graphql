@@ -1,11 +1,39 @@
 type Query {
-    searchListings(location: String, maxPrice: Float, minGuests: Int): [Listing!]!
+  suggestedItems(sessionId: ID!): SuggestedItems!
 }
 
-type Listing {
-    propertyId: ID!
-    title: String!
-    location: String!
-    pricePerNight: Float!
-    maxGuests: Int!
+type SuggestedItems {
+  sessionId: ID!
+  items: [SuggestedItem!]!
+}
+
+type SuggestedItem {
+  productId: ID!
+  name: String!
+  quantity: Int!
+  reason: String!
+}
+
+type Product {
+  productId: ID!
+  name: String!
+  category: String!
+  price: Float!
+  tags: [String!]
+}
+
+input EnterShoppingCriteriaInput {
+  shopperId: ID!
+  criteria: String!
+}
+
+type Mutation {
+  enterShoppingCriteria(input: EnterShoppingCriteriaInput!): EnterShoppingCriteriaPayload!
+}
+
+type EnterShoppingCriteriaPayload {
+  sessionId: ID!
+  shopperId: ID!
+  criteria: String!
+  timestamp: String!
 }

@@ -215,9 +215,16 @@ Do not rely on templates. Instead, produce a result that feels bespoke, intentio
 - Visual feedback for all interaction states
 
 Design and Implementation Rules:
+- Apply atomic design (atoms → molecules → organisms → pages). This is a high priority. 
+    - Start by building the molecules
+    - Then the organisms
+    - Then the pages
+    - Then update the routes in the App.tsx file. DON'T FORGET THIS OR YOU WILL BE FIRED!
+- Do not create any more pages than what you were provided in the ia scheme file.
+  - Do not create any additional pages or routes such as a homepage or login, etc. DON'T FORGET THIS OR YOU WILL BE FIRED!
+- When you create pages, update the routes.
 - All components must be responsive by default.
 - Use a consistent spacing system (e.g., 4/8/12/16px scale).
-- Apply atomic design (atoms → molecules → organisms → pages).
 - Component size should stay under 50 lines where possible.
 - Use Tailwind CSS utility classes for layout, color, and spacing. Avoid raw CSS unless absolutely necessary.
 - Use toast notifications for all critical user feedback (error, success, validation).
@@ -346,8 +353,9 @@ async function fixTsErrors(ctx: ProjectContext, projectDir: string): Promise<boo
   let fixupPlan: Fix[] = [];
   try {
     fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
-  } catch {
-    console.error('Could not parse TS fixup plan from LLM:', fixupPlanText);
+  } catch (e) {
+    console.error('Could not parse TS fixup plan from LLM:', e.message);
+    // console.debug('Could not parse TS fixup plan from LLM:', fixupPlanText, e);
   }
   for (const fix of fixupPlan) {
     if (fix.action === 'update' && fix.file && fix.content) {
