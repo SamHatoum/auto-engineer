@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
@@ -6,6 +6,6 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.specs.{js,ts}'],
     exclude: ['**/.tmp/**', '**/node_modules/**', '**/dist/**'],
-    passWithNoTests: true
-  }
-}) 
+    passWithNoTests: true,
+  },
+});

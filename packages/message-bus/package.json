@@ -10,9 +10,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
-  "keywords": ["message-bus", "event-driven", "cqrs"],
+  "keywords": [
+    "message-bus",
+    "event-driven",
+    "cqrs"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -20,4 +26,4 @@
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
   }
-} 
+}

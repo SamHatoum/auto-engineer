@@ -1,11 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import type { Router as ExpressRouter } from 'express';
-import { 
-  CartItem, 
-  cartSessions, 
-  calculateCartTotal, 
-  getOrCreateCartSession 
-} from '../data/cart';
+import { CartItem, cartSessions, calculateCartTotal, getOrCreateCartSession } from '../data/cart';
 
 const router: ExpressRouter = Router();
 
@@ -149,8 +144,8 @@ router.post('/:sessionId/add', (req: Request, res: Response) => {
   };
 
   if (!productId || !name || price === undefined || !quantity) {
-    return res.status(400).json({ 
-      error: 'Missing required fields: productId, name, price, quantity' 
+    return res.status(400).json({
+      error: 'Missing required fields: productId, name, price, quantity',
     });
   }
 
@@ -159,7 +154,7 @@ router.post('/:sessionId/add', (req: Request, res: Response) => {
   }
 
   const cartSession = getOrCreateCartSession(sessionId);
-  const existingItemIndex = cartSession.items.findIndex(item => item.productId === productId);
+  const existingItemIndex = cartSession.items.findIndex((item) => item.productId === productId);
 
   if (existingItemIndex >= 0) {
     // Update existing item quantity
@@ -232,7 +227,7 @@ router.post('/:sessionId/remove', (req: Request, res: Response) => {
   }
 
   const cartSession = getOrCreateCartSession(sessionId);
-  const itemIndex = cartSession.items.findIndex(item => item.productId === productId);
+  const itemIndex = cartSession.items.findIndex((item) => item.productId === productId);
 
   if (itemIndex === -1) {
     return res.status(404).json({ error: 'Product not found in cart' });
@@ -282,7 +277,7 @@ router.post('/:sessionId/remove', (req: Request, res: Response) => {
 router.post('/:sessionId/clear', (req: Request, res: Response) => {
   const { sessionId } = req.params as { sessionId: string };
   const cartSession = getOrCreateCartSession(sessionId);
-  
+
   cartSession.items = [];
   cartSession.total = 0;
   cartSession.updatedAt = new Date().toISOString();
@@ -291,4 +286,4 @@ router.post('/:sessionId/clear', (req: Request, res: Response) => {
   res.json(cartSession);
 });
 
-export default router; 
+export default router;

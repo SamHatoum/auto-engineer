@@ -13,4 +13,4 @@ describe('AI Integration', () => {
     const providers: AIProvider[] = [AIProvider.OpenAI, AIProvider.Anthropic, AIProvider.Google, AIProvider.XAI];
     expect(providers).toContain(AIProvider.OpenAI);
   });
-}); 
+});

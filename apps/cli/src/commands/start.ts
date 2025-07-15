@@ -107,16 +107,28 @@ const COLORS = {
 
 // Type guards
 const isFlow = (obj: unknown): obj is Flow => {
-  return typeof obj === 'object' && obj !== null && 'name' in obj && typeof (obj as Flow).name === 'string' && (obj as Flow).name.length > 0;
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'name' in obj &&
+    typeof (obj as Flow).name === 'string' &&
+    (obj as Flow).name.length > 0
+  );
 };
 
 const isSlice = (obj: unknown): obj is Slice => {
-  return typeof obj === 'object' && obj !== null && 'name' in obj && typeof (obj as Slice).name === 'string' && (obj as Slice).name.length > 0;
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'name' in obj &&
+    typeof (obj as Slice).name === 'string' &&
+    (obj as Slice).name.length > 0
+  );
 };
 
 const isCommandRef = (obj: unknown): obj is CommandRef => {
   return typeof obj === 'object' && obj !== null && ('commandRef' in obj || 'name' in obj);
-}
+};
 
 // Helper functions to break down complexity
 const addFlowHeader = (flow: Flow, flowIndex: number, lines: string[]): void => {
@@ -138,7 +150,7 @@ const addSliceInfo = (slice: Slice, lines: string[]): void => {
 const addClientSpecs = (clientData: ClientSpec, lines: string[]): void => {
   const clientDesc = clientData.component ?? clientData.description ?? clientData.name ?? 'Component';
   lines.push(`  * **Client:** ${clientDesc}`);
-  
+
   // Handle "should" array or specs array
   const specs = clientData.should ?? clientData.specs ?? [];
   if (Array.isArray(specs)) {
@@ -232,23 +244,23 @@ const processReactTransitions = (gwt: GWT, transitions: string[]): void => {
 const addServerSpecs = (serverData: ServerSpec, lines: string[]): void => {
   const serverDesc = serverData.description ?? serverData.name ?? 'Server logic';
   lines.push(`  * **Server:** ${serverDesc}`);
-  
+
   // Extract GWT (Given-When-Then) and convert to transitions
   const transitions: string[] = [];
-  
+
   if (serverData.gwt) {
     const gwt = serverData.gwt;
     processCommandTransitions(gwt, transitions);
     processQueryTransitions(gwt, transitions);
     processReactTransitions(gwt, transitions);
   }
-  
+
   // Also check for pre-formatted transitions
   const directTransitions = serverData.transitions || serverData.specs || [];
   if (Array.isArray(directTransitions)) {
     transitions.push(...directTransitions);
   }
-  
+
   // Display transitions
   if (transitions.length > 0) {
     transitions.forEach((transition: string) => {
@@ -264,7 +276,7 @@ const addSliceSpecs = (slice: Slice, lines: string[]): void => {
     if (clientData) {
       addClientSpecs(clientData, lines);
     }
-    
+
     // Server specs
     const serverData = slice.specs?.server || slice.server;
     if (serverData) {
@@ -298,12 +310,12 @@ const addMessages = (specsSchema: SpecsSchema, lines: string[]): void => {
   if (specsSchema.messages && Array.isArray(specsSchema.messages) && specsSchema.messages.length > 0) {
     lines.push('');
     lines.push('# **Messages**');
-    
+
     // Group messages by type
     const commands = specsSchema.messages.filter((m: Message) => m.type === 'command');
     const events = specsSchema.messages.filter((m: Message) => m.type === 'event');
     const states = specsSchema.messages.filter((m: Message) => m.type === 'state');
-    
+
     addMessageGroup(commands, 'Commands', lines);
     addMessageGroup(events, 'Events', lines);
     addMessageGroup(states, 'States', lines);
@@ -315,7 +327,8 @@ const addIntegrations = (specsSchema: SpecsSchema, lines: string[]): void => {
     lines.push('');
     lines.push('# **Integrations**');
     specsSchema.integrations.forEach((integration: Integration) => {
-      const description = integration.description != null && integration.description.length > 0 ? `: ${integration.description}` : '';
+      const description =
+        integration.description != null && integration.description.length > 0 ? `: ${integration.description}` : '';
       lines.push(`* **${integration.name}**${description}`);
       if (integration.source != null && integration.source.length > 0) {
         lines.push(`    Source: ${integration.source}`);
@@ -327,45 +340,45 @@ const addIntegrations = (specsSchema: SpecsSchema, lines: string[]): void => {
 // Convert AppSchema to text format for display (matches demo.ts format)
 function convertToTextFormat(appSchema: AppSchema, variant: 'flow-names' | 'slice-names' | 'specs'): string[] {
   const lines: string[] = [];
-  
+
   if (appSchema.flows == null || appSchema.flows.length === 0) {
     return lines;
   }
-  
+
   appSchema.flows.forEach((flow: unknown, flowIndex: number) => {
     if (!isFlow(flow)) return;
-    
+
     addFlowHeader(flow, flowIndex, lines);
-    
+
     // For flow-names variant, stop here
     if (variant === 'flow-names') {
       return;
     }
-    
+
     // Add slices
     if (flow.slices && Array.isArray(flow.slices)) {
       flow.slices.forEach((slice: unknown) => {
         if (!isSlice(slice)) return;
-        
+
         addSliceInfo(slice, lines);
-        
+
         // For slice-names variant, stop here
         if (variant === 'slice-names') {
           return;
         }
-        
+
         addSliceSpecs(slice, lines);
       });
     }
   });
-  
+
   // Add messages and integrations for specs variant
   if (variant === 'specs') {
     const specsSchema = appSchema as SpecsSchema; // Cast to specs variant
     addMessages(specsSchema, lines);
     addIntegrations(specsSchema, lines);
   }
-  
+
   return lines;
 }
 
@@ -374,9 +387,9 @@ const colorSpecsLine = (line: string, parentIndent: string): string => {
   const noBullet = line.replace(/^\s*\*\s*/, '');
   let specsLine = noBullet.replace(/_+Specs:_+/, COLORS.SPECS_LABEL('Specs:'));
   // Color Events, Commands, State in specs
-  specsLine = specsLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-  specsLine = specsLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-  specsLine = specsLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+  specsLine = specsLine.replace(/\bEvents?\.\w+/gi, (match) => COLORS.EVENTS(match));
+  specsLine = specsLine.replace(/\bCommands?\.\w+/gi, (match) => COLORS.COMMANDS(match));
+  specsLine = specsLine.replace(/\bStates?\.\w+/gi, (match) => COLORS.STATE(match));
   return COLORS.SPECS_TEXT(parentIndent + specsLine.trimStart());
 };
 
@@ -386,9 +399,9 @@ const colorFlowHeader = (line: string): string => {
     let before = match[1].replace(/^#\s*/, '').replace(/\*\*/g, '');
     const bracket = match[2];
     // Color Events, Commands, State in the text part
-    before = before.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-    before = before.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-    before = before.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+    before = before.replace(/\bEvents?\.\w+/gi, (match) => COLORS.EVENTS(match));
+    before = before.replace(/\bCommands?\.\w+/gi, (match) => COLORS.COMMANDS(match));
+    before = before.replace(/\bStates?\.\w+/gi, (match) => COLORS.STATE(match));
     if (/^\[stream:/i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.STREAM_BRACKETS(bracket);
     if (/^\[integrations:/i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.INTEGRATIONS_BRACKETS(bracket);
     if (/^\[\.?\/?src\//i.test(bracket)) return COLORS.FLOW_TEXT(before) + COLORS.SOURCE_BRACKETS(bracket);
@@ -396,9 +409,9 @@ const colorFlowHeader = (line: string): string => {
   }
   let cleanLine = line.replace(/^#\s*/, '').replace(/\*\*/g, '');
   // Color Events, Commands, State
-  cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-  cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-  cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+  cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, (match) => COLORS.EVENTS(match));
+  cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, (match) => COLORS.COMMANDS(match));
+  cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, (match) => COLORS.STATE(match));
   return COLORS.FLOW_TEXT(cleanLine);
 };
 
@@ -412,18 +425,21 @@ const colorSliceLine = (line: string): string => {
     return COLORS.SOURCE_BRACKETS(bracket);
   });
   // Color Events, Commands, State
-  cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-  cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-  cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+  cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, (match) => COLORS.EVENTS(match));
+  cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, (match) => COLORS.COMMANDS(match));
+  cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, (match) => COLORS.STATE(match));
   return COLORS.SLICE_TEXT('  ' + cleanLine);
 };
 
 const colorClientServerLine = (line: string): string => {
-  let cleanLine = line.trim().replace(/^\*\s*/, '').replace(/\*\*/g, '');
+  let cleanLine = line
+    .trim()
+    .replace(/^\*\s*/, '')
+    .replace(/\*\*/g, '');
   // Color Events, Commands, State
-  cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-  cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-  cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+  cleanLine = cleanLine.replace(/\bEvents?\.\w+/gi, (match) => COLORS.EVENTS(match));
+  cleanLine = cleanLine.replace(/\bCommands?\.\w+/gi, (match) => COLORS.COMMANDS(match));
+  cleanLine = cleanLine.replace(/\bStates?\.\w+/gi, (match) => COLORS.STATE(match));
   return COLORS.CLIENT_SERVER.italic('    ' + cleanLine);
 };
 
@@ -444,13 +460,13 @@ const colorMessageName = (line: string, arr: string[], idx: number): string => {
   // Check parent category by looking backwards
   for (let i = idx - 1; i >= 0; i--) {
     if (/^\*\s*\*\*?(Commands)[:]?\*\*/i.test(arr[i])) {
-      cleanLine = cleanLine.replace(/(\*\*\w+\*\*)/, match => COLORS.COMMANDS(match.replace(/\*\*/g, '')));
+      cleanLine = cleanLine.replace(/(\*\*\w+\*\*)/, (match) => COLORS.COMMANDS(match.replace(/\*\*/g, '')));
       break;
     } else if (/^\*\s*\*\*?(Events)[:]?\*\*/i.test(arr[i])) {
-      cleanLine = cleanLine.replace(/(\*\*\w+\*\*)/, match => COLORS.EVENTS(match.replace(/\*\*/g, '')));
+      cleanLine = cleanLine.replace(/(\*\*\w+\*\*)/, (match) => COLORS.EVENTS(match.replace(/\*\*/g, '')));
       break;
     } else if (/^\*\s*\*\*?(States)[:]?\*\*/i.test(arr[i])) {
-      cleanLine = cleanLine.replace(/(\*\*\w+\*\*)/, match => COLORS.STATE(match.replace(/\*\*/g, '')));
+      cleanLine = cleanLine.replace(/(\*\*\w+\*\*)/, (match) => COLORS.STATE(match.replace(/\*\*/g, '')));
       break;
     }
   }
@@ -550,10 +566,10 @@ const colorMessageLines = (line: string, arr: string[], idx: number): string | n
 const colorizeLine = (line: string, idx: number, arr: string[]): string => {
   const specialColor = colorSpecialLines(line, idx, arr);
   if (specialColor != null) return specialColor;
-  
+
   const messageColor = colorMessageLines(line, arr, idx);
   if (messageColor != null) return messageColor;
-  
+
   return colorOtherLines(line, arr, idx);
 };
 
@@ -571,11 +587,11 @@ const colorOtherLines = (line: string, arr: string[], idx: number): string => {
 
   let coloredLine = colorBrackets(line);
   // Color Events, Commands, State
-  coloredLine = coloredLine.replace(/\bEvents?\.\w+/gi, match => COLORS.EVENTS(match));
-  coloredLine = coloredLine.replace(/\bCommands?\.\w+/gi, match => COLORS.COMMANDS(match));
-  coloredLine = coloredLine.replace(/\bStates?\.\w+/gi, match => COLORS.STATE(match));
+  coloredLine = coloredLine.replace(/\bEvents?\.\w+/gi, (match) => COLORS.EVENTS(match));
+  coloredLine = coloredLine.replace(/\bCommands?\.\w+/gi, (match) => COLORS.COMMANDS(match));
+  coloredLine = coloredLine.replace(/\bStates?\.\w+/gi, (match) => COLORS.STATE(match));
   return coloredLine;
-}
+};
 
 function renderColoredText(lines: string[]): string {
   return lines.map(colorizeLine).join('\n');
@@ -592,9 +608,9 @@ interface StreamData {
 }
 
 async function sendFlowCommand(
-  prompt: string, 
+  prompt: string,
   variant: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs',
-  onStream?: (data: unknown) => void
+  onStream?: (data: unknown) => void,
 ): Promise<AppSchema> {
   const command: CreateFlowCommand = {
     type: 'CreateFlow',
@@ -603,11 +619,11 @@ async function sendFlowCommand(
     prompt,
     variant,
     useStreaming: true,
-    streamCallback: onStream
+    streamCallback: onStream,
   };
 
   const response = await messageBus.sendCommand(command);
-  
+
   if (response.status === 'nack') {
     throw new Error(response.error ?? 'Failed to create flow');
   }
@@ -637,16 +653,12 @@ const getAppPrompt = async (output: ReturnType<typeof createOutput>): Promise<st
       transformer: (input: string) => input.trim(),
     },
   ]);
-  
+
   output.debug(`User wants to build: ${answers.appPrompt}`);
   return answers.appPrompt;
 };
 
-const generateFlowNames = async (
-  currentPrompt: string, 
-  iteration: number, 
-  flowSpinner: Ora
-): Promise<AppSchema> => {
+const generateFlowNames = async (currentPrompt: string, iteration: number, flowSpinner: Ora): Promise<AppSchema> => {
   return await sendFlowCommand(currentPrompt, 'flow-names', (partialData: unknown) => {
     const data = partialData as StreamData;
     if (data.flows && Array.isArray(data.flows)) {
@@ -667,9 +679,15 @@ const getConfirmation = async (): Promise<string> => {
     {
       type: 'input',
       name: 'confirmation',
-      message: chalk.cyan('Is this on point or would you like to make changes?\n') + 
-              chalk.gray('  Press ') + chalk.green('Enter') + chalk.gray(', type ') + chalk.green('Yes') + chalk.gray(' or ') + chalk.green('Y') + 
-              chalk.gray(' to continue, or describe what changes you\'d like:'),
+      message:
+        chalk.cyan('Is this on point or would you like to make changes?\n') +
+        chalk.gray('  Press ') +
+        chalk.green('Enter') +
+        chalk.gray(', type ') +
+        chalk.green('Yes') +
+        chalk.gray(' or ') +
+        chalk.green('Y') +
+        chalk.gray(" to continue, or describe what changes you'd like:"),
       transformer: (input: string) => input.trim(),
     },
   ]);
@@ -682,7 +700,11 @@ const isUserSatisfied = (confirmation: string): boolean => {
 };
 
 const updatePromptForChanges = (appPrompt: string, flowNamesData: AppSchema, confirmation: string): string => {
-  const previousFlows = flowNamesData.flows?.slice(0, 4).map(f => f.name).join(', ') || '';
+  const previousFlows =
+    flowNamesData.flows
+      ?.slice(0, 4)
+      .map((f) => f.name)
+      .join(', ') || '';
   return `Original request: ${appPrompt}
 
 Previously generated flows: ${previousFlows}
@@ -760,27 +782,27 @@ const logDebugInfo = (partialData: StreamData, output: ReturnType<typeof createO
 };
 
 const handleStreamUpdate = (
-  partialData: StreamData, 
-  specSpinner: Ora, 
-  output: ReturnType<typeof createOutput>, 
-  updateCount: number
+  partialData: StreamData,
+  specSpinner: Ora,
+  output: ReturnType<typeof createOutput>,
+  updateCount: number,
 ): void => {
   if (partialData.flows != null && Array.isArray(partialData.flows)) {
     stopSpinnerAndClear(specSpinner);
     renderStreamHeader();
-    
+
     // Render the current state with full specs
     const specTextLines = convertToTextFormat(partialData as AppSchema, 'specs');
     console.log(renderColoredText(specTextLines));
-    
+
     logDebugInfo(partialData, output, updateCount);
   }
 };
 
 const generateSpecs = async (
-  specsPrompt: string, 
-  specSpinner: Ora, 
-  output: ReturnType<typeof createOutput>
+  specsPrompt: string,
+  specSpinner: Ora,
+  output: ReturnType<typeof createOutput>,
 ): Promise<void> => {
   let updateCount = 0;
   await sendFlowCommand(specsPrompt, 'specs', (partialData: unknown) => {
@@ -810,7 +832,7 @@ const generateFlowsLoop = async (appPrompt: string, _output: ReturnType<typeof c
   while (true) {
     const flowSpinner = ora({
       text: chalk.gray(iteration === 0 ? 'Generating some flows...' : 'Regenerating flows with your feedback...'),
-      spinner: 'dots'
+      spinner: 'dots',
     }).start();
 
     try {
@@ -841,18 +863,22 @@ const generateFlowsLoop = async (appPrompt: string, _output: ReturnType<typeof c
 };
 
 // Helper to handle specs generation
-const generateSpecsStep = async (appPrompt: string, flowNamesData: AppSchema, output: ReturnType<typeof createOutput>): Promise<void> => {
+const generateSpecsStep = async (
+  appPrompt: string,
+  flowNamesData: AppSchema,
+  output: ReturnType<typeof createOutput>,
+): Promise<void> => {
   console.log();
   console.log(chalk.cyan('Building up your flows...'));
   console.log();
 
   const specSpinner = ora({
     text: chalk.gray('Generating full specifications...'),
-    spinner: 'dots'
+    spinner: 'dots',
   }).start();
 
   try {
-    const flowNames = flowNamesData.flows?.map(f => f.name).join(', ') ?? '';
+    const flowNames = flowNamesData.flows?.map((f) => f.name).join(', ') ?? '';
     const specsPrompt = buildSpecsPrompt(appPrompt, flowNames);
     await generateSpecs(specsPrompt, specSpinner, output);
   } catch (error) {
@@ -868,25 +894,22 @@ const generateSpecsStep = async (appPrompt: string, flowNamesData: AppSchema, ou
 export const createStartCommand = (config: Config, analytics: Analytics) => {
   const output = createOutput(config);
 
-  return new Command('start')
-    .description('Create flows interactively using AI')
-    .action(async () => {
-      try {
-        output.debug('Start command initiated');
-        const appPrompt = await getAppPrompt(output);
-        const flowNamesData = await generateFlowsLoop(appPrompt, output);
-        await generateSpecsStep(appPrompt, flowNamesData, output);
-        showNextSteps();
-        await analytics.trackCommand('start', true);
-        output.debug('Start command completed successfully');
-
-      } catch (error: unknown) {
-        await analytics.trackCommand('start', false, error instanceof Error && error.message ? error.message : 'unknown');
-        if (error instanceof Error) {
-          handleError(error);
-        } else {
-          handleError(new Error(String(error)));
-        }
+  return new Command('start').description('Create flows interactively using AI').action(async () => {
+    try {
+      output.debug('Start command initiated');
+      const appPrompt = await getAppPrompt(output);
+      const flowNamesData = await generateFlowsLoop(appPrompt, output);
+      await generateSpecsStep(appPrompt, flowNamesData, output);
+      showNextSteps();
+      await analytics.trackCommand('start', true);
+      output.debug('Start command completed successfully');
+    } catch (error: unknown) {
+      await analytics.trackCommand('start', false, error instanceof Error && error.message ? error.message : 'unknown');
+      if (error instanceof Error) {
+        handleError(error);
+      } else {
+        handleError(new Error(String(error)));
       }
-    });
-}; 
+    }
+  });
+};

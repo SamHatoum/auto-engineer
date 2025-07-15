@@ -18,4 +18,4 @@ export interface UXSchema {
 export interface AIAgentOutput {
   generatedComponents: unknown[];
   layout: unknown;
-} 
+}

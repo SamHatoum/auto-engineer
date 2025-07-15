@@ -1,31 +1,31 @@
-import {CommandSender, InMemoryEventStore} from "@event-driven-io/emmett";
-import {Field, ObjectType} from "type-graphql";
+import { CommandSender, InMemoryEventStore } from '@event-driven-io/emmett';
+import { Field, ObjectType } from 'type-graphql';
 
-export interface ReactorContext  {
-    eventStore: InMemoryEventStore;
-    commandSender: CommandSender;
-    [key: string]: unknown;
-};
+export interface ReactorContext {
+  eventStore: InMemoryEventStore;
+  commandSender: CommandSender;
+  [key: string]: unknown;
+}
 
 export interface GraphQLContext {
-    eventStore: InMemoryEventStore;
-    messageBus: CommandSender;
+  eventStore: InMemoryEventStore;
+  messageBus: CommandSender;
 }
 
 @ObjectType()
 export class MutationError {
-    @Field(() => String)
-    type!: string;
+  @Field(() => String)
+  type!: string;
 
-    @Field(() => String, { nullable: true })
-    message?: string;
+  @Field(() => String, { nullable: true })
+  message?: string;
 }
 
 @ObjectType()
 export class MutationResponse {
-    @Field(() => Boolean)
-    success!: boolean;
+  @Field(() => Boolean)
+  success!: boolean;
 
-    @Field(() => MutationError, { nullable: true })
-    error?: MutationError;
+  @Field(() => MutationError, { nullable: true })
+  error?: MutationError;
 }

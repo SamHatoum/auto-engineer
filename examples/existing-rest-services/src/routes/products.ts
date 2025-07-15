@@ -96,9 +96,10 @@ router.get('/search', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Query parameter "q" is required' });
   }
 
-  const products = mockProducts.filter(p => 
-    p.name.toLowerCase().includes(query.toLowerCase()) ||
-    p.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+  const products = mockProducts.filter(
+    (p) =>
+      p.name.toLowerCase().includes(query.toLowerCase()) ||
+      p.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase())),
   );
   res.json(products);
 });
@@ -129,9 +130,7 @@ router.get('/search', (req: Request, res: Response) => {
  */
 router.get('/category/:category', (req: Request, res: Response) => {
   const { category } = req.params as { category: string };
-  const products = mockProducts.filter(p => 
-    p.category.toLowerCase() === category.toLowerCase()
-  );
+  const products = mockProducts.filter((p) => p.category.toLowerCase() === category.toLowerCase());
   res.json(products);
 });
 
@@ -168,11 +167,11 @@ router.get('/category/:category', (req: Request, res: Response) => {
  */
 router.get('/:id', (req: Request, res: Response) => {
   const { id } = req.params as { id: string };
-  const product = mockProducts.find(p => p.productId === id);
+  const product = mockProducts.find((p) => p.productId === id);
   if (!product) {
     return res.status(404).json({ error: 'Product not found' });
   }
   res.json(product);
 });
 
-export default router; 
+export default router;

@@ -9,16 +9,16 @@ export const supportsColor = (config: Config): boolean => {
 export const createOutput = (config: Config) => {
   const useColor = supportsColor(config);
   const isJsonOutput = config.output === 'json';
-  
+
   const outputJson = (status: string, message: string) => {
     console.log(JSON.stringify({ status, message }));
   };
-  
+
   const outputText = (prefix: string, message: string, colorFn?: (text: string) => string) => {
     const text = `${prefix} ${message}`;
     console.log(useColor && colorFn ? colorFn(text) : text);
   };
-  
+
   return {
     success: (message: string) => {
       if (isJsonOutput) {
@@ -27,7 +27,7 @@ export const createOutput = (config: Config) => {
         outputText('✓', message, chalk.green);
       }
     },
-    
+
     error: (message: string) => {
       if (isJsonOutput) {
         console.error(JSON.stringify({ status: 'error', message }));
@@ -36,7 +36,7 @@ export const createOutput = (config: Config) => {
         console.error(useColor ? chalk.red(text) : text);
       }
     },
-    
+
     info: (message: string) => {
       if (isJsonOutput) {
         outputJson('info', message);
@@ -44,7 +44,7 @@ export const createOutput = (config: Config) => {
         outputText('ℹ', message, chalk.blue);
       }
     },
-    
+
     warn: (message: string) => {
       if (isJsonOutput) {
         outputJson('warning', message);
@@ -52,24 +52,24 @@ export const createOutput = (config: Config) => {
         outputText('⚠', message, chalk.yellow);
       }
     },
-    
+
     debug: (message: string) => {
       if (!config.debug) return;
-      
+
       if (isJsonOutput) {
         outputJson('debug', message);
       } else {
         outputText('🐛', message, chalk.gray);
       }
     },
-    
+
     log: (message: string) => {
       if (isJsonOutput) {
         console.log(JSON.stringify({ message }));
       } else {
         console.log(message);
       }
-    }
+    },
   };
 };
 
@@ -87,4 +87,4 @@ export const readStdin = (): Promise<string> => {
       resolve(data.trim());
     });
   });
-}; 
+};

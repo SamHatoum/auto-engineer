@@ -1,3 +1,3 @@
 # Emmett Generator
 
-Test publish workflow 
+Test publish workflow

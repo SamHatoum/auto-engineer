@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Auto-fix formatting before commit
+pnpm turbo run format
+
+# Stage the formatted files
+git add -A

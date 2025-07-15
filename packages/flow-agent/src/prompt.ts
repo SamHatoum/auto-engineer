@@ -73,7 +73,7 @@ export const variantPrompts = {
 
             User Request: ${userPrompt}`,
 
-  'specs': (userPrompt: string) => `${basePrompt}
+  specs: (userPrompt: string) => `${basePrompt}
             IMPORTANT: Generate a "specs" variant of the system.
             Generate complete specifications with all implementation details, messages, and integrations.
 
@@ -173,7 +173,7 @@ export const variantPrompts = {
               }
             }
 
-            User Request: ${userPrompt}`
+            User Request: ${userPrompt}`,
 };
 
 // Export the base prompt for backward compatibility if needed

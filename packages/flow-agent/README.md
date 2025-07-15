@@ -5,6 +5,7 @@ A multi-provider AI agent built with the [AI SDK](https://ai-sdk.dev/) that supp
 ## Setup
 
 1. Install dependencies:
+
 ```bash
 pnpm install
 ```
@@ -38,7 +39,7 @@ console.log(response);
 
 // Use a specific provider
 const claudeResponse = await agent.generateText('Write a haiku about programming.', {
-  provider: 'anthropic'
+  provider: 'anthropic',
 });
 
 // Stream text
@@ -47,10 +48,11 @@ for await (const chunk of agent.streamText('Tell me a story.')) {
 }
 
 // Compare responses from multiple providers
-const multiResponse = await agent.generateWithMultipleProviders(
-  'What is the best programming language?',
-  ['openai', 'anthropic', 'google']
-);
+const multiResponse = await agent.generateWithMultipleProviders('What is the best programming language?', [
+  'openai',
+  'anthropic',
+  'google',
+]);
 
 // Check available providers
 console.log('Available providers:', agent.getAvailableProviders());
@@ -68,6 +70,7 @@ interface AIAgentOptions {
 ```
 
 ### Default Models
+
 - **OpenAI**: `gpt-4o-mini`
 - **Anthropic**: `claude-3-haiku-20240307`
 - **Google**: `gemini-1.5-flash`
@@ -83,6 +86,7 @@ await example();
 ```
 
 This will:
+
 1. Show available providers
 2. Generate text with the default provider
 3. Stream a response

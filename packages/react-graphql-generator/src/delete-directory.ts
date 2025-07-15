@@ -16,4 +16,3 @@ export function deleteDirectory(targetPath: string): void {
     console.error(`❌ Failed to delete directory: ${resolvedPath}`, error);
   }
 }
-

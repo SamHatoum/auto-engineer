@@ -9,7 +9,9 @@
     "dev": "tsc --watch",
     "test": "vitest run",
     "type-check": "tsc --noEmit --project tsconfig.json",
-    "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.tmp/**' --max-warnings 0 --config ../../eslint.config.js"
+    "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.tmp/**' --max-warnings 0 --config ../../eslint.config.js",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
     "@auto-engineer/flowlang": "workspace:*",

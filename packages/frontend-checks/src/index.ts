@@ -5,7 +5,7 @@ class BrowserManager {
   private static instance: BrowserManager | null = null;
   private browser: Browser | null = null;
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): BrowserManager {
     if (BrowserManager.instance === null) {
@@ -35,7 +35,7 @@ export async function getConsoleErrors(url: string): Promise<string[]> {
   const browser = await browserManager.getBrowser();
   const page = await browser.newPage();
 
-  page.on('console', msg => {
+  page.on('console', (msg) => {
     if (msg.type() === 'error') {
       errors.push(msg.text());
     }
@@ -62,7 +62,7 @@ export function getTsErrors(projectPath: string): Promise<string[]> {
       if (error) {
         // tsc exits with an error code if there are any type errors.
         // The errors are in stdout, not stderr.
-        const errors = stdout.split('\n').filter(line => line.trim().length > 0);
+        const errors = stdout.split('\n').filter((line) => line.trim().length > 0);
         resolve(errors);
       } else {
         // No errors
@@ -78,7 +78,7 @@ export function getBuildErrors(projectPath: string): Promise<string[]> {
     exec(command, { cwd: projectPath }, (error, _stdout, stderr) => {
       if (error) {
         // Vite build errors are usually in stderr
-        const errors = stderr.split('\n').filter(line => line.trim().length > 0);
+        const errors = stderr.split('\n').filter((line) => line.trim().length > 0);
         resolve(errors);
       } else {
         resolve([]);

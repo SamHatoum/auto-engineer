@@ -24,14 +24,15 @@ export class InformationArchitectAgent {
     this.provider = provider;
   }
 
-  async generateUXComponents(flows: string[], uxSchema: UXSchema, existingSchema?: object, atoms?: { name: string, props: { name: string, type: string }[] }[]): Promise<AIAgentOutput> {
+  async generateUXComponents(
+    flows: string[],
+    uxSchema: UXSchema,
+    existingSchema?: object,
+    atoms?: { name: string; props: { name: string; type: string }[] }[],
+  ): Promise<AIAgentOutput> {
     const prompt = this.constructPrompt(flows, uxSchema, existingSchema, atoms);
     try {
-      const response = await generateTextWithAI(
-        prompt,
-        this.provider,
-        { temperature: 0.7, maxTokens: 4096 }
-      );
+      const response = await generateTextWithAI(prompt, this.provider, { temperature: 0.7, maxTokens: 4096 });
       if (!response) {
         throw new Error('No response from AI agent');
       }
@@ -46,7 +47,12 @@ export class InformationArchitectAgent {
     }
   }
 
-  private constructPrompt(flows: string[], uxSchema: UXSchema, existingSchema?: object, atoms?: { name: string, props: { name: string, type: string }[] }[]): string {
+  private constructPrompt(
+    flows: string[],
+    uxSchema: UXSchema,
+    existingSchema?: object,
+    atoms?: { name: string; props: { name: string; type: string }[] }[],
+  ): string {
     return `
 You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 
@@ -125,7 +131,12 @@ Do not include any text, explanation, or markdown—only the JSON object as desc
   }
 }
 
-export async function processFlowsWithAI(flows: string[], uxSchema: UXSchema, existingSchema?: object, atoms?: { name: string, props: { name: string, type: string }[] }[]): Promise<AIAgentOutput> {
+export async function processFlowsWithAI(
+  flows: string[],
+  uxSchema: UXSchema,
+  existingSchema?: object,
+  atoms?: { name: string; props: { name: string; type: string }[] }[],
+): Promise<AIAgentOutput> {
   const agent = new InformationArchitectAgent();
   return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms);
 }

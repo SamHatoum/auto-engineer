@@ -3,196 +3,190 @@ import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flowlang';
 
 describe('projection.ts.ejs', () => {
-    it('should generate a valid projection file with correct relative event import path from producing slice', async () => {
-        const spec: SpecsSchema = {
-            variant: 'specs',
-            flows: [
-                {
-                    name: 'listing-flow',
-                    slices: [
-                        {
-                            type: 'command',
-                            name: 'create-listing',
-                            stream: 'listing-${propertyId}',
-                            client: {
-                                description: 'create listing UI',
-                                specs: [],
-                            },
-                            server: {
-                                description: 'handles create/remove listing',
-                                gwt: [
-                                    {
-                                        when: {
-                                            commandRef: 'CreateListing',
-                                            exampleData: {
-                                                propertyId: 'listing_123',
-                                                title: 'Sea View Flat',
-                                                pricePerNight: 120,
-                                                location: 'Brighton',
-                                                maxGuests: 4,
-                                            },
-                                        },
-                                        then: [
-                                            {
-                                                eventRef: 'ListingCreated',
-                                                exampleData: {
-                                                    propertyId: 'listing_123',
-                                                    title: 'Sea View Flat',
-                                                    pricePerNight: 120,
-                                                    location: 'Brighton',
-                                                    maxGuests: 4,
-                                                },
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        when: {
-                                            commandRef: 'RemoveListing',
-                                            exampleData: {
-                                                propertyId: 'listing_123',
-                                            },
-                                        },
-                                        then: [
-                                            {
-                                                eventRef: 'ListingRemoved',
-                                                exampleData: {},
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
+  it('should generate a valid projection file with correct relative event import path from producing slice', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'listing-flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'create-listing',
+              stream: 'listing-${propertyId}',
+              client: {
+                description: 'create listing UI',
+                specs: [],
+              },
+              server: {
+                description: 'handles create/remove listing',
+                gwt: [
+                  {
+                    when: {
+                      commandRef: 'CreateListing',
+                      exampleData: {
+                        propertyId: 'listing_123',
+                        title: 'Sea View Flat',
+                        pricePerNight: 120,
+                        location: 'Brighton',
+                        maxGuests: 4,
+                      },
+                    },
+                    then: [
+                      {
+                        eventRef: 'ListingCreated',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                          title: 'Sea View Flat',
+                          pricePerNight: 120,
+                          location: 'Brighton',
+                          maxGuests: 4,
                         },
-                        {
-                            type: 'query',
-                            name: 'search-listings',
-                            stream: 'listings',
-                            client: {
-                                description: 'search listings UI',
-                                specs: [],
-                            },
-                            server: {
-                                description: 'projection for available listings',
-                                data: [
-                                    {
-                                        target: {
-                                            type: 'State',
-                                            name: 'AvailableListings',
-                                        },
-                                        origin: {
-                                            type: 'projection',
-                                            name: 'AvailablePropertiesProjection',
-                                            idField: 'propertyId',
-                                        },
-                                    },
-                                ],
-                                gwt: [
-                                    {
-                                        given: [
-                                            {
-                                                eventRef: 'ListingCreated',
-                                                exampleData: {
-                                                    propertyId: 'listing_123',
-                                                    title: 'Sea View Flat',
-                                                    pricePerNight: 120,
-                                                    location: 'Brighton',
-                                                    maxGuests: 4,
-                                                },
-                                            },
-                                        ],
-                                        then: [
-                                            {
-                                                stateRef: 'AvailableListings',
-                                                exampleData: {
-                                                    propertyId: 'listing_123',
-                                                    title: 'Sea View Flat',
-                                                    pricePerNight: 120,
-                                                    location: 'Brighton',
-                                                    maxGuests: 4,
-                                                },
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        given: [
-                                            {
-                                                eventRef: 'ListingRemoved',
-                                                exampleData: {
-                                                    propertyId: 'listing_123',
-                                                },
-                                            },
-                                        ],
-                                        then: [
-                                            {
-                                                stateRef: 'AvailableListings',
-                                                exampleData: {},
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
+                      },
+                    ],
+                  },
+                  {
+                    when: {
+                      commandRef: 'RemoveListing',
+                      exampleData: {
+                        propertyId: 'listing_123',
+                      },
+                    },
+                    then: [
+                      {
+                        eventRef: 'ListingRemoved',
+                        exampleData: {},
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            {
+              type: 'query',
+              name: 'search-listings',
+              stream: 'listings',
+              client: {
+                description: 'search listings UI',
+                specs: [],
+              },
+              server: {
+                description: 'projection for available listings',
+                data: [
+                  {
+                    target: {
+                      type: 'State',
+                      name: 'AvailableListings',
+                    },
+                    origin: {
+                      type: 'projection',
+                      name: 'AvailablePropertiesProjection',
+                      idField: 'propertyId',
+                    },
+                  },
+                ],
+                gwt: [
+                  {
+                    given: [
+                      {
+                        eventRef: 'ListingCreated',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                          title: 'Sea View Flat',
+                          pricePerNight: 120,
+                          location: 'Brighton',
+                          maxGuests: 4,
                         },
+                      },
                     ],
-                },
-            ],
-            messages: [
-                {
-                    type: 'command',
-                    name: 'CreateListing',
-                    fields: [
-                        { name: 'propertyId', type: 'string', required: true },
-                        { name: 'title', type: 'string', required: true },
-                        { name: 'pricePerNight', type: 'number', required: true },
-                        { name: 'location', type: 'string', required: true },
-                        { name: 'maxGuests', type: 'number', required: true },
+                    then: [
+                      {
+                        stateRef: 'AvailableListings',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                          title: 'Sea View Flat',
+                          pricePerNight: 120,
+                          location: 'Brighton',
+                          maxGuests: 4,
+                        },
+                      },
                     ],
-                },
-                {
-                    type: 'command',
-                    name: 'RemoveListing',
-                    fields: [
-                        { name: 'propertyId', type: 'string', required: true },
+                  },
+                  {
+                    given: [
+                      {
+                        eventRef: 'ListingRemoved',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                        },
+                      },
                     ],
-                },
-                {
-                    type: 'event',
-                    name: 'ListingCreated',
-                    source: 'internal',
-                    fields: [
-                        { name: 'propertyId', type: 'string', required: true },
-                        { name: 'title', type: 'string', required: true },
-                        { name: 'pricePerNight', type: 'number', required: true },
-                        { name: 'location', type: 'string', required: true },
-                        { name: 'maxGuests', type: 'number', required: true },
+                    then: [
+                      {
+                        stateRef: 'AvailableListings',
+                        exampleData: {},
+                      },
                     ],
-                },
-                {
-                    type: 'event',
-                    name: 'ListingRemoved',
-                    source: 'internal',
-                    fields: [
-                        { name: 'propertyId', type: 'string', required: true },
-                    ],
-                },
-                {
-                    type: 'state',
-                    name: 'AvailableListings',
-                    fields: [
-                        { name: 'propertyId', type: 'string', required: true },
-                        { name: 'title', type: 'string', required: true },
-                        { name: 'pricePerNight', type: 'number', required: true },
-                        { name: 'location', type: 'string', required: true },
-                        { name: 'maxGuests', type: 'number', required: true },
-                    ],
-                },
-            ],
-        };
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'CreateListing',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+            { name: 'pricePerNight', type: 'number', required: true },
+            { name: 'location', type: 'string', required: true },
+            { name: 'maxGuests', type: 'number', required: true },
+          ],
+        },
+        {
+          type: 'command',
+          name: 'RemoveListing',
+          fields: [{ name: 'propertyId', type: 'string', required: true }],
+        },
+        {
+          type: 'event',
+          name: 'ListingCreated',
+          source: 'internal',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+            { name: 'pricePerNight', type: 'number', required: true },
+            { name: 'location', type: 'string', required: true },
+            { name: 'maxGuests', type: 'number', required: true },
+          ],
+        },
+        {
+          type: 'event',
+          name: 'ListingRemoved',
+          source: 'internal',
+          fields: [{ name: 'propertyId', type: 'string', required: true }],
+        },
+        {
+          type: 'state',
+          name: 'AvailableListings',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+            { name: 'pricePerNight', type: 'number', required: true },
+            { name: 'location', type: 'string', required: true },
+            { name: 'maxGuests', type: 'number', required: true },
+          ],
+        },
+      ],
+    };
 
-        const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
-        const projectionFile = plans.find((p) =>
-            p.outputPath.endsWith('projection.ts')
-        );
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const projectionFile = plans.find((p) => p.outputPath.endsWith('projection.ts'));
 
-        expect(projectionFile?.contents).toMatchInlineSnapshot(`
+    expect(projectionFile?.contents).toMatchInlineSnapshot(`
           "import {
             inMemorySingleStreamProjection,
             type ReadEvent,
@@ -247,5 +241,5 @@ describe('projection.ts.ejs', () => {
           export default projection;
           "
         `);
-    });
+  });
 });

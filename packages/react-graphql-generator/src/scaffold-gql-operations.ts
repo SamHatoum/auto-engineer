@@ -21,7 +21,7 @@ function extractGqlOperations(flow: string): GqlOperation[] {
       operations.push({
         operationType: operationType as 'query' | 'mutation',
         operationName,
-        raw
+        raw,
       });
     }
   }
@@ -32,13 +32,13 @@ function extractGqlOperations(flow: string): GqlOperation[] {
 function formatWithTabs(text: string): string {
   return text
     .split('\n')
-    .map(line => '\t' + line)
+    .map((line) => '\t' + line)
     .join('\n');
 }
 
 function buildFileContent(operations: GqlOperation[]): string {
   const header = `import { graphql } from '../gql';\n`;
-  const entries = operations.map(op => {
+  const entries = operations.map((op) => {
     const formatted = formatWithTabs(op.raw);
     return `\nexport const ${op.operationName} = graphql(\`\n${formatted}\n\`);`;
   });
@@ -49,8 +49,8 @@ function buildFileContent(operations: GqlOperation[]): string {
 export function writeGqlOperationsToFolder(flows: string[], outputDir: string) {
   const allOperations: GqlOperation[] = flows.flatMap(extractGqlOperations);
 
-  const queries = allOperations.filter(op => op.operationType === 'query');
-  const mutations = allOperations.filter(op => op.operationType === 'mutation');
+  const queries = allOperations.filter((op) => op.operationType === 'query');
+  const mutations = allOperations.filter((op) => op.operationType === 'mutation');
 
   const graphqlDir = path.join(outputDir, 'graphql');
   fs.mkdirSync(graphqlDir, { recursive: true });

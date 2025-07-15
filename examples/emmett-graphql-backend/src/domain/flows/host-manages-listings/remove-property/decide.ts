@@ -3,10 +3,7 @@ import type { PropertyState } from './state';
 import type { RemoveProperty } from './commands';
 import type { PropertyRemoved } from './events';
 
-export const decide = (
-    command: RemoveProperty,
-    state: PropertyState
-): PropertyRemoved => {
+export const decide = (command: RemoveProperty, state: PropertyState): PropertyRemoved => {
   if (state.status !== 'Listed') {
     throw new IllegalStateError('Cannot remove a property that is not listed');
   }

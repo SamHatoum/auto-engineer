@@ -9,23 +9,21 @@ The typed builder integration has been successfully implemented. You can now use
 The flowlang DSL now supports a unified `data()` function that accepts arrays of data flow items with full type-safe builder integration:
 
 ### 1. Array-Based API
+
 ```typescript
-commandSlice('Create listing')
-  .server(() => {
-    data([
-      sink().event('ListingCreated')
-        .fields({ propertyId: true })
-        .toStream('listing-${propertyId}')
-    ]);
-  })
+commandSlice('Create listing').server(() => {
+  data([sink().event('ListingCreated').fields({ propertyId: true }).toStream('listing-${propertyId}')]);
+});
 ```
 
 ### 2. Context-Aware Type Safety
+
 - Command slices: Only accept `DataSinkItem[]`
 - Query slices: Only accept `DataSourceItem[]`
 - React slices: Accept `DataItem[]` (mix of both)
 
 ### 3. Builder Foundation
+
 The `createBuilders()` function now returns typed builders with `sink` and `source` properties:
 
 ```typescript
@@ -58,11 +56,13 @@ data([
 ### The Issue
 
 When `sink()` accepts a typed builder, it returns a union type:
+
 - `EventSinkBuilder | CommandSinkBuilder | StateSinkBuilder`
 
 TypeScript can only allow methods that exist on ALL types in the union:
+
 - EventSinkBuilder: has `toStream()`, `toTopic()`
-- CommandSinkBuilder: has `toIntegration()`, `toTopic()`  
+- CommandSinkBuilder: has `toIntegration()`, `toTopic()`
 - StateSinkBuilder: has `toDatabase()`, `toProjection()`
 
 Since no methods exist on all three types, TypeScript throws errors even though the runtime code would work correctly.
@@ -76,12 +76,11 @@ Since no methods exist on all three types, TypeScript throws errors even though 
 ### Proposed Solutions
 
 #### Option A: Type Predicates
+
 ```typescript
 interface TypedSink<T extends 'event' | 'command' | 'state'> {
   type: T;
-  builder: T extends 'event' ? EventSinkBuilder :
-          T extends 'command' ? CommandSinkBuilder :
-          StateSinkBuilder;
+  builder: T extends 'event' ? EventSinkBuilder : T extends 'command' ? CommandSinkBuilder : StateSinkBuilder;
 }
 
 function isEventSink(sink: TypedSink<any>): sink is TypedSink<'event'> {
@@ -90,6 +89,7 @@ function isEventSink(sink: TypedSink<any>): sink is TypedSink<'event'> {
 ```
 
 #### Option B: Separate Functions
+
 ```typescript
 const { sinkEvent, sinkCommand, sinkState, sourceState } = builders;
 
@@ -97,13 +97,14 @@ data([
   sinkEvent(Events.ListingCreated({ ... }))
     .fields({ propertyId: true })
     .toStream('listing-${propertyId}'),
-    
+
   sinkCommand(Commands.NotifyHost({ ... }))
     .toIntegration(MailChimp)
 ])
 ```
 
 #### Option C: Builder Proxies
+
 ```typescript
 const typedSink = new Proxy(sink, {
   get(target, prop) {
@@ -124,16 +125,19 @@ data([
 ## Migration Path
 
 ### Phase 1: Basic Implementation ✅
+
 - Basic array-based `data()` function
 - String-based sink/source builders
 - Context-aware type constraints
 
 ### Phase 2: Enhanced Type Safety ✅ COMPLETED
+
 - Typed builder integration ✅
 - Elimination of string literals ✅
 - Full compile-time validation ✅
 
 ### Phase 3: Advanced Features (Future)
+
 - Field-level type safety
 - Transform function typing
 - Conditional data flows
@@ -162,10 +166,10 @@ const { Events, Commands, State, sink, source } = createBuilders()
 
 // Use typed builders in data flows
 data([
-  sink(Events.ListingCreated({ propertyId: '123', /* ... */ }))
+  sink(Events.ListingCreated({ propertyId: '123' /* ... */ }))
     .fields({ propertyId: true })
-    .toStream('listing-${propertyId}')
-])
+    .toStream('listing-${propertyId}'),
+]);
 ```
 
 ## Recommended Approach (Current)
@@ -174,17 +178,13 @@ Until TypeScript's type system can better handle these scenarios, use the string
 
 ```typescript
 // ✅ Works today with full functionality
-commandSlice('Create listing')
-  .server(() => {
-    data([
-      sink().event('ListingCreated')
-        .fields({ propertyId: true })
-        .toStream('listing-${propertyId}')
-    ]);
-  })
+commandSlice('Create listing').server(() => {
+  data([sink().event('ListingCreated').fields({ propertyId: true }).toStream('listing-${propertyId}')]);
+});
 ```
 
 The benefits still include:
+
 - Context-aware data() function
 - Fluent API with full IntelliSense
 - Type-safe field selection
@@ -195,4 +195,4 @@ The benefits still include:
 1. Investigate TypeScript 5.x conditional types and type predicates
 2. Consider separate typed functions (sinkEvent, sinkCommand, sinkState)
 3. Explore code generation for perfect type safety
-4. Potentially use function overloads to guide TypeScript's inference 
+4. Potentially use function overloads to guide TypeScript's inference

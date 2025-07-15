@@ -9,7 +9,9 @@
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
     "type-check": "tsc --noEmit",
-    "start": "tsx src/app.ts"
+    "start": "tsx src/app.ts",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
     "@auto-engineer/config": "workspace:*",
@@ -20,4 +22,4 @@
   "publishConfig": {
     "access": "public"
   }
-} 
+}

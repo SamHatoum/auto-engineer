@@ -6,23 +6,18 @@ import { initialState } from './state';
 import type { CreateListing } from './commands';
 
 const handler = CommandHandler({
-    evolve,
-    initialState,
+  evolve,
+  initialState,
 });
 
-export const handle = async (
-    eventStore: EventStore,
-    command: CreateListing
-): Promise<MessageHandlerResult> => {
-    try {
-        await handler(eventStore, `property-${command.data.propertyId}`, (state) =>
-            decide(command, state)
-        );
-        return;
-    } catch (error: any) {
-        return {
-            type: 'SKIP',
-            reason: `Command failed: ${error?.message ?? 'Unknown'}`,
-        };
-    }
+export const handle = async (eventStore: EventStore, command: CreateListing): Promise<MessageHandlerResult> => {
+  try {
+    await handler(eventStore, `property-${command.data.propertyId}`, (state) => decide(command, state));
+    return;
+  } catch (error: any) {
+    return {
+      type: 'SKIP',
+      reason: `Command failed: ${error?.message ?? 'Unknown'}`,
+    };
+  }
 };

@@ -1,7 +1,7 @@
-import { Products } from "./product.state";
+import { Products } from './product.state';
 
 // Re-export types for external use
-export type { ProductCatalog, Product } from "./product.state";
+export type { ProductCatalog, Product } from './product.state';
 
 // Define Integration interface locally to avoid import issues
 interface Integration<T extends string = string> {
@@ -13,7 +13,7 @@ interface Integration<T extends string = string> {
 export const ProductCatalogService: Integration<'product-catalog'> = {
   __brand: 'Integration' as const,
   type: 'product-catalog' as const,
-  name: 'ProductCatalogService'
+  name: 'ProductCatalogService',
 };
 
 export const ProductCatalogServiceImplementation = {
@@ -23,26 +23,25 @@ export const ProductCatalogServiceImplementation = {
       return {
         type: 'Products',
         data: {
-          products: []
-        }
-      }
-    }
+          products: [],
+        },
+      };
+    },
   },
   Commands: {
     // Future commands for product catalog management
     Foo: (_params: unknown) => {
-      
       return {
         type: 'Foo',
         data: {
-          foo: 'bar'
-        }
-      }
-    }
+          foo: 'bar',
+        },
+      };
+    },
   },
   Events: {
     // Future events from product catalog changes
-  }
+  },
 };
 // when I create an integration, I need to make sure it's commands and queries are on the gql server as mutations and queries
 // which means we can use the Apollo MCP to call the integration from the AI module

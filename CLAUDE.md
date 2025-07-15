@@ -28,16 +28,19 @@ pnpm test <test-file-pattern>
 ## Architecture
 
 ### Monorepo Structure
+
 - **Package Manager**: pnpm with workspace support
 - **Build System**: Turborepo for task orchestration
 - **Node Version**: >= 20.0.0 required
 - **Test Framework**: Vitest (files: `*.specs.ts`)
 
 ### Key Applications
+
 - **apps/cli**: Main CLI interface (`auto-engineer` or `ag` commands)
 - **apps/api**: Backend API server with message bus integration
 
 ### Core Packages
+
 - **flowlang**: DSL for defining flows with fluent API
 - **emmett-generator**: Code generation from flow specifications using EJS templates
 - **ai-integration**: Unified AI provider interface (OpenAI, Anthropic, Google AI, X.AI)
@@ -47,7 +50,9 @@ pnpm test <test-file-pattern>
 ## Key Patterns
 
 ### FlowLang DSL
+
 Uses fluent API for command, query, and reaction slices:
+
 ```typescript
 // Example flow structure
 const flow = Flow()
@@ -57,11 +62,13 @@ const flow = Flow()
 ```
 
 ### Vertical Slice Architecture
+
 - Features organized as complete vertical slices
 - Each slice contains UI, business logic, and data access
 - Organized by business domains, not technical layers
 
 ### Event Sourcing & CQRS
+
 - Command/Query separation with immutable event streams
 - Event-driven architecture using the message bus
 - Read model projections for queries
@@ -69,6 +76,7 @@ const flow = Flow()
 ## Environment Requirements
 
 At least one AI provider key is required:
+
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
@@ -77,6 +85,7 @@ At least one AI provider key is required:
 ## Code Generation
 
 The emmett-generator package creates:
+
 - GraphQL/Apollo server implementations
 - Type-safe command/event handling
 - React components with Shadcn/ui
@@ -90,5 +99,6 @@ The emmett-generator package creates:
 - Test files use `*.specs.ts` pattern
 
 ## Linting
+
 - You are not allowed to relax lint rules
 - You must fix the underlying issues rather than just make the checks pass

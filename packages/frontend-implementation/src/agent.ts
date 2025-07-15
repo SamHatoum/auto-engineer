@@ -5,57 +5,61 @@ import { getTsErrors, getBuildErrors } from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
 // Utility to extract props from interface
-function extractPropsFromInterface(node: ts.InterfaceDeclaration, sourceFile: ts.SourceFile): { name: string, type: string }[] {
-  return node.members
-    .filter(ts.isPropertySignature)
-    .map(member => {
-      const name = member.name.getText(sourceFile);
-      const type = member.type ? member.type.getText(sourceFile) : 'any';
-      return { name, type };
-    });
+function extractPropsFromInterface(
+  node: ts.InterfaceDeclaration,
+  sourceFile: ts.SourceFile,
+): { name: string; type: string }[] {
+  return node.members.filter(ts.isPropertySignature).map((member) => {
+    const name = member.name.getText(sourceFile);
+    const type = member.type ? member.type.getText(sourceFile) : 'any';
+    return { name, type };
+  });
 }
 
 // Utility to extract props from type alias
-function extractPropsFromTypeAlias(node: ts.TypeAliasDeclaration, sourceFile: ts.SourceFile): { name: string, type: string }[] {
+function extractPropsFromTypeAlias(
+  node: ts.TypeAliasDeclaration,
+  sourceFile: ts.SourceFile,
+): { name: string; type: string }[] {
   if (!ts.isTypeLiteralNode(node.type)) return [];
-  return node.type.members
-    .filter(ts.isPropertySignature)
-    .map(member => {
-      const name = member.name.getText(sourceFile);
-      const type = member.type ? member.type.getText(sourceFile) : 'any';
-      return { name, type };
-    });
+  return node.type.members.filter(ts.isPropertySignature).map((member) => {
+    const name = member.name.getText(sourceFile);
+    const type = member.type ? member.type.getText(sourceFile) : 'any';
+    return { name, type };
+  });
 }
 
 // Extract atoms and their props from src/components/atoms
-async function getAtomsWithProps(projectDir: string): Promise<{ name: string, props: { name: string, type: string }[] }[]> {
+async function getAtomsWithProps(
+  projectDir: string,
+): Promise<{ name: string; props: { name: string; type: string }[] }[]> {
   const atomsDir = path.join(projectDir, 'src/components/atoms');
   let files: string[] = [];
   try {
-    files = (await fs.readdir(atomsDir)).filter(f => f.endsWith('.tsx'));
+    files = (await fs.readdir(atomsDir)).filter((f) => f.endsWith('.tsx'));
   } catch {
     return [];
   }
-  const atoms: { name: string, props: { name: string, type: string }[] }[] = [];
+  const atoms: { name: string; props: { name: string; type: string }[] }[] = [];
   for (const file of files) {
     const filePath = path.join(atomsDir, file);
     const content = await fs.readFile(filePath, 'utf-8');
     const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
     let componentName = file.replace(/\.tsx$/, '');
     componentName = componentName.charAt(0).toUpperCase() + componentName.slice(1);
-    let props: { name: string, type: string }[] = [];
-    ts.forEachChild(sourceFile, node => {
+    let props: { name: string; type: string }[] = [];
+    ts.forEachChild(sourceFile, (node) => {
       if (
         ts.isInterfaceDeclaration(node) &&
         node.name.text.toLowerCase().includes(componentName.toLowerCase()) &&
-        (node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) === true
+        node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true
       ) {
         props = extractPropsFromInterface(node, sourceFile);
       }
       if (
         ts.isTypeAliasDeclaration(node) &&
         node.name.text.toLowerCase().includes(componentName.toLowerCase()) &&
-        (node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) === true
+        node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true
       ) {
         props = extractPropsFromTypeAlias(node, sourceFile);
       }
@@ -84,7 +88,7 @@ async function callAI(prompt: string, options?: { temperature?: number; maxToken
 interface ProjectContext {
   scheme: unknown;
   files: string[];
-  atoms: { name: string, props: { name: string, type: string }[] }[];
+  atoms: { name: string; props: { name: string; type: string }[] }[];
   keyFileContents: Record<string, string>;
   fileTreeSummary: string[];
   graphqlOperations: Record<string, string>;
@@ -134,7 +138,7 @@ async function getProjectContext(projectDir: string): Promise<ProjectContext> {
         f.startsWith('src/lib/') ||
         ['src/App.tsx', 'src/routes.tsx', 'src/main.tsx'].includes(f),
     ),
-    `src/components/atoms/ (atoms: ${atoms.map(a => a.name).join(', ')})`,
+    `src/components/atoms/ (atoms: ${atoms.map((a) => a.name).join(', ')})`,
   ];
   return {
     scheme,
@@ -312,8 +316,9 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
+      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });

@@ -72,7 +72,7 @@ function getDefaultModel(provider: AIProvider): string {
 
 function getModel(provider: AIProvider, model?: string) {
   const modelName = model ?? getDefaultModel(provider);
-  
+
   switch (provider) {
     case AIProvider.OpenAI:
       return openai(modelName);
@@ -90,26 +90,26 @@ function getModel(provider: AIProvider, model?: string) {
 export async function generateTextWithAI(
   prompt: string,
   provider: AIProvider,
-  options: AIOptions = {}
+  options: AIOptions = {},
 ): Promise<string> {
   const finalOptions = { ...defaultOptions, ...options };
   const model = finalOptions.model ?? getDefaultModel(provider);
   const modelInstance = getModel(provider, model);
-  
+
   const result = await generateText({
     model: modelInstance,
     prompt,
     temperature: finalOptions.temperature,
     maxTokens: finalOptions.maxTokens,
   });
-  
+
   return result.text;
 }
 
-export async function *streamTextWithAI(
+export async function* streamTextWithAI(
   prompt: string,
   provider: AIProvider,
-  options: AIOptions = {}
+  options: AIOptions = {},
 ): AsyncGenerator<string> {
   const finalOptions = { ...defaultOptions, ...options };
   const model = getModel(provider, finalOptions.model);
@@ -134,17 +134,17 @@ export async function *streamTextWithAI(
 export async function generateTextStreamingWithAI(
   prompt: string,
   provider: AIProvider,
-  options: AIOptions = {}
+  options: AIOptions = {},
 ): Promise<string> {
   const finalOptions = { ...defaultOptions, ...options };
   let collectedResult = '';
 
   const stream = streamTextWithAI(prompt, provider, finalOptions);
-  
+
   for await (const token of stream) {
     // Collect all tokens for the final result
     collectedResult += token;
-    
+
     // Call the stream callback if provided
     if (finalOptions.streamCallback) {
       finalOptions.streamCallback(token);
@@ -168,8 +168,8 @@ function getEnhancedPrompt(prompt: string, lastError: AIToolValidationError): st
   const errorDetails = lastError.zodIssues
     ? JSON.stringify(lastError.zodIssues, null, 2)
     : lastError.validationDetails?.cause?.issues
-    ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
-    : lastError.message;
+      ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
+      : lastError.message;
 
   return `${prompt}\\n\\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\\n${errorDetails}\\n\\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
 }
@@ -194,7 +194,13 @@ function enhanceValidationError(error: AIToolValidationError): AIToolValidationE
     };
   }
 
-  if (error.message.includes('response did not match schema') && 'cause' in error && typeof error.cause === 'object' && error.cause !== null && 'issues' in error.cause) {
+  if (
+    error.message.includes('response did not match schema') &&
+    'cause' in error &&
+    typeof error.cause === 'object' &&
+    error.cause !== null &&
+    'issues' in error.cause
+  ) {
     enhancedError.zodIssues = error.cause.issues as unknown[];
   }
   return enhancedError;
@@ -318,4 +324,4 @@ export async function streamStructuredDataWithAI<T>(
 }
 
 // Export zod for convenience
-export { z }; 
+export { z };

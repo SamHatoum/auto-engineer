@@ -39,7 +39,7 @@ export const server = (fn: () => void) => {
 };
 
 export const request = (_query: unknown) => ({
-  with: (..._dependencies: unknown[]) => { }
+  with: (..._dependencies: unknown[]) => {},
 });
 
 export const should = (description: string) => {
@@ -63,7 +63,7 @@ export interface SliceTypes {
 export const SliceType = {
   COMMAND: 'command' as const,
   QUERY: 'query' as const,
-  REACT: 'react' as const
+  REACT: 'react' as const,
 } as const;
 
 // Export interface for slice type values
@@ -96,28 +96,28 @@ export interface DataArrayMap {
 export function data(items: DataItem[]): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice for data configuration');
-  
+
   const server = slice.server as Record<string, unknown>;
   if (typeof server !== 'object' || server === null) throw new Error('data() can only be called within a server block');
-  
+
   const sliceType = slice.type as string;
   if (!sliceType) throw new Error('Invalid slice type');
-  
+
   // Validate items based on slice type
   if (sliceType === SliceType.COMMAND) {
-    const hasSource = items.some(item => '__type' in item && item.__type === 'source');
+    const hasSource = items.some((item) => '__type' in item && item.__type === 'source');
     if (hasSource) {
       throw new Error('Command slices cannot have data sources, only sinks');
     }
   }
-  
+
   if (sliceType === SliceType.QUERY) {
-    const hasSink = items.some(item => '__type' in item && item.__type === 'sink');
+    const hasSink = items.some((item) => '__type' in item && item.__type === 'sink');
     if (hasSink) {
       throw new Error('Query slices cannot have data sinks, only sources');
     }
   }
-  
+
   // Store the data items
   server.data = items;
 }

@@ -3,17 +3,17 @@ import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flowlang';
 
 describe('query.resolver.ts.ejs', () => {
-    it('should generate a valid query resolver from request field', async () => {
-        const spec: SpecsSchema = {
-            variant: 'specs',
-            flows: [
-                {
-                    name: 'listing-flow',
-                    slices: [
-                        {
-                            type: 'query',
-                            name: 'search-listings',
-                            request: `
+  it('should generate a valid query resolver from request field', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'listing-flow',
+          slices: [
+            {
+              type: 'query',
+              name: 'search-listings',
+              request: `
                 query SearchProperties($location: String, $maxPrice: Float, $minGuests: Int) {
                   searchProperties(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
                     propertyId
@@ -24,50 +24,50 @@ describe('query.resolver.ts.ejs', () => {
                   }
                 }
               `,
-                            client: {
-                                description: '',
-                                specs: [],
-                            },
-                            server: {
-                                description: '',
-                                data: [
-                                    {
-                                        origin: {
-                                            type: 'projection',
-                                            idField: 'propertyId',
-                                            name: 'AvailablePropertiesProjection',
-                                        },
-                                        target: {
-                                            type: 'State',
-                                            name: 'AvailableListings',
-                                        },
-                                    },
-                                ],
-                                gwt: [],
-                            },
-                        },
-                    ],
-                },
-            ],
-            messages: [
-                {
-                    type: 'state',
-                    name: 'AvailableListings',
-                    fields: [
-                        { name: 'propertyId', type: 'string', required: true },
-                        { name: 'title', type: 'string', required: true },
-                        { name: 'pricePerNight', type: 'number', required: true },
-                        { name: 'location', type: 'string', required: true },
-                        { name: 'maxGuests', type: 'number', required: true },
-                    ],
-                },
-            ],
-        };
+              client: {
+                description: '',
+                specs: [],
+              },
+              server: {
+                description: '',
+                data: [
+                  {
+                    origin: {
+                      type: 'projection',
+                      idField: 'propertyId',
+                      name: 'AvailablePropertiesProjection',
+                    },
+                    target: {
+                      type: 'State',
+                      name: 'AvailableListings',
+                    },
+                  },
+                ],
+                gwt: [],
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'AvailableListings',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+            { name: 'pricePerNight', type: 'number', required: true },
+            { name: 'location', type: 'string', required: true },
+            { name: 'maxGuests', type: 'number', required: true },
+          ],
+        },
+      ],
+    };
 
-        const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
-        const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
-        expect(resolverFile?.contents).toMatchInlineSnapshot(`
+    expect(resolverFile?.contents).toMatchInlineSnapshot(`
           "import { Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
           import { GraphQLContext, ReadModel } from '../../shared';
 
@@ -119,5 +119,5 @@ describe('query.resolver.ts.ejs', () => {
           }
           "
         `);
-    });
+  });
 });

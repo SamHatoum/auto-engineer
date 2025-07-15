@@ -1,0 +1,26 @@
+# Build outputs
+**/dist/**
+**/build/**
+**/.next/**
+**/coverage/**
+
+# Dependencies
+**/node_modules/**
+
+# Generated files
+**/.tmp/**
+**/generated/**
+**/.turbo/**
+
+# Lock files
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# IDE files
+**/.vscode/**
+**/.idea/**
+
+# OS files
+**/.DS_Store
+**/Thumbs.db

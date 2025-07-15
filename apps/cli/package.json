@@ -25,7 +25,9 @@
     "type-check": "tsc --noEmit",
     "start": "tsx src/index.ts start",
     "flow": "tsx src/index.ts flow",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "publishConfig": {
     "access": "public"

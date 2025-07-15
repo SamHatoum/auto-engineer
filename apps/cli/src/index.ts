@@ -77,13 +77,7 @@ const createCLI = () => {
 const displayBanner = (config: ReturnType<typeof loadConfig>) => {
   if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
     const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
-    console.log(chalk.bgBlack(gradient([
-      '#F44B4B',
-      '#FF9C1A',
-      '#F9F871',
-      '#4CD964',
-      '#4BC6F4'
-    ])(asciiText)));
+    console.log(chalk.bgBlack(gradient(['#F44B4B', '#FF9C1A', '#F9F871', '#4CD964', '#4BC6F4'])(asciiText)));
     console.log();
   }
 };
@@ -96,7 +90,9 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   program.addCommand(createDemoCommand(config, analytics));
   program.addCommand(createStartCommand(config, analytics));
 
-  program.addHelpText('after', `
+  program.addHelpText(
+    'after',
+    `
 Examples:
   $ auto-engineer start                   Create flows interactively using AI
   $ ag start                              Create flows interactively using AI (short alias)
@@ -114,7 +110,8 @@ Environment Variables:
   AUTO_ENGINEER_ANALYTICS=false           Disable analytics (enabled by default)
 
 For more information, visit: https://github.com/SamHatoum/auto-engineer
-    `);
+    `,
+  );
 
   return program;
 };
@@ -143,13 +140,13 @@ const main = async () => {
 
     const fullProgram = setupProgram(config);
     await fullProgram.parseAsync(process.argv);
-
   } catch (error: unknown) {
-    if (error instanceof Error && (
-      error.message.includes('commander') ||
-      error.message.includes('helpDisplayed') ||
-      error.message.includes('version')
-    )) {
+    if (
+      error instanceof Error &&
+      (error.message.includes('commander') ||
+        error.message.includes('helpDisplayed') ||
+        error.message.includes('version'))
+    ) {
       process.exit(0);
     }
 
@@ -166,4 +163,4 @@ main().catch((error: unknown) => {
   const errorMessage = error instanceof Error ? error.message : String(error);
   console.error(chalk.red('Fatal error:'), errorMessage);
   process.exit(1);
-}); 
+});

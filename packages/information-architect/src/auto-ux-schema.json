@@ -25,17 +25,12 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "description"
-              ]
+              "required": ["description"]
             }
           }
         }
       },
-      "required": [
-        "description",
-        "items"
-      ]
+      "required": ["description", "items"]
     },
     "molecules": {
       "description": "Components composed from atoms. Stateless and reusable.",
@@ -63,23 +58,15 @@
                       }
                     }
                   },
-                  "required": [
-                    "atoms"
-                  ]
+                  "required": ["atoms"]
                 }
               },
-              "required": [
-                "description",
-                "composition"
-              ]
+              "required": ["description", "composition"]
             }
           }
         }
       },
-      "required": [
-        "description",
-        "items"
-      ]
+      "required": ["description", "items"]
     },
     "organisms": {
       "description": "Smart UI components with data-fetching or logic. Composed of molecules only.",
@@ -107,9 +94,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "molecules"
-                  ]
+                  "required": ["molecules"]
                 },
                 "data_requirements": {
                   "type": "array",
@@ -118,10 +103,7 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": [
-                          "query",
-                          "mutation"
-                        ]
+                        "enum": ["query", "mutation"]
                       },
                       "description": {
                         "type": "string"
@@ -147,33 +129,19 @@
                             }
                           }
                         },
-                        "required": [
-                          "source",
-                          "gql"
-                        ]
+                        "required": ["source", "gql"]
                       }
                     },
-                    "required": [
-                      "type",
-                      "description",
-                      "trigger",
-                      "details"
-                    ]
+                    "required": ["type", "description", "trigger", "details"]
                   }
                 }
               },
-              "required": [
-                "description",
-                "composition"
-              ]
+              "required": ["description", "composition"]
             }
           }
         }
       },
-      "required": [
-        "description",
-        "items"
-      ]
+      "required": ["description", "items"]
     },
     "pages": {
       "description": "Top-level views composed of organisms, molecules, and atoms. Tied to routes.",
@@ -204,9 +172,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "organisms"
-                  ]
+                  "required": ["organisms"]
                 },
                 "navigation": {
                   "type": "array",
@@ -220,10 +186,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "on",
-                      "to"
-                    ]
+                    "required": ["on", "to"]
                   }
                 },
                 "data_requirements": {
@@ -233,10 +196,7 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": [
-                          "query",
-                          "mutation"
-                        ]
+                        "enum": ["query", "mutation"]
                       },
                       "description": {
                         "type": "string"
@@ -262,41 +222,20 @@
                             }
                           }
                         },
-                        "required": [
-                          "source",
-                          "gql"
-                        ]
+                        "required": ["source", "gql"]
                       }
                     },
-                    "required": [
-                      "type",
-                      "description",
-                      "trigger",
-                      "details"
-                    ]
+                    "required": ["type", "description", "trigger", "details"]
                   }
                 }
               },
-              "required": [
-                "route",
-                "description",
-                "layout"
-              ]
+              "required": ["route", "description", "layout"]
             }
           }
         }
       },
-      "required": [
-        "description",
-        "items"
-      ]
+      "required": ["description", "items"]
     }
   },
-  "required": [
-    "schema_description",
-    "atoms",
-    "molecules",
-    "organisms",
-    "pages"
-  ]
+  "required": ["schema_description", "atoms", "molecules", "organisms", "pages"]
 }

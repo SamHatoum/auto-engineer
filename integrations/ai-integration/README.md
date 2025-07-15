@@ -13,13 +13,13 @@ A lightweight package for integrating with various AI providers including OpenAI
 ## Usage
 
 ```typescript
-import { 
-  generateTextWithAI, 
-  streamTextWithAI, 
-  loadConfig, 
+import {
+  generateTextWithAI,
+  streamTextWithAI,
+  loadConfig,
   validateConfig,
   getAvailableProviders,
-  type AIProvider 
+  type AIProvider,
 } from '@auto-engineer/ai-integration';
 
 // Load and validate configuration
@@ -31,18 +31,10 @@ const providers = getAvailableProviders();
 console.log('Available providers:', providers);
 
 // Generate text with a specific provider
-const response = await generateTextWithAI(
-  "What's the weather like?",
-  'openai',
-  { temperature: 0.7, maxTokens: 1000 }
-);
+const response = await generateTextWithAI("What's the weather like?", 'openai', { temperature: 0.7, maxTokens: 1000 });
 
 // Stream text with a specific provider
-for await (const chunk of streamTextWithAI(
-  "Tell me a story",
-  'anthropic',
-  { temperature: 0.8 }
-)) {
+for await (const chunk of streamTextWithAI('Tell me a story', 'anthropic', { temperature: 0.8 })) {
   console.log(chunk);
 }
 ```
@@ -50,21 +42,27 @@ for await (const chunk of streamTextWithAI(
 ## API
 
 ### `generateTextWithAI(prompt, provider, options?)`
+
 Generates text using the specified AI provider.
 
 ### `streamTextWithAI(prompt, provider, options?)`
+
 Streams text generation using the specified AI provider.
 
 ### `loadConfig()`
+
 Loads AI provider configuration from environment variables.
 
 ### `validateConfig(config)`
+
 Validates that at least one AI provider is configured.
 
 ### `getAvailableProviders()`
+
 Returns an array of available AI providers based on configured API keys.
 
 ### Types
+
 - `AIProvider`: 'openai' | 'anthropic' | 'google' | 'xai'
 - `AIOptions`: Configuration options for AI requests
-- `AIConfig`: Configuration interface for AI providers 
+- `AIConfig`: Configuration interface for AI providers

@@ -2,7 +2,7 @@ name: Publish Packages
 
 on:
   workflow_run:
-    workflows: ["Build & Test"]
+    workflows: ['Build & Test']
     branches: [main]
     types:
       - completed
@@ -41,8 +41,8 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: pnpm release
-          commit: "chore(global): version packages"
-          title: "chore(global): version packages"
+          commit: 'chore(global): version packages'
+          title: 'chore(global): version packages'
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,4 +75,4 @@ jobs:
               git tag -a "$tag" -m "Release $package@$version" $COMMIT
               git push origin "$tag"
             fi
-          done <<< "${{ steps.get_packages.outputs.packages }}" 
+          done <<< "${{ steps.get_packages.outputs.packages }}"

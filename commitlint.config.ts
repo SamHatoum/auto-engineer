@@ -5,8 +5,8 @@ import { join } from 'path';
 const getPackages = (dir: string) => {
   try {
     return readdirSync(dir, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name);
   } catch {
     return [];
   }
@@ -15,12 +15,7 @@ const getPackages = (dir: string) => {
 const packages = getPackages(join(process.cwd(), 'packages'));
 const apps = getPackages(join(process.cwd(), 'apps'));
 
-const scopes = [
-  'global',
-  ...packages.map(pkg => `packages/${pkg}`),
-  ...apps.map(app => `apps/${app}`),
-];
-
+const scopes = ['global', ...packages.map((pkg) => `packages/${pkg}`), ...apps.map((app) => `apps/${app}`)];
 
 const config: UserConfig = {
   extends: ['@commitlint/config-conventional'],
@@ -28,11 +23,11 @@ const config: UserConfig = {
     'type-enum': [
       2,
       'always',
-      ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']
+      ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'],
     ],
     'scope-enum': [2, 'always', scopes],
-    'scope-empty': [2, 'never']
-  }
+    'scope-empty': [2, 'never'],
+  },
 };
 
-export default config; 
+export default config;

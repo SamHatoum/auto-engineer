@@ -1,12 +1,12 @@
-import { 
-  BaseCommand, 
-  BaseEvent, 
-  BaseQuery, 
+import {
+  BaseCommand,
+  BaseEvent,
+  BaseQuery,
   BaseResult,
-  CommandHandler, 
-  EventHandler, 
-  QueryHandler, 
-  AckNackResponse 
+  CommandHandler,
+  EventHandler,
+  QueryHandler,
+  AckNackResponse,
 } from './types';
 
 export class MessageBus {
@@ -14,9 +14,7 @@ export class MessageBus {
   private eventHandlers: Record<string, EventHandler> = {};
   private queryHandlers: Record<string, QueryHandler> = {};
 
-  registerCommandHandler<TCommand extends BaseCommand>(
-    commandHandler: CommandHandler<TCommand>
-  ): void {
+  registerCommandHandler<TCommand extends BaseCommand>(commandHandler: CommandHandler<TCommand>): void {
     this.commandHandlers[commandHandler.name] = commandHandler as CommandHandler<BaseCommand>;
   }
 
@@ -35,7 +33,7 @@ export class MessageBus {
         status: 'nack',
         error: `Command handler not found for command: ${command.type}`,
         timestamp: new Date(),
-        requestId: command.requestId
+        requestId: command.requestId,
       };
     }
 
@@ -46,7 +44,7 @@ export class MessageBus {
         status: 'nack',
         error: error instanceof Error ? error.message : 'Unknown error occurred',
         timestamp: new Date(),
-        requestId: command.requestId
+        requestId: command.requestId,
       };
     }
   }
@@ -58,7 +56,7 @@ export class MessageBus {
         status: 'nack',
         error: `Event handler not found for event: ${event.type}`,
         timestamp: new Date(),
-        requestId: event.requestId
+        requestId: event.requestId,
       };
     }
 
@@ -69,7 +67,7 @@ export class MessageBus {
         status: 'nack',
         error: error instanceof Error ? error.message : 'Unknown error occurred',
         timestamp: new Date(),
-        requestId: event.requestId
+        requestId: event.requestId,
       };
     }
   }

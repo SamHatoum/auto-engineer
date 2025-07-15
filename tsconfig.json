@@ -1,4 +1,4 @@
-       {
+{
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
@@ -6,17 +6,10 @@
     "strict": true,
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "experimentalDecorators": true
   },
-  "include": [
-    "**/src/**/*",
-    "eslint.config.js",
-    "vitest.config.ts"
-  ],
-  "exclude": [
-    "**/dist/**",
-    "**/node_modules/**"
-  ],
+  "include": ["**/src/**/*", "eslint.config.js", "vitest.config.ts"],
+  "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
     {
       "path": "./apps/cli"

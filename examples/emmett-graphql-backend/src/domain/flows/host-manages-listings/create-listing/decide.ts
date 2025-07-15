@@ -1,12 +1,9 @@
-import {IllegalStateError} from '@event-driven-io/emmett';
+import { IllegalStateError } from '@event-driven-io/emmett';
 import type { ListingState } from './state';
 import type { CreateListing } from './commands';
-import {ListingCreated} from "./events";
+import { ListingCreated } from './events';
 
-export const decide = (
-    command: CreateListing,
-    state: ListingState
-): ListingCreated => {
+export const decide = (command: CreateListing, state: ListingState): ListingCreated => {
   if (command.type !== 'CreateListing') {
     throw new IllegalStateError(`Unexpected command type: ${command.type}`);
   }

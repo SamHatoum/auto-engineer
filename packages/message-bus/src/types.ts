@@ -42,24 +42,17 @@ export interface NackResponse {
 
 export type AckNackResponse = AckResponse | NackResponse;
 
-export interface CommandHandler<
-  TCommand extends BaseCommand = BaseCommand
-> {
+export interface CommandHandler<TCommand extends BaseCommand = BaseCommand> {
   name: string;
   handle: (command: TCommand) => Promise<AckNackResponse>;
 }
 
-export interface EventHandler<
-  TEvent extends BaseEvent = BaseEvent
-> {
+export interface EventHandler<TEvent extends BaseEvent = BaseEvent> {
   name: string;
   handle: (event: TEvent) => Promise<AckNackResponse>;
 }
 
-export interface QueryHandler<
-  TQuery extends BaseQuery = BaseQuery,
-  TResult extends BaseResult = BaseResult
-> {
+export interface QueryHandler<TQuery extends BaseQuery = BaseQuery, TResult extends BaseResult = BaseResult> {
   name: string;
   handle: (query: TQuery) => Promise<TResult>;
-} 
+}

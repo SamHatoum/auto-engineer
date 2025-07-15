@@ -34,31 +34,33 @@ export const createEventBuilder = <T extends { type: string; data: Record<string
       return (data: Record<string, unknown>) => ({
         type: eventType,
         data,
-        __messageCategory: 'event' as const
+        __messageCategory: 'event' as const,
       });
-    }
+    },
   }) as {
     [K in T['type']]: (
-      data: Extract<T, { type: K }>['data']
-    ) => Extract<T, { type: K }> & { __messageCategory: 'event' }
+      data: Extract<T, { type: K }>['data'],
+    ) => Extract<T, { type: K }> & { __messageCategory: 'event' };
   };
 };
 
-export const createCommandBuilder = <T extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>() => {
+export const createCommandBuilder = <
+  T extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> },
+>() => {
   return new Proxy({} as Record<string, unknown>, {
     get(target: Record<string, unknown>, commandType: string) {
       return (data: Record<string, unknown>, metadata?: Record<string, unknown>) => ({
         type: commandType,
         data,
         ...(metadata !== undefined && { metadata }),
-        __messageCategory: 'command' as const
+        __messageCategory: 'command' as const,
       });
-    }
+    },
   }) as {
     [K in T['type']]: (
       data: Extract<T, { type: K }>['data'],
-      metadata?: Extract<T, { type: K }>['metadata']
-    ) => Extract<T, { type: K }> & { __messageCategory: 'command' }
+      metadata?: Extract<T, { type: K }>['metadata'],
+    ) => Extract<T, { type: K }> & { __messageCategory: 'command' };
   };
 };
 
@@ -68,13 +70,13 @@ export const createStateBuilder = <T>() => {
       return (data: Record<string, unknown>) => ({
         type: stateType,
         data,
-        __messageCategory: 'state' as const
+        __messageCategory: 'state' as const,
       });
-    }
+    },
   }) as {
-    [K in keyof T]: T[K] extends new (...args: unknown[]) => unknown 
+    [K in keyof T]: T[K] extends new (...args: unknown[]) => unknown
       ? (data: Record<string, unknown>) => { type: string; data: Record<string, unknown>; __messageCategory: 'state' }
-      : (data: T[K]) => { type: string; data: T[K]; __messageCategory: 'state' }
+      : (data: T[K]) => { type: string; data: T[K]; __messageCategory: 'state' };
   };
 };
 
@@ -95,63 +97,62 @@ export const createBuilders = () => ({
         const Events = createEventBuilder<E>();
         const Commands = createCommandBuilder<C>();
         const State = createStateBuilder<S>();
-        
+
         // Use the imported typed functions
         const sink = typedSink;
         const source = typedSource;
-        
+
         return {
           Events,
           Commands,
           State,
           sink,
-          source
+          source,
         };
-      }
-    })
-  })
+      },
+    }),
+  }),
 });
 
 // Alternative: Create explicit builders for better IDE support
 export const createTypedEventBuilder = <T extends { type: string; data: Record<string, unknown> }>() => {
   return {
-    create: <K extends T['type']>(
-      type: K,
-      data: Extract<T, { type: K }>['data']
-    ): Extract<T, { type: K }> => ({
-      type,
-      data
-    } as Extract<T, { type: K }>)
+    create: <K extends T['type']>(type: K, data: Extract<T, { type: K }>['data']): Extract<T, { type: K }> =>
+      ({
+        type,
+        data,
+      }) as Extract<T, { type: K }>,
   };
 };
 
-export const createTypedCommandBuilder = <T extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>() => {
+export const createTypedCommandBuilder = <
+  T extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> },
+>() => {
   return {
     create: <K extends T['type']>(
       type: K,
       data: Extract<T, { type: K }>['data'],
-      metadata?: Extract<T, { type: K }>['metadata']
-    ): Extract<T, { type: K }> => ({
-      type,
-      data,
-      ...(metadata !== undefined && { metadata })
-    } as Extract<T, { type: K }>)
+      metadata?: Extract<T, { type: K }>['metadata'],
+    ): Extract<T, { type: K }> =>
+      ({
+        type,
+        data,
+        ...(metadata !== undefined && { metadata }),
+      }) as Extract<T, { type: K }>,
   };
 };
 
 export const createTypedStateBuilder = <T extends { type: string; data: Record<string, unknown> }>() => {
   return {
-    create: <K extends T['type']>(
-      type: K,
-      data: Extract<T, { type: K }>['data']
-    ): Extract<T, { type: K }> => ({
-      type,
-      data
-    } as Extract<T, { type: K }>)
+    create: <K extends T['type']>(type: K, data: Extract<T, { type: K }>['data']): Extract<T, { type: K }> =>
+      ({
+        type,
+        data,
+      }) as Extract<T, { type: K }>,
   };
 };
 
 // Default builders for backward compatibility
 export const event = createEventBuilder<EventUnion>();
 export const command = createCommandBuilder<CommandUnion>();
-export const state = createStateBuilder<StateUnion>(); 
+export const state = createStateBuilder<StateUnion>();

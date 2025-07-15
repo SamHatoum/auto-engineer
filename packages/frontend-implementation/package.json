@@ -10,7 +10,9 @@
     "test": "vitest run",
     "ai-agent": "tsx -r dotenv/config src/agent-cli.ts",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "publishConfig": {
     "access": "public"

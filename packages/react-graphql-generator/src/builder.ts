@@ -15,7 +15,7 @@ export class FrontendScaffoldBuilder {
         const stat = await fs.stat(atomsDir);
         if (stat.isDirectory()) {
           const atomsTarget = 'src/components/atoms';
-          const files = (await fs.readdir(atomsDir)).filter(f => f.endsWith('.tsx'));
+          const files = (await fs.readdir(atomsDir)).filter((f) => f.endsWith('.tsx'));
           if (files.length > 0) {
             // Remove all starter atoms from starterFiles
             for (const key of Array.from(this.starterFiles.keys())) {

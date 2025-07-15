@@ -15,14 +15,14 @@ const commands = [
   'find . -type d -name "build" -exec rm -rf {} +',
   'find . -name "*.tsbuildinfo" -delete',
   'find . -type d -name ".cache" -exec rm -rf {} +',
-  'pnpm install'
+  'pnpm install',
 ];
 
-commands.forEach(cmd => {
+commands.forEach((cmd) => {
   try {
     execSync(cmd, { stdio: 'inherit' });
   } catch (err) {
     console.error(`Failed to execute: ${cmd}`, err);
     process.exit(1);
   }
-}); 
+});

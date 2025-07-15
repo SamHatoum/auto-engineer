@@ -31,7 +31,9 @@ export class Analytics {
     return this.optedIn;
   }
 
-  private prepareAnalyticsData(data: Omit<AnalyticsData, 'timestamp' | 'version' | 'nodeVersion' | 'platform'>): AnalyticsData {
+  private prepareAnalyticsData(
+    data: Omit<AnalyticsData, 'timestamp' | 'version' | 'nodeVersion' | 'platform'>,
+  ): AnalyticsData {
     return {
       ...data,
       timestamp: Date.now(),
@@ -43,7 +45,7 @@ export class Analytics {
 
   async track(data: Omit<AnalyticsData, 'timestamp' | 'version' | 'nodeVersion' | 'platform'>): Promise<void> {
     const consented = await this.promptForConsent();
-    
+
     if (!consented) {
       return;
     }
@@ -59,4 +61,4 @@ export class Analytics {
       errorCode,
     });
   }
-} 
+}

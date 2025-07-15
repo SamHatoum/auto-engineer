@@ -34,7 +34,7 @@ app.use(express.json());
 
 // Swagger UI
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use('/docs', ...swaggerUi.serve as any, swaggerUi.setup(swaggerSpec) as any);
+app.use('/docs', ...(swaggerUi.serve as any), swaggerUi.setup(swaggerSpec) as any);
 
 // Routes
 app.use('/api/products', productsRouter);
@@ -52,4 +52,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-export default app; 
+export default app;

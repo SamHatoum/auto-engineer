@@ -1,78 +1,79 @@
-import {describe, it, expect} from 'vitest';
-import {generateScaffoldFilePlans} from '../../scaffoldFromSchema';
-import {SpecsSchemaType as SpecsSchema} from "@auto-engineer/flowlang";
+import { describe, it, expect } from 'vitest';
+import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
+import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flowlang';
 
 describe('state.ts.ejs', () => {
-    it('should generate an initial state', async () => {
-        const spec: SpecsSchema = {
-            variant: 'specs',
-            flows: [
-                {
-                    name: 'Host creates a listing',
-                    slices: [
-                        {
-                            type: 'command',
-                            name: 'Create listing',
-                            client: {
-                                description: 'test',
-                                specs: [],
-                            },
-                            server: {
-                                description: 'test',
-                                gwt: [{
-                                    when: {
-                                        commandRef: 'CreateListing',
-                                        exampleData: {
-                                            propertyId: 'listing_123',
-                                            title: 'nice apartment',
-                                            pricePerNight: 250,
-                                            available: true,
-                                            rating: 4.8,
-                                            metadata: {foo: 'bar'},
-                                        },
-                                    },
-                                    then: [
-                                        {
-                                            eventRef: 'ListingCreated',
-                                            exampleData: {
-                                                propertyId: 'listing_123',
-                                                listedAt: '2024-01-15T10:00:00Z',
-                                                rating: 4.8,
-                                                metadata: {foo: 'bar'},
-                                            },
-                                        },
-                                    ],
-                                }]
-                                ,
-                            },
+  it('should generate an initial state', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Host creates a listing',
+          slices: [
+            {
+              type: 'command',
+              name: 'Create listing',
+              client: {
+                description: 'test',
+                specs: [],
+              },
+              server: {
+                description: 'test',
+                gwt: [
+                  {
+                    when: {
+                      commandRef: 'CreateListing',
+                      exampleData: {
+                        propertyId: 'listing_123',
+                        title: 'nice apartment',
+                        pricePerNight: 250,
+                        available: true,
+                        rating: 4.8,
+                        metadata: { foo: 'bar' },
+                      },
+                    },
+                    then: [
+                      {
+                        eventRef: 'ListingCreated',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                          listedAt: '2024-01-15T10:00:00Z',
+                          rating: 4.8,
+                          metadata: { foo: 'bar' },
                         },
+                      },
                     ],
-                },
-            ],
-            messages: [
-                {
-                    type: 'command',
-                    name: 'CreateListing',
-                    fields: [],
-                },
-                {
-                    type: 'event',
-                    name: 'ListingCreated',
-                    source: 'internal',
-                    fields: [
-                        {name: 'propertyId', type: 'string', required: true},
-                        {name: 'listedAt', type: 'Date', required: true},
-                        {name: 'rating', type: 'number', required: true},
-                        {name: 'metadata', type: 'object', required: true},
-                    ],
-                },
-            ],
-        };
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'CreateListing',
+          fields: [],
+        },
+        {
+          type: 'event',
+          name: 'ListingCreated',
+          source: 'internal',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'listedAt', type: 'Date', required: true },
+            { name: 'rating', type: 'number', required: true },
+            { name: 'metadata', type: 'object', required: true },
+          ],
+        },
+      ],
+    };
 
-        const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
-        const stateFile = plans.find((p) => p.outputPath.endsWith('state.ts'));
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const stateFile = plans.find((p) => p.outputPath.endsWith('state.ts'));
 
-        expect(stateFile?.contents).toMatchInlineSnapshot(`
+    expect(stateFile?.contents).toMatchInlineSnapshot(`
           "/**
            * ## IMPLEMENTATION INSTRUCTIONS ##
            *
@@ -122,6 +123,5 @@ describe('state.ts.ejs', () => {
           };
           "
         `);
-    });
-
+  });
 });

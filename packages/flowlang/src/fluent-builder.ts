@@ -80,8 +80,8 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
 
   via(integration: Integration | Integration[]): FluentCommandSliceBuilder {
     const currentSlice = getCurrentSlice();
-    if(currentSlice) {
-      currentSlice.integration = Array.isArray(integration) ? integration.map(i => i.name) : [integration.name];
+    if (currentSlice) {
+      currentSlice.integration = Array.isArray(integration) ? integration.map((i) => i.name) : [integration.name];
     }
     return this;
   }
@@ -164,8 +164,8 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
 
   via(integration: Integration | Integration[]): FluentReactionSliceBuilder {
     const slice = getCurrentSlice();
-    if(slice) {
-      slice.integration = Array.isArray(integration) ? integration.map(i => i.name) : [integration.name];
+    if (slice) {
+      slice.integration = Array.isArray(integration) ? integration.map((i) => i.name) : [integration.name];
     }
     return this;
   }
@@ -179,11 +179,8 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   }
 }
 
-export const commandSlice = (name: string): FluentCommandSliceBuilder =>
-    new CommandSliceBuilderImpl(name);
+export const commandSlice = (name: string): FluentCommandSliceBuilder => new CommandSliceBuilderImpl(name);
 
-export const querySlice = (name: string): FluentQuerySliceBuilder =>
-    new QuerySliceBuilderImpl(name);
+export const querySlice = (name: string): FluentQuerySliceBuilder => new QuerySliceBuilderImpl(name);
 
-export const reactSlice = (name: string): FluentReactionSliceBuilder =>
-    new ReactionSliceBuilderImpl(name);
+export const reactSlice = (name: string): FluentReactionSliceBuilder => new ReactionSliceBuilderImpl(name);

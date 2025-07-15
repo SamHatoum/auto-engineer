@@ -26,4 +26,4 @@
     "moduleDetection": "force"
   },
   "exclude": ["node_modules", "dist"]
-} 
+}

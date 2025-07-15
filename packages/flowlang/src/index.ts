@@ -1,7 +1,18 @@
 import { z } from 'zod';
 
 // Core types and utilities
-export type { Integration, DataSink, DataSource, DataSinkItem, DataSourceItem, DataItem, MessageTarget, Destination, Origin, State } from './types';
+export type {
+  Integration,
+  DataSink,
+  DataSource,
+  DataSinkItem,
+  DataSourceItem,
+  DataItem,
+  MessageTarget,
+  Destination,
+  Origin,
+  State,
+} from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
 
@@ -17,11 +28,7 @@ export const get = (strings: TemplateStringsArray, ...values: unknown[]) => {
 };
 
 // Fluent API
-export type { 
-  FluentCommandSliceBuilder, 
-  FluentQuerySliceBuilder, 
-  FluentReactionSliceBuilder 
-} from './fluent-builder';
+export type { FluentCommandSliceBuilder, FluentQuerySliceBuilder, FluentReactionSliceBuilder } from './fluent-builder';
 export { commandSlice, querySlice, reactSlice } from './fluent-builder';
 
 // Data flow builders
@@ -35,24 +42,24 @@ export type { SliceTypeValueInterface } from './flow';
 export { SliceType } from './flow';
 
 // Event and command builders
-export { 
-  event, 
-  command, 
+export {
+  event,
+  command,
   state,
-  createEventBuilder, 
+  createEventBuilder,
   createCommandBuilder,
   createStateBuilder,
   createBuilders,
   createTypedEventBuilder,
   createTypedCommandBuilder,
-  createTypedStateBuilder
+  createTypedStateBuilder,
 } from './builders';
 
 // Testing helpers
 export { createFlowSpec, given, when } from './testing';
 
 // Schema definitions for progressive flow creation
-export { 
+export {
   FlowNamesSchema as FlowNamesSystemSchema,
   SliceNamesSchema as SliceNamesSystemSchema,
   ClientServerNamesSchema as ClientServerNamesSystemSchema,
@@ -70,17 +77,19 @@ export {
   AppSchema as AppSchemaZod,
   SpecsSchema,
   EventExampleSchema,
-  CommandExampleSchema
+  CommandExampleSchema,
 } from './schema';
 
 // Export the AppSchema type
 import {
   AppSchema as ImportedAppSchema,
-  CommandExampleSchema, ErrorExampleSchema,
+  CommandExampleSchema,
+  ErrorExampleSchema,
   EventExampleSchema,
   FlowSchema,
   SliceSchema,
-  SpecsSchema, StateExampleSchema
+  SpecsSchema,
+  StateExampleSchema,
 } from './schema';
 export type AppSchema = z.infer<typeof ImportedAppSchema>;
 

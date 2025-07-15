@@ -6,22 +6,19 @@ export const createFlowSpec = () => {
       when: (command: unknown) => ({
         then: (expectedEvents: unknown[]) => {
           recordWhen(command as Record<string, unknown>);
-          recordThen(...(expectedEvents as Record<string, unknown>[])); 
+          recordThen(...(expectedEvents as Record<string, unknown>[]));
         },
-        thenThrows: (_errorMatcher: (error: Error) => boolean) => {
-        }
+        thenThrows: (_errorMatcher: (error: Error) => boolean) => {},
       }),
-      then: (_expectedData: unknown) => {
-      }
+      then: (_expectedData: unknown) => {},
     }),
     when: (command: unknown) => ({
       then: (expectedEvents: unknown[]) => {
         recordWhen(command as Record<string, unknown>);
-        recordThen(...(expectedEvents as Record<string, unknown>[])); 
+        recordThen(...(expectedEvents as Record<string, unknown>[]));
       },
-      thenThrows: (_errorMatcher: (error: Error) => boolean) => {
-      }
-    })
+      thenThrows: (_errorMatcher: (error: Error) => boolean) => {},
+    }),
   };
 };
 
@@ -31,14 +28,10 @@ export const when = (command: unknown) => createFlowSpec().when(command);
 // GraphQL query testing helper
 export const gqlQuery = (query: string) => ({
   query,
-  then: (_expectedResponse: unknown) => {
-
-  }
+  then: (_expectedResponse: unknown) => {},
 });
 
 // Alternative when function for GraphQL queries
 export const whenQuery = (_query: unknown) => ({
-  then: (_expectedResponse: unknown) => {
-
-  }
+  then: (_expectedResponse: unknown) => {},
 });

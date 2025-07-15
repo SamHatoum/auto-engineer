@@ -9,10 +9,10 @@ export type Product = {
 };
 
 export type Products = State<
-    'Products',
-    {
-      products: Product[]
-    }
-  >;
+  'Products',
+  {
+    products: Product[];
+  }
+>;
 
 export type ProductCatalog = Product[];

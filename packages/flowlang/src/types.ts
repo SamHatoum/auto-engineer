@@ -4,11 +4,12 @@ export interface Integration<T extends string = string> {
   readonly name: string;
 }
 
-export const createIntegration = <T extends string>(type: T, name: string): Integration<T> => ({
-  __brand: 'Integration' as const,
-  type,
-  name
-} as Integration<T>);
+export const createIntegration = <T extends string>(type: T, name: string): Integration<T> =>
+  ({
+    __brand: 'Integration' as const,
+    type,
+    name,
+  }) as Integration<T>;
 
 // Data flow types
 export interface MessageTarget {
@@ -47,8 +48,14 @@ export interface Destination {
 
 // Helper functions to create destinations
 export const createStreamDestination = (pattern: string): StreamDestination => ({ type: 'stream', pattern });
-export const createIntegrationDestination = (systems: string[]): IntegrationDestination => ({ type: 'integration', systems });
-export const createDatabaseDestination = (collection: string): DatabaseDestination => ({ type: 'database', collection });
+export const createIntegrationDestination = (systems: string[]): IntegrationDestination => ({
+  type: 'integration',
+  systems,
+});
+export const createDatabaseDestination = (collection: string): DatabaseDestination => ({
+  type: 'database',
+  collection,
+});
 export const createTopicDestination = (name: string): TopicDestination => ({ type: 'topic', name });
 
 export interface ProjectionOrigin {
@@ -91,7 +98,11 @@ export interface Origin {
 // Helper functions to create origins
 export const createProjectionOrigin = (name: string): ProjectionOrigin => ({ type: 'projection', name });
 export const createReadModelOrigin = (name: string): ReadModelOrigin => ({ type: 'readModel', name });
-export const createDatabaseOrigin = (collection: string, query?: Record<string, unknown>): DatabaseOrigin => ({ type: 'database', collection, query });
+export const createDatabaseOrigin = (collection: string, query?: Record<string, unknown>): DatabaseOrigin => ({
+  type: 'database',
+  collection,
+  query,
+});
 export const createApiOrigin = (endpoint: string, method?: string): ApiOrigin => ({ type: 'api', endpoint, method });
 export const createIntegrationOrigin = (systems: string[]): IntegrationOrigin => ({ type: 'integration', systems });
 
@@ -118,17 +129,25 @@ export interface DataSourceItem extends DataSource {
 
 export interface DataItem {
   __type: 'sink' | 'source';
-} 
+}
 
 type DefaultRecord = Record<string, unknown>;
 
-export type State<StateType extends string = string, StateData extends DefaultRecord = DefaultRecord, EventMetaData extends DefaultRecord | undefined = undefined> = Readonly<EventMetaData extends undefined ? {
-  type: StateType;
-  data: StateData;
-} : {
-  type: StateType;
-  data: StateData;
-  metadata: EventMetaData;
-}> & {
+export type State<
+  StateType extends string = string,
+  StateData extends DefaultRecord = DefaultRecord,
+  EventMetaData extends DefaultRecord | undefined = undefined,
+> = Readonly<
+  EventMetaData extends undefined
+    ? {
+        type: StateType;
+        data: StateData;
+      }
+    : {
+        type: StateType;
+        data: StateData;
+        metadata: EventMetaData;
+      }
+> & {
   readonly kind?: 'State';
 };
