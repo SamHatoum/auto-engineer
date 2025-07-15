@@ -104,6 +104,7 @@ The emmett-generator package creates:
 - You must fix the underlying issues rather than just make the checks pass
 
 ## Important Notes
-ALWAYS run `pnpm check` after you finish all your changes and fix any problems. 
+
+ALWAYS run `pnpm check` after you finish all your changes and fix any problems.
 ALWAYS use the IDE diagnostics tool to check all the files that are not commited remotely.
 ALWAYS perform a git log and see previous commits when tests fail. You need to look at `origin/main` and `origin/current_branch` to see why things were passing before any current changes. It's safe to assume that what's on git is working typically since every dev runs commit hooks and we have CI/CD checks.
