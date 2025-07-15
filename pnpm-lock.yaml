@@ -154,15 +154,15 @@ importers:
       '@auto-engineer/mailchimp-integration':
         specifier: workspace:*
         version: link:../../integrations/mailchimp-integration
-      '@auto-engineer/product-catalogue-integration':
-        specifier: workspace:*
-        version: link:../product-catalogue-integration
       '@auto-engineer/twilio-integration':
         specifier: workspace:*
         version: link:../../integrations/twilio-integration
       '@event-driven-io/emmett':
         specifier: ^0.38.2
         version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.5.4))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+      '@examples/product-catalogue-integration':
+        specifier: workspace:*
+        version: link:../product-catalogue-integration
       apollo-server:
         specifier: ^3.13.0
         version: 3.13.0(graphql@16.11.0)
@@ -270,6 +270,27 @@ importers:
       vitest:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.8)
+
+  examples/flows:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+      '@auto-engineer/mailchimp-integration':
+        specifier: workspace:*
+        version: link:../../integrations/mailchimp-integration
+      '@auto-engineer/twilio-integration':
+        specifier: workspace:*
+        version: link:../../integrations/twilio-integration
+      '@event-driven-io/emmett':
+        specifier: ^0.38.2
+        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.5.4))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+      '@examples/emmett-graphql-backend':
+        specifier: workspace:*
+        version: link:../emmett-graphql-backend
+      '@examples/product-catalogue-integration':
+        specifier: workspace:*
+        version: link:../product-catalogue-integration
 
   examples/product-catalogue-integration:
     dependencies:
@@ -466,6 +487,9 @@ importers:
       '@auto-engineer/ai-integration':
         specifier: workspace:*
         version: link:../../integrations/ai-integration
+      '@auto-engineer/config':
+        specifier: workspace:*
+        version: link:../config
 
   packages/message-bus:
     devDependencies:

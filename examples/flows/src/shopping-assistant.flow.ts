@@ -15,9 +15,11 @@ import {
 } from '@auto-engineer/flowlang';
 import type { Event, Command } from '@event-driven-io/emmett';
 import type { State } from '@auto-engineer/flowlang';
-import { ProductCatalogService, type Product } from '@auto-engineer/product-catalogue-integration';
+import { ProductCatalogService, type Products as ImportedProducts } from '@examples/product-catalogue-integration';
 
-// Domain types
+// Re-export in this module to help TypeScript resolve the union
+type Products = ImportedProducts;
+
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
   {
@@ -56,7 +58,6 @@ type ItemsAddedToCart = Event<
   }
 >;
 
-// Command types
 type EnterShoppingCriteria = Command<
   'EnterShoppingCriteria',
   {
@@ -89,22 +90,30 @@ type AddItemsToCart = Command<
   }
 >;
 
-type SuggestedItems = {
-  sessionId: string;
-  items: { productId: string; name: string; quantity: number; reason: string }[];
-};
+type SuggestedItems = State<
+  'SuggestedItems',
+  {
+    sessionId: string;
+    items: { productId: string; name: string; quantity: number; reason: string }[];
+  }
+>;
 
-type ShoppingSession = {
-  sessionId: string;
-  shopperId: string;
-  criteria: string;
-  status: 'active' | 'completed';
-};
+type ShoppingSession = State<
+  'ShoppingSession',
+  {
+    sessionId: string;
+    shopperId: string;
+    criteria: string;
+    status: 'active' | 'completed';
+  }
+>;
 
+// Note: State uses object mapping instead of union types like Events/Commands
+// due to TypeScript limitations with cross-module union type resolution
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
-  .state<{ Product: Product; SuggestedItems: SuggestedItems; ShoppingSession: ShoppingSession }>();
+  .state<{ Products: Products['data']; SuggestedItems: SuggestedItems['data']; ShoppingSession: ShoppingSession['data'] }>();
 
 flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
@@ -164,36 +173,36 @@ flow('Seasonal Assistant', () => {
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
       given([
-        State.Product(
+        State.Products(
           {
-            productId: 'prod-soccer-ball',
-            name: 'Super Soccer Ball',
-            category: 'Sports',
-            price: 10,
-            tags: ['soccer', 'sports'],
+            products: [
+              {
+                productId: 'prod-soccer-ball',
+                name: 'Super Soccer Ball',
+                category: 'Sports',
+                price: 10,
+                tags: ['soccer', 'sports'],
+              }, {
+                productId: 'prod-craft-kit',
+                name: 'Deluxe Craft Kit',
+                category: 'Arts & Crafts',
+                price: 25,
+                tags: ['crafts', 'art', 'creative'],
+              }, {
+                productId: 'prod-laptop-bag',
+                name: 'Tech Laptop Backpack',
+                category: 'School Supplies',
+                price: 45,
+                tags: ['computers', 'tech', 'school'],
+              }, {
+                productId: 'prod-mtg-starter',
+                name: 'Magic the Gathering Starter Set',
+                category: 'Games',
+                price: 30,
+                tags: ['magic', 'tcg', 'games'],
+              }]
           }),
-          State.Product({
-            productId: 'prod-craft-kit',
-            name: 'Deluxe Craft Kit',
-            category: 'Arts & Crafts',
-            price: 25,
-            tags: ['crafts', 'art', 'creative'],
-          }),
-          State.Product({
-            productId: 'prod-laptop-bag',
-            name: 'Tech Laptop Backpack',
-            category: 'School Supplies',
-            price: 45,
-            tags: ['computers', 'tech', 'school'],
-          }),
-          State.Product({
-            productId: 'prod-mtg-starter',
-            name: 'Magic the Gathering Starter Set',
-            category: 'Games',
-            price: 30,
-            tags: ['magic', 'tcg', 'games'],
-          }),
-        ])      
+      ])
         .when(
           Commands.DoChat({
             sessionId: 'session-abc',
