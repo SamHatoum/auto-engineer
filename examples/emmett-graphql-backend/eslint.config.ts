@@ -10,7 +10,7 @@ export default tseslint.config(
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       parserOptions: {
-        project: true,
+        project: './tsconfig.json',
       },
     },
     rules: {
