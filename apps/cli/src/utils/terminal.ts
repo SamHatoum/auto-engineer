@@ -8,57 +8,68 @@ export const supportsColor = (config: Config): boolean => {
 
 export const createOutput = (config: Config) => {
   const useColor = supportsColor(config);
-  
+  const isJsonOutput = config.output === 'json';
+
+  const outputJson = (status: string, message: string) => {
+    console.log(JSON.stringify({ status, message }));
+  };
+
+  const outputText = (prefix: string, message: string, colorFn?: (text: string) => string) => {
+    const text = `${prefix} ${message}`;
+    console.log(useColor && colorFn ? colorFn(text) : text);
+  };
+
   return {
     success: (message: string) => {
-      if (config.output === 'json') {
-        console.log(JSON.stringify({ status: 'success', message }));
+      if (isJsonOutput) {
+        outputJson('success', message);
       } else {
-        console.log(useColor ? chalk.green(`✓ ${message}`) : `✓ ${message}`);
+        outputText('✓', message, chalk.green);
       }
     },
-    
+
     error: (message: string) => {
-      if (config.output === 'json') {
+      if (isJsonOutput) {
         console.error(JSON.stringify({ status: 'error', message }));
       } else {
-        console.error(useColor ? chalk.red(`✗ ${message}`) : `✗ ${message}`);
+        const text = `✗ ${message}`;
+        console.error(useColor ? chalk.red(text) : text);
       }
     },
-    
+
     info: (message: string) => {
-      if (config.output === 'json') {
-        console.log(JSON.stringify({ status: 'info', message }));
+      if (isJsonOutput) {
+        outputJson('info', message);
       } else {
-        console.log(useColor ? chalk.blue(`ℹ ${message}`) : `ℹ ${message}`);
+        outputText('ℹ', message, chalk.blue);
       }
     },
-    
+
     warn: (message: string) => {
-      if (config.output === 'json') {
-        console.log(JSON.stringify({ status: 'warning', message }));
+      if (isJsonOutput) {
+        outputJson('warning', message);
       } else {
-        console.log(useColor ? chalk.yellow(`⚠ ${message}`) : `⚠ ${message}`);
+        outputText('⚠', message, chalk.yellow);
       }
     },
-    
+
     debug: (message: string) => {
-      if (config.debug) {
-        if (config.output === 'json') {
-          console.log(JSON.stringify({ status: 'debug', message }));
-        } else {
-          console.log(useColor ? chalk.gray(`🐛 ${message}`) : `🐛 ${message}`);
-        }
+      if (!config.debug) return;
+
+      if (isJsonOutput) {
+        outputJson('debug', message);
+      } else {
+        outputText('🐛', message, chalk.gray);
       }
     },
-    
+
     log: (message: string) => {
-      if (config.output === 'json') {
+      if (isJsonOutput) {
         console.log(JSON.stringify({ message }));
       } else {
         console.log(message);
       }
-    }
+    },
   };
 };
 
@@ -70,10 +81,10 @@ export const readStdin = (): Promise<string> => {
   return new Promise((resolve) => {
     let data = '';
     process.stdin.on('data', (chunk) => {
-      data += chunk;
+      data += chunk.toString();
     });
     process.stdin.on('end', () => {
       resolve(data.trim());
     });
   });
-}; 
+};

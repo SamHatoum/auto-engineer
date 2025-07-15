@@ -25,4 +25,4 @@ The package looks for `.env` file in the workspace root directory.
 
 - Automatic .env file loading on import
 - Typed environment variable access
-- Error handling for missing .env files 
+- Error handling for missing .env files

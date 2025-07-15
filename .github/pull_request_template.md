@@ -1,7 +1,9 @@
 ## Description
+
 <!-- Describe your changes -->
 
 ## Type of Change
+
 - [ ] feat: A new feature
 - [ ] fix: A bug fix
 - [ ] docs: Documentation changes
@@ -14,6 +16,7 @@
 - [ ] revert: Reverting previous commits
 
 ## Checklist
+
 - [ ] Code follows style guidelines
 - [ ] Documentation updated
 - [ ] No new warnings generated

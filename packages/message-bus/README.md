@@ -24,9 +24,9 @@ const createUserHandler: CommandHandler = {
     return {
       status: 'ack',
       message: 'User created successfully',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-  }
+  },
 };
 messageBus.registerCommandHandler(createUserHandler);
 
@@ -49,4 +49,4 @@ const result = await messageBus.sendCommand({
 - `registerQueryHandler(handler: QueryHandler)`: Register a query handler
 - `sendCommand(command: BaseCommand)`: Send a command and get an ack/nack response
 - `publishEvent(event: BaseEvent)`: Publish an event and get an ack/nack response
-- `executeQuery(query: BaseQuery)`: Execute a query and get the result 
+- `executeQuery(query: BaseQuery)`: Execute a query and get the result

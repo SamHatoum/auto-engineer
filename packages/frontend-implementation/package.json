@@ -1,0 +1,29 @@
+{
+  "name": "@auto-engineer/frontend-implementation",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "ai-agent": "tsx -r dotenv/config src/agent-cli.ts",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@auto-engineer/frontend-checks": "workspace:*",
+    "@auto-engineer/ai-integration": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.13.1",
+    "openai": "^5.7.0",
+    "zod": "^3.25.67",
+    "vite": "^5.4.1"
+  },
+  "devDependencies": {}
+}

@@ -23,4 +23,4 @@ jobs:
       - name: Test
         run: pnpm turbo run test
       - name: Lint
-        run: pnpm turbo run lint 
+        run: pnpm turbo run lint

@@ -1,0 +1,31 @@
+import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
+import { evolve } from './evolve';
+import { initialState } from './state';
+import { decide } from './decide';
+import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './commands';
+
+const handler = CommandHandler({
+evolve,
+initialState,
+});
+
+export const handle = async (
+eventStore: EventStore,
+command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>
+): Promise<MessageHandlerResult> => {
+    <% if (stream?.pattern?.includes('${')) { -%>
+        const streamId = `<%= stream.pattern.replace(/\$\{([^}]+)\}/g, (_, key) => `\${command.data.${key}}`) %>`;
+    <% } else { -%>
+        const streamId = '<%= stream?.pattern ?? 'unknown-stream' %>';
+    <% } -%>
+
+    try {
+    await handler(eventStore, streamId, (state) => decide(command, state));
+    return; // success (returns void)
+    } catch (error: any) {
+    return {
+    type: 'SKIP',
+    reason: `Command failed: ${error?.message ?? 'Unknown'}`,
+    };
+    }
+    };

@@ -41,23 +41,34 @@ export class RuntimeError extends Error implements CLIError {
   }
 }
 
-export const handleError = (error: Error | CLIError): never => {
+const getErrorDetails = (error: Error | CLIError): { errorCode: string; exitCode: number } => {
   const isCLIError = 'code' in error && 'exitCode' in error;
   const cliError = error as CLIError;
-  
-  const errorCode = isCLIError ? cliError.code : 'E9999';
-  const exitCode = isCLIError ? cliError.exitCode : 1;
-  
-  console.error(chalk.red(`Error (${errorCode}): ${error.message}`));
-  
-  if (process.env.DEBUG === 'auto-engineer') {
+
+  return {
+    errorCode: isCLIError ? cliError.code : 'E9999',
+    exitCode: isCLIError ? cliError.exitCode : 1,
+  };
+};
+
+const logErrorStack = (error: Error): void => {
+  const isDebugMode = process.env.DEBUG === 'auto-engineer';
+  if (isDebugMode && error.stack != null && error.stack.length > 0) {
     console.error(chalk.gray('Stack trace:'));
     console.error(chalk.gray(error.stack));
   }
-  
+};
+
+export const handleError = (error: Error | CLIError): never => {
+  const { errorCode, exitCode } = getErrorDetails(error);
+
+  console.error(chalk.red(`Error (${errorCode}): ${error.message}`));
+
+  logErrorStack(error);
+
   process.exit(exitCode);
 };
 
 export const createError = (message: string, code: string, exitCode: number = 1): CLIError => {
   return new ValidationError(message, code, exitCode);
-}; 
+};

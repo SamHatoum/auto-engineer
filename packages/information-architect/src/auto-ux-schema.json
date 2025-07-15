@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "React Application Scaffold Schema (Atomic Design)",
+  "description": "A schema defining the structure and UX of a frontend React application based on atoms, molecules, organisms, and pages.",
+  "type": "object",
+  "properties": {
+    "schema_description": {
+      "description": "A high-level description of the schema's purpose.",
+      "type": "string"
+    },
+    "atoms": {
+      "description": "Atomic UI primitives like buttons, inputs, etc., usually generated from shadcn.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "items": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][a-zA-Z0-9]*$": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": ["description"]
+            }
+          }
+        }
+      },
+      "required": ["description", "items"]
+    },
+    "molecules": {
+      "description": "Components composed from atoms. Stateless and reusable.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "items": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][a-zA-Z0-9]*$": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "composition": {
+                  "type": "object",
+                  "properties": {
+                    "atoms": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["atoms"]
+                }
+              },
+              "required": ["description", "composition"]
+            }
+          }
+        }
+      },
+      "required": ["description", "items"]
+    },
+    "organisms": {
+      "description": "Smart UI components with data-fetching or logic. Composed of molecules only.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "items": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][a-zA-Z0-9]*$": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "composition": {
+                  "type": "object",
+                  "properties": {
+                    "molecules": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["molecules"]
+                },
+                "data_requirements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["query", "mutation"]
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "trigger": {
+                        "type": "string"
+                      },
+                      "details": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "gql": {
+                            "type": "string"
+                          },
+                          "payload_schema": {
+                            "type": "object",
+                            "patternProperties": {
+                              "^[a-zA-Z0-9_]*$": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "required": ["source", "gql"]
+                      }
+                    },
+                    "required": ["type", "description", "trigger", "details"]
+                  }
+                }
+              },
+              "required": ["description", "composition"]
+            }
+          }
+        }
+      },
+      "required": ["description", "items"]
+    },
+    "pages": {
+      "description": "Top-level views composed of organisms, molecules, and atoms. Tied to routes.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "items": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z][a-zA-Z0-9]*$": {
+              "type": "object",
+              "properties": {
+                "route": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "layout": {
+                  "type": "object",
+                  "properties": {
+                    "organisms": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["organisms"]
+                },
+                "navigation": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "on": {
+                        "type": "string"
+                      },
+                      "to": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["on", "to"]
+                  }
+                },
+                "data_requirements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["query", "mutation"]
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "trigger": {
+                        "type": "string"
+                      },
+                      "details": {
+                        "type": "object",
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "gql": {
+                            "type": "string"
+                          },
+                          "payload_schema": {
+                            "type": "object",
+                            "patternProperties": {
+                              "^[a-zA-Z0-9_]*$": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "required": ["source", "gql"]
+                      }
+                    },
+                    "required": ["type", "description", "trigger", "details"]
+                  }
+                }
+              },
+              "required": ["route", "description", "layout"]
+            }
+          }
+        }
+      },
+      "required": ["description", "items"]
+    }
+  },
+  "required": ["schema_description", "atoms", "molecules", "organisms", "pages"]
+}

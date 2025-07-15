@@ -1,0 +1,65 @@
+<%
+const target = slice?.server?.data?.[0]?.target;
+const projection = slice?.server?.data?.[0]?.origin;
+const queryName = parsedRequest?.queryName ?? camelCase(sliceName);
+const viewType = target?.name ? pascalCase(target.name) : 'UnknownView';
+const projectionType = projection?.name ? pascalCase(projection.name) : 'UnknownProjection';
+const message = messages?.find(m => m.name === viewType);
+const resolverClassName = `${pascalCase(slice.name)}QueryResolver`
+%>
+import { Query, Resolver, Arg, Ctx,ObjectType, Field } from 'type-graphql';
+import { GraphQLContext, ReadModel } from '../../shared';
+
+@ObjectType()
+export class <%= viewType %> {
+<% if (message?.fields?.length) {
+        for (const field of message.fields) {
+    const gqlType = graphqlType(field.type ?? 'string');
+    const tsType = field.type ?? 'string';
+%>
+@Field(() => <%= gqlType %>)
+<%= field.name %>!: <%= tsType %>;
+<%   }
+%>
+[key: string]: unknown;
+<% } else { %>
+    [key: string]: unknown;
+<% } %>
+}
+
+@Resolver()
+export class <%= resolverClassName %> {
+@Query(() => [<%= viewType %>])
+async <%= queryName %>(
+@Ctx() ctx: GraphQLContext<% if (parsedRequest?.args?.length) { %>,
+<%     for (let i = 0; i < parsedRequest.args.length; i++) {
+    const arg = parsedRequest.args[i];
+    const gqlType = graphqlType(arg.tsType);
+%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%= arg.tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
+<%     }
+} %>
+): Promise<<%= viewType %>[]> {
+const model = new ReadModel<<%= viewType %>>(ctx.eventStore, '<%= projectionType %>');
+
+// ## IMPLEMENTATION INSTRUCTIONS ##
+// Filter the collection using the provided arguments.
+// You can access the projection via model.find and use .find(filterFn).
+
+return model.find((item) => {
+<% if (parsedRequest?.args?.length) {
+        for (const arg of parsedRequest.args) {
+if (arg.name === 'location') { %>
+    if (location && !item.location.toLowerCase().includes(location.toLowerCase())) return false;
+<%     } else if (arg.name === 'maxPrice') { %>
+    if (maxPrice && item.pricePerNight > maxPrice) return false;
+<%     } else if (arg.name === 'minGuests') { %>
+    if (minGuests && item.maxGuests < minGuests) return false;
+<%     } else { %>
+    if (<%= arg.name %> && item.<%= arg.name %> !== <%= arg.name %>) return false;
+<%     }
+}
+} %>
+return true;
+});
+}
+}

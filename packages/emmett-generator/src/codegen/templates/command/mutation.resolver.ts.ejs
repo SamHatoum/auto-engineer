@@ -1,0 +1,26 @@
+import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
+import { GraphQLContext, MutationResponse } from '../../shared';
+import { sendCommand } from '../../shared';
+
+@InputType()
+export class <%= pascalCase(commands[0].type) %>Input {
+<% for (const field of commands[0].fields) { -%>
+    @Field(() => <%= graphqlType(field.tsType) %><%= field.required === false ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= field.required === false ? '?' : '' %><%= field.required !== false ? '!' : '' %>: <%= field.tsType %>;
+<% } -%>
+}
+
+@Resolver()
+export class <%= pascalCase(commands[0].type) %>Resolver {
+@Mutation(() => MutationResponse)
+async <%= camelCase(commands[0].type) %>(
+@Arg('input', () => <%= pascalCase(commands[0].type) %>Input) input: <%= pascalCase(commands[0].type) %>Input,
+@Ctx() ctx: GraphQLContext
+): Promise<MutationResponse> {
+    return await sendCommand(ctx.messageBus, {
+    type: '<%= commands[0].type %>',
+    kind: 'Command',
+    data: { ...input },
+    });
+    }
+    }

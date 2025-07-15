@@ -1,69 +1,103 @@
+import { z } from 'zod';
+
 // Core types and utilities
-export type { Integration } from './types';
+export type {
+  Integration,
+  DataSink,
+  DataSource,
+  DataSinkItem,
+  DataSourceItem,
+  DataItem,
+  MessageTarget,
+  Destination,
+  Origin,
+  State,
+} from './types';
+export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';
 
 // HTTP GET template literal function
-export const get = (strings: TemplateStringsArray, ...values: any[]) => {
+export const get = (strings: TemplateStringsArray, ...values: unknown[]) => {
   return strings.reduce((result, str, i) => {
-    return result + str + (values[i] || '');
+    const value = values[i];
+    return result + str + (value !== undefined && value !== null ? String(value) : '');
   }, '');
 };
 
 // Fluent API
-export type { 
-  FluentCommandSliceBuilder, 
-  FluentQuerySliceBuilder, 
-  FluentReactionSliceBuilder 
-} from './fluent-builder';
+export type { FluentCommandSliceBuilder, FluentQuerySliceBuilder, FluentReactionSliceBuilder } from './fluent-builder';
 export { commandSlice, querySlice, reactSlice } from './fluent-builder';
+
+// Data flow builders
+export { sink, source } from './data-flow-builders';
+export type { FieldSelector } from './data-flow-builders';
 
 // Flow language functions
 export { flow } from './flow';
-export { client, server, specs, should, request } from './flow';
+export { client, server, specs, should, request, data } from './flow';
+export type { SliceTypeValueInterface } from './flow';
+export { SliceType } from './flow';
 
 // Event and command builders
-export { 
-  event, 
-  command, 
+export {
+  event,
+  command,
   state,
-  createEventBuilder, 
+  createEventBuilder,
   createCommandBuilder,
   createStateBuilder,
   createBuilders,
   createTypedEventBuilder,
   createTypedCommandBuilder,
-  createTypedStateBuilder
+  createTypedStateBuilder,
 } from './builders';
 
 // Testing helpers
 export { createFlowSpec, given, when } from './testing';
 
 // Schema definitions for progressive flow creation
-export { 
+export {
   FlowNamesSchema as FlowNamesSystemSchema,
   SliceNamesSchema as SliceNamesSystemSchema,
   ClientServerNamesSchema as ClientServerNamesSystemSchema,
   SpecsSchema as SpecsSystemSchema,
-  type SpecsSchema,
-  type Message,
-  type Command,
-  type Event,
-  type State,
-  type Slice,
-  type Flow,
-  type Integration as SchemaIntegration,
-  type MessageField,
-  type CommandExample,
-  type EventExample,
-  type StateExample,
-  type CommandSlice,
-  type QuerySlice,
-  type ReactSlice,
-  type FlowNamesSchema as FlowNames,
-  type SliceNamesSchema as SliceNames,
-  type ClientServerNamesSchema as ClientServerNames,
-  type AppSchema
-} from './schema'; 
+  MessageFieldSchema,
+  MessageSchema,
+  CommandSchema,
+  EventSchema,
+  StateSchema,
+  CommandSliceSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+  SliceSchema,
+  FlowSchema,
+  AppSchema as AppSchemaZod,
+  SpecsSchema,
+  EventExampleSchema,
+  CommandExampleSchema,
+} from './schema';
+
+// Export the AppSchema type
+import {
+  AppSchema as ImportedAppSchema,
+  CommandExampleSchema,
+  ErrorExampleSchema,
+  EventExampleSchema,
+  FlowSchema,
+  SliceSchema,
+  SpecsSchema,
+  StateExampleSchema,
+} from './schema';
+export type AppSchema = z.infer<typeof ImportedAppSchema>;
+
+// Export additional required types
+export type CommandExample = z.infer<typeof CommandExampleSchema>;
+export type EventExample = z.infer<typeof EventExampleSchema>;
+export type Flow = z.infer<typeof FlowSchema>;
+export type Slice = z.infer<typeof SliceSchema>;
+export type SpecsSchemaType = z.infer<typeof SpecsSchema>;
+export type StateExample = z.infer<typeof StateExampleSchema>;
+export type ErrorExample = z.infer<typeof ErrorExampleSchema>;

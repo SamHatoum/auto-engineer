@@ -5,4 +5,4 @@
   },
   "include": ["src/**/*", "src/**/*.spec.ts", "src/**/*.specs.ts"],
   "exclude": ["node_modules", "dist"]
-} 
+}

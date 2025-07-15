@@ -4,28 +4,18 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
-  "include": [
-    "**/src/**/*"
-  ],
-  "exclude": [
-    "**/dist/**",
-    "**/node_modules/**",
-    "**/*.specs.ts"
-  ],
+  "include": ["**/src/**/*", "eslint.config.js", "vitest.config.ts"],
+  "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
     {
       "path": "./apps/cli"
     },
     {
       "path": "./packages/emmett-generator"
-    },
-    {
-      "path": "./packages/example-mcp-server"
-    },
-    {
-      "path": "./packages/frontend-scaffold"
-    },
+    }
   ]
 }

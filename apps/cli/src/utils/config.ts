@@ -8,13 +8,23 @@ export interface Config {
   projectPath?: string;
 }
 
-const getEnvConfig = (): Partial<Config> => ({
-  debug: process.env.DEBUG === 'auto-engineer',
-  noColor: process.env.NO_COLOR === '1' || process.env.NO_COLOR === 'true',
-  output: process.env.OUTPUT_FORMAT === 'json' ? 'json' : 'text',
-  apiToken: process.env.AUTO_ENGINEER_API_TOKEN,
-  projectPath: process.env.AUTO_ENGINEER_PROJECT_PATH,
-});
+const parseNoColor = (): boolean => {
+  return process.env.NO_COLOR === '1' || process.env.NO_COLOR === 'true';
+};
+
+const parseOutputFormat = (): 'text' | 'json' => {
+  return process.env.OUTPUT_FORMAT === 'json' ? 'json' : 'text';
+};
+
+const getEnvConfig = (): Partial<Config> => {
+  return {
+    debug: process.env.DEBUG === 'auto-engineer',
+    noColor: parseNoColor(),
+    output: parseOutputFormat(),
+    apiToken: process.env.AUTO_ENGINEER_API_TOKEN,
+    projectPath: process.env.AUTO_ENGINEER_PROJECT_PATH,
+  };
+};
 
 const getDefaultConfig = (): Config => ({
   debug: false,
@@ -25,7 +35,7 @@ const getDefaultConfig = (): Config => ({
 export const loadConfig = (cliArgs: Partial<Config> = {}): Config => {
   const envConfig = getEnvConfig();
   const defaultConfig = getDefaultConfig();
-  
+
   // Merge in order of precedence: CLI args > env vars > defaults
   return {
     ...defaultConfig,
@@ -34,18 +44,24 @@ export const loadConfig = (cliArgs: Partial<Config> = {}): Config => {
   };
 };
 
+const validateApiToken = (apiToken: string | undefined): void => {
+  if (apiToken !== undefined && apiToken !== null && apiToken.length > 0 && apiToken.length < 10) {
+    throw createError('API token must be at least 10 characters long', 'E4003');
+  }
+};
+
+const validateProjectPath = (projectPath: string | undefined): void => {
+  if (projectPath !== undefined && projectPath !== null && projectPath.length > 0) {
+    const isValidPath = projectPath.startsWith('/') || projectPath.startsWith('./');
+    if (!isValidPath) {
+      throw createError('Project path must be an absolute path or relative path starting with ./', 'E4004');
+    }
+  }
+};
+
 export const validateConfig = (config: Config): void => {
-  if (config.apiToken && config.apiToken.length < 10) {
-    throw createError(
-      'API token must be at least 10 characters long',
-      'E4003'
-    );
-  }
-  
-  if (config.projectPath && !config.projectPath.startsWith('/') && !config.projectPath.startsWith('./')) {
-    throw createError(
-      'Project path must be an absolute path or relative path starting with ./',
-      'E4004'
-    );
-  }
-}; 
+  const { apiToken, projectPath } = config;
+
+  validateApiToken(apiToken);
+  validateProjectPath(projectPath);
+};

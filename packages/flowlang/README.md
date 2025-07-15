@@ -14,14 +14,14 @@ A TypeScript library for building domain-driven flows with event sourcing and CQ
 ## Usage
 
 ```typescript
-import { 
-  commandSlice, 
-  querySlice, 
+import {
+  commandSlice,
+  querySlice,
   reactionSlice,
-  flow, 
+  flow,
   createBuilders,
-  should, 
-  when 
+  should,
+  when
 } from '@auto-engineer/flowlang';
 
 const { Events, Commands } = createBuilders()
@@ -49,6 +49,7 @@ export default flow('PropertyBooking', () => {
 ## API
 
 ### Fluent API
+
 - `commandSlice(name)` - Command slice builder with method chaining
 - `querySlice(name)` - Query slice builder with method chaining
 - `reactionSlice(name)` - Reaction slice builder with method chaining
@@ -56,17 +57,20 @@ export default flow('PropertyBooking', () => {
 - `.validate()` - Validate and execute slice definitions
 
 ### Core Functions
+
 - `flow(name, fn)` - Define a flow
 - `client(name, fn)` - Client specifications
 - `server(name, fn)` - Server implementations
 - `specs(name, fn)` - Test specifications
 
 ### Builders
+
 - `event` - Type-safe event builder
 - `command` - Type-safe command builder
 - `createIntegration(type, name)` - Create integration configurations
 
 ### Testing
+
 - `given(events)` - Set up test state
 - `when(command)` - Execute test command
 - `then(expectedEvents)` - Assert expected outcomes
@@ -79,4 +83,4 @@ export default flow('PropertyBooking', () => {
 - **Consistent Pattern**: Everything follows the same method chaining pattern
 - **Optional Chaining**: Skip parts that aren't needed
 
-See [FLUENT_API.md](./FLUENT_API.md) for detailed documentation and examples. 
+See [FLUENT_API.md](./FLUENT_API.md) for detailed documentation and examples.

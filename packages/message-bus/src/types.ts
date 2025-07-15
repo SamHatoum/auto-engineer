@@ -1,65 +1,58 @@
-export type BaseCommand = {
+export interface BaseCommand {
   type: string;
   timestamp?: Date;
   requestId?: string;
   correlationId?: string;
-};
+}
 
-export type BaseEvent = {
+export interface BaseEvent {
   type: string;
   timestamp?: Date;
   requestId?: string;
   correlationId?: string;
-};
+}
 
-export type BaseQuery = {
+export interface BaseQuery {
   type: string;
   timestamp?: Date;
   requestId?: string;
   correlationId?: string;
-};
+}
 
-export type BaseResult = {
+export interface BaseResult {
   type: string;
   timestamp?: Date;
   requestId?: string;
   correlationId?: string;
-};
+}
 
-export type AckResponse = {
+export interface AckResponse {
   status: 'ack';
   message?: string;
   timestamp: Date;
   requestId?: string;
-};
+}
 
-export type NackResponse = {
+export interface NackResponse {
   status: 'nack';
   error: string;
   timestamp: Date;
   requestId?: string;
-};
+}
 
 export type AckNackResponse = AckResponse | NackResponse;
 
-export type CommandHandler<
-  TCommand extends BaseCommand = BaseCommand
-> = {
+export interface CommandHandler<TCommand extends BaseCommand = BaseCommand> {
   name: string;
   handle: (command: TCommand) => Promise<AckNackResponse>;
-};
+}
 
-export type EventHandler<
-  TEvent extends BaseEvent = BaseEvent
-> = {
+export interface EventHandler<TEvent extends BaseEvent = BaseEvent> {
   name: string;
   handle: (event: TEvent) => Promise<AckNackResponse>;
-};
+}
 
-export type QueryHandler<
-  TQuery extends BaseQuery = BaseQuery,
-  TResult extends BaseResult = BaseResult
-> = {
+export interface QueryHandler<TQuery extends BaseQuery = BaseQuery, TResult extends BaseResult = BaseResult> {
   name: string;
   handle: (query: TQuery) => Promise<TResult>;
-}; 
+}

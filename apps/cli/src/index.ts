@@ -15,7 +15,7 @@ import { createInitCommand } from './commands/init.js';
 import { createDemoCommand } from './commands/demo.js';
 import { createStartCommand } from './commands/start.js';
 
-const VERSION = process.env.npm_package_version || '0.1.2';
+const VERSION = process.env.npm_package_version ?? '0.1.2';
 
 const checkNodeVersion = () => {
   const nodeVersion = process.version;
@@ -68,56 +68,31 @@ const createCLI = () => {
     .option('-d, --debug', 'Enable debug mode')
     .option('--no-color', 'Disable colored output')
     .option('--json', 'Output in JSON format')
-    .option('--api-token <token>', 'API token for external services') 
+    .option('--api-token <token>', 'API token for external services')
     .option('--project-path <path>', 'Project path to work with');
 
   return program;
 };
 
-const main = async () => {
-  try {
-    checkNodeVersion();
+const displayBanner = (config: ReturnType<typeof loadConfig>) => {
+  if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
+    const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
+    console.log(chalk.bgBlack(gradient(['#F44B4B', '#FF9C1A', '#F9F871', '#4CD964', '#4BC6F4'])(asciiText)));
+    console.log();
+  }
+};
 
-    clearConsole();
+const setupProgram = (config: ReturnType<typeof loadConfig>) => {
+  const program = createCLI();
+  const analytics = new Analytics(config);
 
-    setupSignalHandlers();
+  program.addCommand(createInitCommand(config, analytics));
+  program.addCommand(createDemoCommand(config, analytics));
+  program.addCommand(createStartCommand(config, analytics));
 
-    const program = createCLI();
-
-    program.parse(process.argv, { from: 'user' });
-    const globalOptions = program.opts();
-
-    const config = loadConfig({
-      debug: globalOptions.debug || false,
-      noColor: globalOptions.noColor || false,
-      output: globalOptions.json ? 'json' : 'text',
-      apiToken: globalOptions.apiToken,
-      projectPath: globalOptions.projectPath,
-    });
-
-    validateConfig(config);
-
-    const output = createOutput(config);
-
-    if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
-      const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
-      console.log(chalk.bgBlack(gradient([
-        '#F44B4B',
-        '#FF9C1A',
-        '#F9F871',
-        '#4CD964',
-        '#4BC6F4' 
-      ])(asciiText)));
-      console.log(chalk.gray(`Version ${VERSION}\n`));
-    }
-
-    const analytics = new Analytics(config);
-
-    program.addCommand(createInitCommand(config, analytics));
-    program.addCommand(createDemoCommand(config, analytics));
-    program.addCommand(createStartCommand(config, analytics));
-
-    program.addHelpText('after', `
+  program.addHelpText(
+    'after',
+    `
 Examples:
   $ auto-engineer start                   Create flows interactively using AI
   $ ag start                              Create flows interactively using AI (short alias)
@@ -135,16 +110,43 @@ Environment Variables:
   AUTO_ENGINEER_ANALYTICS=false           Disable analytics (enabled by default)
 
 For more information, visit: https://github.com/SamHatoum/auto-engineer
-    `);
+    `,
+  );
 
-    await program.parseAsync(process.argv);
+  return program;
+};
 
+const main = async () => {
+  try {
+    checkNodeVersion();
+    clearConsole();
+    setupSignalHandlers();
+
+    const program = createCLI();
+    program.parse(process.argv, { from: 'user' });
+    const globalOptions = program.opts();
+
+    const config = loadConfig({
+      debug: Boolean(globalOptions.debug),
+      noColor: Boolean(globalOptions.noColor),
+      output: globalOptions.json === true ? 'json' : 'text',
+      apiToken: typeof globalOptions.apiToken === 'string' ? globalOptions.apiToken : undefined,
+      projectPath: typeof globalOptions.projectPath === 'string' ? globalOptions.projectPath : undefined,
+    });
+
+    validateConfig(config);
+    createOutput(config);
+    displayBanner(config);
+
+    const fullProgram = setupProgram(config);
+    await fullProgram.parseAsync(process.argv);
   } catch (error: unknown) {
-    if (error instanceof Error && (
-      error.message.includes('commander') ||
-      error.message.includes('helpDisplayed') ||
-      error.message.includes('version')
-    )) {
+    if (
+      error instanceof Error &&
+      (error.message.includes('commander') ||
+        error.message.includes('helpDisplayed') ||
+        error.message.includes('version'))
+    ) {
       process.exit(0);
     }
 
@@ -161,4 +163,4 @@ main().catch((error: unknown) => {
   const errorMessage = error instanceof Error ? error.message : String(error);
   console.error(chalk.red('Fatal error:'), errorMessage);
   process.exit(1);
-}); 
+});

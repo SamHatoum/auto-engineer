@@ -20,11 +20,13 @@ A powerful command-line interface for automating development workflows, followin
 ## Installation
 
 ### npm (Recommended)
+
 ```bash
 npm install -g @auto-engineer/cli
 ```
 
 ### Docker
+
 ```bash
 docker pull auto-engineer/cli
 docker run --rm auto-engineer/cli --help
@@ -33,11 +35,13 @@ docker run --rm auto-engineer/cli --help
 ## Quick Start
 
 1. **Initialize** your project:
+
    ```bash
    auto-engineer init
    ```
 
 2. **Generate** code templates:
+
    ```bash
    auto-engineer generate --type code
    ```
@@ -50,6 +54,7 @@ docker run --rm auto-engineer/cli --help
 ## Commands
 
 ### `init`
+
 Initialize auto-engineer configuration for your project.
 
 ```bash
@@ -57,10 +62,12 @@ auto-engineer init [options]
 ```
 
 **Options:**
+
 - `-y, --yes` - Skip prompts and use defaults
 - `-p, --path <path>` - Project path (default: current directory)
 
 **Examples:**
+
 ```bash
 # Interactive initialization
 auto-engineer init
@@ -73,6 +80,7 @@ auto-engineer init --path ./my-project
 ```
 
 ### `generate`
+
 Generate code, documentation, or other artifacts.
 
 ```bash
@@ -80,12 +88,14 @@ auto-engineer generate [options]
 ```
 
 **Options:**
+
 - `-t, --type <type>` - Type of generation (code, docs, tests)
 - `-o, --output <path>` - Output path for generated files
 - `-f, --force` - Overwrite existing files
 - `--stdin` - Read input from STDIN
 
 **Examples:**
+
 ```bash
 # Generate code templates
 auto-engineer generate --type code
@@ -98,6 +108,7 @@ echo "component" | auto-engineer generate --stdin
 ```
 
 ### `analyze`
+
 Analyze code quality and provide insights.
 
 ```bash
@@ -105,11 +116,13 @@ auto-engineer analyze [options]
 ```
 
 **Options:**
+
 - `-p, --path <path>` - Path to analyze (default: current directory)
 - `-f, --format <format>` - Output format (text, json)
 - `--stdin` - Analyze content from STDIN
 
 **Examples:**
+
 ```bash
 # Analyze current directory
 auto-engineer analyze
@@ -187,11 +200,13 @@ Auto-engineer collects anonymous usage analytics to improve the tool. Analytics 
 - **Controllable** - You can disable anytime
 
 To disable analytics:
+
 ```bash
 export AUTO_ENGINEER_ANALYTICS=false
 ```
 
 Analytics data includes:
+
 - Command usage (which commands are run)
 - Success/failure rates
 - Error codes (for debugging)
@@ -203,10 +218,12 @@ This data helps us understand usage patterns and improve the tool's reliability 
 ## Development
 
 ### Prerequisites
+
 - Node.js 18.0.0 or higher
 - npm, yarn, or pnpm
 
 ### Setup
+
 ```bash
 # Install dependencies
 npm install
@@ -225,6 +242,7 @@ npm run test:coverage
 ```
 
 ### Project Structure
+
 ```
 src/
 ├── commands/          # Command implementations
@@ -256,4 +274,4 @@ MIT License - see LICENSE file for details.
 
 - **Documentation**: [GitHub Wiki](https://github.com/your-repo/auto-engineer/wiki)
 - **Issues**: [GitHub Issues](https://github.com/your-repo/auto-engineer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/auto-engineer/discussions) 
+- **Discussions**: [GitHub Discussions](https://github.com/your-repo/auto-engineer/discussions)

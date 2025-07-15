@@ -12,10 +12,11 @@
 > Build production-grade applications with AI assistance. Not just another prototype tool.
 
 ##### _NOTE THIS IS AN EARLY PREVIEW - WE ARE WORKING HARD ON MAKING IT HAPPEN_
+
 Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the Discord for conversations.
 
 ```bash
-# clone and cd into the repo 
+# clone and cd into the repo
 # setup your .env var to use your AI key (supports all models, openai current default)
 pnpm i & pnpm start
 ```
@@ -39,27 +40,37 @@ Auto Engineer generates well-architected, scalable applications with proper desi
 
 It achieves this through a combination of techniques:
 
-* **Architecture as Code**: Engineers maintain full control of design decisions while AI operates within defined constraints, focusing on rapid code generation
-* **Bulletproof Design Patterns**: Implements gateways and anti-corruption layers for robust external system integrations
-* **Sliced Architecture**: Organizes code into domain-driven slices, ensuring low coupling and high cohesion between components
-* **Specification by Example & BDD**: Ensures correct implementation from the start through clear specifications
-* **Built-in Regression Testing**: Maintains system integrity by preventing breaking changes
-* **Self-Documenting System**: Provides full transparency into human and AI decisions over time
+- **Architecture as Code**: Engineers maintain full control of design decisions while AI operates within defined constraints, focusing on rapid code generation
+- **Bulletproof Design Patterns**: Implements gateways and anti-corruption layers for robust external system integrations
+- **Sliced Architecture**: Organizes code into domain-driven slices, ensuring low coupling and high cohesion between components
+- **Specification by Example & BDD**: Ensures correct implementation from the start through clear specifications
+- **Built-in Regression Testing**: Maintains system integrity by preventing breaking changes
+- **Self-Documenting System**: Provides full transparency into human and AI decisions over time
 
 ## 🔄 FlowModels
 
 Information Flow Modeling is the act of expressing a system as interfaces, commands, queries, events, and state. The majority of systems lend themselves to be easily modeled using Flow Models. Flow Models define system behaviors through vertical slices, and bridges the gap between technical and non-technical stakeholders by providing a common language that:
 
-* **Describes Complete Flows**: Captures entire user journeys and system interactions
-* **Uses Vertical Slices**: Organizes functionality by domain-driven slices rather than technical layers
-* **Enables Collaboration**: Allows technical, non-technical, and AI systems to work together
-* **Specifies Behavior**: Defines both frontend and backend requirements in a single flow
-* **Includes Validation Rules**: Embeds business rules and acceptance criteria directly in the flow
+- **Describes Complete Flows**: Captures entire user journeys and system interactions
+- **Uses Vertical Slices**: Organizes functionality by domain-driven slices rather than technical layers
+- **Enables Collaboration**: Allows technical, non-technical, and AI systems to work together
+- **Specifies Behavior**: Defines both frontend and backend requirements in a single flow
+- **Includes Validation Rules**: Embeds business rules and acceptance criteria directly in the flow
 
 ### Example Flow Model
 
 ```typescript
-import { commandSlice, querySlice, reactSlice, flow, createBuilders, should, when, specs, gql } from '@auto-engineer/flow-lang';
+import {
+  commandSlice,
+  querySlice,
+  reactSlice,
+  flow,
+  createBuilders,
+  should,
+  when,
+  specs,
+  gql,
+} from '@auto-engineer/flow-lang';
 
 import type { ListingCreated } from './slices/create-listing/events';
 import type { BookingRequested } from './slices/guest-submits-booking-request/events';
@@ -79,60 +90,57 @@ const { Events, Commands, State } = createBuilders()
   .commands<CreateListing | RequestBooking | NotifyHost | RemoveProperty>()
   .state<{ AvailableProperties: AvailableProperty }>();
 
-
 flow('Host creates a listing', () => {
-
   commandSlice('Create listing')
     .stream('listing-${id}')
     .client(() => {
-      specs('A form that allows hosts to create a listing',() => {
-        should('have fields for title, description, location, address')
-        should('have price per night input')
-        should('have max guests selector')
-        should('have amenities checklist')
-        should.not('be shown to guest users')
+      specs('A form that allows hosts to create a listing', () => {
+        should('have fields for title, description, location, address');
+        should('have price per night input');
+        should('have max guests selector');
+        should('have amenities checklist');
+        should.not('be shown to guest users');
       });
     })
     .server(() => {
       specs('Host can create a new listing', () => {
         when(
           Commands.CreateListing({
-            propertyId: "listing_123",
-            hostId: "host_456",
-            location: "San Francisco",
-            address: "123 Market St",
-            title: "Modern Downtown Apartment",
-            description: "Beautiful apartment with city views",
+            propertyId: 'listing_123',
+            hostId: 'host_456',
+            location: 'San Francisco',
+            address: '123 Market St',
+            title: 'Modern Downtown Apartment',
+            description: 'Beautiful apartment with city views',
             pricePerNight: 250,
             maxGuests: 4,
-            amenities: ["wifi", "kitchen", "parking"]
-          })).then([
-            Events.ListingCreated({
-              propertyId: "listing_123",
-              hostId: "host_456",
-              location: "San Francisco",
-              address: "123 Market St",
-              title: "Modern Downtown Apartment",
-              description: "Beautiful apartment with city views",
-              pricePerNight: 250,
-              maxGuests: 4,
-              amenities: ["wifi", "kitchen", "parking"],
-              listedAt: new Date("2024-01-15T10:00:00Z")
-            })
-          ]);
+            amenities: ['wifi', 'kitchen', 'parking'],
+          }),
+        ).then([
+          Events.ListingCreated({
+            propertyId: 'listing_123',
+            hostId: 'host_456',
+            location: 'San Francisco',
+            address: '123 Market St',
+            title: 'Modern Downtown Apartment',
+            description: 'Beautiful apartment with city views',
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ['wifi', 'kitchen', 'parking'],
+            listedAt: new Date('2024-01-15T10:00:00Z'),
+          }),
+        ]);
       });
     });
-
 });
 
 flow('Guest books a listing', () => {
-
   querySlice('Search for available listings')
     .client(() => {
       specs('Listing Search Screen', () => {
-        should('have location filter')
-        should('have price range slider')
-        should('have guest count filter')
+        should('have location filter');
+        should('have price range slider');
+        should('have guest count filter');
       });
     })
     .request(gql`
@@ -144,64 +152,63 @@ flow('Guest books a listing', () => {
           pricePerNight
           maxGuests
         }
-      }`
-    )
+      }
+    `)
     .server(() => {
       specs('Listing becomes searchable after being created', () => {
         when(
           Events.ListingCreated({
-            propertyId: "listing_123",
-            hostId: "host_456",
-            location: "San Francisco",
-            address: "123 Market St",
-            title: "Modern Downtown Apartment",
-            description: "Beautiful apartment with city views",
+            propertyId: 'listing_123',
+            hostId: 'host_456',
+            location: 'San Francisco',
+            address: '123 Market St',
+            title: 'Modern Downtown Apartment',
+            description: 'Beautiful apartment with city views',
             pricePerNight: 250,
             maxGuests: 4,
-            amenities: ["wifi", "kitchen", "parking"],
-            listedAt: new Date("2024-01-15T10:00:00Z")
-          })
+            amenities: ['wifi', 'kitchen', 'parking'],
+            listedAt: new Date('2024-01-15T10:00:00Z'),
+          }),
         ).then([
           State.AvailableProperties({
-            propertyId: "listing_123",
-            title: "Modern Downtown Apartment",
-            location: "San Francisco",
+            propertyId: 'listing_123',
+            title: 'Modern Downtown Apartment',
+            location: 'San Francisco',
             pricePerNight: 250,
-            maxGuests: 4
-          })
+            maxGuests: 4,
+          }),
         ]);
       });
     });
 
-  reactSlice('Host is notified')
-    .server(() => {
-      specs('Host is notified when booking request is received',() => {
-        when([
-          Events.BookingRequested({
-            bookingId: "booking_456",
-            propertyId: "listing_123",
-            hostId: "host_456",
-            guestId: "guest_789",
-            checkIn: "2024-02-01",
-            checkOut: "2024-02-05",
-            guests: 2,
-            message: "Looking forward to our stay!",
-            status: "pending_host_approval",
-            requestedAt: "2024-01-15T14:30:00Z",
-            expiresAt: "2024-01-16T14:30:00Z"
-          })
-        ]).then([
-          Commands.NotifyHost({
-            hostId: "host_456",
-            notificationType: "booking_request",
-            priority: "high",
-            channels: ["email", "sms"],
-            message: "Looking forward to our stay!",
-            actionRequired: true
-          })
-        ]);
-      });
+  reactSlice('Host is notified').server(() => {
+    specs('Host is notified when booking request is received', () => {
+      when([
+        Events.BookingRequested({
+          bookingId: 'booking_456',
+          propertyId: 'listing_123',
+          hostId: 'host_456',
+          guestId: 'guest_789',
+          checkIn: '2024-02-01',
+          checkOut: '2024-02-05',
+          guests: 2,
+          message: 'Looking forward to our stay!',
+          status: 'pending_host_approval',
+          requestedAt: '2024-01-15T14:30:00Z',
+          expiresAt: '2024-01-16T14:30:00Z',
+        }),
+      ]).then([
+        Commands.NotifyHost({
+          hostId: 'host_456',
+          notificationType: 'booking_request',
+          priority: 'high',
+          channels: ['email', 'sms'],
+          message: 'Looking forward to our stay!',
+          actionRequired: true,
+        }),
+      ]);
     });
+  });
 
   commandSlice('Notify host')
     .via([MailChimp, Twilio])
@@ -210,32 +217,33 @@ flow('Guest books a listing', () => {
       specs('Send notification using the specified integrations', () => {
         when(
           Commands.NotifyHost({
-            hostId: "host_456",
-            notificationType: "booking_request",
-            priority: "high",
-            channels: ["email", "sms"],
-            message: "Looking forward to our stay!",
-            actionRequired: true
-          })).then([
-            Events.HostNotified({
-              bookingId: "booking_456",
-              hostId: "host_456",
-              notificationType: "booking_request",
-              channels: ["email", "sms"],
-              notifiedAt: "2024-01-15T14:30:00Z"
-            })
-          ]);
+            hostId: 'host_456',
+            notificationType: 'booking_request',
+            priority: 'high',
+            channels: ['email', 'sms'],
+            message: 'Looking forward to our stay!',
+            actionRequired: true,
+          }),
+        ).then([
+          Events.HostNotified({
+            bookingId: 'booking_456',
+            hostId: 'host_456',
+            notificationType: 'booking_request',
+            channels: ['email', 'sms'],
+            notifiedAt: '2024-01-15T14:30:00Z',
+          }),
+        ]);
       });
     });
 });
-
 ```
 
 This approach enables:
-* **Clear Architecture**: Each slice defines its own frontend and backend requirements
-* **Traceable Requirements**: Rules and validations are explicitly defined
-* **AI Understanding**: Structured format that AI systems can parse and implement
-* **Living Documentation**: Flows serve as both specification and documentation
+
+- **Clear Architecture**: Each slice defines its own frontend and backend requirements
+- **Traceable Requirements**: Rules and validations are explicitly defined
+- **AI Understanding**: Structured format that AI systems can parse and implement
+- **Living Documentation**: Flows serve as both specification and documentation
 
 ## 🚀 Quick Start
 
@@ -244,7 +252,7 @@ This approach enables:
 - Node.js >= 20.0.0
 - pnpm >= 8.15.4
 
-### Installation  
+### Installation
 
 ```bash
 # Install dependencies
@@ -297,6 +305,7 @@ git commit -m "chore(global): update repository settings"
 This project uses [Changesets](https://github.com/changesets/changesets) for versioning and publishing packages.
 
 > **⚠️ Important:**
+>
 > - Do **not** run `changeset version` or `changeset publish` locally or push version bumps directly to `main`.
 > - Always use Pull Requests and let the GitHub Action create and merge the release PR. This ensures correct versioning, publishing, and tagging of only the changed packages.
 > - If you bypass this flow, tags and changelogs may not be generated correctly.
@@ -315,13 +324,16 @@ This project uses [Changesets](https://github.com/changesets/changesets) for ver
      - Publish updated packages to npm if all checks pass.
 
 ### Commands
+
 - `pnpm changeset` – Start a new changeset
 - `pnpm release` – Publish packages (run by CI)
 
 ### Automation
-- Publishing is fully automated via GitHub Actions. Manual publishing is not required. 
+
+- Publishing is fully automated via GitHub Actions. Manual publishing is not required.
 
 ### Changelogs
+
 - Each package maintains its own changelog in `CHANGELOG.md`
 - Changelogs are automatically generated from changesets
 - Changes are categorized by type (feat, fix, chore, etc.)

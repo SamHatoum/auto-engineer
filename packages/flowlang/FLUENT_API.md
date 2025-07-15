@@ -5,16 +5,19 @@ The Fluent API provides better developer ergonomics for the Flow Language DSL wi
 ## Key Benefits
 
 ### Better IDE Support
+
 - Autocomplete flows naturally from left to right
 - Each method returns a typed builder, making invalid chains impossible
 - No need to remember which functions are available in which context
 
 ### Reduced Nesting
+
 - Flatter code is easier to read and refactor
 - Less cognitive load tracking closing braces
 - Easier to reorder or extract sections
 
 ### Type-Safe Event/Command/State Builders
+
 - Use `createBuilders()` for fully typed events, commands, and state
 - Automatic TypeScript inference for event/command payloads
 - IDE autocomplete for all event and command types
@@ -22,6 +25,7 @@ The Fluent API provides better developer ergonomics for the Flow Language DSL wi
 ## Core API
 
 ### Flow Definition
+
 ```typescript
 import { flow } from '@auto-engineer/flowlang';
 
@@ -33,35 +37,67 @@ flow('Flow name', () => {
 ### Slice Builders
 
 #### Command Slices
+
 ```typescript
 commandSlice('Action name')
-  .stream('stream-${id}')              // Optional: specify event stream
-  .client(() => { /* or */ })          // Optional: client implementation
-  .client('Description', () => { })    // Optional: with description
-  .server(() => { /* or */ })          // Optional: server implementation
-  .server('Description', () => { })    // Optional: with description
-  .via(Integration)                    // Optional: single integration
-  .via([Integration1, Integration2])   // Optional: multiple integrations
-  .retries(3)                         // Optional: retry count
+  .stream('stream-${id}') // Optional: specify event stream
+  .client(() => {
+    /* or */
+  }) // Optional: client implementation
+  .client('Description', () => {}) // Optional: with description
+  .server(() => {
+    // Optional: server implementation
+    data([
+      // Optional: array of data sinks
+      sink().event('EventName').toStream('stream-${id}'),
+      sink().command('CmdName').toIntegration(Integration),
+    ]);
+    // server logic
+  })
+  .server('Description', () => {}) // Optional: with description
+  .via(Integration) // Optional: single integration
+  .via([Integration1, Integration2]) // Optional: multiple integrations
+  .retries(3); // Optional: retry count
 ```
 
 #### Query Slices
+
 ```typescript
 querySlice('Query name')
-  .client(() => { /* or */ })          // Optional: client implementation
-  .client('Description', () => { })    // Optional: with description
-  .request(gql`...`)                   // Optional: GraphQL query
-  .server(() => { /* or */ })          // Optional: server implementation
-  .server('Description', () => { })    // Optional: with description
+  .client(() => {
+    /* or */
+  }) // Optional: client implementation
+  .client('Description', () => {}) // Optional: with description
+  .request(gql`...`) // Optional: GraphQL query
+  .server(() => {
+    // Optional: server implementation
+    data([
+      // Optional: array of data sources
+      source().state('StateName').fromProjection('ProjectionName'),
+      source().state('OtherState').fromDatabase('collection'),
+    ]);
+    // server logic
+  })
+  .server('Description', () => {}); // Optional: with description
 ```
 
 #### Reaction Slices
+
 ```typescript
 reactSlice('Reaction name')
-  .server(() => { /* or */ })          // Required: server implementation
-  .server('Description', () => { })    // Or with description
-  .via(Integration)                    // Optional: integration
-  .retries(3)                         // Optional: retry count
+  .server(() => {
+    // Required: server implementation
+    data([
+      // Optional: mix of sinks and sources
+      source().state('Config').fromDatabase('config'),
+      sink().command('HandleEvent').toIntegration(Integration),
+      sink().event('EventHandled').toStream('events-${id}'),
+    ]);
+    // server logic
+  })
+  .server('Description', () => {}) // Or with description
+  .via(Integration) // Optional: integration
+  .retries(3); // Optional: retry count
 ```
 
 ### Type-Safe Builders
@@ -100,7 +136,7 @@ specs('Specification name', () => {
   should('have input field for email')
   should('display error on invalid input')
   should.not('allow submission without required fields')
-  
+
   // Behavior specifications
   when(Commands.CreateListing({ ... }))
     .then([Events.ListingCreated({ ... })])
@@ -114,15 +150,14 @@ Use the `gql` template literal for GraphQL queries:
 ```typescript
 import { gql } from '@auto-engineer/flowlang';
 
-querySlice('Search listings')
-  .request(gql`
-    query SearchListings($location: String) {
-      searchListings(location: $location) {
-        propertyId
-        title
-      }
+querySlice('Search listings').request(gql`
+  query SearchListings($location: String) {
+    searchListings(location: $location) {
+      propertyId
+      title
     }
-  `)
+  }
+`);
 ```
 
 ## Complete Examples
@@ -132,45 +167,42 @@ querySlice('Search listings')
 ```typescript
 import { flow, commandSlice, specs, should, when, createBuilders } from '@auto-engineer/flowlang';
 
-const { Events, Commands } = createBuilders()
-  .events<ListingCreated>()
-  .commands<CreateListing>()
-  .state<{}>()
+const { Events, Commands } = createBuilders().events<ListingCreated>().commands<CreateListing>().state<{}>();
 
 flow('Host manages listings', () => {
   commandSlice('Create listing')
     .stream('listing-${id}')
     .client('A form that allows hosts to create a listing', () => {
       specs(() => {
-        should('have fields for title, description, location, address')
-        should('have price per night input')
-        should('have max guests selector')
-        should('have amenities checklist')
+        should('have fields for title, description, location, address');
+        should('have price per night input');
+        should('have max guests selector');
+        should('have amenities checklist');
       });
     })
     .server('Create listing handler', () => {
       specs('Host can create a new listing', () => {
         when(
           Commands.CreateListing({
-            propertyId: "listing_123",
-            hostId: "host_456",
-            location: "San Francisco",
-            title: "Modern Downtown Apartment",
+            propertyId: 'listing_123',
+            hostId: 'host_456',
+            location: 'San Francisco',
+            title: 'Modern Downtown Apartment',
             pricePerNight: 250,
             maxGuests: 4,
-            amenities: ["wifi", "kitchen"]
-          })
+            amenities: ['wifi', 'kitchen'],
+          }),
         ).then([
           Events.ListingCreated({
-            propertyId: "listing_123",
-            hostId: "host_456",
-            location: "San Francisco",
-            title: "Modern Downtown Apartment",
+            propertyId: 'listing_123',
+            hostId: 'host_456',
+            location: 'San Francisco',
+            title: 'Modern Downtown Apartment',
             pricePerNight: 250,
             maxGuests: 4,
-            amenities: ["wifi", "kitchen"],
-            listedAt: new Date()
-          })
+            amenities: ['wifi', 'kitchen'],
+            listedAt: new Date(),
+          }),
         ]);
       });
     });
@@ -245,6 +277,7 @@ export const Twilio = createIntegration('sms', 'Twilio');
 ## Migration from Non-Fluent API
 
 ### Before (Function-based)
+
 ```typescript
 flow('PropertyBooking', () => {
   slice
@@ -266,6 +299,7 @@ flow('PropertyBooking', () => {
 ```
 
 ### After (Fluent)
+
 ```typescript
 flow('PropertyBooking', () => {
   commandSlice('List property')
@@ -290,4 +324,4 @@ flow('PropertyBooking', () => {
 2. **Keep specs focused**: Each spec should test one specific behavior
 3. **Use descriptive names**: Both for slices and specifications
 4. **Group related flows**: Use the flow() wrapper to organize related slices
-5. **Leverage optional chaining**: Only add the parts you need (client, server, integrations) 
+5. **Leverage optional chaining**: Only add the parts you need (client, server, integrations)

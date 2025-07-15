@@ -1,0 +1,56 @@
+<%
+const gwtList = slice.server?.gwt ?? [];
+const firstGwt = gwtList[0];
+const when = Array.isArray(firstGwt?.when) ? firstGwt.when[0] : firstGwt?.when;
+const firstEventType = when?.eventRef;
+const event = events.find(e => e.type === firstEventType);
+const eventImportPath = event ? toKebabCase(event.sourceSliceName) : 'unknown';
+-%>
+import { describe, it, beforeEach } from 'vitest';
+import 'reflect-metadata';
+import {
+getInMemoryEventStore,
+type InMemoryEventStore,
+} from '@event-driven-io/emmett';
+import {
+type ReactorContext,
+ReactorSpecification,
+} from '../../shared';
+import { react } from './react';
+import type { <%= pascalCase(firstEventType) %> } from '../<%= eventImportPath %>/events';
+
+describe('<%= pascalCase(flowName) %> | <%= pascalCase(slice.name) %>', () => {
+let eventStore: InMemoryEventStore;
+let given: ReturnType<typeof ReactorSpecification.for<any, any, ReactorContext>>;
+
+beforeEach(() => {
+eventStore = getInMemoryEventStore({});
+given = ReactorSpecification.for(
+react(),
+(commandSender) => ({ eventStore, commandSender })
+);
+});
+
+<% for (const example of gwtList) {
+    const exampleEvent = Array.isArray(example.when) ? example.when[0] : example.when;
+    const commands = example.then;
+    const description = `should send ${commands.map(c => c.commandRef).join(', ')} when ${exampleEvent.eventRef} is received`;
+-%>
+it('<%= description %>', async () => {
+await given([])
+.when({
+type: '<%= exampleEvent.eventRef %>',
+data: <%- JSON.stringify(exampleEvent.exampleData, null, 10) %>
+})
+.then([
+<% for (const cmd of commands) { -%>
+    {
+    type: '<%= cmd.commandRef %>',
+    kind: 'Command',
+    data: <%- JSON.stringify(cmd.exampleData, null, 12) %>
+    },
+<% } -%>
+]);
+});
+<% } -%>
+});

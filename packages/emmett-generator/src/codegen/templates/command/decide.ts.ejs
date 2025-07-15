@@ -1,0 +1,66 @@
+import {
+IllegalStateError<% if (usedErrors.includes('ValidationError')) { %>, ValidationError<% } %><% if (usedErrors.includes('NotFoundError')) { %>, NotFoundError<% } %>
+} from '@event-driven-io/emmett';
+import type { State } from './state';
+import type { <%= Object.keys(gwtMapping).map(pascalCase).join(', ') %> } from './commands';
+<%
+const fallbackEvents = Object.values(gwtMapping).flatMap(scenarios =>
+        scenarios.flatMap(s => s.then?.filter(t => 'eventRef' in t) || [])
+);
+const uniqueEventTypes = [...new Set(fallbackEvents.map(e => pascalCase(e.eventRef)))];
+-%>
+<% if (uniqueEventTypes.length > 0) { -%>
+    import type { <%= uniqueEventTypes.join(', ') %> } from './events';
+<% } -%>
+
+export const decide = (
+command: <%= Object.keys(gwtMapping).map(pascalCase).join(' | ') %>,
+state: State
+): <%= uniqueEventTypes.length === 0
+        ? 'never'
+        : uniqueEventTypes.length === 1
+                ? uniqueEventTypes[0]
+                : `(${uniqueEventTypes.join(' | ')}) | (${uniqueEventTypes.join(' | ')})[]` %> => {
+switch (command.type) {
+<% for (const command of Object.keys(gwtMapping)) {
+    const scenarios = gwtMapping?.[command] ?? [];
+    const hasGivenEvents = scenarios.some(s => s.given?.length > 0);
+    const fallbackEvents = scenarios.flatMap(s => s.then.filter(t => 'eventRef' in t));
+    const fallbackEventTypes = [...new Set(fallbackEvents.map(e => e.eventRef))];
+-%>
+case '<%= command %>': {
+/**
+* ## IMPLEMENTATION INSTRUCTIONS ##
+*
+* This command <%= hasGivenEvents ? 'requires evaluating prior state to determine if it can proceed' : 'can directly emit one or more events based on the input' %>.
+*
+* You should:
+* - Validate the command input fields
+* - Inspect the current domain `state` to determine if the command is allowed
+* - If invalid, throw one of the following domain errors `NotFoundError`, `ValidationError` or `IllegalStateError`
+* - If valid, return one or more events with the correct structure
+*
+* ⚠️ Only read from `state` — never mutate it. The `evolve.ts` file is responsible for updating state.
+*/
+<% for (const gwt of scenarios) {
+    const error = gwt.then.find(t => 'errorType' in t);
+if (error && gwt.failingFields?.length) {
+    const condition = gwt.failingFields.map(field => `command.data.${field} === ''`).join(' || ');
+-%>
+if (<%- condition %>) {
+throw new <%= error.errorType %>('<%- error.message ?? 'Validation failed' %>');
+}
+<% } } -%>
+
+// return {
+//   type: '<%= fallbackEventTypes[0] ?? 'TODO_EVENT_TYPE' %>',
+//   data: { ...command.data },
+// } as <%= fallbackEventTypes[0] ? pascalCase(fallbackEventTypes[0]) : 'TODO_EVENT_TYPE' %>;
+
+throw new IllegalStateError('Not yet implemented: ' + command.type);
+}
+<% } -%>
+default:
+throw new IllegalStateError('Unexpected command type: ' + command.type);
+}
+};
