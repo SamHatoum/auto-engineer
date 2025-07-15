@@ -9,11 +9,13 @@ export const decide = (command: RequestBooking, state: BookingState): BookingReq
   }
 
   const { now, bookingId } = command.metadata;
+  const { placeId, ...commandDataWithoutPlaceId } = command.data;
 
   return {
     type: 'BookingRequested',
     data: {
-      ...command.data,
+      ...commandDataWithoutPlaceId,
+      listingId: placeId, // Map placeId to listingId for backend consistency
       bookingId,
       status: 'pending_host_approval',
       requestedAt: now.toISOString(),

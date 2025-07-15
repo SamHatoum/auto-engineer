@@ -3,7 +3,7 @@ import type { Event } from '@event-driven-io/emmett';
 export type ListingCreated = Event<
   'ListingCreated',
   {
-    propertyId: string;
+    listingId: string;
     hostId: string;
     location: string;
     address: string;

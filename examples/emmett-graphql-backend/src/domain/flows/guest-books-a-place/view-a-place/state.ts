@@ -1,5 +1,5 @@
-export type ViewProperty = {
-  propertyId: string;
+export type ViewPlace = {
+  placeId: string;
   title: string;
   location: string;
   address: string;

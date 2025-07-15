@@ -4,7 +4,7 @@ export type BookingRequested = Event<
   'BookingRequested',
   {
     bookingId: string;
-    propertyId: string;
+    listingId: string;
     hostId: string;
     guestId: string;
     checkIn: string;

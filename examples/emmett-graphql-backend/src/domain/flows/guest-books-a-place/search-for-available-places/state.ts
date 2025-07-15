@@ -1,5 +1,5 @@
-export type AvailableProperty = {
-  propertyId: string;
+export type AvailablePlace = {
+  placeId: string;
   title: string;
   location: string;
   pricePerNight: number;

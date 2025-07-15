@@ -3,7 +3,7 @@ import { Command } from '@event-driven-io/emmett';
 export type RequestBooking = Command<
   'RequestBooking',
   {
-    propertyId: string;
+    placeId: string;
     hostId: string;
     guestId: string;
     checkIn: string;

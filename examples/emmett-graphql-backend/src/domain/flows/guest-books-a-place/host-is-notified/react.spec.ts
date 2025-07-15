@@ -22,7 +22,7 @@ describe('HostManagesBookingRequest | Email Confirmation Policy', () => {
         data: {
           bookingId: 'book_xyz789',
           hostId: 'host_123',
-          propertyId: 'prop_789',
+          listingId: 'prop_789',
           guestId: 'guest_456',
           checkIn: '2025-07-15',
           checkOut: '2025-07-18',
@@ -55,7 +55,7 @@ describe('HostManagesBookingRequest | Email Confirmation Policy', () => {
         data: {
           bookingId: 'book_123',
           hostId: 'host_999',
-          propertyId: 'prop_999',
+          listingId: 'prop_999',
           guestId: 'guest_999',
           checkIn: '2025-08-01',
           checkOut: '2025-08-10',

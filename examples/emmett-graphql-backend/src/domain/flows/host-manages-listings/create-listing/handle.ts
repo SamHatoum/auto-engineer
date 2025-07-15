@@ -12,7 +12,7 @@ const handler = CommandHandler({
 
 export const handle = async (eventStore: EventStore, command: CreateListing): Promise<MessageHandlerResult> => {
   try {
-    await handler(eventStore, `property-${command.data.propertyId}`, (state) => decide(command, state));
+    await handler(eventStore, `listing-${command.data.listingId}`, (state) => decide(command, state));
     return;
   } catch (error: any) {
     return {

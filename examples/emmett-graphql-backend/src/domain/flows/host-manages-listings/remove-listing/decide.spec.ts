@@ -1,26 +1,26 @@
 import { DeciderSpecification } from '@event-driven-io/emmett';
 import { decide } from './decide';
 import { evolve } from './evolve';
-import { initialPropertyState, PropertyState } from './state';
+import { initialListingState, ListingState } from './state';
 import { describe, it } from 'vitest';
-import { RemoveProperty } from './commands';
+import { RemoveListing } from './commands';
 import { ListingCreated } from '../create-listing';
-import { PropertyRemoved } from './events';
+import { ListingRemoved } from './events';
 
-describe('Property | RemoveProperty', () => {
+describe('Listing | RemoveListing', () => {
   const now = new Date();
-  const given = DeciderSpecification.for<RemoveProperty, ListingCreated | PropertyRemoved, PropertyState>({
+  const given = DeciderSpecification.for<RemoveListing, ListingCreated | ListingRemoved, ListingState>({
     decide,
     evolve,
-    initialState: initialPropertyState,
+    initialState: initialListingState,
   });
 
-  it('should emit PropertyRemoved when property is listed', () => {
+  it('should emit ListingRemoved when listing is listed', () => {
     given([
       {
         type: 'ListingCreated',
         data: {
-          propertyId: 'property-123',
+          listingId: 'property-123',
           hostId: 'host-abc',
           location: 'San Francisco',
           address: '123 Market St',
@@ -34,18 +34,18 @@ describe('Property | RemoveProperty', () => {
       },
     ])
       .when({
-        type: 'RemoveProperty',
+        type: 'RemoveListing',
         data: {
-          propertyId: 'property-123',
+          listingId: 'property-123',
           hostId: 'host-abc',
         },
         metadata: { now },
       })
       .then([
         {
-          type: 'PropertyRemoved',
+          type: 'ListingRemoved',
           data: {
-            propertyId: 'property-123',
+            listingId: 'property-123',
             hostId: 'host-abc',
             removedAt: now,
           },
@@ -53,16 +53,16 @@ describe('Property | RemoveProperty', () => {
       ]);
   });
 
-  it('should throw if property is not listed', () => {
+  it('should throw if listing is not listed', () => {
     given([])
       .when({
-        type: 'RemoveProperty',
+        type: 'RemoveListing',
         data: {
-          propertyId: 'property-123',
+          listingId: 'property-123',
           hostId: 'host-abc',
         },
         metadata: { now },
       })
-      .thenThrows((error: Error) => error.message === 'Cannot remove a property that is not listed');
+      .thenThrows((error: Error) => error.message === 'Cannot remove a listing that is not listed');
   });
 });

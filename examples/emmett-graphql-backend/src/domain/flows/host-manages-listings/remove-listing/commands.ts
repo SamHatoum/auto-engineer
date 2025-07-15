@@ -1,9 +1,9 @@
 import type { Command } from '@event-driven-io/emmett';
 
-export type RemoveProperty = Command<
-  'RemoveProperty',
+export type RemoveListing = Command<
+  'RemoveListing',
   {
-    propertyId: string;
+    listingId: string;
     hostId: string;
   }
 >;

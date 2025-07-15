@@ -14,8 +14,16 @@ const getPackages = (dir: string) => {
 
 const packages = getPackages(join(process.cwd(), 'packages'));
 const apps = getPackages(join(process.cwd(), 'apps'));
+const examples = getPackages(join(process.cwd(), 'examples'));
+const integrations = getPackages(join(process.cwd(), 'integrations'));
 
-const scopes = ['global', ...packages.map((pkg) => `packages/${pkg}`), ...apps.map((app) => `apps/${app}`)];
+const scopes = [
+  'global',
+  ...packages.map((pkg) => `packages/${pkg}`),
+  ...apps.map((app) => `apps/${app}`),
+  ...examples.map((example) => `examples/${example}`),
+  ...integrations.map((integration) => `integrations/${integration}`)
+];
 
 const config: UserConfig = {
   extends: ['@commitlint/config-conventional'],

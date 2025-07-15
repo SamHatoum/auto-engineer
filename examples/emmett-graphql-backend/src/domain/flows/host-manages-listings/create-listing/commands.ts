@@ -3,7 +3,7 @@ import type { Command } from '@event-driven-io/emmett';
 export type CreateListing = Command<
   'CreateListing',
   {
-    propertyId: string;
+    listingId: string;
     hostId: string;
     location: string;
     address: string;

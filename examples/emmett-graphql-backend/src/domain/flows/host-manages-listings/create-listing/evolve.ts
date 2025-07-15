@@ -6,7 +6,7 @@ export const evolve = (state: ListingState, event: ListingCreated): ListingState
     case 'ListingCreated':
       return {
         status: 'Created',
-        propertyId: event.data.propertyId,
+        listingId: event.data.listingId,
         hostId: event.data.hostId,
         location: event.data.location,
         address: event.data.address,

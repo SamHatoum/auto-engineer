@@ -4,7 +4,7 @@ export type EmptyListing = {
 
 export type CreatedListing = {
   status: 'Created';
-  propertyId: string;
+  listingId: string;
   hostId: string;
   location: string;
   address: string;

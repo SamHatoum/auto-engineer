@@ -1,9 +1,9 @@
 import type { Event } from '@event-driven-io/emmett';
 
-export type PropertyRemoved = Event<
-  'PropertyRemoved',
+export type ListingRemoved = Event<
+  'ListingRemoved',
   {
-    propertyId: string;
+    listingId: string;
     hostId: string;
     removedAt: Date;
   }

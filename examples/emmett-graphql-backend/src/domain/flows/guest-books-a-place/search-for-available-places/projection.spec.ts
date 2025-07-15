@@ -4,29 +4,29 @@ import { InMemoryProjectionSpec, eventsInStream, newEventsInStream } from '@even
 import { projection } from './projection';
 
 import type { ListingCreated } from '../../host-manages-listings/create-listing';
-import type { PropertyRemoved } from '../../host-manages-listings/remove-property/events';
-import { AvailableProperty } from './state';
+import type { ListingRemoved } from '../../host-manages-listings/remove-listing/events';
+import { AvailablePlace } from './state';
 
-type PropertyEvent = ListingCreated | PropertyRemoved;
+type ListingEvent = ListingCreated | ListingRemoved;
 
-describe('Available Property Projection', () => {
-  let given: InMemoryProjectionSpec<PropertyEvent>;
-  let propertyId: string;
+describe('Available Place Projection', () => {
+  let given: InMemoryProjectionSpec<ListingEvent>;
+  let listingId: string;
 
   beforeEach(() => {
-    propertyId = `property-${uuid()}`;
+    listingId = `property-${uuid()}`;
     given = InMemoryProjectionSpec.for({
       projection: projection,
     });
   });
 
-  it('creates availableProperty document', () =>
+  it('creates availablePlace document', () =>
     given([])
       .when([
         {
           type: 'ListingCreated',
           data: {
-            propertyId,
+            listingId,
             hostId: `host-${uuid()}`,
             location: 'London',
             address: '123 blah blah',
@@ -38,7 +38,7 @@ describe('Available Property Projection', () => {
             listedAt: new Date(),
           },
           metadata: {
-            streamName: propertyId,
+            streamName: listingId,
             streamPosition: 1n,
             globalPosition: 1n,
           },
@@ -46,11 +46,11 @@ describe('Available Property Projection', () => {
       ])
       .then(async (state) => {
         const document = await state.database
-          .collection<AvailableProperty>('availableProperties')
-          .findOne((doc) => doc.propertyId === propertyId);
+          .collection<AvailablePlace>('availableProperties')
+          .findOne((doc) => doc.placeId === listingId);
 
-        const expected: AvailableProperty = {
-          propertyId,
+        const expected: AvailablePlace = {
+          placeId: listingId,
           title: 'Beautiful House',
           location: 'London',
           pricePerNight: 250,
@@ -60,13 +60,13 @@ describe('Available Property Projection', () => {
         expect(document).toMatchObject(expected);
       }));
 
-  it('removes property document when PropertyRemoved event is processed', () =>
+  it('removes place document when ListingRemoved event is processed', () =>
     given(
-      eventsInStream(propertyId, [
+      eventsInStream(listingId, [
         {
           type: 'ListingCreated',
           data: {
-            propertyId,
+            listingId,
             hostId: `host-${uuid()}`,
             location: 'London',
             address: '123 blah blah',
@@ -81,11 +81,11 @@ describe('Available Property Projection', () => {
       ]),
     )
       .when(
-        newEventsInStream(propertyId, [
+        newEventsInStream(listingId, [
           {
-            type: 'PropertyRemoved',
+            type: 'ListingRemoved',
             data: {
-              propertyId,
+              listingId,
               hostId: `host-${uuid()}`,
               removedAt: new Date(),
             },
@@ -94,8 +94,8 @@ describe('Available Property Projection', () => {
       )
       .then(async (state) => {
         const document = await state.database
-          .collection<AvailableProperty>('availableProperties')
-          .findOne((doc) => doc.propertyId === propertyId);
+          .collection<AvailablePlace>('availableProperties')
+          .findOne((doc) => doc.placeId === listingId);
         expect(document).toBeNull();
       }));
 });

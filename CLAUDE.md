@@ -102,3 +102,7 @@ The emmett-generator package creates:
 
 - You are not allowed to relax lint rules
 - You must fix the underlying issues rather than just make the checks pass
+
+## Important Notes
+ALWAYS run `pnpm check` after you finish all your changes and fix any problems. 
+Do perform a git log and see previous commits and/or origin/main and origin/<current_branch> to see why thinkgs were passing before any breakges you make. It's safe to assume that what's on git is working typically since every dev runs commit hooks and we have CI/CD checks.

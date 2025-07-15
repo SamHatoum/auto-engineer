@@ -14,22 +14,22 @@ import {
 } from '@auto-engineer/flowlang';
 
 import type { ListingCreated } from './flows/host-manages-listings/create-listing';
-import type { BookingRequested } from './flows/guest-booking/guest-submits-booking-request/events';
-import type { PropertyRemoved } from './flows/host-manages-listings/remove-property/events';
+import type { BookingRequested } from './flows/guest-books-a-place/guest-submits-booking-request/events';
+import type { ListingRemoved } from './flows/host-manages-listings/remove-listing/events';
 import type { CreateListing } from './flows/host-manages-listings/create-listing/commands';
-import type { RequestBooking } from './flows/guest-booking/guest-submits-booking-request/commands';
-import type { NotifyHost } from './flows/guest-booking/notify-host/commands';
-import type { RemoveProperty } from './flows/host-manages-listings/remove-property/commands';
+import type { RequestBooking } from './flows/guest-books-a-place/guest-submits-booking-request/commands';
+import type { NotifyHost } from './flows/guest-books-a-place/notify-host/commands';
+import type { RemoveListing } from './flows/host-manages-listings/remove-listing/commands';
 
-import { AvailableProperty } from './flows/finding-an-available-property/search-for-available-property/state';
-import { HostNotified } from './flows/guest-booking/notify-host/events';
+import { AvailablePlace } from './flows/guest-books-a-place/search-for-available-places/state';
+import { HostNotified } from './flows/guest-books-a-place/notify-host/events';
 import { MailChimp } from '@auto-engineer/mailchimp-integration';
 import { Twilio } from '@auto-engineer/twilio-integration';
 
 const { Events, Commands, State } = createBuilders()
-  .events<ListingCreated | BookingRequested | HostNotified | PropertyRemoved>()
-  .commands<CreateListing | RequestBooking | NotifyHost | RemoveProperty>()
-  .state<{ AvailableListings: AvailableProperty }>();
+  .events<ListingCreated | BookingRequested | HostNotified | ListingRemoved>()
+  .commands<CreateListing | RequestBooking | NotifyHost | RemoveListing>()
+  .state<{ AvailablePlaces: AvailablePlace }>();
 
 flow('Host manages listings', () => {
   commandSlice('Create listing')
@@ -42,12 +42,12 @@ flow('Host manages listings', () => {
       });
     })
     .server(() => {
-      data([sink().event('ListingCreated').fields({ propertyId: true }).toStream('listing-${propertyId}')]);
+      data([sink().event('ListingCreated').fields({ listingId: true }).toStream('listing-${listingId}')]);
 
       specs('Host can create a new listing', () => {
         when(
           Commands.CreateListing({
-            propertyId: 'listing_123',
+            listingId: 'listing_123',
             hostId: 'host_456',
             location: 'San Francisco',
             address: '123 Market St',
@@ -59,7 +59,7 @@ flow('Host manages listings', () => {
           }),
         ).then([
           Events.ListingCreated({
-            propertyId: 'listing_123',
+            listingId: 'listing_123',
             hostId: 'host_456',
             location: 'San Francisco',
             address: '123 Market St',
@@ -73,21 +73,40 @@ flow('Host manages listings', () => {
         ]);
       });
     });
+
+  commandSlice('Remove listing').server(() => {
+    data([sink().event('ListingRemoved').fields({ listingId: true }).toStream('listing-${listingId}')]);
+
+    specs('Host can remove an existing listing', () => {
+      when(
+        Commands.RemoveListing({
+          listingId: 'listing_123',
+          hostId: 'host_456',
+        }),
+      ).then([
+        Events.ListingRemoved({
+          listingId: 'listing_123',
+          hostId: 'host_456',
+          removedAt: new Date('2024-01-16T10:00:00Z'),
+        }),
+      ]);
+    });
+  });
 });
 
-flow('Guest books a listing', () => {
-  querySlice('Search for available listings')
+flow('Guest books a place', () => {
+  querySlice('Search for available places')
     .client(() => {
-      specs('Listing Search Screen', () => {
+      specs('Place Search Screen', () => {
         should('have location filter');
         should('have price range slider');
         should('have guest count filter');
       });
     })
     .request(gql`
-      query SearchListings($location: String, $maxPrice: Float, $minGuests: Int) {
-        searchListings(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
-          propertyId
+      query SearchPlaces($location: String, $maxPrice: Float, $minGuests: Int) {
+        searchPlaces(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
+          placeId
           title
           location
           pricePerNight
@@ -98,13 +117,13 @@ flow('Guest books a listing', () => {
     .server(() => {
       data([
         // @ts-expect-error: Allow passing builder function for type-safe state reference
-        source().state(State.AvailableListings).fromProjection('AvailablePropertiesProjection'),
+        source().state(State.AvailablePlaces).fromProjection('AvailablePlacesProjection'),
       ]);
 
-      specs('Listing becomes searchable after being created', () => {
+      specs('Place becomes searchable after listing is created', () => {
         when(
           Events.ListingCreated({
-            propertyId: 'listing_123',
+            listingId: 'listing_123',
             hostId: 'host_456',
             location: 'San Francisco',
             address: '123 Market St',
@@ -116,8 +135,8 @@ flow('Guest books a listing', () => {
             listedAt: new Date('2024-01-15T10:00:00Z'),
           }),
         ).then([
-          State.AvailableListings({
-            propertyId: 'listing_123',
+          State.AvailablePlaces({
+            placeId: 'listing_123',
             title: 'Modern Downtown Apartment',
             location: 'San Francisco',
             pricePerNight: 250,
@@ -127,12 +146,49 @@ flow('Guest books a listing', () => {
       });
     });
 
+  querySlice('View a place')
+    .request(gql`
+      query ViewPlace($placeId: String!) {
+        viewPlace(placeId: $placeId) {
+          placeId
+          title
+          location
+          address
+          description
+          pricePerNight
+          maxGuests
+          amenities
+          hostId
+        }
+      }
+    `)
+    .server(() => {
+      specs('Place details can be viewed after listing is created', () => {
+        when(
+          Events.ListingCreated({
+            listingId: 'listing_123',
+            hostId: 'host_456',
+            location: 'San Francisco',
+            address: '123 Market St',
+            title: 'Modern Downtown Apartment',
+            description: 'Beautiful apartment with city views',
+            pricePerNight: 250,
+            maxGuests: 4,
+            amenities: ['wifi', 'kitchen', 'parking'],
+            listedAt: new Date('2024-01-15T10:00:00Z'),
+          }),
+        ).then([
+          // View listing state should be available
+        ]);
+      });
+    });
+
   reactSlice('Host is notified').server(() => {
     specs('Host is notified when booking request is received', () => {
       when([
         Events.BookingRequested({
           bookingId: 'booking_456',
-          propertyId: 'listing_123',
+          listingId: 'listing_123',
           hostId: 'host_456',
           guestId: 'guest_789',
           checkIn: '2024-02-01',

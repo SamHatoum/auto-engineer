@@ -4,7 +4,7 @@ import { initialState } from './state';
 import { describe, it } from 'vitest';
 import { decide } from './decide';
 
-describe('Property | ListProperty', () => {
+describe('Listing | CreateListing', () => {
   const now = new Date();
   const given = DeciderSpecification.for({
     decide: decide,
@@ -17,7 +17,7 @@ describe('Property | ListProperty', () => {
       .when({
         type: 'CreateListing',
         data: {
-          propertyId: 'property-123',
+          listingId: 'property-123',
           hostId: 'host-abc',
           location: 'San Francisco',
           address: '123 Market St',
@@ -35,7 +35,7 @@ describe('Property | ListProperty', () => {
         {
           type: 'ListingCreated',
           data: {
-            propertyId: 'property-123',
+            listingId: 'property-123',
             hostId: 'host-abc',
             location: 'San Francisco',
             address: '123 Market St',
@@ -50,12 +50,12 @@ describe('Property | ListProperty', () => {
       ]);
   });
 
-  it('should throw if property already exists', () => {
+  it('should throw if listing already exists', () => {
     given([
       {
         type: 'ListingCreated',
         data: {
-          propertyId: 'property-123',
+          listingId: 'property-123',
           hostId: 'host-abc',
           location: 'San Francisco',
           address: '123 Market St',
@@ -71,7 +71,7 @@ describe('Property | ListProperty', () => {
       .when({
         type: 'CreateListing',
         data: {
-          propertyId: 'property-123',
+          listingId: 'property-123',
           hostId: 'host-abc',
           location: 'San Francisco',
           address: '123 Market St',

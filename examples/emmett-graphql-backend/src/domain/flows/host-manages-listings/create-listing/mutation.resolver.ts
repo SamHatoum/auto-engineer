@@ -6,7 +6,7 @@ import { sendCommand } from '../../../shared';
 @InputType()
 export class CreateListingInput {
   @Field(() => String)
-  propertyId!: string;
+  listingId!: string;
 
   @Field(() => String)
   hostId!: string;

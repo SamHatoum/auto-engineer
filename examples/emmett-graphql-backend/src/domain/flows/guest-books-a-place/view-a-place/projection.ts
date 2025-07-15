@@ -1,26 +1,23 @@
-import type { PropertyRemoved } from '../../host-manages-listings/remove-property/events';
+import type { ListingRemoved } from '../../host-manages-listings/remove-listing/events';
 import {
   inMemorySingleStreamProjection,
   type ReadEvent,
   type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
 import { ListingCreated } from '../../host-manages-listings/create-listing';
-import { ViewProperty } from './state';
+import { ViewPlace } from './state';
 
-type PropertyEvent = ListingCreated | PropertyRemoved;
+type ListingEvent = ListingCreated | ListingRemoved;
 
-export const projection = inMemorySingleStreamProjection<ViewProperty, PropertyEvent>({
+export const projection = inMemorySingleStreamProjection<ViewPlace, ListingEvent>({
   collectionName: 'viewProperties',
-  canHandle: ['ListingCreated', 'PropertyRemoved'],
-  getDocumentId: (event) => event.data.propertyId,
-  evolve: (
-    document: ViewProperty | null,
-    event: ReadEvent<PropertyEvent, InMemoryReadEventMetadata>,
-  ): ViewProperty | null => {
+  canHandle: ['ListingCreated', 'ListingRemoved'],
+  getDocumentId: (event) => event.data.listingId,
+  evolve: (document: ViewPlace | null, event: ReadEvent<ListingEvent, InMemoryReadEventMetadata>): ViewPlace | null => {
     switch (event.type) {
       case 'ListingCreated': {
         return {
-          propertyId: event.data.propertyId,
+          placeId: event.data.listingId,
           title: event.data.title,
           location: event.data.location,
           address: event.data.address,
@@ -28,7 +25,7 @@ export const projection = inMemorySingleStreamProjection<ViewProperty, PropertyE
           amenities: event.data.amenities,
         };
       }
-      case 'PropertyRemoved': {
+      case 'ListingRemoved': {
         return null;
       }
       default:
