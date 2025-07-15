@@ -14,5 +14,3 @@ export type Products = State<
     products: Product[];
   }
 >;
-
-export type ProductCatalog = Product[];

@@ -15,7 +15,7 @@ import {
 } from '@auto-engineer/flowlang';
 import type { Event, Command } from '@event-driven-io/emmett';
 import type { State } from '@auto-engineer/flowlang';
-import { ProductCatalogService, type ProductCatalog } from '@auto-engineer/product-catalogue-integration';
+import { ProductCatalogService, type Product } from '@auto-engineer/product-catalogue-integration';
 
 // Domain types
 type ShoppingCriteriaEntered = Event<
@@ -104,7 +104,7 @@ type ShoppingSession = {
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
-  .state<{ ProductCatalog: ProductCatalog; SuggestedItems: SuggestedItems; ShoppingSession: ShoppingSession }>();
+  .state<{ Product: Product; SuggestedItems: SuggestedItems; ShoppingSession: ShoppingSession }>();
 
 flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
@@ -158,43 +158,42 @@ flow('Seasonal Assistant', () => {
 
   commandSlice('Do Chat').server(() => {
     data([
-      // sink().command('DoChat').toIntegration(AI),
-      source().state('Products').fromIntegration(ProductCatalogService),
+      // sink().command('DoChat').toIntegration(AI).withStream('URN'),
+      source().state('Product').fromIntegration(ProductCatalogService),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
       given([
-        State.ProductCatalog([
+        State.Product(
           {
             productId: 'prod-soccer-ball',
             name: 'Super Soccer Ball',
             category: 'Sports',
             price: 10,
             tags: ['soccer', 'sports'],
-          },
-          {
+          }),
+          State.Product({
             productId: 'prod-craft-kit',
             name: 'Deluxe Craft Kit',
             category: 'Arts & Crafts',
             price: 25,
             tags: ['crafts', 'art', 'creative'],
-          },
-          {
+          }),
+          State.Product({
             productId: 'prod-laptop-bag',
             name: 'Tech Laptop Backpack',
             category: 'School Supplies',
             price: 45,
             tags: ['computers', 'tech', 'school'],
-          },
-          {
+          }),
+          State.Product({
             productId: 'prod-mtg-starter',
             name: 'Magic the Gathering Starter Set',
             category: 'Games',
             price: 30,
             tags: ['magic', 'tcg', 'games'],
-          },
-        ]),
-      ])
+          }),
+        ])      
         .when(
           Commands.DoChat({
             sessionId: 'session-abc',

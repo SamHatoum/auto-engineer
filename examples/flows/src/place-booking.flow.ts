@@ -13,16 +13,16 @@ import {
   data,
 } from '@auto-engineer/flowlang';
 
-import type { ListingCreated } from './flows/host-manages-listings/create-listing';
-import type { BookingRequested } from './flows/guest-books-a-place/guest-submits-booking-request/events';
-import type { ListingRemoved } from './flows/host-manages-listings/remove-listing/events';
-import type { CreateListing } from './flows/host-manages-listings/create-listing/commands';
-import type { RequestBooking } from './flows/guest-books-a-place/guest-submits-booking-request/commands';
-import type { NotifyHost } from './flows/guest-books-a-place/notify-host/commands';
-import type { RemoveListing } from './flows/host-manages-listings/remove-listing/commands';
+import type { ListingCreated } from '../../emmett-graphql-backend/src/domain/flows/host-manages-listings/create-listing';
+import type { BookingRequested } from '../../emmett-graphql-backend/src/domain/flows/guest-books-a-place/guest-submits-booking-request/events';
+import type { ListingRemoved } from '../../emmett-graphql-backend/src/domain/flows/host-manages-listings/remove-listing/events';
+import type { CreateListing } from '../../emmett-graphql-backend/src/domain/flows/host-manages-listings/create-listing/commands';
+import type { RequestBooking } from '../../emmett-graphql-backend/src/domain/flows/guest-books-a-place/guest-submits-booking-request/commands';
+import type { NotifyHost } from '../../emmett-graphql-backend/src/domain/flows/guest-books-a-place/notify-host/commands';
+import type { RemoveListing } from '../../emmett-graphql-backend/src/domain/flows/host-manages-listings/remove-listing/commands';
 
-import { AvailablePlace } from './flows/guest-books-a-place/search-for-available-places/state';
-import { HostNotified } from './flows/guest-books-a-place/notify-host/events';
+import { AvailablePlace } from '../../emmett-graphql-backend/src/domain/flows/guest-books-a-place/search-for-available-places/state';
+import { HostNotified } from '../../emmett-graphql-backend/src/domain/flows/guest-books-a-place/notify-host/events';
 import { MailChimp } from '@auto-engineer/mailchimp-integration';
 import { Twilio } from '@auto-engineer/twilio-integration';
 

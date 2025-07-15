@@ -1,6 +1,5 @@
 import { processFlowsWithAI } from './index';
 import uxSchema from './auto-ux-schema.json';
-import { guestBooksAListingFlow, hostCreatesAListingFlow } from './mock-flows';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as ts from 'typescript';
@@ -106,14 +105,13 @@ async function getAtomsList(baseDir: string): Promise<{ name: string; props: { n
 }
 
 async function main() {
-  const [, , outputDir] = process.argv;
+  const [, , outputDir, ...flowFiles] = process.argv;
   if (!outputDir) {
-    console.error('Usage: tsx src/generate-ia-schema.ts <output-dir>');
+    console.error('Usage: tsx src/generate-ia-schema.ts <output-dir> <flow-file-1> <flow-file-2> ...');
     process.exit(1);
   }
 
-  // You can adjust which flows to use here
-  const flows: string[] = [guestBooksAListingFlow, hostCreatesAListingFlow];
+  const flows: string[] = await Promise.all(flowFiles.map((flow) => fs.readFile(flow, 'utf-8')));
 
   await fs.mkdir(outputDir, { recursive: true });
   const outPath = path.join(outputDir, 'auto-ia-scheme.json');
