@@ -38,6 +38,9 @@
     "format:fix": {
       "outputs": []
     },
+    "install": {
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true

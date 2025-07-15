@@ -105,4 +105,5 @@ The emmett-generator package creates:
 
 ## Important Notes
 ALWAYS run `pnpm check` after you finish all your changes and fix any problems. 
-Do perform a git log and see previous commits and/or origin/main and origin/<current_branch> to see why thinkgs were passing before any breakges you make. It's safe to assume that what's on git is working typically since every dev runs commit hooks and we have CI/CD checks.
+ALWAYS use the IDE diagnostics tool to check all the files that are not commited remotely.
+ALWAYS perform a git log and see previous commits when tests fail. You need to look at `origin/main` and `origin/current_branch` to see why things were passing before any current changes. It's safe to assume that what's on git is working typically since every dev runs commit hooks and we have CI/CD checks.

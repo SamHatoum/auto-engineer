@@ -1,12 +1,18 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(js.configs.recommended, ...tseslint.configs.recommended, {
-  languageOptions: {
-    parserOptions: {
-      project: true,
-    },
+export default tseslint.config(
+  {
+    ignores: ['**/eslint.config.ts', '**/eslint.config.js'],
   },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: true,
+      },
+    },
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
