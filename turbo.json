@@ -35,6 +35,9 @@
     "format:check": {
       "outputs": []
     },
+    "format:fix": {
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -44,9 +47,6 @@
     },
     "lint:fix": {
       "outputs": []
-    },
-    "check-all": {
-      "dependsOn": ["lint:fix", "type-check", "test"]
     }
   }
 }
