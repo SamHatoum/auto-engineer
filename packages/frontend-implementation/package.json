@@ -16,7 +16,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ui-checks": "workspace:*",
+    "@auto-engineer/frontend-checks": "workspace:*",
     "@auto-engineer/ai-integration": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.13.1",
     "openai": "^5.7.0",

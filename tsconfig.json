@@ -10,7 +10,8 @@
   },
   "include": [
     "**/src/**/*",
-    "eslint.config.js"
+    "eslint.config.js",
+    "vitest.config.ts"
   ],
   "exclude": [
     "**/dist/**",

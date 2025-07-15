@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Core types and utilities
-export type { Integration, DataSink, DataSource, DataSinkItem, DataSourceItem, DataItem, MessageTarget, Destination, Origin } from './types';
+export type { Integration, DataSink, DataSource, DataSinkItem, DataSourceItem, DataItem, MessageTarget, Destination, Origin, State } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
 

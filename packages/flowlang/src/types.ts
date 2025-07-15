@@ -73,6 +73,11 @@ export interface ApiOrigin {
   method?: string;
 }
 
+export interface IntegrationOrigin {
+  type: 'integration';
+  systems: string[];
+}
+
 export interface Origin {
   type: string;
   name?: string;
@@ -80,6 +85,7 @@ export interface Origin {
   query?: Record<string, unknown>;
   endpoint?: string;
   method?: string;
+  systems?: string[];
 }
 
 // Helper functions to create origins
@@ -87,6 +93,7 @@ export const createProjectionOrigin = (name: string): ProjectionOrigin => ({ typ
 export const createReadModelOrigin = (name: string): ReadModelOrigin => ({ type: 'readModel', name });
 export const createDatabaseOrigin = (collection: string, query?: Record<string, unknown>): DatabaseOrigin => ({ type: 'database', collection, query });
 export const createApiOrigin = (endpoint: string, method?: string): ApiOrigin => ({ type: 'api', endpoint, method });
+export const createIntegrationOrigin = (systems: string[]): IntegrationOrigin => ({ type: 'integration', systems });
 
 export interface DataSink {
   target: MessageTarget;
@@ -112,3 +119,16 @@ export interface DataSourceItem extends DataSource {
 export interface DataItem {
   __type: 'sink' | 'source';
 } 
+
+type DefaultRecord = Record<string, unknown>;
+
+export type State<StateType extends string = string, StateData extends DefaultRecord = DefaultRecord, EventMetaData extends DefaultRecord | undefined = undefined> = Readonly<EventMetaData extends undefined ? {
+  type: StateType;
+  data: StateData;
+} : {
+  type: StateType;
+  data: StateData;
+  metadata: EventMetaData;
+}> & {
+  readonly kind?: 'State';
+};

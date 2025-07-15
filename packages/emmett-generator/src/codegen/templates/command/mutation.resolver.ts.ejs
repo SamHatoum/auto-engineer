@@ -1,6 +1,6 @@
 import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
-import { GraphQLContext, MutationResponse } from '../../../shared';
-import { sendCommand } from '../../../shared';
+import { GraphQLContext, MutationResponse } from '../../shared';
+import { sendCommand } from '../../shared';
 
 @InputType()
 export class <%= pascalCase(commands[0].type) %>Input {

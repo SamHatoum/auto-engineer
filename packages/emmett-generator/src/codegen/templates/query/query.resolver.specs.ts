@@ -69,7 +69,7 @@ describe('query.resolver.ts.ejs', () => {
 
         expect(resolverFile?.contents).toMatchInlineSnapshot(`
           "import { Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
-          import { GraphQLContext, ReadModel } from '../../../shared';
+          import { GraphQLContext, ReadModel } from '../../shared';
 
           @ObjectType()
           export class AvailableListings {

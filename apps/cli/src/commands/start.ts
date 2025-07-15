@@ -85,7 +85,6 @@ interface Integration {
   source?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-type-alias
 type SpecsSchema = AppSchema & {
   messages?: Message[];
   integrations?: Integration[];

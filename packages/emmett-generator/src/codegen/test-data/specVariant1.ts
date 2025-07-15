@@ -15,8 +15,9 @@ const specVariant1: SpecsSchema = {
                     client: {
                         description: 'A form that allows users to add items',
                         specs: ['have fields for id and description'],
-                    },
-                    server: {
+                    }, 
+                    
+                    server: { 
                         description: 'Handles creation logic',
                         gwt: [
                             {
@@ -140,7 +141,7 @@ const specVariant1: SpecsSchema = {
             ],
             metadata: {
                 version: 1,
-            },
+            }
         },
         {
             type: 'command',

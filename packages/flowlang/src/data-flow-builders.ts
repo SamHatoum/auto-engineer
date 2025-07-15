@@ -1,4 +1,5 @@
 import type { DataSinkItem, DataSourceItem, MessageTarget, Integration } from './types';
+import { createIntegrationOrigin } from './types';
 
 // Field selector interface for partial object selection
 export interface FieldSelector {
@@ -68,10 +69,19 @@ export class CommandSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
     this.target = { type: 'Command', name };
   }
   
-  toIntegration(...systems: Integration[]): DataSinkItem {
+  toIntegration(...systems: (Integration | string)[]): DataSinkItem {
     return {
       target: this.target as MessageTarget,
-      destination: { type: 'integration', systems: systems.map(s => s.name) },
+      destination: { type: 'integration', systems: systems.map(s => typeof s === 'string' ? s : s.name) },
+      __type: 'sink' as const
+    };
+  }
+  
+  hints(hint: string): DataSinkItem {
+    return {
+      target: this.target as MessageTarget,
+      destination: { type: 'integration', systems: [] },
+      transform: hint,
       __type: 'sink' as const
     };
   }
@@ -164,8 +174,16 @@ export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
     };
   }
   
+  fromIntegration(...systems: (Integration | string)[]): DataSourceItem {
+    return {
+      target: this.target as MessageTarget,
+      origin: createIntegrationOrigin(systems.map(s => typeof s === 'string' ? s : s.name)),
+      __type: 'source' as const
+    };
+  }
+  
   build(): DataSourceItem {
-    throw new Error('Must specify an origin using fromProjection(), fromReadModel(), fromDatabase(), or fromApi()');
+    throw new Error('Must specify an origin using fromProjection(), fromReadModel(), fromDatabase(), fromApi(), or fromIntegration()');
   }
 }
 

@@ -20,7 +20,7 @@ export type ThenThrows<ErrorType extends Error> =
     | ((errorCheck: ErrorCheck<ErrorType>) => void)
     | ((
     errorConstructor: ErrorConstructor<ErrorType>,
-    errorCheck?: ErrorCheck<ErrorType>
+    errorCheck?: ErrorCheck<ErrorType>,
 ) => void);
 
 
@@ -65,23 +65,21 @@ function createMockCommandSender<Command>(): MockCommandSender<Command> {
     } as MockCommandSender<Command>;
 }
 
+
+
 function reactorSpecificationFor<Event, Command, Context extends { commandSender: CommandSender }>(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     processorOrReactor: any,
     createContext: (commandSender: CommandSender) => Context,
 ): ReactorSpecification<Event, Command, Context> {
     const reactor = {
         handle: async (events: unknown[], context: Context) => {
             // Handle the case where we have a MessageProcessor with eachMessage
-            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
-            if (processorOrReactor.eachMessage) {
+            if ('eachMessage' in processorOrReactor && processorOrReactor.eachMessage) {
                 for (const event of events) {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     await processorOrReactor.eachMessage(event, context);
                 }
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                const result = processorOrReactor.handle(events, context);
+                const result = processorOrReactor.handle(events as any, context);
                 await result;
             }
         },
@@ -94,7 +92,7 @@ function reactorSpecificationFor<Event, Command, Context extends { commandSender
                 const context = contextOverride || defaultContext;
 
                 const handle = async () => {
-                    const givenArray = Array.isArray(givenEvents) ? givenEvents : (givenEvents != null ? [givenEvents] : []);
+                    const givenArray = Array.isArray(givenEvents) ? givenEvents : (givenEvents !== null && givenEvents !== undefined ? [givenEvents] : []);
                     const whenArray = Array.isArray(whenEvent) ? whenEvent : [whenEvent];
                     const allEvents = [...givenArray, ...whenArray];
                     let eventsToHandle = allEvents;

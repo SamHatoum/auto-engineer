@@ -205,7 +205,7 @@ describe('react.specs.ts.ejs (react slice)', () => {
           "import { describe, it, beforeEach } from 'vitest';
           import 'reflect-metadata';
           import { getInMemoryEventStore, type InMemoryEventStore } from '@event-driven-io/emmett';
-          import { type ReactorContext, ReactorSpecification } from '../../../shared';
+          import { type ReactorContext, ReactorSpecification } from '../../shared';
           import { react } from './react';
           import type { BookingRequested } from '../guest-submits-booking-request/events';
 

@@ -14,7 +14,7 @@ reactor,
 IllegalStateError,
 } from '@event-driven-io/emmett';
 import type { <%= pascalCase(eventType) %> } from '../<%= toKebabCase(event.sourceSliceName ?? 'unknown') %>/events';
-import type { ReactorContext } from '../../../shared';
+import type { ReactorContext } from '../../shared';
 
 export const react = () =>
 reactor<<%= pascalCase(eventType) %>, InMemoryReadEventMetadata, ReactorContext>({

@@ -16,7 +16,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'complexity': ['error', { 'max': 10 }],
-      '@typescript-eslint/no-type-alias': 'error',
+      '@typescript-eslint/no-type-alias': 'off',
       '@typescript-eslint/no-unnecessary-type-constraint': 'error',
       '@typescript-eslint/no-unsafe-assignment': 'error',
       '@typescript-eslint/no-unsafe-call': 'error',

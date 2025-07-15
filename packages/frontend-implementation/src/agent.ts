@@ -1,7 +1,7 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-integration';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { getTsErrors, getBuildErrors } from '@auto-engineer/ui-checks';
+import { getTsErrors, getBuildErrors } from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
 // Utility to extract props from interface

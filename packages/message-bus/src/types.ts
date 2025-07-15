@@ -40,7 +40,6 @@ export interface NackResponse {
   requestId?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-type-alias
 export type AckNackResponse = AckResponse | NackResponse;
 
 export interface CommandHandler<

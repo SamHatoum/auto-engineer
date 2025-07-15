@@ -2,7 +2,7 @@ import { describe, it } from 'vitest';
 import { execa } from 'execa';
 import { scaffoldFromSchema } from './scaffoldFromSchema';
 import testSpec from './test-data/specVariant1';
-import { readdir } from 'fs/promises';
+import { readdir, mkdir } from 'fs/promises';
 import * as path from 'path';
 import { writeFile } from 'fs/promises';
 import {rm} from "node:fs/promises";
@@ -24,8 +24,18 @@ async function findTestFiles(dir: string): Promise<string[]> {
 
 describe('Scaffold integration test', () => {
     it('should generate valid TypeScript code and only fail on "Not yet implemented" tests', async () => {
-        const outputDir = path.join(__dirname, '..', 'domain', '/.flows-test-output');
+        const outputDir = path.join(__dirname, '..', 'domain', '/.tmp/test-output');
+        
+        // Clean up and recreate the output directory before running the test
+        await rm(outputDir, { recursive: true, force: true });
+        await mkdir(outputDir, { recursive: true });
+        
         await scaffoldFromSchema(testSpec.flows, testSpec.messages, outputDir);
+        
+        // Copy the shared module from the generator to the test output directory
+        const sharedSourceDir = path.join(__dirname, '..', 'domain', 'shared');
+        const sharedTargetDir = path.join(outputDir, 'shared');
+        await execa('cp', ['-r', sharedSourceDir, sharedTargetDir]);
         const testFiles = await findTestFiles(outputDir);
 
         if (testFiles.length === 0) {
