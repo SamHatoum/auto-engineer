@@ -199,7 +199,7 @@ describe('handle.ts.ejs (react slice)', () => {
             IllegalStateError,
           } from '@event-driven-io/emmett';
           import type { BookingRequested } from '../guest-submits-booking-request/events';
-          import type { ReactorContext } from '../../shared';
+          import type { ReactorContext } from '../../../shared';
 
           export const react = () =>
             reactor<BookingRequested, InMemoryReadEventMetadata, ReactorContext>({

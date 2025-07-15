@@ -1,5 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import ejs from 'ejs';
 import { ensureDirExists, ensureDirPath, toKebabCase } from './utils/path';
 import { camelCase, pascalCase } from 'change-case';
@@ -115,6 +117,7 @@ async function generateFileForTemplate(
   sliceDir: string,
   templateData: Record<string, unknown>,
 ): Promise<FilePlan> {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
   const templatePath = path.join(__dirname, './templates', slice.type, templateFile);
   const fileName = templateFile.replace(/\.ts\.ejs$/, '.ts');
   const outputPath = path.join(sliceDir, fileName);

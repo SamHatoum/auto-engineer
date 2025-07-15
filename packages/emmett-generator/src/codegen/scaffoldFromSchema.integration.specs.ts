@@ -1,11 +1,10 @@
 import { describe, it } from 'vitest';
 import { execa } from 'execa';
-import { scaffoldFromSchema } from './scaffoldFromSchema';
-import testSpec from './test-data/specVariant1';
-import { readdir, mkdir } from 'fs/promises';
 import * as path from 'path';
-import { writeFile } from 'fs/promises';
-import { rm } from 'node:fs/promises';
+import { writeFile, mkdir, readdir, rm } from 'fs/promises';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function findTestFiles(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -22,48 +21,34 @@ async function findTestFiles(dir: string): Promise<string[]> {
   return testFiles;
 }
 
-describe('Scaffold integration test', () => {
-  it('should generate valid TypeScript code and only fail on "Not yet implemented" tests', async () => {
-    const outputDir = path.join(__dirname, '..', 'domain', '/.tmp/test-output');
+describe('generateServer integration test', () => {
+  it('should scaffold a working server with valid TS and passing tests', async () => {
+    const tmpDir = path.resolve(__dirname, '../../.tmp/server-test-output');
+    const specPath = path.resolve(__dirname, './test-data/specVariant1.json');
 
-    // Clean up and recreate the output directory before running the test
-    await rm(outputDir, { recursive: true, force: true });
-    await mkdir(outputDir, { recursive: true });
+    await rm(tmpDir, { recursive: true, force: true });
+    await mkdir(tmpDir, { recursive: true });
 
-    await scaffoldFromSchema(testSpec.flows, testSpec.messages, outputDir);
+    await execa('pnpm', ['generate:server', specPath, tmpDir]);
 
-    // Copy the shared module from the generator to the test output directory
-    const sharedSourceDir = path.join(__dirname, '..', 'domain', 'shared');
-    const sharedTargetDir = path.join(outputDir, 'shared');
-    await execa('cp', ['-r', sharedSourceDir, sharedTargetDir]);
-    const testFiles = await findTestFiles(outputDir);
+    const serverDir = path.join(tmpDir, 'server');
+    const tsconfigPath = path.join(serverDir, 'tsconfig.json');
+    const testFiles = await findTestFiles(serverDir);
 
     if (testFiles.length === 0) {
-      throw new Error(`No test files found in ${outputDir}`);
+      throw new Error(`❌ No test files found in: ${serverDir}`);
     }
 
-    const tempTsConfigPath = path.join(outputDir, 'tsconfig.generated.json');
-    await writeFile(
-      tempTsConfigPath,
-      JSON.stringify(
-        {
-          extends: path.relative(outputDir, path.join(__dirname, '../../../../tsconfig.json')),
-          include: ['**/*.ts'],
-        },
-        null,
-        2,
-      ),
-    );
-
-    const typecheck = await execa('npx', ['tsc', '--noEmit', '-p', tempTsConfigPath], {
-      cwd: outputDir,
+    const typecheck = await execa('npx', ['tsc', '--noEmit', '-p', tsconfigPath], {
+      cwd: serverDir,
       reject: false,
     });
     if (typecheck.exitCode !== 0) {
       console.error('❌ TypeScript errors:\n', typecheck.stderr || typecheck.stdout);
-      throw new Error('TypeScript type-check failed');
+      throw new Error('❌ TypeScript type-check failed');
     }
-    const testResult = await execa('npx', ['vitest', 'run', '--dir', outputDir], {
+
+    const testResult = await execa('npx', ['vitest', 'run', '--dir', serverDir], {
       reject: false,
     });
     const output = testResult.stdout + '\n' + testResult.stderr;
@@ -78,6 +63,7 @@ describe('Scaffold integration test', () => {
     if (notYetImplementedMatches.length > 0) {
       console.warn(`ℹ️ Ignored test files awaiting implementation:\n${notYetImplementedMatches.join('\n')}`);
     }
-    await rm(outputDir, { recursive: true, force: true });
+
+    await rm(tmpDir, { recursive: true, force: true });
   });
 });

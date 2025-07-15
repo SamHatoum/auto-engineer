@@ -68,49 +68,48 @@ describe('mutation.resolver.ts.ejs', () => {
     const mutationFile = plans.find((p) => p.outputPath.endsWith('mutation.resolver.ts'));
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
-          "import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
-          import { GraphQLContext, MutationResponse } from '../../shared';
-          import { sendCommand } from '../../shared';
+      "import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
+      import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
-          @InputType()
-          export class CreateListingInput {
-            @Field(() => String)
-            propertyId!: string;
-            @Field(() => String)
-            title!: string;
-            @Field(() => Number)
-            pricePerNight!: number;
-            @Field(() => Number)
-            maxGuests!: number;
-            @Field(() => [String])
-            amenities!: string[];
-            @Field(() => Boolean)
-            available!: boolean;
-            @Field(() => [String])
-            tags!: string[];
-            @Field(() => Number)
-            rating!: number;
-            @Field(() => Object)
-            metadata!: object;
-            @Field(() => Date)
-            listedAt!: Date;
-          }
+      @InputType()
+      export class CreateListingInput {
+        @Field(() => String)
+        propertyId!: string;
+        @Field(() => String)
+        title!: string;
+        @Field(() => Number)
+        pricePerNight!: number;
+        @Field(() => Number)
+        maxGuests!: number;
+        @Field(() => [String])
+        amenities!: string[];
+        @Field(() => Boolean)
+        available!: boolean;
+        @Field(() => [String])
+        tags!: string[];
+        @Field(() => Number)
+        rating!: number;
+        @Field(() => Object)
+        metadata!: object;
+        @Field(() => Date)
+        listedAt!: Date;
+      }
 
-          @Resolver()
-          export class CreateListingResolver {
-            @Mutation(() => MutationResponse)
-            async createListing(
-              @Arg('input', () => CreateListingInput) input: CreateListingInput,
-              @Ctx() ctx: GraphQLContext,
-            ): Promise<MutationResponse> {
-              return await sendCommand(ctx.messageBus, {
-                type: 'CreateListing',
-                kind: 'Command',
-                data: { ...input },
-              });
-            }
-          }
-          "
-        `);
+      @Resolver()
+      export class CreateListingResolver {
+        @Mutation(() => MutationResponse)
+        async createListing(
+          @Arg('input', () => CreateListingInput) input: CreateListingInput,
+          @Ctx() ctx: GraphQLContext,
+        ): Promise<MutationResponse> {
+          return await sendCommand(ctx.messageBus, {
+            type: 'CreateListing',
+            kind: 'Command',
+            data: { ...input },
+          });
+        }
+      }
+      "
+    `);
   });
 });

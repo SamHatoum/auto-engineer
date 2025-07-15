@@ -8,7 +8,7 @@ const message = messages?.find(m => m.name === viewType);
 const resolverClassName = `${pascalCase(slice.name)}QueryResolver`
 %>
 import { Query, Resolver, Arg, Ctx,ObjectType, Field } from 'type-graphql';
-import { GraphQLContext, ReadModel } from '../../shared';
+import { type GraphQLContext, ReadModel } from '../../../shared';
 
 @ObjectType()
 export class <%= viewType %> {

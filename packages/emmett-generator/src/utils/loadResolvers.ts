@@ -1,12 +1,11 @@
-import { glob } from 'fast-glob';
+import fg from 'fast-glob';
 
 export interface Resolver {
   (...args: unknown[]): unknown;
 }
 
 export async function loadResolvers(source: string): Promise<Resolver[]> {
-  //const files = await glob('src/graphql/{mutations,queries,resolvers}/**/*.ts');
-  const files = await glob(source, {
+  const files = await fg(source, {
     absolute: true,
   });
   const modules: unknown[] = await Promise.all(files.map((file) => import(file)));
