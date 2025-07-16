@@ -15,7 +15,10 @@
       "Bash(pnpm lint:*)",
       "Bash(pnpm type-check:*)",
       "Bash(pnpm typecheck:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(pnpm implement:*)",
+      "Bash(node:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }
