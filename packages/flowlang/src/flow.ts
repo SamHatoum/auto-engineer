@@ -103,13 +103,7 @@ export function data(items: DataItem[]): void {
   const sliceType = slice.type as string;
   if (!sliceType) throw new Error('Invalid slice type');
 
-  // Validate items based on slice type
-  if (sliceType === SliceType.COMMAND) {
-    const hasSource = items.some((item) => '__type' in item && item.__type === 'source');
-    if (hasSource) {
-      throw new Error('Command slices cannot have data sources, only sinks');
-    }
-  }
+  // Command slices can now have both data sources and sinks
 
   if (sliceType === SliceType.QUERY) {
     const hasSink = items.some((item) => '__type' in item && item.__type === 'sink');

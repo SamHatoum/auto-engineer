@@ -43,6 +43,9 @@ export { client, server, specs, should, request, data } from './flow';
 export type { SliceTypeValueInterface } from './flow';
 export { SliceType } from './flow';
 
+// Flow conversion utilities
+export { getFlows, getFlow, convertFlowToJson } from './getFlows';
+
 // Event and command builders
 export {
   event,
