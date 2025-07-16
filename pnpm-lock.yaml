@@ -273,6 +273,9 @@ importers:
 
   examples/flows:
     dependencies:
+      '@auto-engineer/ai-integration':
+        specifier: workspace:*
+        version: link:../../integrations/ai-integration
       '@auto-engineer/flowlang':
         specifier: workspace:*
         version: link:../../packages/flowlang
@@ -304,6 +307,12 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.5.4
+
+  integrations/ai-integration:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
 
   integrations/mailchimp-integration:
     dependencies:

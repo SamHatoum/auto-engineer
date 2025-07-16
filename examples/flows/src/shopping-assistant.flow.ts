@@ -17,6 +17,7 @@ import {
   type State,
 } from '@auto-engineer/flowlang';
 import { ProductCatalogService, type Products } from '@examples/product-catalogue-integration';
+import { AI } from '@auto-engineer/ai-integration';
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
@@ -163,7 +164,7 @@ flow('Seasonal Assistant', () => {
 
   commandSlice('Do Chat').server(() => {
     data([
-      // sink().command('DoChat').toIntegration(AI),
+      sink().command('DoChat').toIntegration(AI),
       source().state('Products').fromIntegration(ProductCatalogService),
     ]);
 
