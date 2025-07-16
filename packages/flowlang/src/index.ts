@@ -12,6 +12,8 @@ export type {
   Destination,
   Origin,
   State,
+  Command,
+  Event,
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';

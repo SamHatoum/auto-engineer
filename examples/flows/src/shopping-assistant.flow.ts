@@ -12,13 +12,11 @@ import {
   source,
   data,
   sink,
+  type Command,
+  type Event,
+  type State,
 } from '@auto-engineer/flowlang';
-import type { Event, Command } from '@event-driven-io/emmett';
-import type { State } from '@auto-engineer/flowlang';
-import { ProductCatalogService, type Products as ImportedProducts } from '@examples/product-catalogue-integration';
-
-// Re-export in this module to help TypeScript resolve the union
-type Products = ImportedProducts;
+import { ProductCatalogService, type Products } from '@examples/product-catalogue-integration';
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
@@ -108,8 +106,6 @@ type ShoppingSession = State<
   }
 >;
 
-// Note: State uses object mapping instead of union types like Events/Commands
-// due to TypeScript limitations with cross-module union type resolution
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
@@ -168,7 +164,7 @@ flow('Seasonal Assistant', () => {
   commandSlice('Do Chat').server(() => {
     data([
       // sink().command('DoChat').toIntegration(AI).withStream('URN'),
-      source().state('Product').fromIntegration(ProductCatalogService),
+      source().state('Products').fromIntegration(ProductCatalogService),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {

@@ -139,15 +139,42 @@ export type State<
   EventMetaData extends DefaultRecord | undefined = undefined,
 > = Readonly<
   EventMetaData extends undefined
-    ? {
-        type: StateType;
-        data: StateData;
-      }
-    : {
-        type: StateType;
-        data: StateData;
-        metadata: EventMetaData;
-      }
+  ? {
+    type: StateType;
+    data: StateData;
+  }
+  : {
+    type: StateType;
+    data: StateData;
+    metadata: EventMetaData;
+  }
 > & {
   readonly kind?: 'State';
+};
+
+export type DefaultCommandMetadata = {
+  now: Date;
+};
+
+export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord, CommandMetaData extends DefaultRecord | undefined = undefined> = Readonly<CommandMetaData extends undefined ? {
+  type: CommandType;
+  data: Readonly<CommandData>;
+  metadata?: DefaultCommandMetadata | undefined;
+} : {
+  type: CommandType;
+  data: CommandData;
+  metadata: CommandMetaData;
+}> & {
+  readonly kind?: 'Command';
+};
+
+export type Event<EventType extends string = string, EventData extends DefaultRecord = DefaultRecord, EventMetaData extends DefaultRecord | undefined = undefined> = Readonly<EventMetaData extends undefined ? {
+  type: EventType;
+  data: EventData;
+} : {
+  type: EventType;
+  data: EventData;
+  metadata: EventMetaData;
+}> & {
+  readonly kind?: 'Event';
 };
