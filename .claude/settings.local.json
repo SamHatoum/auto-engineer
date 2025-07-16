@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(pnpm test:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(pnpm generate:server:*)",
+      "Bash(npx tsx:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(npm install:*)",
+      "Bash(node generate-schema.js)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": []
+  }
+}
