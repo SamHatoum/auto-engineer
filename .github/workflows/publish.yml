@@ -12,6 +12,10 @@ jobs:
     name: Release
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    # To use Turborepo Remote Caching, set the following environment variables for the job.
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     permissions:
       contents: write
       id-token: write
@@ -36,12 +40,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Setup Turbo Remote Cache
-        run: npx turbo link --yes
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
@@ -53,8 +51,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
       - name: Get Published Packages
         if: success()

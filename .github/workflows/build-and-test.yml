@@ -7,8 +7,14 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # To use Turborepo Remote Caching, set the following environment variables for the job.
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v2
         with:
           version: 8
@@ -18,23 +24,9 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-      - name: Setup Turbo Remote Cache
-        run: npx turbo link --yes
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       - name: Build
         run: pnpm turbo run build
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       - name: Test
         run: pnpm turbo run test
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       - name: Lint
         run: pnpm turbo run lint
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}

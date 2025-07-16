@@ -8,6 +8,10 @@ on:
 jobs:
   create-release-pr:
     runs-on: ubuntu-latest
+    # To use Turborepo Remote Caching, set the following environment variables for the job.
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     permissions:
       contents: write
       pull-requests: write
@@ -32,12 +36,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Setup Turbo Remote Cache
-        run: npx turbo link --yes
-        env:
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
       - name: Create Release Pull Request
         uses: changesets/action@v1
         with:
@@ -45,5 +43,3 @@ jobs:
           title: 'chore(global): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
