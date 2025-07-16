@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest';
 import { execa } from 'execa';
 import * as path from 'path';
-import { writeFile, mkdir, readdir, rm } from 'fs/promises';
+import { mkdir, readdir, rm } from 'fs/promises';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,7 +29,9 @@ describe('generateServer integration test', { timeout: 10000 }, () => {
     await rm(tmpDir, { recursive: true, force: true });
     await mkdir(tmpDir, { recursive: true });
 
-    await execa('pnpm', ['generate:server', specPath, tmpDir]);
+    await execa('pnpm', ['generate:server', specPath, tmpDir], {
+      cwd: path.resolve(__dirname, '../../'),
+    });
 
     const serverDir = path.join(tmpDir, 'server');
     const tsconfigPath = path.join(serverDir, 'tsconfig.json');

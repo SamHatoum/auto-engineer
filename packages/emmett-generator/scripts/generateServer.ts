@@ -1,6 +1,7 @@
+import 'reflect-metadata';
 import fs from 'fs-extra';
 import * as path from 'path';
-import { readFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 import { resolve, join } from 'path';
 import { existsSync } from 'fs';
 import { generateScaffoldFilePlans, writeScaffoldFilePlans } from '../src/codegen/scaffoldFromSchema';
@@ -8,6 +9,10 @@ import { ensureDirExists } from '../src/codegen/utils/path';
 import { SpecsSchemaType } from '@auto-engineer/flowlang';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { execa } from 'execa';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function main() {
   const [, , schemaPath, destination] = process.argv;
@@ -24,11 +29,14 @@ async function main() {
     console.error(`Schema file not found at ${absSchema}`);
     process.exit(1);
   }
-
   const content = await readFile(absSchema, 'utf8');
   const spec = JSON.parse(content) as SpecsSchemaType;
-
   const serverDir = join(absDest, 'server');
+  if (await fs.pathExists(serverDir)) {
+    console.log('🧹 Removing existing server directory...');
+    await fs.remove(serverDir);
+  }
+
   await ensureDirExists(serverDir);
 
   const filePlans = await generateScaffoldFilePlans(
@@ -37,14 +45,16 @@ async function main() {
     join(serverDir, 'src', 'domain', 'flows'),
   );
   await writeScaffoldFilePlans(filePlans);
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
   await copySharedAndRootFiles(join(__dirname, '../src/domain'), join(serverDir, 'src/domain'));
   await copySharedAndRootFiles(join(__dirname, '../src'), join(serverDir, 'src'));
   await fs.copy(join(__dirname, '../src/utils'), join(serverDir, 'src/utils'));
   await writeTsconfigAndPackage(serverDir);
 
+  await generateSchemaScript(serverDir, absDest);
+
   console.log(`✅ Server scaffold generated at: ${serverDir}`);
+
+  await installDependenciesAndGenerateSchema(serverDir, absDest);
 }
 
 main().catch((err) => {
@@ -71,8 +81,6 @@ async function copySharedAndRootFiles(from: string, to: string): Promise<void> {
 }
 
 async function writeTsconfigAndPackage(dest: string): Promise<void> {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
   const currentPackageJsonPath = path.join(__dirname, '..', 'package.json');
   const currentPackageJson = await fs.readJson(currentPackageJsonPath);
 
@@ -131,4 +139,70 @@ async function writeTsconfigAndPackage(dest: string): Promise<void> {
   };
 
   await fs.writeJson(path.join(dest, 'tsconfig.json'), tsconfig, { spaces: 2 });
+}
+
+async function generateSchemaScript(serverDir: string, workingDir: string): Promise<void> {
+  const contextDir = join(workingDir, 'context');
+  await ensureDirExists(contextDir);
+
+  const scriptsDir = join(serverDir, 'scripts');
+  await ensureDirExists(scriptsDir);
+
+  const schemaScriptContent = `import 'reflect-metadata';
+import { buildSchema } from 'type-graphql';
+import { printSchema } from 'graphql';
+import { writeFile } from 'fs/promises';
+import * as path from 'path';
+import { loadResolvers } from '../src/utils/loadResolvers.js';
+
+async function main() {
+  try {
+    const resolvers = await loadResolvers('src/domain/flows/**/*.resolver.{ts,js}');
+    const schema = await buildSchema({
+      resolvers: resolvers as any,
+      emitSchemaFile: false,
+    });
+    const printedSchema = printSchema(schema);
+    
+    const contextDir = path.resolve('../context');
+    const schemaPath = path.join(contextDir, 'schema.graphql');
+    await writeFile(schemaPath, printedSchema, 'utf-8');
+    
+    console.log(\`✅ GraphQL schema generated at: \${schemaPath}\`);
+  } catch (error) {
+    console.error(\`❌ GraphQL schema generation failed: \${error instanceof Error ? error.message : 'Unknown error'}\`);
+    process.exit(1);
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+`;
+
+  const schemaScriptPath = join(scriptsDir, 'generate-schema.ts');
+  await writeFile(schemaScriptPath, schemaScriptContent, 'utf-8');
+
+  console.log(`✅ Schema generation script created at: ${schemaScriptPath}`);
+}
+
+async function installDependenciesAndGenerateSchema(serverDir: string, workingDir: string): Promise<void> {
+  console.log('📦 Installing dependencies...');
+
+  try {
+    await execa('npm', ['install'], { cwd: serverDir });
+    console.log('✅ Dependencies installed successfully');
+
+    console.log('🔄 Generating GraphQL schema...');
+    await execa('npx', ['tsx', 'scripts/generate-schema.ts'], { cwd: serverDir });
+
+    const schemaPath = join(workingDir, 'context', 'schema.graphql');
+    console.log(`✅ GraphQL schema generated at: ${schemaPath}`);
+  } catch (error) {
+    console.warn(
+      `⚠️  Failed to install dependencies or generate schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
+    console.warn('You can manually run: cd server && npm install && npx tsx generate-schema.ts');
+  }
 }
