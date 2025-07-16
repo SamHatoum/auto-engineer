@@ -29,7 +29,11 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: '*',
+  }),
+);
 app.use(express.json());
 
 // Swagger UI

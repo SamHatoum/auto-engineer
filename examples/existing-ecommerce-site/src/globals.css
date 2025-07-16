@@ -1,0 +1,46 @@
+:root {
+    --radius: 0.5rem;
+
+    --background: #1a1a1a; /* Dark background */
+    --foreground: #fefefe;
+
+    --card: #ffda87; /* Light yellow cart */
+    --card-foreground: #1a1a1a;
+
+    --popover: #2a2a2a;
+    --popover-foreground: #ffffff;
+
+    --primary: #ff4f38; /* Bright red arrow */
+    --primary-foreground: #ffffff;
+
+    --secondary: #ffc964;
+    --secondary-foreground: #1a1a1a;
+
+    --muted: #2f2f2f;
+    --muted-foreground: #bbbbbb;
+
+    --accent: #ffd080;
+    --accent-foreground: #1a1a1a;
+
+    --destructive: #ff2e2e;
+    --destructive-foreground: #ffffff;
+
+    --border: #3a3a3a;
+    --input: #3a3a3a;
+    --ring: #ff4f38;
+
+    --chart-1: #ff4f38;
+    --chart-2: #ffda87;
+    --chart-3: #2f2f2f;
+    --chart-4: #ffc964;
+    --chart-5: #1a1a1a;
+
+    --sidebar: #1a1a1a;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #ff4f38;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #ffda87;
+    --sidebar-accent-foreground: #1a1a1a;
+    --sidebar-border: #333333;
+    --sidebar-ring: #ff4f38;
+}

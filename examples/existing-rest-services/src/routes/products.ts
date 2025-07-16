@@ -16,6 +16,7 @@ const router: ExpressRouter = Router();
  *         - category
  *         - price
  *         - tags
+ *         - imageUrl
  *       properties:
  *         productId:
  *           type: string
@@ -34,6 +35,9 @@ const router: ExpressRouter = Router();
  *           items:
  *             type: string
  *           description: Array of tags associated with the product
+ *         imageUrl:
+ *           type: string
+ *           description: URL of the product image
  */
 
 /**

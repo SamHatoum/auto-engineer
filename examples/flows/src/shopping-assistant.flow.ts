@@ -110,7 +110,11 @@ type ShoppingSession = State<
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
-  .state<{ Products: Products['data']; SuggestedItems: SuggestedItems['data']; ShoppingSession: ShoppingSession['data'] }>();
+  .state<{
+    Products: Products['data'];
+    SuggestedItems: SuggestedItems['data'];
+    ShoppingSession: ShoppingSession['data'];
+  }>();
 
 flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
@@ -170,35 +174,38 @@ flow('Seasonal Assistant', () => {
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
       given([
-        State.Products(
-          {
-            products: [
-              {
-                productId: 'prod-soccer-ball',
-                name: 'Super Soccer Ball',
-                category: 'Sports',
-                price: 10,
-                tags: ['soccer', 'sports'],
-              }, {
-                productId: 'prod-craft-kit',
-                name: 'Deluxe Craft Kit',
-                category: 'Arts & Crafts',
-                price: 25,
-                tags: ['crafts', 'art', 'creative'],
-              }, {
-                productId: 'prod-laptop-bag',
-                name: 'Tech Laptop Backpack',
-                category: 'School Supplies',
-                price: 45,
-                tags: ['computers', 'tech', 'school'],
-              }, {
-                productId: 'prod-mtg-starter',
-                name: 'Magic the Gathering Starter Set',
-                category: 'Games',
-                price: 30,
-                tags: ['magic', 'tcg', 'games'],
-              }]
-          }),
+        State.Products({
+          products: [
+            {
+              productId: 'prod-soccer-ball',
+              name: 'Super Soccer Ball',
+              category: 'Sports',
+              price: 10,
+              tags: ['soccer', 'sports'],
+            },
+            {
+              productId: 'prod-craft-kit',
+              name: 'Deluxe Craft Kit',
+              category: 'Arts & Crafts',
+              price: 25,
+              tags: ['crafts', 'art', 'creative'],
+            },
+            {
+              productId: 'prod-laptop-bag',
+              name: 'Tech Laptop Backpack',
+              category: 'School Supplies',
+              price: 45,
+              tags: ['computers', 'tech', 'school'],
+            },
+            {
+              productId: 'prod-mtg-starter',
+              name: 'Magic the Gathering Starter Set',
+              category: 'Games',
+              price: 30,
+              tags: ['magic', 'tcg', 'games'],
+            },
+          ],
+        }),
       ])
         .when(
           Commands.DoChat({
