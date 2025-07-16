@@ -6,15 +6,15 @@ import { writeGqlOperationsToFolder } from './scaffold-gql-operations';
 import { generateSchemaFile } from './write-graphql-schema';
 
 export async function main(appName: string, flows: string[]) {
-  // deleteDirectory(`../emmett-example/${appName}`);
+  // deleteDirectory(`../../../auto-engineer-output/${appName}`);
 
   const builder = new FrontendScaffoldBuilder();
-  await builder.cloneStarter(`../emmett-example/${appName}`);
-  await builder.build(`../emmett-example/${appName}`);
-  writeGqlOperationsToFolder(flows, `../emmett-example/${appName}/src`);
-  generateSchemaFile(`../emmett-example/${appName}`);
-  runCodegen(`../emmett-example/${appName}`);
+  await builder.cloneStarter(`../../../auto-engineer-output/${appName}`);
+  await builder.build(`../../../auto-engineer-output/${appName}`);
+  writeGqlOperationsToFolder(flows, `../../../auto-engineer-output/${appName}/src`);
+  generateSchemaFile(`../../../auto-engineer-output/${appName}`);
+  runCodegen(`../../../auto-engineer-output/${appName}`);
   return 'Frontend Scaffold is running!';
 }
 
-void main('example-booking-app', [guestBooksAListingFlow, hostCreatesAListingFlow]);
+void main('client', [guestBooksAListingFlow, hostCreatesAListingFlow]);
