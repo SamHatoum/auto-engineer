@@ -22,7 +22,7 @@ const scopes = [
   ...packages.map((pkg) => `packages/${pkg}`),
   ...apps.map((app) => `apps/${app}`),
   ...examples.map((example) => `examples/${example}`),
-  ...integrations.map((integration) => `integrations/${integration}`)
+  ...integrations.map((integration) => `integrations/${integration}`),
 ];
 
 const config: UserConfig = {

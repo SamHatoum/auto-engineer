@@ -12,12 +12,13 @@ import {
   source,
   data,
   sink,
+  type Command,
+  type Event,
+  type State,
 } from '@auto-engineer/flowlang';
-import type { Event, Command } from '@event-driven-io/emmett';
-import type { State } from '@auto-engineer/flowlang';
-import { ProductCatalogService, type ProductCatalog } from '@auto-engineer/product-catalogue-integration';
+import { ProductCatalogService, type Products } from '@examples/product-catalogue-integration';
+import { AI } from '@auto-engineer/ai-integration';
 
-// Domain types
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
   {
@@ -56,7 +57,6 @@ type ItemsAddedToCart = Event<
   }
 >;
 
-// Command types
 type EnterShoppingCriteria = Command<
   'EnterShoppingCriteria',
   {
@@ -89,22 +89,28 @@ type AddItemsToCart = Command<
   }
 >;
 
-type SuggestedItems = {
-  sessionId: string;
-  items: { productId: string; name: string; quantity: number; reason: string }[];
-};
+type SuggestedItems = State<
+  'SuggestedItems',
+  {
+    sessionId: string;
+    items: { productId: string; name: string; quantity: number; reason: string }[];
+  }
+>;
 
-type ShoppingSession = {
-  sessionId: string;
-  shopperId: string;
-  criteria: string;
-  status: 'active' | 'completed';
-};
+type ShoppingSession = State<
+  'ShoppingSession',
+  {
+    sessionId: string;
+    shopperId: string;
+    criteria: string;
+    status: 'active' | 'completed';
+  }
+>;
 
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
-  .state<{ ProductCatalog: ProductCatalog; SuggestedItems: SuggestedItems; ShoppingSession: ShoppingSession }>();
+  .state<{ Products: Products['data']; SuggestedItems: SuggestedItems['data']; ShoppingSession: ShoppingSession['data'] }>();
 
 flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
@@ -158,42 +164,41 @@ flow('Seasonal Assistant', () => {
 
   commandSlice('Do Chat').server(() => {
     data([
-      // sink().command('DoChat').toIntegration(AI),
+      sink().command('DoChat').toIntegration(AI),
       source().state('Products').fromIntegration(ProductCatalogService),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
       given([
-        State.ProductCatalog([
+        State.Products(
           {
-            productId: 'prod-soccer-ball',
-            name: 'Super Soccer Ball',
-            category: 'Sports',
-            price: 10,
-            tags: ['soccer', 'sports'],
-          },
-          {
-            productId: 'prod-craft-kit',
-            name: 'Deluxe Craft Kit',
-            category: 'Arts & Crafts',
-            price: 25,
-            tags: ['crafts', 'art', 'creative'],
-          },
-          {
-            productId: 'prod-laptop-bag',
-            name: 'Tech Laptop Backpack',
-            category: 'School Supplies',
-            price: 45,
-            tags: ['computers', 'tech', 'school'],
-          },
-          {
-            productId: 'prod-mtg-starter',
-            name: 'Magic the Gathering Starter Set',
-            category: 'Games',
-            price: 30,
-            tags: ['magic', 'tcg', 'games'],
-          },
-        ]),
+            products: [
+              {
+                productId: 'prod-soccer-ball',
+                name: 'Super Soccer Ball',
+                category: 'Sports',
+                price: 10,
+                tags: ['soccer', 'sports'],
+              }, {
+                productId: 'prod-craft-kit',
+                name: 'Deluxe Craft Kit',
+                category: 'Arts & Crafts',
+                price: 25,
+                tags: ['crafts', 'art', 'creative'],
+              }, {
+                productId: 'prod-laptop-bag',
+                name: 'Tech Laptop Backpack',
+                category: 'School Supplies',
+                price: 45,
+                tags: ['computers', 'tech', 'school'],
+              }, {
+                productId: 'prod-mtg-starter',
+                name: 'Magic the Gathering Starter Set',
+                category: 'Games',
+                price: 30,
+                tags: ['magic', 'tcg', 'games'],
+              }]
+          }),
       ])
         .when(
           Commands.DoChat({

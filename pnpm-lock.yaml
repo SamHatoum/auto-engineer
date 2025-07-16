@@ -154,15 +154,15 @@ importers:
       '@auto-engineer/mailchimp-integration':
         specifier: workspace:*
         version: link:../../integrations/mailchimp-integration
-      '@auto-engineer/product-catalogue-integration':
-        specifier: workspace:*
-        version: link:../product-catalogue-integration
       '@auto-engineer/twilio-integration':
         specifier: workspace:*
         version: link:../../integrations/twilio-integration
       '@event-driven-io/emmett':
         specifier: ^0.38.2
         version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.5.4))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+      '@examples/product-catalogue-integration':
+        specifier: workspace:*
+        version: link:../product-catalogue-integration
       apollo-server:
         specifier: ^3.13.0
         version: 3.13.0(graphql@16.11.0)
@@ -271,6 +271,30 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.8)
 
+  examples/flows:
+    dependencies:
+      '@auto-engineer/ai-integration':
+        specifier: workspace:*
+        version: link:../../integrations/ai-integration
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+      '@auto-engineer/mailchimp-integration':
+        specifier: workspace:*
+        version: link:../../integrations/mailchimp-integration
+      '@auto-engineer/twilio-integration':
+        specifier: workspace:*
+        version: link:../../integrations/twilio-integration
+      '@event-driven-io/emmett':
+        specifier: ^0.38.2
+        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.5.4))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+      '@examples/emmett-graphql-backend':
+        specifier: workspace:*
+        version: link:../emmett-graphql-backend
+      '@examples/product-catalogue-integration':
+        specifier: workspace:*
+        version: link:../product-catalogue-integration
+
   examples/product-catalogue-integration:
     dependencies:
       '@auto-engineer/flowlang':
@@ -285,6 +309,24 @@ importers:
         version: 5.5.4
 
   integrations/ai-integration:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+
+  integrations/mailchimp-integration:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+
+  integrations/twilio-integration:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+
+  packages/ai-gateway:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^1.2.12
@@ -304,18 +346,6 @@ importers:
       zod:
         specifier: ^3.25.67
         version: 3.25.76
-
-  integrations/mailchimp-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-
-  integrations/twilio-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
 
   packages/config:
     dependencies:
@@ -390,9 +420,9 @@ importers:
 
   packages/flow-agent:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       '@auto-engineer/flowlang':
         specifier: workspace:*
         version: link:../flowlang
@@ -442,9 +472,9 @@ importers:
 
   packages/frontend-implementation:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       '@auto-engineer/frontend-checks':
         specifier: workspace:*
         version: link:../frontend-checks
@@ -463,9 +493,12 @@ importers:
 
   packages/information-architect:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
+      '@auto-engineer/config':
+        specifier: workspace:*
+        version: link:../config
 
   packages/message-bus:
     devDependencies:
@@ -481,9 +514,9 @@ importers:
 
   packages/react-graphql-generator:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       graphql:
         specifier: ^16.11.0
         version: 16.11.0

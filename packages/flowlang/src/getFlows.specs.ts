@@ -6,15 +6,18 @@ describe('getFlows', () => {
     const flows = await getFlows();
     const schemas = flows.toSchema();
 
-    expect(Array.isArray(schemas)).toBe(true);
-    expect(schemas.length).toBeGreaterThanOrEqual(2);
+    // Convert the Record to an array of values
+    const schemasArray = Object.values(schemas) as Array<{ name: string; slices: unknown[] }>;
+    
+    expect(Array.isArray(schemasArray)).toBe(true);
+    expect(schemasArray.length).toBeGreaterThanOrEqual(2);
 
-    const names = schemas.map((f: { name: string }) => f.name);
+    const names = schemasArray.map((f) => f.name);
     expect(names).toContain('Add item');
     expect(names).toContain('Place order');
 
-    const addItem = schemas.find((f: { name: string }) => f.name === 'Add item');
-    const placeOrder = schemas.find((f: { name: string }) => f.name === 'Place order');
+    const addItem = schemasArray.find((f) => f.name === 'Add item');
+    const placeOrder = schemasArray.find((f) => f.name === 'Place order');
 
     expect(addItem).toMatchObject({
       name: 'Add item',

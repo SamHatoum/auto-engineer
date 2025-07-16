@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/product-catalogue-integration",
+  "name": "@examples/product-catalogue-integration",
   "version": "0.0.1",
   "description": "Product catalog integration example",
   "main": "dist/index.js",

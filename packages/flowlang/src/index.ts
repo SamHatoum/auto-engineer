@@ -12,6 +12,8 @@ export type {
   Destination,
   Origin,
   State,
+  Command,
+  Event,
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
@@ -40,6 +42,9 @@ export { flow } from './flow';
 export { client, server, specs, should, request, data } from './flow';
 export type { SliceTypeValueInterface } from './flow';
 export { SliceType } from './flow';
+
+// Flow conversion utilities
+export { getFlows, getFlow, convertFlowToJson } from './getFlows';
 
 // Event and command builders
 export {

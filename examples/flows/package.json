@@ -1,0 +1,24 @@
+{
+  "name": "@examples/flows",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@auto-engineer/flowlang": "workspace:*",
+    "@auto-engineer/mailchimp-integration": "workspace:*",
+    "@auto-engineer/twilio-integration": "workspace:*",
+    "@auto-engineer/ai-integration": "workspace:*",
+    "@examples/product-catalogue-integration": "workspace:*",
+    "@examples/emmett-graphql-backend": "workspace:*",
+    "@event-driven-io/emmett": "^0.38.2"
+  },
+  "devDependencies": {}
+}

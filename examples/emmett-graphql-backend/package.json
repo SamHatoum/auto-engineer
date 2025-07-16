@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/emmett-graphql-backend",
+  "name": "@examples/emmett-graphql-backend",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "@auto-engineer/flowlang": "workspace:*",
     "@auto-engineer/mailchimp-integration": "workspace:*",
     "@auto-engineer/twilio-integration": "workspace:*",
-    "@auto-engineer/product-catalogue-integration": "workspace:*",
+    "@examples/product-catalogue-integration": "workspace:*",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",
     "express": "^4.21.2",

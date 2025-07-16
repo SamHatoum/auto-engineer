@@ -8,6 +8,10 @@ on:
 jobs:
   create-release-pr:
     runs-on: ubuntu-latest
+    # To use Turborepo Remote Caching, set the following environment variables for the job.
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     permissions:
       contents: write
       pull-requests: write

@@ -1,4 +1,5 @@
-import { streamStructuredDataWithAI, AIProvider } from '@auto-engineer/ai-integration';
+import { streamStructuredDataWithAI } from '@auto-engineer/ai-gateway';
+import { AIProvider } from '@auto-engineer/ai-gateway';
 import {
   type CommandHandler,
   type BaseCommand,
@@ -144,7 +145,7 @@ async function generateSystemData(
         break;
 
       case 'specs':
-        systemData = (await streamStructuredDataWithAI(enhancedPrompt, AIProvider.OpenAI, {
+        systemData = (await streamStructuredDataWithAI(enhancedPrompt, provider, {
           schema: SpecsSystemSchema,
           schemaName: 'SpecsSystemGeneration',
           schemaDescription:

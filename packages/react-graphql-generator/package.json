@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/frontend-scaffold",
+  "name": "@auto-engineer/react-graphql-generator",
   "version": "0.1.0",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-integration": "workspace:*",
+    "@auto-engineer/ai-gateway": "workspace:*",
     "graphql": "^16.11.0",
     "openai": "^4.104.0"
   }

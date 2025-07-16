@@ -73,11 +73,17 @@ export const createStateBuilder = <T>() => {
         __messageCategory: 'state' as const,
       });
     },
-  }) as {
-    [K in keyof T]: T[K] extends new (...args: unknown[]) => unknown
-      ? (data: Record<string, unknown>) => { type: string; data: Record<string, unknown>; __messageCategory: 'state' }
-      : (data: T[K]) => { type: string; data: T[K]; __messageCategory: 'state' };
-  };
+  }) as T extends { type: string; data: Record<string, unknown> }
+    ? {
+        [K in T['type']]: (
+          data: Extract<T, { type: K }>['data'],
+        ) => Extract<T, { type: K }> & { __messageCategory: 'state' };
+      }
+    : {
+        [K in keyof T]: T[K] extends { data: infer StateData }
+          ? (data: StateData) => { type: string; data: StateData; __messageCategory: 'state' }
+          : (data: T[K]) => { type: string; data: T[K]; __messageCategory: 'state' };
+      };
 };
 
 // Type for sink and source functions

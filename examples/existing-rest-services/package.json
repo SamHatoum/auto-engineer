@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/existing-services-example",
+  "name": "@examples/existing-services-example",
   "version": "0.0.1",
   "description": "Example of integrating with existing services",
   "main": "dist/index.js",

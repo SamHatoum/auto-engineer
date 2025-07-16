@@ -1,7 +1,7 @@
 import { Products } from './product.state';
 
 // Re-export types for external use
-export type { ProductCatalog, Product } from './product.state';
+export type { Product } from './product.state';
 
 // Define Integration interface locally to avoid import issues
 interface Integration<T extends string = string> {

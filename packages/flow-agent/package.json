@@ -15,7 +15,7 @@
     "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
-    "@auto-engineer/ai-integration": "workspace:*",
+    "@auto-engineer/ai-gateway": "workspace:*",
     "@auto-engineer/flowlang": "workspace:*",
     "@auto-engineer/message-bus": "workspace:*",
     "vitest": "^3.2.4",
