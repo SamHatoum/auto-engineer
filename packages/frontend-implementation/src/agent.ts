@@ -1,4 +1,4 @@
-import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-integration';
+import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { getTsErrors, getBuildErrors } from '@auto-engineer/frontend-checks';

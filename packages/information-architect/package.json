@@ -17,7 +17,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-integration": "workspace:*",
+    "@auto-engineer/ai-gateway": "workspace:*",
     "@auto-engineer/config": "workspace:*"
   }
 }

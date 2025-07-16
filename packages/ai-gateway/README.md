@@ -20,7 +20,7 @@ import {
   validateConfig,
   getAvailableProviders,
   type AIProvider,
-} from '@auto-engineer/ai-integration';
+} from '@auto-engineer/ai-gateway';
 
 // Load and validate configuration
 const config = loadConfig();

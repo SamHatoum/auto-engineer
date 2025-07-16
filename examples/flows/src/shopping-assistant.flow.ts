@@ -163,7 +163,7 @@ flow('Seasonal Assistant', () => {
 
   commandSlice('Do Chat').server(() => {
     data([
-      // sink().command('DoChat').toIntegration(AI).withStream('URN'),
+      // sink().command('DoChat').toIntegration(AI),
       source().state('Products').fromIntegration(ProductCatalogService),
     ]);
 

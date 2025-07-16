@@ -1,4 +1,4 @@
-import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-integration';
+import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import { type UXSchema, type AIAgentOutput } from './types';
 import * as dotenv from 'dotenv';
 

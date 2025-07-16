@@ -305,7 +305,19 @@ importers:
         specifier: ^5.3.3
         version: 5.5.4
 
-  integrations/ai-integration:
+  integrations/mailchimp-integration:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+
+  integrations/twilio-integration:
+    dependencies:
+      '@auto-engineer/flowlang':
+        specifier: workspace:*
+        version: link:../../packages/flowlang
+
+  packages/ai-gateway:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^1.2.12
@@ -325,18 +337,6 @@ importers:
       zod:
         specifier: ^3.25.67
         version: 3.25.76
-
-  integrations/mailchimp-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-
-  integrations/twilio-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
 
   packages/config:
     dependencies:
@@ -411,9 +411,9 @@ importers:
 
   packages/flow-agent:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       '@auto-engineer/flowlang':
         specifier: workspace:*
         version: link:../flowlang
@@ -463,9 +463,9 @@ importers:
 
   packages/frontend-implementation:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       '@auto-engineer/frontend-checks':
         specifier: workspace:*
         version: link:../frontend-checks
@@ -484,9 +484,9 @@ importers:
 
   packages/information-architect:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       '@auto-engineer/config':
         specifier: workspace:*
         version: link:../config
@@ -505,9 +505,9 @@ importers:
 
   packages/react-graphql-generator:
     dependencies:
-      '@auto-engineer/ai-integration':
+      '@auto-engineer/ai-gateway':
         specifier: workspace:*
-        version: link:../../integrations/ai-integration
+        version: link:../ai-gateway
       graphql:
         specifier: ^16.11.0
         version: 16.11.0
