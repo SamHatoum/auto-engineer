@@ -6,9 +6,14 @@ describe('getFlows', () => {
     const flows = await getFlows();
     const schemas = flows.toSchema();
 
-    // Convert the Record to an array of values
-    const schemasArray = Object.values(schemas) as Array<{ name: string; slices: unknown[] }>;
-    
+    // Verify the schema structure matches SpecsSchema
+    expect(schemas).toHaveProperty('variant', 'specs');
+    expect(schemas).toHaveProperty('flows');
+    expect(schemas).toHaveProperty('messages');
+    expect(schemas).toHaveProperty('integrations');
+
+    const schemasArray = (schemas as any).flows as Array<{ name: string; slices: unknown[] }>;
+
     expect(Array.isArray(schemasArray)).toBe(true);
     expect(schemasArray.length).toBeGreaterThanOrEqual(2);
 
@@ -25,33 +30,32 @@ describe('getFlows', () => {
         {
           type: 'command',
           name: 'Create item',
+          stream: 'item-${id}',
           client: {
+            description: '',
             specs: [
-              {
-                description: 'A form that allows users to add items',
-                should: ['have fields for id and description'],
-              },
+              'A form that allows users to add items'
             ],
           },
           server: {
-            specs: [
+            description: '',
+            gwt: [
               {
-                description: 'User can add an item',
                 when: {
-                  type: 'CreateItem',
-                  data: {
+                  commandRef: 'CreateItem',
+                  exampleData: {
                     itemId: 'item_123',
                     description: 'A new item',
-                  },
+                  }
                 },
                 then: [
                   {
-                    type: 'ItemCreated',
-                    data: {
+                    eventRef: 'ItemCreated',
+                    exampleData: {
                       id: 'item_123',
                       description: 'A new item',
                       addedAt: '2024-01-15T10:00:00.000Z',
-                    },
+                    }
                   },
                 ],
               },
@@ -67,34 +71,33 @@ describe('getFlows', () => {
         {
           type: 'command',
           name: 'Submit order',
+          stream: 'order-${orderId}',
           client: {
+            description: '',
             specs: [
-              {
-                description: 'Order submission form',
-                should: ['allow product selection', 'allow quantity input'],
-              },
+              'Order submission form'
             ],
           },
           server: {
-            specs: [
+            description: '',
+            gwt: [
               {
-                description: 'User submits a new order',
                 when: {
-                  type: 'PlaceOrder',
-                  data: {
+                  commandRef: 'PlaceOrder',
+                  exampleData: {
                     productId: 'product_789',
                     quantity: 3,
-                  },
+                  }
                 },
                 then: [
                   {
-                    type: 'OrderPlaced',
-                    data: {
+                    eventRef: 'OrderPlaced',
+                    exampleData: {
                       orderId: 'order_001',
                       productId: 'product_789',
                       quantity: 3,
                       placedAt: '2024-01-20T10:00:00.000Z',
-                    },
+                    }
                   },
                 ],
               },

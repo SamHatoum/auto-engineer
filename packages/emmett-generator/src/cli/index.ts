@@ -45,6 +45,8 @@ async function main() {
         join(serverDir, 'src', 'domain', 'flows'),
     );
     await writeScaffoldFilePlans(filePlans);
+
+    await copyRootFilesFromSrc(path.join(process.cwd(), 'src'), path.join(serverDir, 'src'));
     await copySharedAndRootFiles(path.join(__dirname, '../domain'), path.join(serverDir, 'src/domain'));
     //await copySharedAndRootFiles(path.join(process.cwd(), 'shared'), path.join(serverDir, 'src'));
     await fs.copy(path.join(process.cwd(), 'src/utils'), path.join(serverDir, 'src/utils'));
@@ -63,6 +65,23 @@ main().catch((err) => {
     console.error(err);
     process.exit(1);
 });
+
+async function copyRootFilesFromSrc(from: string, to: string): Promise<void> {
+    if (!await fs.pathExists(from)) {
+        return;
+    }
+    
+    const rootFiles = await fs.readdir(from);
+    for (const file of rootFiles) {
+        const srcFile = path.join(from, file);
+        const stat = await fs.stat(srcFile);
+        if (stat.isFile() && file.endsWith('.ts')) {
+            const destFile = path.join(to, file);
+            await fs.copy(srcFile, destFile);
+            console.log(`✅ Copied ${file} from ${from} to ${to}`);
+        }
+    }
+}
 
 async function copySharedAndRootFiles(from: string, to: string): Promise<void> {
     const sharedFrom = path.join(from, 'shared');
@@ -133,6 +152,7 @@ async function writePackage(dest: string): Promise<void> {
             'fast-glob',
             'reflect-metadata',
             'zod',
+            'apollo-server'
         ]),
         devDependencies: resolveDeps([
             'typescript',

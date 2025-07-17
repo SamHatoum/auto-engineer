@@ -19,7 +19,12 @@
       "Bash(pnpm implement:*)",
       "Bash(node:*)",
       "Bash(npm test)",
-      "WebFetch(domain:turborepo.com)"
+      "WebFetch(domain:turborepo.com)",
+      "Bash(grep:*)",
+      "Bash(tsx scripts/convert-flow-exec:*)",
+      "Bash(tsx:*)",
+      "Bash(npm test:*)",
+      "Bash(pnpm build:*)"
     ],
     "deny": []
   }
