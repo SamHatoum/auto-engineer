@@ -26,15 +26,41 @@ type TestAndTypecheckResult = {
 export async function runSlice(sliceDir: string): Promise<void> {
     console.log(`✏️ Implementing slice: ${sliceDir}`);
 
-    const contextFiles = await loadContextFiles(sliceDir);
+    let contextFiles = await loadContextFiles(sliceDir);
     const filesToImplement = findFilesToImplement(contextFiles);
 
     for (const [targetFile] of filesToImplement) {
         await implementFileFromAI(sliceDir, targetFile, contextFiles);
     }
 
-    const result = await runTestsAndTypecheck(sliceDir);
+    let result = await runTestsAndTypecheck(sliceDir);
     reportTestAndTypecheckResults(sliceDir, result);
+
+    const failedFiles = new Set([...result.failedTestFiles, ...result.failedTypecheckFiles]);
+
+    for (let attempt = 1; attempt <= 3 && failedFiles.size > 0; attempt++) {
+        console.log(`🔁 Retry attempt ${attempt} for ${failedFiles.size} files...`);
+
+        contextFiles = await loadContextFiles(sliceDir);
+
+        for (const filePath of failedFiles) {
+            const fileName = path.basename(filePath);
+            const prompt = buildRetryPrompt(fileName, contextFiles, result.testErrors, result.typecheckErrors);
+
+            const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
+            const cleanedCode = extractCodeBlock(aiOutput);
+
+            await writeFile(path.join(sliceDir, fileName), cleanedCode, 'utf-8');
+            console.log(`♻️ Retried and updated ${fileName}`);
+        }
+
+        result = await runTestsAndTypecheck(sliceDir);
+        reportTestAndTypecheckResults(sliceDir, result);
+
+        failedFiles.clear();
+        result.failedTestFiles.forEach(f => failedFiles.add(f));
+        result.failedTypecheckFiles.forEach(f => failedFiles.add(f));
+    }
 }
 
 async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
@@ -76,16 +102,45 @@ Return only the whole updated file of ${targetFile}. Do not remove existing impo
 `.trim();
 }
 
+function buildRetryPrompt(
+    targetFile: string,
+    context: Record<string, string>,
+    testErrors: string,
+    typeErrors: string
+): string {
+    return `
+${SYSTEM_PROMPT}
+
+---
+The previous implementation of ${targetFile} caused test or type-check failures.
+
+📄 File to fix: ${targetFile}
+
+${context[targetFile]}
+
+🧠 Other files in the same slice:
+${Object.entries(context)
+        .filter(([name]) => name !== targetFile)
+        .map(([name, content]) => `// File: ${name}\n${content}`)
+        .join('\n\n')}
+
+🧪 Test errors:
+${testErrors || 'None'}
+
+📐 Typecheck errors:
+${typeErrors || 'None'}
+
+---
+Return only the corrected full contents of ${targetFile}, no commentary, no markdown.
+`.trim();
+}
+
 async function implementFileFromAI(sliceDir: string, targetFile: string, contextFiles: Record<string, string>) {
     const filePath = path.join(sliceDir, targetFile);
     const prompt = buildInitialPrompt(targetFile, contextFiles);
-
     console.log(`🔮 Analysing and Implementing ${targetFile}`);
-    //console.log('Prompt:', prompt);
-
     const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
     //console.log('AI output:', aiOutput);
-
     const cleanedCode = extractCodeBlock(aiOutput);
     await writeFile(filePath, cleanedCode, 'utf-8');
 
@@ -128,7 +183,6 @@ async function runTests(sliceDir: string, rootDir: string) {
         console.log('Test output:', output);
 
         if (result.exitCode !== 0 || output.includes('FAIL') || output.includes('failed')) {
-            // Filter test output to only show errors from slice files
             const filteredOutput = filterTestErrors(output, sliceDir);
             const failPatterns = [
                 /FAIL\s+(\S+\.specs?\.ts)/g,
@@ -168,14 +222,10 @@ async function runTypecheck(sliceDir: string, rootDir: string) {
             stdio: 'pipe',
             reject: false,
         });
-
         const output = (result.stdout ?? '') + (result.stderr ?? '');
-        console.log('TypeScript output:', output);
-
         if (result.exitCode !== 0 || output.includes('error')) {
             return await processTypecheckOutput(output, sliceDir, rootDir);
         }
-
         return { success: true, typecheckErrors: '', failedTypecheckFiles: [] };
     } catch (err: unknown) {
         const execaErr = err as { stdout?: string; stderr?: string };
@@ -224,16 +274,12 @@ function extractFailedFiles(output: string, patterns: RegExp[], rootDir: string,
 }
 
 async function processTypecheckOutput(output: string, sliceDir: string, rootDir: string) {
-    // Extract the relative path from sliceDir to filter correctly
     const relativePath = path.relative(rootDir, sliceDir);
-    
-    // Filter lines that contain TypeScript errors from the slice directory
     const filtered = output
         .split('\n')
         .filter(line => {
             const hasError = line.includes('error TS') || line.includes('): error');
             const notNodeModules = !line.includes('node_modules');
-            // Check if the line contains a file path that's within our slice
             const hasSlicePath = line.includes(relativePath) || line.includes(sliceDir);
             return hasError && notNodeModules && hasSlicePath;
         })
