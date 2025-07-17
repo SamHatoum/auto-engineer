@@ -19,9 +19,9 @@ export async function main(appName: string) {
   const builder = new FrontendScaffoldBuilder();
   await builder.cloneStarter(`../../examples/design-system/components/ui`);
   await builder.build(`../../../auto-engineer-output/${appName}`);
-  writeGqlOperationsToFolder(flows, `../../../auto-engineer-output/${appName}/src`);
-  generateSchemaFile(`../../../auto-engineer-output/${appName}`);
-  runCodegen(`../../../auto-engineer-output/${appName}`);
+  // writeGqlOperationsToFolder(flows, `../../../auto-engineer-output/${appName}/src`);
+  // generateSchemaFile(`../../../auto-engineer-output/${appName}`);
+  // runCodegen(`../../../auto-engineer-output/${appName}`);
   return 'Frontend Scaffold is running!';
 }
 

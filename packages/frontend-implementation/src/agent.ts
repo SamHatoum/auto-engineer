@@ -342,12 +342,32 @@ interface Fix {
 
 async function fixTsErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
   const tsErrors = await getTsErrors(projectDir);
+  console.log('Found ts errors', tsErrors);
   if (tsErrors.length === 0) return false;
 
   const errorFeedback = tsErrors.join('\n');
-  const fixupPrompt = `${makeBasePrompt(
-    ctx,
-  )}\nAfter your previous changes, the application produced the following TypeScript errors:\n\n${errorFeedback}\n\nYou must fix ALL errors in the list above. If there are multiple errors in a file, fix them all in one go.\nOutput a JSON array of planned changes, each with:\n  - action: "update"\n  - file: relative file path\n  - description: "Fix TypeScript errors"\n  - content: the full new code for the file\n\nRespond with only a JSON array, no explanation, no markdown, no code block.`;
+  const fixupPrompt = `${makeBasePrompt(ctx)}\n
+After your previous changes, the application produced the following TypeScript errors:\n\n${errorFeedback}\n
+You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
+
+Before generating code, analyze and validate your solution against every error. Use existing type definitions, component props, GraphQL typings, and shared interfaces from the project. Do not invent new types or structures unless absolutely necessary.
+
+Strict rules:
+- Never use \`any\`, \`as any\`, or unsafe type assertions
+- Do not silence errors — resolve them fully and correctly
+- Fix all errors in each file in one go
+- Reuse existing logic or types instead of re-creating similar ones
+- Do not modify the GraphQL files
+- Do not submit partial updates; provide the full updated content of the file
+
+Output must be a **JSON array** only. Each item must include:
+- \`action\`: "update"
+- \`file\`: relative path to the updated file
+- \`description\`: "Fix TypeScript errors"
+- \`content\`: full new content of the file, as a string
+
+Do not include explanations, markdown, or code blocks.
+`;
   const fixupPlanText = await callAI(fixupPrompt);
   let fixupPlan: Fix[] = [];
   try {
@@ -356,6 +376,7 @@ async function fixTsErrors(ctx: ProjectContext, projectDir: string): Promise<boo
     console.error('Could not parse TS fixup plan from LLM:', e instanceof Error ? e.message : String(e));
     // console.debug('Could not parse TS fixup plan from LLM:', fixupPlanText, e);
   }
+  console.log('Fixup plan', fixupPlan);
   for (const fix of fixupPlan) {
     if (fix.action === 'update' && fix.file && fix.content) {
       const outPath = path.join(projectDir, fix.file);

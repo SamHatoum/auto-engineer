@@ -56,7 +56,7 @@ export function getTsErrors(projectPath: string): Promise<string[]> {
   return new Promise((resolve) => {
     // Using `pnpm exec tsc` is more robust as it uses the workspace's typescript compiler
     // and correctly resolves dependencies within the monorepo.
-    const command = `tsc -b`;
+    const command = `tsc --noEmit`;
 
     exec(command, { cwd: projectPath }, (error, stdout, _stderr) => {
       if (error) {
