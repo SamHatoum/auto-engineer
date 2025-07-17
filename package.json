@@ -25,8 +25,8 @@
     "design-system-importer": "pnpm --filter @auto-engineer/design-system-importer start ../../examples/design-system ../../../auto-engineer-output/.context",
     "information-architect": "pnpm --filter @auto-engineer/information-architect generate-ia-schema ../../../auto-engineer-output/.context ../../examples/flows/src/shopping-assistant.flow.ts",
     "react-generator": "pnpm --filter @auto-engineer/react-graphql-generator start ../../examples/flows/src/shopping-assistant.flow.ts && cd ../auto-engineer-output/client && yarn",
-    "frontend-implementation": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../auto-engineer-output/client",
-    "fe": "pnpm information-architect && pnpm react-generator && pnpm frontend-implementation"
+    "frontend-implementation": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../auto-engineer-output/client ../../../auto-engineer-output/.context/auto-ia-scheme.json",
+    "fe": "pnpm design-system-importer && pnpm information-architect && pnpm react-generator && pnpm frontend-implementation"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

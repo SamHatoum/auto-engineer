@@ -17,7 +17,7 @@ export async function main(appName: string) {
   const flows: string[] = await Promise.all(flowFiles.map((flow) => readFile(flow, 'utf-8')));
 
   const builder = new FrontendScaffoldBuilder();
-  await builder.cloneStarter(`../../../auto-engineer-output/${appName}`);
+  await builder.cloneStarter(`../../examples/design-system/components/ui`);
   await builder.build(`../../../auto-engineer-output/${appName}`);
   writeGqlOperationsToFolder(flows, `../../../auto-engineer-output/${appName}/src`);
   generateSchemaFile(`../../../auto-engineer-output/${appName}`);

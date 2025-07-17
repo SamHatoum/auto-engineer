@@ -5,17 +5,15 @@ export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
 
   async cloneStarter(customDesignSystemDir?: string): Promise<this> {
-    console.log('Cloning starter project...');
     const starterDir = path.resolve(__dirname, '../react-graphql-starter');
     await this.collectFiles(starterDir, '');
 
     if (customDesignSystemDir != null && customDesignSystemDir !== '') {
-      const atomsDir = path.join(customDesignSystemDir, 'design-system');
       try {
-        const stat = await fs.stat(atomsDir);
+        const stat = await fs.stat(customDesignSystemDir);
         if (stat.isDirectory()) {
           const atomsTarget = 'src/components/atoms';
-          const files = (await fs.readdir(atomsDir)).filter((f) => f.endsWith('.tsx'));
+          const files = (await fs.readdir(customDesignSystemDir)).filter((f) => f.endsWith('.tsx'));
           if (files.length > 0) {
             // Remove all starter atoms from starterFiles
             for (const key of Array.from(this.starterFiles.keys())) {
@@ -25,13 +23,13 @@ export class FrontendScaffoldBuilder {
             }
             // Add custom atoms
             for (const file of files) {
-              const content = await fs.readFile(path.join(atomsDir, file));
+              const content = await fs.readFile(path.join(customDesignSystemDir, file));
               this.starterFiles.set(path.join(atomsTarget, file), content);
             }
           }
         }
-      } catch {
-        // If custom design-system doesn't exist, do nothing
+      } catch (err) {
+        console.error('Error importing custom design system:', err);
       }
     }
     return this;

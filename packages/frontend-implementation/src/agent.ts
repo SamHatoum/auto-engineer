@@ -94,8 +94,8 @@ interface ProjectContext {
   graphqlOperations: Record<string, string>;
 }
 
-async function getProjectContext(projectDir: string): Promise<ProjectContext> {
-  const schemePath = path.join(projectDir, 'auto-ia-scheme.json');
+async function getProjectContext(projectDir: string, iaSchemeDir: string): Promise<ProjectContext> {
+  const schemePath = iaSchemeDir;
   let scheme: unknown = undefined;
   try {
     scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as unknown;
@@ -323,9 +323,8 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
-      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
@@ -426,8 +425,8 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
 //   }
 // }
 
-export async function runAIAgent(projectDir: string) {
-  const ctx = await getProjectContext(projectDir);
+export async function runAIAgent(projectDir: string, iaSchemeDir: string) {
+  const ctx = await getProjectContext(projectDir, iaSchemeDir);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);
