@@ -12,9 +12,9 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Legacy Product Service API',
+      title: 'Product Catalog Service API',
       version: '1.0.0',
-      description: 'A mock product catalog service with interactive documentation',
+      description: 'A product catalog service with interactive documentation',
     },
     servers: [
       {
@@ -23,7 +23,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./src/routes/products.ts'], // Only include product routes
+  apis: ['./src/routes/products.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);

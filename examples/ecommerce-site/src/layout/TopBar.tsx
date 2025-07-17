@@ -3,8 +3,8 @@ import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
-} from '@examples/existing-design-system/components/ui/navigation-menu';
-import { Separator } from '@examples/existing-design-system/components/ui/separator';
+} from '../../../design-system/components/ui/navigation-menu';
+import { Separator } from '../../../design-system/components/ui/separator';
 
 export function TopBar() {
   return (

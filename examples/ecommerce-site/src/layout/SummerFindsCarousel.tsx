@@ -1,13 +1,13 @@
-import { CardContent } from '@examples/existing-design-system/components/ui/card'; // CardContent will be replaced by a plain div for more control
+import { CardContent } from '../../../design-system/components/ui/card'; // CardContent will be replaced by a plain div for more control
 // No need for `cn` utility for this specific component if not doing complex conditional classes.
-import { Button } from '@examples/existing-design-system/components/ui/button';
+import { Button } from '../../../design-system/components/ui/button';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@examples/existing-design-system/components/ui/carousel';
+} from '../../../design-system/components/ui/carousel';
 import { useProducts } from '../hooks/useProducts';
 
 export function SummerFindsCarousel() {

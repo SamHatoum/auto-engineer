@@ -1,10 +1,10 @@
-import { Button } from '@examples/existing-design-system/components/ui/button';
+import { Button } from '../../../design-system/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@examples/existing-design-system/components/ui/card';
+} from '../../../design-system/components/ui/card';
 import { TopBar } from '../layout/TopBar';
 import { MainNavbar } from '../layout/MainNavbar';
 import { useCart } from '../hooks/useCart';

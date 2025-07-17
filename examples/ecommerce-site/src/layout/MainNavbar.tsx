@@ -2,9 +2,9 @@ import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
-} from '@examples/existing-design-system/components/ui/navigation-menu';
-import { Input } from '@examples/existing-design-system/components/ui/input';
-import { Button } from '@examples/existing-design-system/components/ui/button';
+} from '../../../design-system/components/ui/navigation-menu';
+import { Input } from '../../../design-system/components/ui/input';
+import { Button } from '../../../design-system/components/ui/button';
 
 import { Search, ShoppingCart, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

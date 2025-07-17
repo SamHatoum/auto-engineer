@@ -1,4 +1,4 @@
-import { Button } from '@examples/existing-design-system/components/ui/button'; // Assuming this is your button component
+import { Button } from '../../../design-system/components/ui/button'; // Assuming this is your button component
 
 export function HeroSection() {
   return (

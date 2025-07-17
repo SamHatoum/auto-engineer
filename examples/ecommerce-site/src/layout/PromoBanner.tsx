@@ -1,5 +1,5 @@
 // src/components/PromoBanner.tsx
-import { Button } from '@examples/existing-design-system/components/ui/button'; // Import shadcn/ui Button component
+import { Button } from '../../../design-system/components/ui/button'; // Import shadcn/ui Button component
 
 export function PromoBanner() {
   // Named export

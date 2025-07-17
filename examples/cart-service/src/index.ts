@@ -23,7 +23,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./src/routes/cart.ts'], // Only include cart routes
+  apis: ['./src/routes/cart.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);

@@ -13,7 +13,8 @@
     "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "workspace:*"
+    "@auto-engineer/flowlang": "workspace:*",
+    "axios": "^1.10.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
