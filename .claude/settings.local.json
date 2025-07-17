@@ -18,7 +18,8 @@
       "Bash(cat:*)",
       "Bash(pnpm implement:*)",
       "Bash(node:*)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "WebFetch(domain:turborepo.com)"
     ],
     "deny": []
   }
