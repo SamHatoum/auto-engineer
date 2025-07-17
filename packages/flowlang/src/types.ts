@@ -2,6 +2,9 @@ export interface Integration<T extends string = string> {
   readonly __brand: 'Integration';
   readonly type: T;
   readonly name: string;
+  readonly State?: Record<string, (...args: any[]) => Promise<any>>;
+  readonly Commands?: Record<string, (...args: any[]) => Promise<any>>;
+  readonly Events?: Record<string, (...args: any[]) => Promise<any>>;
 }
 
 export const createIntegration = <T extends string>(type: T, name: string): Integration<T> =>

@@ -16,7 +16,7 @@ import {
   type Event,
   type State,
 } from '@auto-engineer/flowlang';
-import { ProductCatalogService, type Products } from '@examples/product-catalogue-integration';
+import { ProductCatalog, type Products } from '@examples/product-catalogue-integration';
 import { AI } from '@auto-engineer/ai-integration';
 
 type ShoppingCriteriaEntered = Event<
@@ -169,7 +169,7 @@ flow('Seasonal Assistant', () => {
   commandSlice('Do Chat').server(() => {
     data([
       sink().command('DoChat').toIntegration(AI),
-      source().state('Products').fromIntegration(ProductCatalogService),
+      source().state('Products').fromIntegration(ProductCatalog),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
@@ -182,6 +182,7 @@ flow('Seasonal Assistant', () => {
               category: 'Sports',
               price: 10,
               tags: ['soccer', 'sports'],
+              imageUrl: 'https://example.com/soccer-ball.jpg',
             },
             {
               productId: 'prod-craft-kit',
@@ -189,6 +190,7 @@ flow('Seasonal Assistant', () => {
               category: 'Arts & Crafts',
               price: 25,
               tags: ['crafts', 'art', 'creative'],
+              imageUrl: 'https://example.com/craft-kit.jpg',
             },
             {
               productId: 'prod-laptop-bag',
@@ -196,6 +198,7 @@ flow('Seasonal Assistant', () => {
               category: 'School Supplies',
               price: 45,
               tags: ['computers', 'tech', 'school'],
+              imageUrl: 'https://example.com/laptop-bag.jpg',
             },
             {
               productId: 'prod-mtg-starter',
@@ -203,6 +206,7 @@ flow('Seasonal Assistant', () => {
               category: 'Games',
               price: 30,
               tags: ['magic', 'tcg', 'games'],
+              imageUrl: 'https://example.com/mtg-starter.jpg',
             },
           ],
         }),
