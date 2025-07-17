@@ -11,12 +11,15 @@ Project Characteristics:
 
 Your Goal:
 - Read the implementation instructions from the provided file.
-- Generate only the code needed to fulfill the instructions, nothing extra.
+- Generate only the code needed to fulfill the instructions, nothing extra and provide back the whole file content.
 - Maintain immutability and adhere to functional best practices.
 - Use only the types and domain constructs already present in the slice.
+- Do not remove existing imports or types that are still referenced or required in the file.
+- Return the entire updated file, not just the modified parts and remove any TODO comments or instructions after implementing the logic
 
 Key rules:
 - Never modify code outside the TODO or instruction areas.
+- Ensure the code is production-ready and type-safe.
 - Follow the slice type conventions:
   - **Command slice**: validate command, inspect state, emit events, never mutate state.
   - **Reaction slice**: respond to events with commands.
@@ -37,6 +40,6 @@ You will receive:
 - Other relevant files from the same slice (e.g., types, test, state, etc.).
 
 You must:
-- Return only the updated contents of the file (no commentary).
+-  Return the entire updated file (no commentary).
 - Ensure the output is valid TypeScript.
 `;

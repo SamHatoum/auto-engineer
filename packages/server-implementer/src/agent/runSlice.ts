@@ -1,6 +1,6 @@
 import path from 'path';
 import fg from 'fast-glob';
-import {generateTextWithAI, getAvailableProviders} from '@auto-engineer/ai-gateway';
+import { generateTextWithAI, getAvailableProviders } from '@auto-engineer/ai-gateway';
 import { readFile, writeFile, access } from 'fs/promises';
 import { execa } from 'execa';
 import { SYSTEM_PROMPT } from '../prompts/systemPrompt.js';
@@ -14,32 +14,28 @@ if (availableProviders.length === 0) {
     process.exit(1);
 }
 
+type TestAndTypecheckResult = {
+    success: boolean;
+    failedTestFiles: string[];
+    failedTypecheckFiles: string[];
+    testErrors: string;
+    typecheckErrors: string;
+};
+
+
 export async function runSlice(sliceDir: string): Promise<void> {
     console.log(`✏️ Implementing slice: ${sliceDir}`);
+
     const contextFiles = await loadContextFiles(sliceDir);
-    const filesToImplement = Object.entries(contextFiles)
-        .filter(([, content]) =>
-            content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS')
-        );
+    const filesToImplement = findFilesToImplement(contextFiles);
 
     for (const [targetFile] of filesToImplement) {
-        const filePath = path.join(sliceDir, targetFile);
-        const prompt = buildInitialPrompt(targetFile, contextFiles);
-        console.log(`🔮 [AI] Implementing ${targetFile}`);
-        const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
-        const cleanedCode = extractCodeBlock(aiOutput);
-        await writeFile(filePath, cleanedCode, 'utf-8');
-        //console.log('✅ Updated file with clean up code:', filePath, cleanedCode);
-        console.log(`♻ Implemented ${targetFile}`);
+        await implementFileFromAI(sliceDir, targetFile, contextFiles);
     }
-    const success = await runTestsAndTypecheck(sliceDir);
-    if (!success) {
-         console.error(`❌ ${sliceDir} implementation failed tests or type-checks. Please check the logs.`);
-    } else {
-       console.log(`✅ All Tests and checks passed for: ${sliceDir}`);
-    }
-}
 
+    const result = await runTestsAndTypecheck(sliceDir);
+    reportTestAndTypecheckResults(sliceDir, result);
+}
 
 async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
     const files = await fg(['*.ts'], { cwd: sliceDir });
@@ -51,6 +47,12 @@ async function loadContextFiles(sliceDir: string): Promise<Record<string, string
     }
 
     return context;
+}
+
+function findFilesToImplement(contextFiles: Record<string, string>) {
+    return Object.entries(contextFiles).filter(([, content]) =>
+        content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS')
+    );
 }
 
 function buildInitialPrompt(targetFile: string, context: Record<string, string>): string {
@@ -70,8 +72,194 @@ ${Object.entries(context)
         .join('\n\n')}
 
 ---
-Return only the whole updated file of ${targetFile}. Do not remove existing imports or types that are still referenced or required in the file. The file returned file has to be production ready.
+Return only the whole updated file of ${targetFile}. Do not remove existing imports or types that are still referenced or required in the file. The file returned has to be production ready.
 `.trim();
+}
+
+async function implementFileFromAI(sliceDir: string, targetFile: string, contextFiles: Record<string, string>) {
+    const filePath = path.join(sliceDir, targetFile);
+    const prompt = buildInitialPrompt(targetFile, contextFiles);
+
+    console.log(`🔮 Analysing and Implementing ${targetFile}`);
+    //console.log('Prompt:', prompt);
+
+    const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
+    //console.log('AI output:', aiOutput);
+
+    const cleanedCode = extractCodeBlock(aiOutput);
+    await writeFile(filePath, cleanedCode, 'utf-8');
+
+    console.log(`♻ Implemented ${targetFile}`);
+}
+
+
+export async function runTestsAndTypecheck(sliceDir: string): Promise<TestAndTypecheckResult> {
+    const rootDir = await findProjectRoot(sliceDir);
+
+    const testResult = await runTests(sliceDir, rootDir);
+    const typecheckResult = await runTypecheck(sliceDir, rootDir);
+
+    return {
+        success: testResult.success && typecheckResult.success,
+        failedTestFiles: testResult.failedTestFiles,
+        failedTypecheckFiles: typecheckResult.failedTypecheckFiles,
+        testErrors: testResult.testErrors,
+        typecheckErrors: typecheckResult.typecheckErrors,
+    };
+}
+
+async function runTests(sliceDir: string, rootDir: string) {
+    const testFiles = await fg(['*.spec.ts', '*.specs.ts'], { cwd: sliceDir });
+
+    if (testFiles.length === 0) {
+        console.warn(`⚠️ No test files found in ${sliceDir}`);
+        return { success: true, testErrors: '', failedTestFiles: [] };
+    }
+
+    try {
+        const relativePaths = testFiles.map(f => path.join(sliceDir, f).replace(`${rootDir}/`, ''));
+        const result = await execa('npx', ['vitest', 'run', ...relativePaths], {
+            cwd: rootDir,
+            stdio: 'pipe',
+            reject: false,
+        });
+
+        const output = (result.stdout ?? '') + (result.stderr ?? '');
+        console.log('Test output:', output);
+
+        if (result.exitCode !== 0 || output.includes('FAIL') || output.includes('failed')) {
+            // Filter test output to only show errors from slice files
+            const filteredOutput = filterTestErrors(output, sliceDir);
+            const failPatterns = [
+                /FAIL\s+(\S+\.specs?\.ts)/g,
+                /❯\s+(\S+\.specs?\.ts)/g,
+                /(\S+\.specs?\.ts)\s+>/g,
+                /\s+(\S+\.specs?\.ts)\s+\d+ms/g,
+            ];
+
+            return {
+                success: false,
+                testErrors: filteredOutput,
+                failedTestFiles: extractFailedFiles(filteredOutput, failPatterns, rootDir, sliceDir),
+            };
+        }
+
+        return {
+            success: true,
+            testErrors: '',
+            failedTestFiles: [],
+        };
+    } catch (err: unknown) {
+        const execaErr = err as { stdout?: string; stderr?: string };
+        const output = (execaErr.stdout ?? '') + (execaErr.stderr ?? '');
+        console.error('Test execution error:', output);
+        return {
+            success: false,
+            testErrors: output,
+            failedTestFiles: testFiles.map(f => path.join(sliceDir, f)),
+        };
+    }
+}
+
+async function runTypecheck(sliceDir: string, rootDir: string) {
+    try {
+        const result = await execa('npx', ['tsc', '--noEmit'], {
+            cwd: rootDir,
+            stdio: 'pipe',
+            reject: false,
+        });
+
+        const output = (result.stdout ?? '') + (result.stderr ?? '');
+        console.log('TypeScript output:', output);
+
+        if (result.exitCode !== 0 || output.includes('error')) {
+            return await processTypecheckOutput(output, sliceDir, rootDir);
+        }
+
+        return { success: true, typecheckErrors: '', failedTypecheckFiles: [] };
+    } catch (err: unknown) {
+        const execaErr = err as { stdout?: string; stderr?: string };
+        const output = (execaErr.stdout ?? '') + (execaErr.stderr ?? '');
+        console.error('TypeScript execution error:', output);
+        const files = await fg(['*.ts'], { cwd: sliceDir, absolute: true });
+        return { success: false, typecheckErrors: output, failedTypecheckFiles: files };
+    }
+}
+
+function getTypecheckPatterns(): RegExp[] {
+    return [
+        /^([^:]+\.ts)\(\d+,\d+\): error/gm,
+        /error TS\d+: (.+) '([^']+\.ts)'/gm,
+        /^([^:]+\.ts):\d+:\d+\s+-\s+error/gm,
+    ];
+}
+
+function filterTestErrors(output: string, sliceDir: string): string {
+    const lines = output.split('\n');
+    const sliceErrorLines = lines.filter(line => 
+        line.includes(sliceDir) && 
+        !line.includes('node_modules') &&
+        (line.includes('FAIL') || line.includes('failed') || line.includes('error'))
+    );
+    return sliceErrorLines.join('\n');
+}
+
+function extractFailedFiles(output: string, patterns: RegExp[], rootDir: string, sliceDir?: string): string[] {
+    const failedFiles = new Set<string>();
+    
+    for (const pattern of patterns) {
+        for (const match of output.matchAll(pattern)) {
+            const filePath = match[1] ? path.resolve(rootDir, match[1]) : '';
+            
+            const notNodeModules = !filePath.includes('node_modules');
+            const inSlice = sliceDir === undefined || filePath.startsWith(sliceDir);
+            
+            if (notNodeModules && inSlice) {
+                failedFiles.add(filePath);
+            }
+        }
+    }
+    
+    return Array.from(failedFiles);
+}
+
+async function processTypecheckOutput(output: string, sliceDir: string, rootDir: string) {
+    // Extract the relative path from sliceDir to filter correctly
+    const relativePath = path.relative(rootDir, sliceDir);
+    
+    // Filter lines that contain TypeScript errors from the slice directory
+    const filtered = output
+        .split('\n')
+        .filter(line => {
+            const hasError = line.includes('error TS') || line.includes('): error');
+            const notNodeModules = !line.includes('node_modules');
+            // Check if the line contains a file path that's within our slice
+            const hasSlicePath = line.includes(relativePath) || line.includes(sliceDir);
+            return hasError && notNodeModules && hasSlicePath;
+        })
+        .join('\n');
+
+    if (filtered.trim() === '') {
+        return { success: true, typecheckErrors: '', failedTypecheckFiles: [] };
+    }
+
+    const failedFiles = await processTypecheckFailure(filtered, rootDir, sliceDir);
+    return {
+        success: false,
+        typecheckErrors: filtered,
+        failedTypecheckFiles: failedFiles,
+    };
+}
+
+async function processTypecheckFailure(output: string, rootDir: string, sliceDir: string): Promise<string[]> {
+    const patterns = getTypecheckPatterns();
+    let failed = extractFailedFiles(output, patterns, rootDir, sliceDir);
+
+    if (failed.length === 0 && output.includes('error')) {
+        failed = await fg(['*.ts'], { cwd: sliceDir, absolute: true });
+    }
+
+    return failed;
 }
 
 async function findProjectRoot(startDir: string): Promise<string> {
@@ -87,58 +275,25 @@ async function findProjectRoot(startDir: string): Promise<string> {
     throw new Error('❌ Could not find project root');
 }
 
-
-
-export async function runTestsAndTypecheck(sliceDir: string): Promise<boolean> {
-    try {
-        const rootDir = await findProjectRoot(sliceDir);
-        const testFiles = await fg(['*.spec.ts', '*.specs.ts'], {
-            cwd: sliceDir,
-            absolute: false,
-        });
-
-        if (testFiles.length === 0) {
-            console.warn(`⚠️ No test files found in ${sliceDir}`);
-        } else {
-            const relativePaths = testFiles.map((f) => path.join(sliceDir, f).replace(`${rootDir}/`, ''));
-            await execa('npx', ['vitest', 'run', ...relativePaths], {
-                cwd: rootDir,
-                stdio: 'inherit',
-            });
-        }
-
-        const tsconfigPath = await findNearestTsconfig(sliceDir);
-        const tsFiles = await fg(['*.ts'], {
-            cwd: sliceDir,
-            absolute: false,
-        });
-
-        if (tsFiles.length > 0) {
-            const tsFilePaths = tsFiles.map((f) => path.join(sliceDir, f));
-            await execa('npx', ['tsc', '--noEmit', '--project', tsconfigPath, ...tsFilePaths], {
-                cwd: rootDir,
-                stdio: 'inherit',
-            });
-        }
-
-        return true;
-    } catch {
-        return false;
+function reportTestAndTypecheckResults(sliceDir: string, result: TestAndTypecheckResult) {
+    if (result.success) {
+        console.log(`✅ All Tests and checks passed for: ${sliceDir}`);
+        return;
     }
-}
 
+    console.error(`❌ ${sliceDir} failed tests or type-checks.`);
 
-async function findNearestTsconfig(startDir: string): Promise<string> {
-    let dir = startDir;
-    while (dir !== path.dirname(dir)) {
-        const tsconfigPath = path.join(dir, 'tsconfig.json');
-        try {
-            await access(tsconfigPath);
-            return tsconfigPath;
-        } catch {
-            dir = path.dirname(dir);
+    if (result.failedTestFiles.length) {
+        console.log(`🧪 Failed test files:\n${result.failedTestFiles.join('\n')}`);
+        if (result.testErrors) {
+            console.log(`📝 Test errors:\n${result.testErrors}`);
         }
     }
-    throw new Error('❌ Could not find nearest tsconfig.json');
-}
 
+    if (result.failedTypecheckFiles.length) {
+        console.log(`📐 Failed typecheck files:\n${result.failedTypecheckFiles.join('\n')}`);
+        if (result.typecheckErrors) {
+            console.log(`📝 Typecheck errors:\n${result.typecheckErrors}`);
+        }
+    }
+}
