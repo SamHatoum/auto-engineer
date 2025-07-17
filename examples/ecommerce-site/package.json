@@ -1,5 +1,5 @@
 {
-  "name": "@examples/existing-ecommerce-site",
+  "name": "@examples/ecommerce-site",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@examples/existing-design-system": "workspace:*",
+    "@examples/design-system": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",

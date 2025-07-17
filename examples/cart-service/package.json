@@ -1,5 +1,5 @@
 {
-  "name": "@examples/example-cart-service",
+  "name": "@examples/cart-service",
   "version": "0.0.1",
   "description": "Example cart service with REST API",
   "main": "dist/index.js",

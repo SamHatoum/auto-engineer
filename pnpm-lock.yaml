@@ -396,7 +396,7 @@ importers:
 
   examples/ecommerce-site:
     dependencies:
-      '@examples/existing-design-system':
+      '@examples/design-system':
         specifier: workspace:*
         version: link:../design-system
       '@radix-ui/react-accordion':
