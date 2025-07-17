@@ -1,10 +1,10 @@
-import path from "path";
+import path from 'path';
 import fg from 'fast-glob';
-import {generateTextWithAI, getAvailableProviders} from "@auto-engineer/ai-gateway";
+import {generateTextWithAI, getAvailableProviders} from '@auto-engineer/ai-gateway';
 import { readFile, writeFile, access } from 'fs/promises';
-import {execa} from "execa";
-import { SYSTEM_PROMPT } from "../prompts/systemPrompt.js";
-import {extractCodeBlock} from "../utils/extractCodeBlock";
+import { execa } from 'execa';
+import { SYSTEM_PROMPT } from '../prompts/systemPrompt.js';
+import { extractCodeBlock } from '../utils/extractCodeBlock.js';
 
 const availableProviders = getAvailableProviders();
 const AI_PROVIDER = availableProviders[0];
@@ -14,88 +14,131 @@ if (availableProviders.length === 0) {
     process.exit(1);
 }
 
-export async function runSlice(sliceDir: string, targetFile: string): Promise<void> {
-    const filePath = path.join(sliceDir, targetFile);
-    const filesInSlice = await fg(['*.ts'], { cwd: sliceDir });
+export async function runSlice(sliceDir: string): Promise<void> {
+    console.log(`✏️ Implementing slice: ${sliceDir}`);
+    const contextFiles = await loadContextFiles(sliceDir);
+    const filesToImplement = Object.entries(contextFiles)
+        .filter(([, content]) =>
+            content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS')
+        );
 
-    const contextFiles: Record<string, string> = {};
-    for (const f of filesInSlice) {
-        const absPath = path.join(sliceDir, f);
-        contextFiles[f] = await readFile(absPath, 'utf-8');
+    for (const [targetFile] of filesToImplement) {
+        const filePath = path.join(sliceDir, targetFile);
+        const prompt = buildInitialPrompt(targetFile, contextFiles);
+        console.log(`🔮 [AI] Implementing ${targetFile}`);
+        const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
+        const cleanedCode = extractCodeBlock(aiOutput);
+        await writeFile(filePath, cleanedCode, 'utf-8');
+        //console.log('✅ Updated file with clean up code:', filePath, cleanedCode);
+        console.log(`♻ Implemented ${targetFile}`);
+    }
+    const success = await runTestsAndTypecheck(sliceDir);
+    if (!success) {
+         console.error(`❌ ${sliceDir} implementation failed tests or type-checks. Please check the logs.`);
+    } else {
+       console.log(`✅ All Tests and checks passed for: ${sliceDir}`);
+    }
+}
+
+
+async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
+    const files = await fg(['*.ts'], { cwd: sliceDir });
+    const context: Record<string, string> = {};
+
+    for (const file of files) {
+        const absPath = path.join(sliceDir, file);
+        context[file] = await readFile(absPath, 'utf-8');
     }
 
-    const prompt = `
+    return context;
+}
+
+function buildInitialPrompt(targetFile: string, context: Record<string, string>): string {
+    return `
 ${SYSTEM_PROMPT}
 
 ---
 📄 Target file to implement: ${targetFile}
 
-${contextFiles[targetFile]}
+${context[targetFile]}
 
 ---
 🧠 Other files in the same slice:
-${Object.entries(contextFiles)
+${Object.entries(context)
         .filter(([name]) => name !== targetFile)
         .map(([name, content]) => `// File: ${name}\n${content}`)
         .join('\n\n')}
 
 ---
-Return only the updated content of ${targetFile}.
-  `;
+Return only the whole updated file of ${targetFile}. Do not remove existing imports or types that are still referenced or required in the file. The file returned file has to be production ready.
+`.trim();
+}
 
-    const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
-    const cleanedCode = extractCodeBlock(aiOutput);
-    await writeFile(filePath, cleanedCode, 'utf-8');
-    console.log(`✅ Updated: ${filePath}`);
+async function findProjectRoot(startDir: string): Promise<string> {
+    let dir = startDir;
+    while (dir !== path.dirname(dir)) {
+        try {
+            await access(path.join(dir, 'package.json'));
+            return dir;
+        } catch {
+            dir = path.dirname(dir);
+        }
+    }
+    throw new Error('❌ Could not find project root');
+}
 
+
+
+export async function runTestsAndTypecheck(sliceDir: string): Promise<boolean> {
     try {
-        let projectRoot = sliceDir;
-        while (projectRoot !== path.dirname(projectRoot)) {
-            try {
-                await access(path.join(projectRoot, 'package.json'));
-                break;
-            } catch {
-                projectRoot = path.dirname(projectRoot);
-            }
+        const rootDir = await findProjectRoot(sliceDir);
+        const testFiles = await fg(['*.spec.ts', '*.specs.ts'], {
+            cwd: sliceDir,
+            absolute: false,
+        });
+
+        if (testFiles.length === 0) {
+            console.warn(`⚠️ No test files found in ${sliceDir}`);
+        } else {
+            const relativePaths = testFiles.map((f) => path.join(sliceDir, f).replace(`${rootDir}/`, ''));
+            await execa('npx', ['vitest', 'run', ...relativePaths], {
+                cwd: rootDir,
+                stdio: 'inherit',
+            });
         }
 
-        await execa('npx', ['vitest', 'run'], {
-            cwd: projectRoot,
-            stdio: 'inherit',
+        const tsconfigPath = await findNearestTsconfig(sliceDir);
+        const tsFiles = await fg(['*.ts'], {
+            cwd: sliceDir,
+            absolute: false,
         });
 
-        await execa('npx', ['tsc', '--noEmit'], {
-            cwd: projectRoot,
-            stdio: 'inherit',
-        });
-        console.log(`✅ Tests and types passed for: ${targetFile}`);
+        if (tsFiles.length > 0) {
+            const tsFilePaths = tsFiles.map((f) => path.join(sliceDir, f));
+            await execa('npx', ['tsc', '--noEmit', '--project', tsconfigPath, ...tsFilePaths], {
+                cwd: rootDir,
+                stdio: 'inherit',
+            });
+        }
+
+        return true;
     } catch {
-        console.warn(`❌ Tests or types failed for: ${targetFile}`);
-
-        const retryPrompt = `
-${SYSTEM_PROMPT}
-
----
-The previous implementation of ${targetFile} caused test or type-check failures.
-
-Please regenerate the correct implementation using the instructions only.
-
-📄 File to fix: ${targetFile}
-
-${contextFiles[targetFile]}
-
-🧠 Other files:
-${Object.entries(contextFiles)
-            .filter(([name]) => name !== targetFile)
-            .map(([name, content]) => `// File: ${name}\n${content}`)
-            .join('\n\n')}
-
-Return only the corrected content of ${targetFile}, no commentary, no markdown.
-`;
-
-        const retryOutput = await generateTextWithAI(retryPrompt, AI_PROVIDER);
-        const retryCleaned = extractCodeBlock(retryOutput);
-        await writeFile(filePath, retryCleaned, 'utf-8');
-        console.log(`♻️ Retried and updated: ${filePath}`);
+        return false;
     }
 }
+
+
+async function findNearestTsconfig(startDir: string): Promise<string> {
+    let dir = startDir;
+    while (dir !== path.dirname(dir)) {
+        const tsconfigPath = path.join(dir, 'tsconfig.json');
+        try {
+            await access(tsconfigPath);
+            return tsconfigPath;
+        } catch {
+            dir = path.dirname(dir);
+        }
+    }
+    throw new Error('❌ Could not find nearest tsconfig.json');
+}
+
