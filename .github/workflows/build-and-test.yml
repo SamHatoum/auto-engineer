@@ -24,9 +24,5 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-      - name: Build
-        run: pnpm turbo run build
-      - name: Test
-        run: pnpm turbo run test
-      - name: Lint
-        run: pnpm turbo run lint
+      - name: Lint, format, test
+        run: pnpm check
