@@ -1,0 +1,48 @@
+{
+  "name": "@examples/cart-service",
+  "version": "0.0.1",
+  "description": "Example cart service with REST API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.19",
+    "@types/supertest": "^2.0.16",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "keywords": [
+    "cart",
+    "service",
+    "example",
+    "rest",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT"
+}

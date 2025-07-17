@@ -12,13 +12,14 @@ const getPackages = (dir: string) => {
   }
 };
 
+const specialScopes = ['global', 'root'];
 const packages = getPackages(join(process.cwd(), 'packages'));
 const apps = getPackages(join(process.cwd(), 'apps'));
 const examples = getPackages(join(process.cwd(), 'examples'));
 const integrations = getPackages(join(process.cwd(), 'integrations'));
 
 const scopes = [
-  'global',
+  ...specialScopes,
   ...packages.map((pkg) => `packages/${pkg}`),
   ...apps.map((app) => `apps/${app}`),
   ...examples.map((example) => `examples/${example}`),

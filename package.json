@@ -20,7 +20,7 @@
     "version": "changeset version",
     "release": "changeset publish",
     "prepare": "husky",
-    "install": "turbo run install",
+    "install": "turbo run install build",
     "start": "pnpm --filter @auto-engineer/cli start",
     "design-system-importer": "pnpm --filter @auto-engineer/design-system-importer start ../../examples/existing-design-system ../../../auto-engineer-output/.context",
     "information-architect": "pnpm --filter @auto-engineer/information-architect generate-ia-schema ../../../auto-engineer-output/.context ../../examples/flows/src/shopping-assistant.flow.ts",

@@ -16,7 +16,7 @@ import {
   type Event,
   type State,
 } from '@auto-engineer/flowlang';
-import { ProductCatalogService, type Products } from '@examples/product-catalogue-integration';
+import { ProductCatalog, type Products } from '@examples/product-catalogue-integration';
 import { AI } from '@auto-engineer/ai-integration';
 
 type ShoppingCriteriaEntered = Event<
@@ -110,7 +110,11 @@ type ShoppingSession = State<
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
-  .state<{ Products: Products['data']; SuggestedItems: SuggestedItems['data']; ShoppingSession: ShoppingSession['data'] }>();
+  .state<{
+    Products: Products['data'];
+    SuggestedItems: SuggestedItems['data'];
+    ShoppingSession: ShoppingSession['data'];
+  }>();
 
 flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
@@ -165,40 +169,47 @@ flow('Seasonal Assistant', () => {
   commandSlice('Do Chat').server(() => {
     data([
       sink().command('DoChat').toIntegration(AI),
-      source().state('Products').fromIntegration(ProductCatalogService),
+      source().state('Products').fromIntegration(ProductCatalog),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
       given([
-        State.Products(
-          {
-            products: [
-              {
-                productId: 'prod-soccer-ball',
-                name: 'Super Soccer Ball',
-                category: 'Sports',
-                price: 10,
-                tags: ['soccer', 'sports'],
-              }, {
-                productId: 'prod-craft-kit',
-                name: 'Deluxe Craft Kit',
-                category: 'Arts & Crafts',
-                price: 25,
-                tags: ['crafts', 'art', 'creative'],
-              }, {
-                productId: 'prod-laptop-bag',
-                name: 'Tech Laptop Backpack',
-                category: 'School Supplies',
-                price: 45,
-                tags: ['computers', 'tech', 'school'],
-              }, {
-                productId: 'prod-mtg-starter',
-                name: 'Magic the Gathering Starter Set',
-                category: 'Games',
-                price: 30,
-                tags: ['magic', 'tcg', 'games'],
-              }]
-          }),
+        State.Products({
+          products: [
+            {
+              productId: 'prod-soccer-ball',
+              name: 'Super Soccer Ball',
+              category: 'Sports',
+              price: 10,
+              tags: ['soccer', 'sports'],
+              imageUrl: 'https://example.com/soccer-ball.jpg',
+            },
+            {
+              productId: 'prod-craft-kit',
+              name: 'Deluxe Craft Kit',
+              category: 'Arts & Crafts',
+              price: 25,
+              tags: ['crafts', 'art', 'creative'],
+              imageUrl: 'https://example.com/craft-kit.jpg',
+            },
+            {
+              productId: 'prod-laptop-bag',
+              name: 'Tech Laptop Backpack',
+              category: 'School Supplies',
+              price: 45,
+              tags: ['computers', 'tech', 'school'],
+              imageUrl: 'https://example.com/laptop-bag.jpg',
+            },
+            {
+              productId: 'prod-mtg-starter',
+              name: 'Magic the Gathering Starter Set',
+              category: 'Games',
+              price: 30,
+              tags: ['magic', 'tcg', 'games'],
+              imageUrl: 'https://example.com/mtg-starter.jpg',
+            },
+          ],
+        }),
       ])
         .when(
           Commands.DoChat({
