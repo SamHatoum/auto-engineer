@@ -2,11 +2,16 @@ import path from 'path';
 import fs from 'fs';
 import { FrontendScaffoldBuilder } from './builder';
 // import { deleteDirectory } from './delete-directory';
-import { generateComponents, IAScheme } from './generator/generateComponents';
+import { generateComponents } from './generator/generateComponents';
+import { writeGqlOperationsToFolder } from './scaffold-gql-operations';
+import { generateSchemaFile } from './write-graphql-schema';
+import { runCodegen } from './run-codegen';
+import { IAScheme } from './types';
 
 export async function main() {
-  const [, , starterDir, targetDir, iaSchemaPath] = process.argv;
+  const [, , starterDir, targetDir, iaSchemaPath, gqlSchemaPath] = process.argv;
   console.log(process.argv);
+  console.log(gqlSchemaPath);
   if (!starterDir || !targetDir) {
     console.error('Usage: tsx src/index.ts <starter-dir> <target-dir>');
     process.exit(1);
@@ -22,12 +27,10 @@ export async function main() {
   const iaSchemeJson = JSON.parse(iaSchemeJsonFile) as IAScheme;
   generateComponents(iaSchemeJson, `${targetDir}/src`);
 
-  // writeGqlOperationsToFolder(flows, `../../../auto-engineer-output/${appName}/src`);
-  // generateSchemaFile(`../../../auto-engineer-output/${appName}`);
-  // runCodegen(`../../../auto-engineer-output/${appName}`);
+  // writeGqlOperationsToFolder(iaSchemeJson, `${targetDir}/src`);
+  // generateSchemaFile(gqlSchemaPath, targetDir);
+  // runCodegen(targetDir);
   return 'Frontend Scaffold is running!';
 }
 
 void main();
-
-//
