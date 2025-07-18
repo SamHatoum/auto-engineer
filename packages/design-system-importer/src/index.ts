@@ -43,11 +43,16 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
   await fs.writeFile(outPath, md);
 }
 
-export async function copyDesignSystemDocs(inputDir: string, outputDir: string): Promise<void> {
-  const srcPath = path.join(inputDir, 'design-system.md');
-  const destPath = path.join(outputDir, 'design-system.md');
+async function copyFile(inputDir: string, outputDir: string, file: string): Promise<any> {
+  const srcPath = path.join(inputDir, file);
+  const destPath = path.join(outputDir, file);
   await fs.mkdir(outputDir, { recursive: true });
   await fs.copyFile(srcPath, destPath);
+}
+
+export async function copyDesignSystemDocsAndUserPreferences(inputDir: string, outputDir: string): Promise<void> {
+  await copyFile(inputDir, outputDir, 'design-system.md');
+  await copyFile(inputDir, outputDir, 'design-system-principles.md');
 }
 
 if (require.main === module) {
@@ -64,7 +69,7 @@ if (require.main === module) {
   //     console.error('Error generating design-system.md:', err);
   //     process.exit(1);
   //   });
-  copyDesignSystemDocs(inputDir, outputDir)
+  copyDesignSystemDocsAndUserPreferences(inputDir, outputDir)
     .then(() => {
       console.log(`design-system.md copied to ${outputDir}`);
     })
