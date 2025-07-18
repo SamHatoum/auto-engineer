@@ -120,7 +120,7 @@ async function getProjectContext(projectDir: string, iaSchemeDir: string): Promi
   }
 
   const keyFiles = files.filter(
-    (f) => f.startsWith('src/pages/') || ['src/App.tsx', 'src/routes.tsx', 'src/main.tsx'].includes(f),
+    (f) => f.startsWith('src/') || ['src/App.tsx', 'src/routes.tsx', 'src/main.tsx'].includes(f),
   );
   const keyFileContents: Record<string, string> = {};
   for (const file of keyFiles) {
@@ -154,11 +154,18 @@ async function listFiles(dir: string, base = dir): Promise<string[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files = await Promise.all(
     entries.map(async (entry) => {
+      if (entry.name === 'node_modules') return [];
+
       const res = path.resolve(dir, entry.name);
-      if (entry.isDirectory()) return listFiles(res, base);
-      else return [path.relative(base, res)];
+
+      if (entry.isDirectory()) {
+        return listFiles(res, base);
+      } else {
+        return [path.relative(base, res)];
+      }
     }),
   );
+
   return files.flat();
 }
 
@@ -205,7 +212,7 @@ Evaluate the app’s intent and domain by analyzing its name, schema, component 
 
 Do not rely on templates. Instead, produce a result that feels bespoke, intentional, and polished, as if it was the product of an elite design team.
 
-🎨 General Visual Principles:
+General Visual Principles:
 - Modular layout using card-based or section-based design
 - Generous whitespace and consistent vertical rhythm
 - Clear typographic hierarchy with logical font sizing and spacing
@@ -213,6 +220,13 @@ Do not rely on templates. Instead, produce a result that feels bespoke, intentio
 - Subtle microinteractions (hover, focus, loading, error, empty, active)
 - Smooth, context-appropriate transitions (e.g. fade/scale for expressive UIs, minimal transitions for dashboards)
 - Visual feedback for all interaction states
+
+Visual Cohesion & Page Continuity:
+- All pages must feel like they belong to the same product. Visual design must be cohesive across the entire application.
+- If you introduce a design style (e.g. iconography, background gradients, card structure, typography scale, spacing rhythm) on one page, you must reuse or adapt it on all other pages for consistency.
+- Design elements like layout containers, headers, feature highlights, buttons, or shadows must follow a shared visual system.
+- Do not treat each page as a blank slate. Carry over the established visual language unless explicitly told to diverge.
+- Always maintain alignment, padding, and proportions between pages to ensure UI smoothness and visual predictability.
 
 Design and Implementation Rules:
 - Apply atomic design (atoms → molecules → organisms → pages). This is a high priority. 
@@ -234,6 +248,9 @@ Design and Implementation Rules:
 - Optimize all images and use appropriate loading strategies.
 - Never use inline styles — always use Tailwind or utility class abstractions.
 
+🔔 Heading Structure Design Principle:
+Only include one top-level page heading per screen. If the layout or route wrapper already provides a page title or introductory description, do **not** repeat the same heading or subtext inside the component. Components should avoid redundant visual headers and instead render their core UI logic directly.
+
 Component Architecture Guidelines:
 - Reuse components where possible:
   - Treat components in \`src/components/atoms\` as general atoms (they can be either [shadcn/ui](https://ui.shadcn.com) or custom design system).
@@ -244,6 +261,12 @@ Component Architecture Guidelines:
 - File names must be consistent across the codebase, using either PascalCase or kebab-case as defined in the existing structure.
 - Component names must not conflict with TypeScript built-in/global types.
 - When typing component props, always use the format \`<ComponentName>Props\`. For example: \`BookingCardProps\`, \`SearchFormProps\`.
+
+Component Responsibility & Header Ownership:
+- If an organism or molecule already contains a primary visual header (e.g., an H1 or a section introduction), do **not** duplicate that same header in the page or route-level wrapper.
+- The outer \`Page\` or route component should only include a header if the rendered component does **not** provide one itself.
+- Always ensure **one and only one visual H1-level heading** appears per page — never repeat the same section header in both the page wrapper and the component.
+- Think in terms of **responsibility**: the component owns its visual hierarchy. If it includes a heading and description, the page must not override or repeat it.
 
 Code & File Standards:
 - Use TypeScript across the entire project.
@@ -270,6 +293,9 @@ You are not allowed to modify the following files under any circumstances:
 - src/graphql/mutations.ts
 
 These files are read-only. You must work with the GraphQL operations defined in them exactly as they are. Do not create, delete, rename, or rewrite any GraphQL documents.
+
+Key File Rule:
+When working with a key file, always assume it already includes all necessary imports and specs. **Never add or modify imports or specs manually**. You must implement strictly using the imports and specs that are already present in the key file.
 
 Output Specification:
 Your output must be a JSON array of planned changes, where each item includes:
@@ -323,8 +349,9 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
+      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
