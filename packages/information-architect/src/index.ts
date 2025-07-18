@@ -53,7 +53,6 @@ export class InformationArchitectAgent {
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
   ): string {
-    console.log(JSON.stringify(atoms, null, 2));
     return `
 You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 

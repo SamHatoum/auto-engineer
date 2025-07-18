@@ -349,9 +349,8 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
-      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
