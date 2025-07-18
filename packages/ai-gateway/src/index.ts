@@ -325,3 +325,13 @@ export async function streamStructuredDataWithAI<T>(
 
 // Export zod for convenience
 export { z };
+
+// Export MCP server singleton functions
+export { 
+  server as mcpServer,
+  registerTool, 
+  registerTools, 
+  startServer, 
+  isServerStarted,
+  type ToolHandler
+} from './mcp-server.js';
