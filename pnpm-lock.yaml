@@ -60,6 +60,9 @@ importers:
       husky:
         specifier: ^9.0.11
         version: 9.1.7
+      playwright:
+        specifier: ^1.54.1
+        version: 1.54.1
       prettier:
         specifier: ^3.3.3
         version: 3.6.2
@@ -790,12 +793,13 @@ importers:
 
   packages/frontend-checks:
     dependencies:
-      playwright:
-        specifier: ^1.44.1
-        version: 1.54.1
       typescript:
         specifier: ^5.4.5
         version: 5.5.4
+    devDependencies:
+      playwright:
+        specifier: ^1.54.1
+        version: 1.54.1
 
   packages/frontend-implementation:
     dependencies:
@@ -817,6 +821,10 @@ importers:
       zod:
         specifier: ^3.25.67
         version: 3.25.76
+    devDependencies:
+      playwright:
+        specifier: ^1.54.1
+        version: 1.54.1
 
   packages/information-architect:
     dependencies:

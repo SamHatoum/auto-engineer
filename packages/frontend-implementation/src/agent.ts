@@ -1,7 +1,7 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { getTsErrors, getBuildErrors } from '@auto-engineer/frontend-checks';
+import { getTsErrors, getBuildErrors, getConsoleErrors, closeBrowser } from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
 // Utility to extract props from interface
@@ -390,19 +390,38 @@ Do not include explanations, markdown, or code blocks.
 
 async function fixBuildErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
   const buildErrors = await getBuildErrors(projectDir);
+  console.log('Found build errors', buildErrors);
   if (buildErrors.length === 0) return false;
 
   const errorFeedback = buildErrors.join('\n');
-  const fixupPrompt = `${makeBasePrompt(
-    ctx,
-  )}\nAfter your previous changes, the application produced the following Vite build errors:\n\n${errorFeedback}\n\nPlease provide the necessary code changes to fix these errors. This might involve adding missing dependencies to package.json or correcting import paths.\nOutput a JSON array of planned changes, each with:\n  - action: "update"\n  - file: relative file path\n  - description: "Fix Vite build errors"\n  - content: the full new code for the file\n\nRespond with only a JSON array, no explanation, no markdown, no code block.`;
+  const fixupPrompt = `${makeBasePrompt(ctx)}\n
+After your previous changes, the application produced the following Vite build errors:\n\n${errorFeedback}\n
+You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
+
+Strict rules:
+- Do not silence errors — resolve them fully and correctly
+- Fix all errors in each file in one go
+- Reuse existing logic or types instead of re-creating similar ones
+- Do not submit partial updates; provide the full updated content of the file
+
+Output must be a **JSON array** only. Each item must include:
+- \`action\`: "update"
+- \`file\`: relative path to the updated file
+- \`description\`: "Fix Vite build errors"
+- \`content\`: full new content of the file, as a string
+
+Do not include explanations, markdown, or code blocks.
+`;
   const fixupPlanText = await callAI(fixupPrompt);
   let fixupPlan: Fix[] = [];
   try {
     fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
-  } catch {
-    console.error('Could not parse Vite build fixup plan from LLM:', fixupPlanText);
+  } catch (e) {
+    await closeBrowser?.();
+    console.error('Could not parse Vite build fixup plan from LLM:', e instanceof Error ? e.message : String(e));
+    // console.debug('Could not parse Vite build fixup plan from LLM:', fixupPlanText, e);
   }
+  console.log('Fixup plan', fixupPlan);
   for (const fix of fixupPlan) {
     if (fix.action === 'update' && fix.file && fix.content) {
       const outPath = path.join(projectDir, fix.file);
@@ -414,47 +433,66 @@ async function fixBuildErrors(ctx: ProjectContext, projectDir: string): Promise<
   return true;
 }
 
+async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
+  const consoleErrors = await getConsoleErrors("http://localhost:8081");
+  console.log('Found console errors', consoleErrors);
+  if (consoleErrors.length === 0) return false;
+
+  const errorFeedback = consoleErrors.join("\n");
+  const fixupPrompt = `${makeBasePrompt(ctx)}\n
+After your previous changes, the application produced the following console errors when running:\n\n${errorFeedback}\n
+You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
+
+Strict rules:
+- Do not silence errors — resolve them fully and correctly
+- Fix all errors in each file in one go
+- Reuse existing logic or types instead of re-creating similar ones
+- Do not submit partial updates; provide the full updated content of the file
+
+Output must be a **JSON array** only. Each item must include:
+- \`action\`: "update"
+- \`file\`: relative path to the updated file
+- \`description\`: "Fix console errors"
+- \`content\`: full new content of the file, as a string
+
+Do not include explanations, markdown, or code blocks.
+`;
+  const fixupPlanText = await callAI(fixupPrompt);
+  let fixupPlan: Fix[] = [];
+  try {
+    fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
+  } catch (e) {
+    await closeBrowser();
+    console.error("Could not parse fixup plan from LLM:", e instanceof Error ? e.message : String(e));
+    // console.debug('Could not parse fixup plan from LLM:', fixupPlanText, e);
+  }
+  console.log('Fixup plan', fixupPlan);
+  for (const fix of fixupPlan) {
+    if (fix.action === 'update' && fix.file && fix.content) {
+      const outPath = path.join(projectDir, fix.file);
+      await fs.mkdir(path.dirname(outPath), { recursive: true });
+      await fs.writeFile(outPath, fix.content, "utf-8");
+      console.log(`Fixed ${fix.file} for console errors`);
+    }
+  }
+  await closeBrowser();
+  return true;
+}
+
 async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   const maxIterations = 5;
   for (let i = 0; i < maxIterations; ++i) {
     if (await fixTsErrors(ctx, projectDir)) continue;
     if (await fixBuildErrors(ctx, projectDir)) continue;
+    // if (await fixConsoleErrors(ctx, projectDir)) continue;
     break;
   }
 }
-
-// async function fixConsoleErrors(ctx: ProjectContext, projectDir: string) {
-//   const consoleErrors = await getConsoleErrors("http://localhost:8081");
-//   if (consoleErrors.length > 0) {
-//     const errorFeedback = consoleErrors.join("\n");
-//     const fixupPrompt = `${makeBasePrompt(ctx)}\nAfter your previous changes, the application produced the following console errors when running:\n\n${errorFeedback}\n\nPlease provide the necessary code changes to fix these errors. You can choose to update one or more files.\nOutput a JSON array of planned changes, each with:\n  - action: "update"\n  - file: relative file path\n  - description: "Fix console errors"\n  - content: the full new code for the file\n\nRespond with only a JSON array, no explanation, no markdown, no code block.`;
-//     const fixupPlanText = await callAI(fixupPrompt);
-//     let fixupPlan: Fix[] = [];
-//     try {
-//       fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
-//     } catch {
-//       console.error("Could not parse fixup plan from LLM:", fixupPlanText);
-//     }
-//     for (const fix of fixupPlan) {
-//       if (fix.action === 'update' && fix.file && fix.content) {
-//         const outPath = path.join(projectDir, fix.file);
-//         await fs.mkdir(path.dirname(outPath), { recursive: true });
-//         await fs.writeFile(outPath, fix.content, "utf-8");
-//         console.log(`Fixed ${fix.file}`);
-//       }
-//     }
-//   }
-// }
 
 export async function runAIAgent(projectDir: string, iaSchemeDir: string) {
   const ctx = await getProjectContext(projectDir, iaSchemeDir);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);
-  // await fixConsoleErrors(ctx, projectDir);
-  // await closeBrowser();
   console.log('AI project implementation complete!');
 }
-
-// Example usage:
-// pnpm --filter @auto-engineer/frontend-implementation ai-agent /absolute/path/to/your/react/project

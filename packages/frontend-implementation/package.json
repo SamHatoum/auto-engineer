@@ -18,12 +18,14 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/frontend-checks": "workspace:*",
     "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/frontend-checks": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.13.1",
     "openai": "^5.7.0",
-    "zod": "^3.25.67",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "zod": "^3.25.67"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "playwright": "^1.54.1"
+  }
 }

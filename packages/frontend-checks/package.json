@@ -13,10 +13,12 @@
     "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
-    "playwright": "^1.44.1",
     "typescript": "^5.4.5"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "playwright": "^1.54.1"
   }
 }
