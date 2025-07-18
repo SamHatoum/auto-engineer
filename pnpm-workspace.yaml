@@ -5,7 +5,13 @@ packages:
   - integrations/*
   - '!examples/shopping-assistant'
 
+ignoredBuiltDependencies:
+  - '@apollo/protobufjs'
+  - '@scarf/scarf'
+  - '@tailwindcss/oxide'
+  - esbuild
+
 overrides:
-  punycode: ^2.3.1
-  '@auto-engineer/flowlang': link:packages/flowlang
   '@auto-engineer/ai-gateway': link:packages/ai-gateway
+  '@auto-engineer/flowlang': link:packages/flowlang
+  punycode: ^2.3.1

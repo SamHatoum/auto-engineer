@@ -1,7 +1,19 @@
 {
+  "name": "@examples/shopping-assistant-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
   "dependencies": {
     "@auto-engineer/ai-gateway": "file:../../auto-engineer/packages/ai-gateway",
     "@auto-engineer/flowlang": "file:../../auto-engineer/packages/flowlang",
     "axios": "^1.10.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^22.13.10"
   }
 }

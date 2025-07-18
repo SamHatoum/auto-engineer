@@ -30,13 +30,15 @@
     "start:product-mcp": "cd examples/shopping-assistant/server && tsx src/integrations/start-mcp-server.ts",
     "## ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "init:example": "rm -rf ../shopping-assistant && cp -r ./examples/shopping-assistant ../shopping-assistant && rm -rf ../shopping-assistant/.turbo && cd ../shopping-assistant && pnpm install",
+    "generate:schema": "cd ../shopping-assistant/server && pnpm install && pnpm build && cd .. && pnpm build:flow-schema",
     "import:design-system": "pnpm --filter @auto-engineer/design-system-importer start ../../examples/design-system ../../../shopping-assistant/.context",
     "generate:information-architecture": "pnpm --filter @auto-engineer/information-architect generate-ia-schema ../../../shopping-assistant/.context ../../../shopping-assistant/flows/shopping-assistant.flow.ts",
-    "generate:server": "pnpm --filter @auto-engineer/emmett-generator generate:server ../../examples/shopping-assistant/.context/schema.json ../../../shopping-assistant",
+    "generate:server": "pnpm --filter @auto-engineer/emmett-generator generate:server ../../../shopping-assistant/.context/schema.json ../../../shopping-assistant",
     "implement:server": "pnpm --filter @auto-engineer/emmett-generator TODO",
-    "generate:client": "pnpm --filter @auto-engineer/react-graphql-generator start ../../examples/design-system/components/ui ../../../shopping-assistant/client ../../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/schema.graphql && cd ../shopping-assistant/client && pnpm install",
+    "generate:client": "pnpm --filter @auto-engineer/react-graphql-generator start ../../examples/design-system/components/ui ../../../shopping-assistant/client ../../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/schema.graphql && cd ../shopping-assistant/client && pnpm install && pnpm codegen",
     "implement:client": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../shopping-assistant/client ../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/design-system-principles.md",
-    "generate:all": "pnpm init:example && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:server && pnpm generate:client && pnpm implement:server && pnpm implement:client",
+    "regenerate:client": "rm -rf ../shopping-assistant/client && pnpm generate:client && pnpm implement:client",
+    "generate:all": "pnpm init:example && pnpm generate:schema && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:server && pnpm generate:client && pnpm implement:server && pnpm implement:client",
     "## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": ""
   },
   "devDependencies": {

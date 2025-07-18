@@ -1,4 +1,4 @@
-import { parse, OperationDefinitionNode, TypeNode } from 'graphql';
+import { parse, OperationDefinitionNode, TypeNode, print } from 'graphql';
 
 export interface ParsedArg {
   name: string;
@@ -42,8 +42,26 @@ function graphqlToTs(type: string): string {
   }
 }
 
+function convertJsonAstToSdl(request: string): string {
+  // Handle JSON-serialized AST
+  if (request.startsWith('{') && request.includes('"kind"')) {
+    try {
+      const ast = JSON.parse(request) as unknown;
+      if (typeof ast === 'object' && ast !== null && 'kind' in ast && ast.kind === 'Document') {
+        // Convert AST to SDL string - cast is safe here as we've validated it's a Document
+        return print(ast as Parameters<typeof print>[0]);
+      }
+    } catch {
+      // If parsing fails, assume it's already a GraphQL string
+    }
+  }
+  return request;
+}
+
 export function parseGraphQlRequest(request: string): ParsedGraphQlQuery {
-  const ast = parse(request);
+  const sdlRequest = convertJsonAstToSdl(request);
+  
+  const ast = parse(sdlRequest);
   const op = ast.definitions.find(
     (d): d is OperationDefinitionNode => d.kind === 'OperationDefinition' && d.operation === 'query',
   );

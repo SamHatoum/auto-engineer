@@ -17,10 +17,8 @@ import {
   type State,
 } from '@auto-engineer/flowlang';
 
-// @ts-ignore
-const { ProductCatalog } = await import('../server/src/integrations/product-catalogue-integration');
-// @ts-ignore
-const { AI } = await import('../server/src/integrations/ai-integration');
+import { ProductCatalog } from '../server/src/integrations/product-catalogue-integration';
+import { AI } from '../server/src/integrations/ai-integration';
 
 import type { Products } from '../server/src/integrations/product-catalogue-integration';
 import type { DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
@@ -82,6 +80,8 @@ flow('Seasonal Assistant', () => {
         should('allow shopper to describe their shopping needs in natural language');
         should('provide a text input for entering criteria');
         should('show examples of what to include (age, interests, budget)');
+        should('show a button to submit the criteria');
+
       });
     })
     .server(() => {
@@ -91,7 +91,7 @@ flow('Seasonal Assistant', () => {
           Commands.EnterShoppingCriteria({
             sessionId: 'shopper-123',
             criteria:
-              'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
+              'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.'
           }),
         ).then([
           Events.ShoppingCriteriaEntered({
@@ -337,5 +337,3 @@ flow('Seasonal Assistant', () => {
       });
     });
 });
-
-console.log('AI Integration:', AI);

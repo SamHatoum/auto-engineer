@@ -1,10 +1,10 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
-import path from 'path';
 
 const config: CodegenConfig = {
   overwrite: true,
-  schema: path.join(__dirname, 'schema.graphql'), // 👈 updated to local file
-  documents: 'src/graphql/*.ts',
+  schema: '../.context/schema.graphql',
+  documents: ['src/gql/**/*.ts', 'src/gql/**/*.tsx'],
+  ignoreNoDocuments: true,
   generates: {
     'src/gql/': {
       preset: 'client',

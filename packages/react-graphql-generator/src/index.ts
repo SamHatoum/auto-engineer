@@ -24,9 +24,9 @@ export async function main() {
   const iaSchemeJson = JSON.parse(iaSchemeJsonFile) as IAScheme;
   generateComponents(iaSchemeJson, `${targetDir}/src`);
 
-  // writeGqlOperationsToFolder(iaSchemeJson, `${targetDir}/src`);
-  // generateSchemaFile(gqlSchemaPath, targetDir);
-  // runCodegen(targetDir);
+  writeGqlOperationsToFolder(iaSchemeJson, `${targetDir}/src`);
+  generateSchemaFile(gqlSchemaPath, targetDir);
+  runCodegen(targetDir);
   return 'Frontend Scaffold is running!';
 }
 

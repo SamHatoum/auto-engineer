@@ -235,8 +235,9 @@ export const convertFlowToJson = async (filePath: string, outputPath?: string): 
   // Validate against SpecSchema
   try {
     SpecsSchema.parse(schema);
-    console.log('✓ Schema validation passed');
+    // Validation passed - no console output needed
   } catch (error) {
+    // Only log to stderr so it doesn't pollute stdout
     console.error('⚠ Schema validation failed:', error instanceof z.ZodError ? error.format() : error);
   }
 
@@ -244,7 +245,7 @@ export const convertFlowToJson = async (filePath: string, outputPath?: string): 
 
   if (outputPath !== undefined && outputPath !== null && outputPath.length > 0) {
     writeFileSync(outputPath, json);
-    console.log(`Flow converted to JSON and saved to: ${outputPath}`);
+    // Don't log here - this will be handled by the calling script
   }
 
   return json;

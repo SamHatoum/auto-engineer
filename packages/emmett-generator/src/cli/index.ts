@@ -1,15 +1,15 @@
 import 'reflect-metadata';
 import fs from 'fs-extra';
 import * as path from 'path';
-import {readFile, writeFile} from 'fs/promises';
-import {resolve, join} from 'path';
-import {existsSync} from 'fs';
-import {generateScaffoldFilePlans, writeScaffoldFilePlans} from '../codegen/scaffoldFromSchema';
-import {ensureDirExists} from '../codegen/utils/path';
-import {SpecsSchemaType} from '@auto-engineer/flowlang';
-import {fileURLToPath} from 'url';
-import {dirname} from 'path';
-import {execa} from 'execa';
+import { readFile, writeFile } from 'fs/promises';
+import { resolve, join } from 'path';
+import { existsSync } from 'fs';
+import { generateScaffoldFilePlans, writeScaffoldFilePlans } from '../codegen/scaffoldFromSchema';
+import { ensureDirExists } from '../codegen/utils/path';
+import { SpecsSchemaType } from '@auto-engineer/flowlang';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { execa } from 'execa';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -66,7 +66,7 @@ async function copyRootFilesFromSrc(from: string, to: string): Promise<void> {
     if (!await fs.pathExists(from)) {
         return;
     }
-    
+
     const rootFiles = await fs.readdir(from);
     for (const file of rootFiles) {
         const srcFile = path.join(from, file);
@@ -159,14 +159,11 @@ async function writePackage(dest: string): Promise<void> {
     };
 
     const existingPkg = await fs.readJson(path.join(dest, 'package.json')).catch(() => ({})) as Record<string, unknown>;
-    console.log('found existing package.json', existingPkg);
     packageJson.dependencies = {
         ...(existingPkg.dependencies as Record<string, string>),
         ...packageJson.dependencies,
     };
-    
-    console.log('merged existing package.json dependecies', packageJson);
-
+    console.log('✅ Merged existing package.json dependecies');
     await fs.writeJson(path.join(dest, 'package.json'), packageJson, { spaces: 2 });
 }
 
@@ -185,7 +182,7 @@ async function writeTsconfig(dest: string): Promise<void> {
         exclude: ['dist', 'node_modules'],
     };
 
-    await fs.writeJson(path.join(dest, 'tsconfig.json'), tsconfig, {spaces: 2});
+    await fs.writeJson(path.join(dest, 'tsconfig.json'), tsconfig, { spaces: 2 });
 }
 
 async function writeVitestConfig(dest: string): Promise<void> {
@@ -252,11 +249,11 @@ async function installDependenciesAndGenerateSchema(serverDir: string, workingDi
     console.log('📦 Installing dependencies...');
 
     try {
-        await execa('pnpm', ['install'], {cwd: serverDir});
+        await execa('pnpm', ['install'], { cwd: serverDir });
         console.log('✅ Dependencies installed successfully');
 
         console.log('🔄 Generating GraphQL schema...');
-        await execa('tsx', ['scripts/generate-schema.ts'], {cwd: serverDir});
+        await execa('tsx', ['scripts/generate-schema.ts'], { cwd: serverDir });
 
         const schemaPath = join(workingDir, '.context', 'schema.graphql');
         console.log(`✅ GraphQL schema generated at: ${schemaPath}`);

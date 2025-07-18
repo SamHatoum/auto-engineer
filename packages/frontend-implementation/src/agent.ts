@@ -194,6 +194,7 @@ Component Design & Structure:
   - Build molecules → organisms → pages
   - Then update routing in \`App.tsx\` accordingly. **DO NOT FORGET THIS.**
 - Only create pages that are explicitly listed in \`auto-ia-scheme.json\`. No extra routes.
+- If a root page is not explicitly listed in \`auto-ia-scheme.json\`, then make the root page an index to all the other routes
 - Reuse atoms/molecules/organisms when possible. Only create new components when absolutely required.
 - Use responsive layout by default.
 - Use a consistent spacing scale (4/8/12/16px).
@@ -308,7 +309,7 @@ interface Fix {
 
 async function fixTsErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
   const tsErrors = await getTsErrors(projectDir);
-  console.log('Found ts errors', tsErrors);
+  console.log('Found', tsErrors.length, 'TypeScript errors');
   if (tsErrors.length === 0) return false;
 
   const errorFeedback = tsErrors.join('\n');
@@ -342,13 +343,13 @@ Do not include explanations, markdown, or code blocks.
     console.error('Could not parse TS fixup plan from LLM:', e instanceof Error ? e.message : String(e));
     // console.debug('Could not parse TS fixup plan from LLM:', fixupPlanText, e);
   }
-  console.log('Fixup plan', fixupPlan);
+  console.log('Fixup plan has', fixupPlan.length, 'items');
   for (const fix of fixupPlan) {
     if (fix.action === 'update' && fix.file && fix.content) {
       const outPath = path.join(projectDir, fix.file);
       await fs.mkdir(path.dirname(outPath), { recursive: true });
       await fs.writeFile(outPath, fix.content, 'utf-8');
-      console.log(`Fixed ${fix.file} for TS errors`);
+      console.log(`Fixed TS errors in ${fix.file}`);
     }
   }
   return true;
@@ -356,7 +357,7 @@ Do not include explanations, markdown, or code blocks.
 
 async function fixBuildErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
   const buildErrors = await getBuildErrors(projectDir);
-  console.log('Found build errors', buildErrors);
+  console.log('Found', buildErrors.length, 'build errors');
   if (buildErrors.length === 0) return false;
 
   const errorFeedback = buildErrors.join('\n');
