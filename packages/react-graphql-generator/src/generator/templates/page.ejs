@@ -1,0 +1,15 @@
+<% organisms.forEach(org => { -%>
+import { <%= org %> } from "@/components/organisms/<%= org %>";
+<% }) -%>
+
+// <%= description %>
+<% if (specs && specs.length) { -%>
+// Specs:
+<% specs.forEach(spec => { -%>
+// - <%- spec %>
+<% }) -%>
+<% } -%>
+
+export function <%= name %>() {
+    return <div />;
+}

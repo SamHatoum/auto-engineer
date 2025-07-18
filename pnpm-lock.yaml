@@ -844,12 +844,19 @@ importers:
       '@auto-engineer/ai-gateway':
         specifier: workspace:*
         version: link:../ai-gateway
+      ejs:
+        specifier: ^3.1.10
+        version: 3.1.10
       graphql:
         specifier: ^16.11.0
         version: 16.11.0
       openai:
         specifier: ^4.104.0
         version: 4.104.0(zod@3.25.76)
+    devDependencies:
+      '@types/ejs':
+        specifier: ^3.1.5
+        version: 3.1.5
 
   packages/server-implementer:
     dependencies:

@@ -1,0 +1,18 @@
+<% atoms.forEach(atom => { -%>
+import { <%= atom %> } from "@/components/atoms/<%= atom.toLowerCase() %>";
+<% }) -%>
+<% molecules.forEach(mol => { -%>
+import { <%= mol %> } from "@/components/molecules/<%= mol %>";
+<% }) -%>
+
+// <%= description %>
+<% if (specs && specs.length) { -%>
+// Specs:
+<% specs.forEach(spec => { -%>
+// - <%- spec %>
+<% }) -%>
+<% } -%>
+
+export function <%= name %>() {
+    return <div />;
+}
