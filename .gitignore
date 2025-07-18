@@ -2,7 +2,6 @@
 node_modules
 .pnp
 .pnp.js
-.claude
 
 # Build outputs
 dist
@@ -46,3 +45,4 @@ coverage
 
 # Misc
 *.pem 
+.claude
