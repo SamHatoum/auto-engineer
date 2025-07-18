@@ -16,8 +16,14 @@ import {
   type Event,
   type State,
 } from '@auto-engineer/flowlang';
-import { ProductCatalog, type Products } from '../server/src/integrations/product-catalogue-integration';
-import { AI, DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
+
+// @ts-ignore
+const { ProductCatalog } = await import('../server/src/integrations/product-catalogue-integration');
+// @ts-ignore
+const { AI } = await import('../server/src/integrations/ai-integration');
+
+import type { Products } from '../server/src/integrations/product-catalogue-integration';
+import type { DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
