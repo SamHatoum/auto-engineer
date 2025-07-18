@@ -45,7 +45,7 @@
                     "exampleData": {
                       "sessionId": "session-abc",
                       "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                      "timestamp": "2025-07-18T13:39:09.629Z"
+                      "timestamp": "2025-07-18T15:20:43.059Z"
                     }
                   }
                 ]
@@ -66,7 +66,7 @@
                     "exampleData": {
                       "sessionId": "session-abc",
                       "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                      "timestamp": "2025-07-18T13:39:09.629Z"
+                      "timestamp": "2025-07-18T15:20:43.059Z"
                     }
                   }
                 ],
@@ -157,7 +157,7 @@
                           "reason": "Ideal starter set for Magic the Gathering enthusiasts"
                         }
                       ],
-                      "timestamp": "2025-07-18T13:39:09.629Z"
+                      "timestamp": "2025-07-18T15:20:43.059Z"
                     }
                   }
                 ]
@@ -178,7 +178,7 @@
               "allow removing items from the suggestions"
             ]
           },
-          "request": "{\"kind\":\"Document\",\"definitions\":[{\"kind\":\"OperationDefinition\",\"operation\":\"query\",\"name\":{\"kind\":\"Name\",\"value\":\"GetSuggestedItems\"},\"variableDefinitions\":[{\"kind\":\"VariableDefinition\",\"variable\":{\"kind\":\"Variable\",\"name\":{\"kind\":\"Name\",\"value\":\"sessionId\"}},\"type\":{\"kind\":\"NonNullType\",\"type\":{\"kind\":\"NamedType\",\"name\":{\"kind\":\"Name\",\"value\":\"ID\"}}},\"directives\":[]}],\"directives\":[],\"selectionSet\":{\"kind\":\"SelectionSet\",\"selections\":[{\"kind\":\"Field\",\"name\":{\"kind\":\"Name\",\"value\":\"suggestedItems\"},\"arguments\":[{\"kind\":\"Argument\",\"name\":{\"kind\":\"Name\",\"value\":\"sessionId\"},\"value\":{\"kind\":\"Variable\",\"name\":{\"kind\":\"Name\",\"value\":\"sessionId\"}}}],\"directives\":[],\"selectionSet\":{\"kind\":\"SelectionSet\",\"selections\":[{\"kind\":\"Field\",\"name\":{\"kind\":\"Name\",\"value\":\"items\"},\"arguments\":[],\"directives\":[],\"selectionSet\":{\"kind\":\"SelectionSet\",\"selections\":[{\"kind\":\"Field\",\"name\":{\"kind\":\"Name\",\"value\":\"productId\"},\"arguments\":[],\"directives\":[]},{\"kind\":\"Field\",\"name\":{\"kind\":\"Name\",\"value\":\"name\"},\"arguments\":[],\"directives\":[]},{\"kind\":\"Field\",\"name\":{\"kind\":\"Name\",\"value\":\"quantity\"},\"arguments\":[],\"directives\":[]},{\"kind\":\"Field\",\"name\":{\"kind\":\"Name\",\"value\":\"reason\"},\"arguments\":[],\"directives\":[]}]}}]}}]}}],\"loc\":{\"start\":0,\"end\":229}}",
+          "request": "query GetSuggestedItems($sessionId: ID!) {\n  suggestedItems(sessionId: $sessionId) {\n    items {\n      productId\n      name\n      quantity\n      reason\n    }\n  }\n}",
           "server": {
             "description": "",
             "data": [
@@ -298,7 +298,7 @@
                           "quantity": 1
                         }
                       ],
-                      "timestamp": "2025-07-18T13:39:09.630Z"
+                      "timestamp": "2025-07-18T15:20:43.060Z"
                     }
                   }
                 ]

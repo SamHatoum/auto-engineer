@@ -4,7 +4,7 @@ import { Command } from "@event-driven-io/emmett";
     '<%= command.type %>',
     {
     <% for (const field of command.fields) { -%>
-        <%= field.name %>: <%= field.tsType %>;
+        <%- field.name %>: <%- field.tsType %>;
     <% } -%>
     }
     >;

@@ -1,8 +1,7 @@
 <% for (const state of states) { -%>
     export type <%= pascalCase(state.type) %> = {
     <% for (const field of state.fields) { -%>
-        <%= field.name %><%= field.required ? '' : '?' %>: <%= field.tsType %>;
+        <%- field.name %><%= field.required ? '' : '?' %>: <%- field.tsType %>;
     <% } -%>
     };
-
 <% } -%>

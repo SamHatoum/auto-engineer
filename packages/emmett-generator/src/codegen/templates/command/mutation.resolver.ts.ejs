@@ -5,7 +5,7 @@ import { type GraphQLContext, sendCommand, MutationResponse } from '../../../sha
 export class <%= pascalCase(commands[0].type) %>Input {
 <% for (const field of commands[0].fields) { -%>
     @Field(() => <%= graphqlType(field.tsType) %><%= field.required === false ? ', { nullable: true }' : '' %>)
-    <%= field.name %><%= field.required === false ? '?' : '' %><%= field.required !== false ? '!' : '' %>: <%= field.tsType %>;
+    <%= field.name %><%= field.required === false ? '?' : '' %><%= field.required !== false ? '!' : '' %>: <%- field.tsType %>;
 <% } -%>
 }
 

@@ -314,27 +314,27 @@ export const AppSchema = z
     .discriminatedUnion('variant', [FlowNamesSchema, SliceNamesSchema, ClientServerNamesSchema, SpecsSchema])
     .describe('Progressive system definition supporting incremental co-creation');
 
-if (require.main === module) {
-  const schemas = Object.fromEntries(
-    Object.entries({
-      flow: FlowSchema,
-      message: MessageSchema,
-      integration: IntegrationSchema,
-      commandSlice: CommandSliceSchema,
-      querySlice: QuerySliceSchema,
-      reactSlice: ReactSliceSchema,
-    }).map(([k, v]) => [
-      k,
-      zodToJsonSchema(v, {
-        $refStrategy: 'root' as const,
-        target: 'jsonSchema7' as const,
-        definitionPath: 'definitions',
-        name: k[0].toUpperCase() + k.slice(1),
-      }),
-    ]),
-  );
-  console.log(JSON.stringify(schemas, null, 2));
-}
+// if (require.main === module) {
+//   const schemas = Object.fromEntries(
+//     Object.entries({
+//       flow: FlowSchema,
+//       message: MessageSchema,
+//       integration: IntegrationSchema,
+//       commandSlice: CommandSliceSchema,
+//       querySlice: QuerySliceSchema,
+//       reactSlice: ReactSliceSchema,
+//     }).map(([k, v]) => [
+//       k,
+//       zodToJsonSchema(v, {
+//         $refStrategy: 'root' as const,
+//         target: 'jsonSchema7' as const,
+//         definitionPath: 'definitions',
+//         name: k[0].toUpperCase() + k.slice(1),
+//       }),
+//     ]),
+//   );
+//   console.log(JSON.stringify(schemas, null, 2));
+// }
 
 // Re-export schemas for external usage
 export {

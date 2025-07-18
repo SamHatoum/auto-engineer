@@ -7,6 +7,7 @@ import {
   endServerBlock,
 } from './flow-context';
 import {CommandSlice, QuerySlice, ReactSlice} from "./index";
+import { print, ASTNode } from 'graphql';
 
 export interface FluentCommandSliceBuilder {
   stream(name: string): FluentCommandSliceBuilder;
@@ -140,9 +141,10 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   request(query: unknown): FluentQuerySliceBuilder {
     if (typeof query === 'string') {
       this.slice.request = query;
+    } else if (query && typeof query === 'object' && (query as any).kind === 'Document') {
+      this.slice.request = print(<ASTNode>query); // ✅ convert AST to SDL string
     } else {
-      // Handle GraphQL AST or other query formats
-      this.slice.request = JSON.stringify(query);
+      throw new Error('Invalid GraphQL query format');
     }
     return this;
   }
