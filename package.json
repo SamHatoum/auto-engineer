@@ -35,7 +35,7 @@
     "generate:server": "pnpm --filter @auto-engineer/emmett-generator generate:server ../../examples/shopping-assistant/.context/schema.json ../../../shopping-assistant",
     "implement:server": "pnpm --filter @auto-engineer/emmett-generator TODO",
     "generate:client": "pnpm --filter @auto-engineer/react-graphql-generator start ../../examples/design-system/components/ui ../../../shopping-assistant/client ../../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/schema.graphql && cd ../shopping-assistant/client && pnpm install",
-    "implement:client": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../shopping-assistant/client ../../../shopping-assistant/.context/auto-ia-scheme.json",
+    "implement:client": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../shopping-assistant/client ../../../shopping-assistant/.context/auto-ia-scheme.json ../../../shopping-assistant/.context/design-system-principles.md",
     "generate:all": "pnpm init:example && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:server && pnpm generate:client && pnpm implement:server && pnpm implement:client",
     "## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": ""
   },

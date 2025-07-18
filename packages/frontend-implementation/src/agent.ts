@@ -92,9 +92,14 @@ interface ProjectContext {
   keyFileContents: Record<string, string>;
   fileTreeSummary: string[];
   graphqlOperations: Record<string, string>;
+  userPreferences: string;
 }
 
-async function getProjectContext(projectDir: string, iaSchemeDir: string): Promise<ProjectContext> {
+async function getProjectContext(
+  projectDir: string,
+  iaSchemeDir: string,
+  userPreferences: string,
+): Promise<ProjectContext> {
   const schemePath = iaSchemeDir;
   let scheme: unknown = undefined;
   try {
@@ -119,9 +124,7 @@ async function getProjectContext(projectDir: string, iaSchemeDir: string): Promi
     }
   }
 
-  const keyFiles = files.filter(
-    (f) => f.startsWith('src/') || ['src/App.tsx', 'src/routes.tsx', 'src/main.tsx'].includes(f),
-  );
+  const keyFiles = files.filter((f) => ['src/index.css', 'src/globals.css'].includes(f));
   const keyFileContents: Record<string, string> = {};
   for (const file of keyFiles) {
     try {
@@ -147,6 +150,7 @@ async function getProjectContext(projectDir: string, iaSchemeDir: string): Promi
     keyFileContents,
     fileTreeSummary,
     graphqlOperations,
+    userPreferences,
   };
 }
 
@@ -169,20 +173,6 @@ async function listFiles(dir: string, base = dir): Promise<string[]> {
   return files.flat();
 }
 
-// What I want to build:
-//   Guest books a listing:
-//   - Search for available listings (get)
-//     - should have location filter
-//     - should have price range slider
-//     - should have guest count filter
-//   - Host is notified
-
-//   Host creates a listing:
-//   - Create listing (post)
-//     - should have fields for title, description, location, address
-//     - should have price per night input
-//     - should have max guests selector
-//     - should have amenities checklist
 function makeBasePrompt(ctx: ProjectContext): string {
   const keyFileContents = Object.entries(ctx.keyFileContents)
     .map(([f, c]) => `--- ${f} ---\n${c}\n`)
@@ -193,117 +183,67 @@ function makeBasePrompt(ctx: ProjectContext): string {
     .join('\n');
 
   return `
-You are Auto, an expert AI frontend engineer specializing in building visually stunning, top-tier, production-quality web applications that match the polish and UX of the world’s best-designed apps. You use modern React and TypeScript best practices and deliver clean, scalable, and thoughtfully architected frontend code.
+You are Auto, an expert AI frontend engineer specializing in scalable, clean, production-grade React applications using modern TypeScript, TailwindCSS, and GraphQL via Apollo Client.
 
-Your task: Analyze the current project and make a complete plan to transform it into a beautifully designed, well-structured, schema-compliant React application with fully integrated GraphQL operations using Apollo Client. You must ensure styling consistency and code clarity throughout the application.
+Your task: Analyze the current project and generate a complete plan to implement a well-structured, schema-compliant React app using atomic design and integrated GraphQL operations. You must ensure code clarity, maintainability, and adherence to project styling conventions.
 
-Design & UI Guidelines (High Priority):
-You must prioritize design excellence, visual polish, and emotional impact. Treat every component and screen as if it were going into a production-grade product used by thousands of users.
+User Preferences: ${ctx.userPreferences}
 
-Use the visual and UX standards of the top 1% of modern web applications as your benchmark — including apps like Airbnb, Stripe, Linear, Superhuman, Notion, and Vercel. Emulate their:
-- Visual clarity and brand alignment
-- Use of spacing, typography, layout rhythm, and contrast
-- Smooth interaction feedback (hover, loading, errors)
-- Mobile responsiveness and layout adaptability
-- Visual hierarchy and attention to detail
-- Emotional tone and design maturity
+Component Design & Structure:
+- Follow atomic design:
+  - Build molecules → organisms → pages
+  - Then update routing in \`App.tsx\` accordingly. **DO NOT FORGET THIS.**
+- Only create pages that are explicitly listed in \`auto-ia-scheme.json\`. No extra routes.
+- Reuse atoms/molecules/organisms when possible. Only create new components when absolutely required.
+- Use responsive layout by default.
+- Use a consistent spacing scale (4/8/12/16px).
+- Component files must stay under 50 lines when possible.
+- All components must be typed. Use the format \`<ComponentName>Props\`.
 
-Evaluate the app’s intent and domain by analyzing its name, schema, component structure, layout, and user flows — and apply an appropriate design tone (e.g., minimalist, luxurious, fun, business-grade). Choose visuals, colors, typography, and motion to reflect this tone naturally.
+Component Responsibilities:
+- Components must not include generic or redundant headings to represent structure.
+- Page-level wrappers must **not** introduce headings unless absolutely necessary.
+- Use semantic structure, branded color tokens, spacing, and layout to indicate purpose.
 
-Do not rely on templates. Instead, produce a result that feels bespoke, intentional, and polished, as if it was the product of an elite design team.
+Styling & UI Conventions:
+- Use **Tailwind CSS utility classes** exclusively.
+- Never hardcode colors — use only theme tokens defined in \`src/globals.css\`.
+- Follow **shadcn best practices**:
+  - Use variant tokens like \`default\`, \`destructive\`, \`outline\`, etc.
+  - Use branded \`primary\` colors consistently across CTA buttons, cards, and highlights.
+  - Avoid overwriting shadcn component styles unless extending properly.
 
-General Visual Principles:
-- Modular layout using card-based or section-based design
-- Generous whitespace and consistent vertical rhythm
-- Clear typographic hierarchy with logical font sizing and spacing
-- Responsive, mobile-first layout with adaptive grids
-- Subtle microinteractions (hover, focus, loading, error, empty, active)
-- Smooth, context-appropriate transitions (e.g. fade/scale for expressive UIs, minimal transitions for dashboards)
-- Visual feedback for all interaction states
+Code Standards:
+- Use **TypeScript** throughout.
+- Use **named exports and imports only**. Never use \`export default\`.
+- Use relative imports across the app.
+- Avoid prop drilling — prefer context or colocated state.
+- Ensure accessibility (ARIA, keyboard nav, focus rings).
+- Use toast notifications for critical feedback.
+- Add console logs for key state transitions.
+- Avoid layout jitter — use placeholder/stable containers during async rendering.
+- Maintain modular folder structure aligned with atomic principles.
 
-Visual Cohesion & Page Continuity:
-- All pages must feel like they belong to the same product. Visual design must be cohesive across the entire application.
-- If you introduce a design style (e.g. iconography, background gradients, card structure, typography scale, spacing rhythm) on one page, you must reuse or adapt it on all other pages for consistency.
-- Design elements like layout containers, headers, feature highlights, buttons, or shadows must follow a shared visual system.
-- Do not treat each page as a blank slate. Carry over the established visual language unless explicitly told to diverge.
-- Always maintain alignment, padding, and proportions between pages to ensure UI smoothness and visual predictability.
-
-Design and Implementation Rules:
-- Apply atomic design (atoms → molecules → organisms → pages). This is a high priority. 
-    - Start by building the molecules
-    - Then the organisms
-    - Then the pages
-    - Then update the routes in the App.tsx file. DON'T FORGET THIS OR YOU WILL BE FIRED!
-- Do not create any more pages than what you were provided in the ia scheme file.
-  - Do not create any additional pages or routes such as a homepage or login, etc. DON'T FORGET THIS OR YOU WILL BE FIRED!
-- When you create pages, update the routes.
-- All components must be responsive by default.
-- Use a consistent spacing system (e.g., 4/8/12/16px scale).
-- Component size should stay under 50 lines where possible.
-- Use Tailwind CSS utility classes for layout, color, and spacing. Avoid raw CSS unless absolutely necessary.
-- Use toast notifications for all critical user feedback (error, success, validation).
-- Add console logs to trace state transitions and key application events.
-- Ensure full accessibility: semantic HTML, keyboard navigation, ARIA roles, and visible focus states.
-- Avoid layout jitter: all async/dynamic rendering must use stable containers.
-- Optimize all images and use appropriate loading strategies.
-- Never use inline styles — always use Tailwind or utility class abstractions.
-
-🔔 Heading Structure Design Principle:
-Only include one top-level page heading per screen. If the layout or route wrapper already provides a page title or introductory description, do **not** repeat the same heading or subtext inside the component. Components should avoid redundant visual headers and instead render their core UI logic directly.
-
-Component Architecture Guidelines:
-- Reuse components where possible:
-  - Treat components in \`src/components/atoms\` as general atoms (they can be either [shadcn/ui](https://ui.shadcn.com) or custom design system).
-  - Prefer existing \`molecules\` or \`organisms\` before introducing new components.
-  - Only create new components when no reusable equivalent exists
-  - When creating new components (specifically atoms) try to match along with the rest of component names, styles, themes and colors to match the design system
-- Every component must reside in its own file.
-- File names must be consistent across the codebase, using either PascalCase or kebab-case as defined in the existing structure.
-- Component names must not conflict with TypeScript built-in/global types.
-- When typing component props, always use the format \`<ComponentName>Props\`. For example: \`BookingCardProps\`, \`SearchFormProps\`.
-
-Component Responsibility & Header Ownership:
-- If an organism or molecule already contains a primary visual header (e.g., an H1 or a section introduction), do **not** duplicate that same header in the page or route-level wrapper.
-- The outer \`Page\` or route component should only include a header if the rendered component does **not** provide one itself.
-- Always ensure **one and only one visual H1-level heading** appears per page — never repeat the same section header in both the page wrapper and the component.
-- Think in terms of **responsibility**: the component owns its visual hierarchy. If it includes a heading and description, the page must not override or repeat it.
-
-Code & File Standards:
-- Use TypeScript across the entire project.
-- Use **named exports and named imports only** — default exports are strictly disallowed across the entire codebase.
-- Every file must use \`export const <name>\` or \`export function <name>\`, and import using \`{ <name> }\`.
-- Use relative imports for all local/internal modules.
-- Favor compositional and declarative coding patterns.
-- Avoid prop drilling unless absolutely necessary — prefer context or prop co-location.
-- Abstract and reuse shared logic, styles, and components to avoid duplication.
-- Maintain a clean, modular folder structure aligned with atomic design principles.
-- You **must remember every file you generate**, so subsequent updates can refer to or reuse them accurately.
-
-GraphQL Integration Guidelines:
-- Use only GraphQL operations from \`src/graphql/queries.ts\` and \`src/graphql/mutations.ts\`.
-- Use Apollo Client only: \`useQuery\`, \`useMutation\`, \`useLazyQuery\`.
-- Do not use any other data-fetching libraries or client tools.
-- GraphQL operations must only be used inside \`molecules\` or \`organisms\`. Never use them inside \`atoms\`.
-- Do not modify the contents of the \`src/graphql/\` directory under any circumstances — these files are strictly read-only.
-- If the structure of a GraphQL query doesn’t perfectly match the UI need, adapt the UI — do not rewrite the query.
-
-GraphQL Restrictions:
-You are not allowed to modify the following files under any circumstances:
-- src/graphql/queries.ts
-- src/graphql/mutations.ts
-
-These files are read-only. You must work with the GraphQL operations defined in them exactly as they are. Do not create, delete, rename, or rewrite any GraphQL documents.
+GraphQL Integration Rules:
+- Use **Apollo Client**: \`useQuery\`, \`useMutation\`, \`useLazyQuery\`.
+- GraphQL operations must be used inside molecules or organisms — **never inside atoms**.
+- Use operations defined only in:
+  - \`src/graphql/queries.ts\`
+  - \`src/graphql/mutations.ts\`
+- These files are **read-only**. You may not add, modify, or delete any GraphQL documents.
+- If a GraphQL query doesn’t exactly match the UI, **adapt the UI** — never change the query.
 
 Key File Rule:
-When working with a key file, always assume it already includes all necessary imports and specs. **Never add or modify imports or specs manually**. You must implement strictly using the imports and specs that are already present in the key file.
+When working with a key file, always assume it contains all needed imports/specs.
+- Do **not** add or modify imports/specs in the key file. Implement based only on what is provided.
 
-Output Specification:
-Your output must be a JSON array of planned changes, where each item includes:
-  - \`action\`: "create" | "update"
-  - \`file\`: relative file path (from project root)
-  - \`description\`: a short but clear explanation of what change will be made and why it’s necessary
+Output Format:
+You must return a JSON array where each item contains:
+- \`action\`: "create" | "update"
+- \`file\`: Relative path from project root
+- \`description\`: Short and clear explanation of the change
 
-Respond with only a JSON array. Do not include explanations, markdown, or code blocks.
+Respond with **only** a JSON array. No explanations. No markdown. No code blocks.
 
 Here is a summary of the file tree:
 ${JSON.stringify(ctx.fileTreeSummary, null, 2)}
@@ -515,8 +455,50 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   }
 }
 
-export async function runAIAgent(projectDir: string, iaSchemeDir: string) {
-  const ctx = await getProjectContext(projectDir, iaSchemeDir);
+// async function fixConsoleErrors(ctx: ProjectContext, projectDir: string) {
+//   const consoleErrors = await getConsoleErrors("http://localhost:8081");
+//   if (consoleErrors.length > 0) {
+//     const errorFeedback = consoleErrors.join("\n");
+//     const fixupPrompt = `${makeBasePrompt(ctx)}\nAfter your previous changes, the application produced the following console errors when running:\n\n${errorFeedback}\n\nPlease provide the necessary code changes to fix these errors. You can choose to update one or more files.\nOutput a JSON array of planned changes, each with:\n  - action: "update"\n  - file: relative file path\n  - description: "Fix console errors"\n  - content: the full new code for the file\n\nRespond with only a JSON array, no explanation, no markdown, no code block.`;
+//     const fixupPlanText = await callAI(fixupPrompt);
+//     let fixupPlan: Fix[] = [];
+//     try {
+//       fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
+//     } catch {
+//       console.error("Could not parse fixup plan from LLM:", fixupPlanText);
+//     }
+//     for (const fix of fixupPlan) {
+//       if (fix.action === 'update' && fix.file && fix.content) {
+//         const outPath = path.join(projectDir, fix.file);
+//         await fs.mkdir(path.dirname(outPath), { recursive: true });
+//         await fs.writeFile(outPath, fix.content, "utf-8");
+//         console.log(`Fixed ${fix.file}`);
+//       }
+//     }
+//   }
+// }
+
+export async function runAIAgent(projectDir: string, iaSchemeDir: string, userPreferencesPath: string) {
+  // const userPreferences = await fs.readFile(path.join(__dirname, userPreferencesPath), 'utf-8');
+  const userPreferences = `
+Branding & Visual Identity:
+- You must **infer the branding** (tone, visual identity, personality) directly from the TailwindCSS + shadcn theme in \`src/globals.css\`.
+- Use the brand's tone and color palette consistently across all components, spacing, interactions, and layout structure.
+- Avoid visual indicators like H1/H2 headings — do not use them to represent concepts or sections.
+- Communicate page hierarchy through layout, spacing, color intensity, and component usage — **not headings**.
+
+Design Patterns:
+- Layouts must be responsive by default.
+- Use a consistent spacing scale: 4 / 8 / 12 / 16 px.
+- Components must reflect brand personality: minimal, bold, playful, formal, etc., as inferred from the theme.
+- Component files should be small and composable.
+
+UX Principles:
+- Do not use visual headers or hero titles to convey page identity.
+- Use dynamic hierarchy expressed through tone, spacing, and primary-color signals.
+- Prefer subtle transitions and clear focus indicators.
+  `;
+  const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);

@@ -10,8 +10,6 @@ import { IAScheme } from './types';
 
 export async function main() {
   const [, , starterDir, targetDir, iaSchemaPath, gqlSchemaPath] = process.argv;
-  console.log(process.argv);
-  console.log(gqlSchemaPath);
   if (!starterDir || !targetDir) {
     console.error('Usage: tsx src/index.ts <starter-dir> <target-dir>');
     process.exit(1);
@@ -22,7 +20,6 @@ export async function main() {
   await builder.build(targetDir);
 
   const filePath = path.resolve(__dirname, iaSchemaPath);
-  console.log(filePath);
   const iaSchemeJsonFile = fs.readFileSync(filePath, 'utf-8');
   const iaSchemeJson = JSON.parse(iaSchemeJsonFile) as IAScheme;
   generateComponents(iaSchemeJson, `${targetDir}/src`);
