@@ -778,6 +778,9 @@ importers:
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
+      graphql:
+        specifier: ^16.11.0
+        version: 16.11.0
       graphql-tag:
         specifier: ^2.12.6
         version: 2.12.6(graphql@16.11.0)
