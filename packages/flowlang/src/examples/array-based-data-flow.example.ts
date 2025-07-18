@@ -27,7 +27,7 @@ flow('E-commerce Order Flow', () => {
   querySlice('Order dashboard').server(() => {
     data([
       // From event-sourced projection
-      source().state('OrderSummary').fromProjection('OrderSummaryProjection'),
+      source().state('OrderSummary').fromProjection('OrderSummaryProjection', 'id'),
 
       // From database with query
       source()

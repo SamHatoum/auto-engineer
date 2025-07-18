@@ -10,7 +10,6 @@ import {SpecsSchemaType} from '@auto-engineer/flowlang';
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
 import {execa} from 'execa';
-import { log } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

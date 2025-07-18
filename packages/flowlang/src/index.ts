@@ -95,6 +95,10 @@ import {
   SliceSchema,
   SpecsSchema,
   StateExampleSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+  MessageSchema,
+  CommandSliceSchema
 } from './schema';
 export type AppSchema = z.infer<typeof ImportedAppSchema>;
 
@@ -106,3 +110,7 @@ export type Slice = z.infer<typeof SliceSchema>;
 export type SpecsSchemaType = z.infer<typeof SpecsSchema>;
 export type StateExample = z.infer<typeof StateExampleSchema>;
 export type ErrorExample = z.infer<typeof ErrorExampleSchema>;
+export type QuerySlice = z.infer<typeof QuerySliceSchema>;
+export type ReactSlice = z.infer<typeof ReactSliceSchema>;
+export type CommandSlice = z.infer<typeof CommandSliceSchema>;
+export type Message = z.infer<typeof MessageSchema>;

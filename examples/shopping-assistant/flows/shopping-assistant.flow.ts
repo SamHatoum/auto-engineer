@@ -228,7 +228,7 @@ flow('Seasonal Assistant', () => {
       });
     })
     .server(() => {
-      data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection')]);
+      data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection', 'sessionId')]);
 
       specs('Suggested items are available for viewing', () => {
         when(

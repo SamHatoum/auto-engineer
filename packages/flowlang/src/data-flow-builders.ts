@@ -226,10 +226,10 @@ export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
     this.target = { type: 'State', name };
   }
 
-  fromProjection(name: string, idField?: string): ChainableSource {
+  fromProjection(name: string, idField: string): ChainableSource {
     const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
-      origin: { type: 'projection', name, ...(idField != null && idField !== '' && { idField }) },
+      origin: { type: 'projection', name, idField },
       __type: 'source' as const,
       ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };

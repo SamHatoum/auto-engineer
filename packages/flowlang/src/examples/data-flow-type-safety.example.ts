@@ -27,7 +27,7 @@ flow('Type Safety Examples', () => {
   querySlice('Get order history').server(() => {
     // ✅ Valid - query slices can have sources
     data([
-      source().state('OrderHistory').fromProjection('OrderHistoryProjection'),
+      source().state('OrderHistory').fromProjection('OrderHistoryProjection', 'id'),
       source().state('CustomerProfile').fromDatabase('customers'),
     ]);
 

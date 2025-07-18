@@ -62,14 +62,14 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.13.1",
   "resolutions": {
     "punycode": "^2.3.1"
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "link:packages/ai-gateway",
     "@auto-engineer/flowlang": "link:packages/flowlang",
-    "dotenv": "^16.4.5",
-    "axios": "^1.7.9"
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.5"
   }
 }

@@ -1,11 +1,21 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { commandSlice, reactSlice } from './fluent-builder';
 import { createIntegration } from './types';
+import { startFlow, clearCurrentFlow } from './flow-context';
 
 // Test integrations
 const MailChimp = createIntegration('mailchimp', 'MailChimp');
 const Twilio = createIntegration('twilio', 'Twilio');
 
 describe('via method', () => {
+  beforeEach(() => {
+    startFlow('test-flow');
+  });
+
+  afterEach(() => {
+    clearCurrentFlow();
+  });
+
   it('should accept a single integration', () => {
     const slice = commandSlice('test').via(MailChimp);
 

@@ -1,90 +1,261 @@
-import type { FlowSchema } from './flow-registry';
+import type {DataSinkItem, DataSourceItem, DataItem, DataSink, DataSource} from './types';
+import {Flow, Slice} from "./index";
 
-let currentFlow: FlowSchema | null = null;
-let currentSpecTarget: 'client' | 'server' | null = null;
-let currentShouldList: string[] | null = null;
-
-export function startFlow(name: string): FlowSchema {
-  currentFlow = { name, slices: [] };
-  return currentFlow;
+interface FlowContext {
+  flow: Flow;
+  currentSliceIndex: number | null;
+  currentSpecTarget: 'client' | 'server' | null;
+  currentSpecIndex: number | null;
 }
 
-export function getCurrentFlow(): FlowSchema | null {
-  return currentFlow;
+let context: FlowContext | null = null;
+
+export function startFlow(name: string): Flow {
+  const flow: Flow = {
+    name,
+    slices: []
+  };
+  context = {
+    flow,
+    currentSliceIndex: null,
+    currentSpecTarget: null,
+    currentSpecIndex: null
+  };
+  return flow;
+}
+
+export function getCurrentFlow(): Flow | null {
+  return context?.flow ?? null;
 }
 
 export function clearCurrentFlow(): void {
-  currentFlow = null;
+  context = null;
 }
 
-export function getCurrentSlice(): Record<string, unknown> | null {
-  const flow = getCurrentFlow();
-  if (!flow) return null;
-  if (flow.slices.length === 0) {
-    const newSlice = { type: 'command', name: '', client: {}, server: {} };
-    flow.slices.push(newSlice);
+export function getCurrentSlice(): Slice | null {
+  if (!context || context.currentSliceIndex === null) return null;
+  return context.flow.slices[context.currentSliceIndex] ?? null;
+}
+
+export function addSlice(slice: Slice): void {
+  if (!context) throw new Error('No active flow');
+  context.flow.slices.push(slice);
+  context.currentSliceIndex = context.flow.slices.length - 1;
+}
+
+export function startClientBlock(description: string = ''): void {
+  if (!context) throw new Error('No active flow context');
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  if (slice.type === 'command' || slice.type === 'query') {
+    slice.client = {
+      description,
+      specs: []
+    };
+    context.currentSpecTarget = 'client';
   }
-  return flow.slices[flow.slices.length - 1];
-}
-
-export function startClientBlock(slice: Record<string, unknown>, description: string): void {
-  slice.client = { specs: [] };
-  slice.clientDescription = description;
-  currentSpecTarget = 'client';
 }
 
 export function endClientBlock(): void {
-  currentSpecTarget = null;
+  if (context) {
+    context.currentSpecTarget = null;
+  }
 }
 
-export function startServerBlock(slice: Record<string, unknown>, description: string): void {
-  slice.server = { specs: [] };
-  slice.serverDescription = description;
-  currentSpecTarget = 'server';
+export function startServerBlock(description: string = ''): void {
+  if (!context) throw new Error('No active flow context');
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  if (slice.type === 'command') {
+    slice.server = {
+      description,
+      gwt: [],
+      data: undefined
+    };
+  } else if (slice.type === 'query') {
+    slice.server = {
+      description,
+      gwt: [],
+      data: undefined
+    };
+  } else if (slice.type === 'react') {
+    slice.server = {
+      description,
+      gwt: [],
+      data: undefined
+    };
+  }
+
+  context.currentSpecTarget = 'server';
 }
 
 export function endServerBlock(): void {
-  currentSpecTarget = null;
+  if (context) {
+    context.currentSpecTarget = null;
+  }
 }
 
 export function pushSpec(description: string): void {
+  if (!context || !context.currentSpecTarget) throw new Error('No active spec target');
   const slice = getCurrentSlice();
-  const target = currentSpecTarget;
-  if (!target) throw new Error('No active spec target');
   if (!slice) throw new Error('No active slice');
 
-  const sliceTarget = slice[target] as Record<string, unknown>;
-  if (typeof sliceTarget !== 'object' || sliceTarget === null) {
-    slice[target] = { specs: [] };
+  if (context.currentSpecTarget === 'client' && (slice.type === 'command' || slice.type === 'query')) {
+    slice.client.specs.push(description);
   }
-
-  const targetWithSpecs = slice[target] as { specs: Array<{ description: string; should: string[] }> };
-  targetWithSpecs.specs.push({ description, should: [] });
-  currentShouldList = targetWithSpecs.specs[targetWithSpecs.specs.length - 1].should;
 }
 
 export function startShouldBlock(description?: string): void {
-  if (typeof description === 'string' && currentShouldList !== null) {
-    currentShouldList.push(description);
+  if ((description != null) && context?.currentSpecTarget === 'client') {
+    const slice = getCurrentSlice();
+    if (slice && (slice.type === 'command' || slice.type === 'query')) {
+      slice.client.specs.push(description);
+    }
   }
 }
 
 export function endShouldBlock(): void {
-  currentShouldList = null;
+  // No-op for compatibility
 }
 
-export function recordWhen(command: Record<string, unknown>) {
+export function startGwtSpec(): void {
+  if (!context || !context.currentSpecTarget) throw new Error('No active spec target');
   const slice = getCurrentSlice();
-  const server = slice?.server as Record<string, unknown>;
-  const specs = server?.specs as Array<Record<string, unknown>>;
-  if (!Array.isArray(specs) || specs.length === 0) throw new Error('No active server spec to attach `when`');
-  specs[specs.length - 1].when = command;
+  if (!slice) throw new Error('No active slice');
+
+  if (context.currentSpecTarget === 'server') {
+    // Initialize a new GWT spec based on slice type
+    if (slice.type === 'command') {
+      slice.server.gwt.push({
+        when: { commandRef: '', exampleData: {} },
+        then: []
+      });
+    } else if (slice.type === 'query') {
+      slice.server.gwt.push({
+        given: [],
+        then: []
+      });
+    } else if (slice.type === 'react') {
+      slice.server.gwt.push({
+        when: [],
+        then: []
+      });
+    }
+    context.currentSpecIndex = slice.server.gwt.length - 1;
+  }
 }
 
-export function recordThen(...events: Record<string, unknown>[]) {
+export function recordGiven(events: Array<{ type: string; data: Record<string, unknown> }>): void {
+  if (!context || context.currentSpecIndex === null) throw new Error('No active GWT spec');
   const slice = getCurrentSlice();
-  const server = slice?.server as Record<string, unknown>;
-  const specs = server?.specs as Array<Record<string, unknown>>;
-  if (!Array.isArray(specs) || specs.length === 0) throw new Error('No active server spec to attach `then`');
-  specs[specs.length - 1].then = events;
+  if (!slice || slice.type !== 'command') throw new Error('Given can only be used in command slices');
+
+  const spec = slice.server.gwt[context.currentSpecIndex];
+  if ('given' in spec) {
+    spec.given = events.map(event => ({
+      eventRef: event.type,
+      exampleData: event.data
+    }));
+  }
+}
+
+export function recordWhen(command: { type: string; data: Record<string, unknown> }): void {
+  if (!context || context.currentSpecIndex === null) throw new Error('No active GWT spec');
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  if (slice.type === 'command') {
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    spec.when = {
+      commandRef: command.type,
+      exampleData: command.data
+    };
+  } else if (slice.type === 'react') {
+    // For react slices, when is an array of events
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    spec.when = [{
+      eventRef: command.type,
+      exampleData: command.data
+    }];
+  }
+}
+
+export function recordWhenEvents(events: Array<{ type: string; data: Record<string, unknown> }>): void {
+  if (!context || context.currentSpecIndex === null) throw new Error('No active GWT spec');
+  const slice = getCurrentSlice();
+  if (!slice || slice.type !== 'react') throw new Error('When events can only be used in react slices');
+
+  const spec = slice.server.gwt[context.currentSpecIndex];
+  spec.when = events.map(event => ({
+    eventRef: event.type,
+    exampleData: event.data
+  }));
+}
+
+export function recordThen(...items: Array<{ type: string; data: Record<string, unknown> }>): void {
+  if (!context || context.currentSpecIndex === null) throw new Error('No active GWT spec');
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  if (slice.type === 'command') {
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    spec.then = items.map(item => ({
+      eventRef: item.type,
+      exampleData: item.data
+    }));
+  } else if (slice.type === 'query') {
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    spec.then = items.map(item => ({
+      stateRef: item.type,
+      exampleData: item.data
+    }));
+  } else if (slice.type === 'react') {
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    spec.then = items.map(item => ({
+      commandRef: item.type,
+      exampleData: item.data
+    }));
+  }
+}
+
+export function setQueryRequest(request: string): void {
+  const slice = getCurrentSlice();
+  if (!slice || slice.type !== 'query') throw new Error('Request can only be set on query slices');
+  slice.request = request;
+}
+
+export function setSliceData(data: DataItem[]): void {
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  if (slice.server === undefined) {
+    throw new Error('Data can only be set in server block');
+  }
+
+  // Separate sinks and sources
+  const sinks = data.filter((item): item is DataSinkItem => item.__type === 'sink');
+  const sources = data.filter((item): item is DataSourceItem => item.__type === 'source');
+
+  if (slice.type === 'command') {
+    // Command slices only have sinks in their data
+    slice.server.data = sinks.length > 0 ? sinks : undefined;
+  } else if (slice.type === 'query') {
+    // Query slices only have sources in their data
+    slice.server.data = sources.length > 0 ? sources : undefined;
+  } else if (slice.type === 'react') {
+    slice.server.data =
+        data.length > 0 ? stripTypeDiscriminator(data) : undefined;
+  }
+}
+
+function stripTypeDiscriminator(
+    items: DataItem[]
+): (DataSink | DataSource)[] {
+  return items.map((item) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { __type, ...rest } = item;
+    return rest as DataSink | DataSource;
+  });
 }

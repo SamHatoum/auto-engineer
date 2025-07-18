@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { convertFlowToJson } from '../src/getFlows.js';
 import { resolve, dirname, relative, join } from 'path';
 import { existsSync, writeFileSync } from 'fs';
 import { spawn } from 'child_process';

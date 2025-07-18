@@ -1,16 +1,15 @@
-export interface FlowSchema {
-  name: string;
-  slices: Record<string, unknown>[];
-}
+import { FlowSchema } from './schema';
+import {Flow} from "./index";
 
 class FlowRegistry {
-  private flows: FlowSchema[] = [];
+  private flows: Flow[] = [];
 
-  register(flow: FlowSchema) {
-    this.flows.push(flow);
+  register(flow: Flow) {
+    const validated = FlowSchema.parse(flow);
+    this.flows.push(validated);
   }
 
-  getAllFlows(): FlowSchema[] {
+  getAllFlows(): Flow[] {
     return [...this.flows];
   }
 

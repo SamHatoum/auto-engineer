@@ -1,6 +1,14 @@
 {
   "name": "shopping-assistant",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm run build:flow-schema",
+    "build:flow-schema": "tsx scripts/export-schema.ts"
+  },
   "dependencies": {
     "@auto-engineer/flowlang": "file:../auto-engineer/packages/flowlang"
+  },
+  "devDependencies": {
+    "tsx": "^3.12.7"
   }
 }
