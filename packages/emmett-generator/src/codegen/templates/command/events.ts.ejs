@@ -6,7 +6,7 @@
         '<%= event.type %>',
         {
         <% for (const field of event.fields) { -%>
-            <%= field.name %>: <%= field.tsType %>;
+            <%- field.name %>: <%- field.tsType %>;
         <% } -%>
         }
         >;

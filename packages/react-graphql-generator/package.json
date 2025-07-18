@@ -19,7 +19,11 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "workspace:*",
+    "ejs": "^3.1.10",
     "graphql": "^16.11.0",
     "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5"
   }
 }

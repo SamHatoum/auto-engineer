@@ -1,12 +1,13 @@
 import type { Integration } from './types';
 import {
-  getCurrentFlow,
-  getCurrentSlice,
+  addSlice,
   startClientBlock,
   endClientBlock,
   startServerBlock,
   endServerBlock,
 } from './flow-context';
+import {CommandSlice, QuerySlice, ReactSlice} from "./index";
+import { print, ASTNode } from 'graphql';
 
 export interface FluentCommandSliceBuilder {
   stream(name: string): FluentCommandSliceBuilder;
@@ -34,27 +35,31 @@ export interface FluentReactionSliceBuilder {
 }
 
 class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
+  private slice: CommandSlice;
+
   constructor(name: string) {
-    getCurrentFlow()?.slices.push({ type: 'command', name });
+    this.slice = {
+      type: 'command',
+      name,
+      client: { description: '', specs: [] },
+      server: { description: '', gwt: [], data: undefined }
+    };
+    addSlice(this.slice);
   }
 
   stream(name: string): FluentCommandSliceBuilder {
-    const slice = getCurrentSlice();
-    if (slice) {
-      slice.stream = name;
-    }
+    this.slice.stream = name;
     return this;
   }
 
   client(fn: () => void): FluentCommandSliceBuilder;
   client(description: string, fn: () => void): FluentCommandSliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentCommandSliceBuilder {
-    const slice = getCurrentSlice();
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback && slice) {
-      startClientBlock(slice, description);
+    if (callback) {
+      startClientBlock(description);
       callback();
       endClientBlock();
     }
@@ -65,12 +70,11 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   server(fn: () => void): FluentCommandSliceBuilder;
   server(description: string, fn: () => void): FluentCommandSliceBuilder;
   server(descriptionOrFn: string | (() => void), fn?: () => void): FluentCommandSliceBuilder {
-    const slice = getCurrentSlice();
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback && slice) {
-      startServerBlock(slice, description);
+    if (callback) {
+      startServerBlock(description);
       callback();
       endServerBlock();
     }
@@ -79,36 +83,39 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   }
 
   via(integration: Integration | Integration[]): FluentCommandSliceBuilder {
-    const currentSlice = getCurrentSlice();
-    if (currentSlice) {
-      currentSlice.integration = Array.isArray(integration) ? integration.map((i) => i.name) : [integration.name];
-    }
+    const integrations = Array.isArray(integration) ? integration : [integration];
+    this.slice.via = integrations.map(i => i.name);
     return this;
   }
 
   retries(count: number): FluentCommandSliceBuilder {
-    const slice = getCurrentSlice();
-    if (slice) {
-      slice.retries = count;
-    }
+    // Store retries in additionalInstructions or metadata
+    this.slice.additionalInstructions = `retries: ${count}`;
     return this;
   }
 }
 
 class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
+  private slice: QuerySlice;
+
   constructor(name: string) {
-    getCurrentFlow()?.slices.push({ type: 'query', name });
+    this.slice = {
+      type: 'query',
+      name,
+      client: { description: '', specs: [] },
+      server: { description: '', gwt: [], data: undefined }
+    };
+    addSlice(this.slice);
   }
 
   client(fn: () => void): FluentQuerySliceBuilder;
   client(description: string, fn: () => void): FluentQuerySliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentQuerySliceBuilder {
-    const slice = getCurrentSlice();
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback && slice) {
-      startClientBlock(slice, description);
+    if (callback) {
+      startClientBlock(description);
       callback();
       endClientBlock();
     }
@@ -119,12 +126,11 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   server(fn: () => void): FluentQuerySliceBuilder;
   server(description: string, fn: () => void): FluentQuerySliceBuilder;
   server(descriptionOrFn: string | (() => void), fn?: () => void): FluentQuerySliceBuilder {
-    const slice = getCurrentSlice();
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback && slice) {
-      startServerBlock(slice, description);
+    if (callback) {
+      startServerBlock(description);
       callback();
       endServerBlock();
     }
@@ -133,28 +139,37 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   }
 
   request(query: unknown): FluentQuerySliceBuilder {
-    const slice = getCurrentSlice();
-    if (slice) {
-      slice.request = query;
+    if (typeof query === 'string') {
+      this.slice.request = query;
+    } else if (query && typeof query === 'object' && (query as any).kind === 'Document') {
+      this.slice.request = print(<ASTNode>query); // ✅ convert AST to SDL string
+    } else {
+      throw new Error('Invalid GraphQL query format');
     }
     return this;
   }
 }
 
 class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
+  private slice: ReactSlice;
+
   constructor(name: string) {
-    getCurrentFlow()?.slices.push({ type: 'reaction', name });
+    this.slice = {
+      type: 'react',
+      name,
+      server: { gwt: [], data: undefined }
+    };
+    addSlice(this.slice);
   }
 
   server(fn: () => void): FluentReactionSliceBuilder;
   server(description: string, fn: () => void): FluentReactionSliceBuilder;
   server(descriptionOrFn: string | (() => void), fn?: () => void): FluentReactionSliceBuilder {
-    const slice = getCurrentSlice();
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    if (callback && slice) {
-      startServerBlock(slice, description);
+    if (callback) {
+      startServerBlock(description);
       callback();
       endServerBlock();
     }
@@ -163,18 +178,14 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   }
 
   via(integration: Integration | Integration[]): FluentReactionSliceBuilder {
-    const slice = getCurrentSlice();
-    if (slice) {
-      slice.integration = Array.isArray(integration) ? integration.map((i) => i.name) : [integration.name];
-    }
+    const integrations = Array.isArray(integration) ? integration : [integration];
+    this.slice.via = integrations.map(i => i.name);
     return this;
   }
 
   retries(count: number): FluentReactionSliceBuilder {
-    const slice = getCurrentSlice();
-    if (slice) {
-      slice.retries = count;
-    }
+    // Store retries in additionalInstructions or metadata
+    this.slice.additionalInstructions = `retries: ${count}`;
     return this;
   }
 }

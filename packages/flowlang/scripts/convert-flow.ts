@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { convertFlowToJson } from '../src/getFlows.js';
 import { resolve, dirname, relative, join } from 'path';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, statSync } from 'fs';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
@@ -9,7 +8,7 @@ const runInContext = (flowPath: string, projectRoot: string): Promise<string> =>
   return new Promise((resolve, reject) => {
     const __dirname = dirname(fileURLToPath(import.meta.url));
     const helperScript = join(__dirname, 'convert-flow-helper.ts');
-    
+
     const child = spawn('npx', ['tsx', helperScript, flowPath], {
       cwd: projectRoot,
       stdio: ['inherit', 'pipe', 'pipe']
@@ -38,9 +37,9 @@ const runInContext = (flowPath: string, projectRoot: string): Promise<string> =>
 
 const main = async () => {
   const args = process.argv.slice(2);
-  
+
   if (args.length === 0) {
-    console.error('Usage: pnpm convert-flow <input-file.flow.ts> [output-file.json]');
+    console.error('Usage: pnpm convert-flow <input-file.flow.ts> [output-file-or-dir]');
     process.exit(1);
   }
 
@@ -54,34 +53,42 @@ const main = async () => {
 
   try {
     const inputPath = resolve(inputFile);
-    
+
     if (!existsSync(inputPath)) {
       console.error(`Error: File not found: ${inputPath}`);
       process.exit(1);
     }
-    
-    const outputPath = outputFile ? resolve(outputFile) : undefined;
-    
+
+    let outputPath: string | undefined;
+
+    if (outputFile) {
+      const resolved = resolve(outputFile);
+      if (existsSync(resolved) && statSync(resolved).isDirectory()) {
+        outputPath = join(resolved, 'schema.json');
+      } else {
+        outputPath = resolved;
+      }
+    }
+
     console.log(`Converting flow: ${inputPath}`);
-    
-    // Find the project root
+
     const flowDir = dirname(inputPath);
     let projectRoot = flowDir;
     while (projectRoot !== '/' && !existsSync(`${projectRoot}/package.json`)) {
       projectRoot = dirname(projectRoot);
     }
-    
+
     if (!existsSync(`${projectRoot}/package.json`)) {
       console.error('Error: Could not find package.json in flow directory or its parents');
       process.exit(1);
     }
-    
+
     // Get relative path from project root
     const relativeFlowPath = relative(projectRoot, inputPath);
-    
+
     // Run the conversion in the correct context
     const json = await runInContext(relativeFlowPath, projectRoot);
-    
+
     if (outputPath) {
       writeFileSync(outputPath, json);
       console.log(`✓ Flow converted successfully to: ${outputPath}`);

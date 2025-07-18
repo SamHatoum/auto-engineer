@@ -18,7 +18,7 @@ export class <%= viewType %> {
     const tsType = field.type ?? 'string';
 %>
 @Field(() => <%= gqlType %>)
-<%= field.name %>!: <%= tsType %>;
+<%= field.name %>!: <%- tsType %>;
 <%   }
 %>
 [key: string]: unknown;
@@ -35,7 +35,7 @@ async <%= queryName %>(
 <%     for (let i = 0; i < parsedRequest.args.length; i++) {
     const arg = parsedRequest.args[i];
     const gqlType = graphqlType(arg.tsType);
-%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%= arg.tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
+%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%- arg.tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
 <%     }
 } %>
 ): Promise<<%= viewType %>[]> {

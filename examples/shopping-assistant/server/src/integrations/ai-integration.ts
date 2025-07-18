@@ -34,5 +34,12 @@ export const AI: Integration<'ai'> = {
   }
 };
 
-console.log('Starting MCP server');
-await startServer();
+async function startMCPServer() {
+  console.log('Starting MCP server');
+  await startServer();
+}
+
+// Only start server when running directly (not when imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startMCPServer().catch(console.error);
+}

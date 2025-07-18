@@ -1,248 +1,206 @@
 import fg from 'fast-glob';
-import { pathToFileURL, fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { pathToFileURL } from 'url';
+import { resolve } from 'path';
 import { writeFileSync } from 'fs';
 import { registry } from './flow-registry';
-import { SpecsSchema} from './schema';
+import { SpecsSchema } from './schema';
 import { z } from 'zod';
+import {Flow, Message} from "./index";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const packageRoot = resolve(__dirname, '..');
 
-const flowsToSchema = (flows: unknown): Record<string, unknown> => {
-  // First serialize to handle dates properly
-  const serialized = JSON.stringify(flows, (_key, val) => {
-    if (val instanceof Date) {
-      return val.toISOString();
-    }
-    return val as unknown;
-  });
-  const parsedFlows = JSON.parse(serialized) as Array<{ name: string; slices: any[] }>;
-  
-  // Extract messages from flows
-  const messages = new Map<string, any>();
-  
-  parsedFlows.forEach(flow => {
+const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
+  // Extract messages and integrations from flows
+  const messages = new Map<string, Message>();
+  const integrations = new Map<string, {
+    name: string;
+    description?: string;
+    source: string;
+  }>();
+
+  flows.forEach(flow => {
     flow.slices.forEach(slice => {
-      // Check server specs for when/then messages
-      const serverSpecs = slice.server?.specs || [];
-      serverSpecs.forEach((spec: any) => {
-        if (spec.when) {
-          const message = extractMessage(spec.when, 'command');
-          if (message) {
-            messages.set(message.name, message);
+      // Extract messages from GWT specs
+      if ('server' in slice && slice.server?.gwt !== undefined) {
+        slice.server.gwt.forEach(gwt => {
+          // Process given
+          if ('given' in gwt && gwt.given) {
+            gwt.given.forEach(event => {
+              if (!messages.has(event.eventRef)) {
+                messages.set(event.eventRef, createMessage(event.eventRef, event.exampleData, 'event'));
+              }
+            });
           }
-        }
-        if (spec.then && Array.isArray(spec.then)) {
-          spec.then.forEach((event: any) => {
-            const message = extractMessage(event, 'event');
-            if (message) {
-              messages.set(message.name, message);
+
+          // Process when
+          if ('when' in gwt) {
+            if ('commandRef' in gwt.when) {
+              // Command slice
+              if (!messages.has(gwt.when.commandRef)) {
+                messages.set(gwt.when.commandRef, createMessage(gwt.when.commandRef, gwt.when.exampleData, 'command'));
+              }
+            } else if (Array.isArray(gwt.when)) {
+              // React slice
+              gwt.when.forEach(event => {
+                if (!messages.has(event.eventRef)) {
+                  messages.set(event.eventRef, createMessage(event.eventRef, event.exampleData, 'event'));
+                }
+              });
             }
-          });
-        }
-        if (spec.given && Array.isArray(spec.given)) {
-          spec.given.forEach((event: any) => {
-            const message = extractMessage(event, 'event');
-            if (message) {
-              messages.set(message.name, message);
-            }
-          });
-        }
-      });
+          }
+
+          // Process then
+          if ('then' in gwt && gwt.then !== undefined) {
+            gwt.then.forEach(item => {
+              if ('eventRef' in item) {
+                if (!messages.has(item.eventRef)) {
+                  messages.set(item.eventRef, createMessage(item.eventRef, item.exampleData, 'event'));
+                }
+              } else if ('commandRef' in item) {
+                if (!messages.has(item.commandRef)) {
+                  messages.set(item.commandRef, createMessage(item.commandRef, item.exampleData, 'command'));
+                }
+              } else if ('stateRef' in item) {
+                if (!messages.has(item.stateRef)) {
+                  messages.set(item.stateRef, createMessage(item.stateRef, item.exampleData, 'state'));
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // Extract integrations from data
+      if ('server' in slice && slice.server?.data !== undefined) {
+        slice.server.data.forEach((dataItem) => {
+          if ('destination' in dataItem && dataItem.destination.type === 'integration') {
+            dataItem.destination.systems.forEach((system: string) => {
+              if (!integrations.has(system)) {
+                integrations.set(system, {
+                  name: system,
+                  description: `${system} integration`,
+                  source: `@auto-engineer/${system.toLowerCase()}-integration`
+                });
+              }
+            });
+          }
+        });
+      }
+
+      // Extract integrations from via
+      if ('via' in slice && slice.via) {
+        slice.via.forEach(integrationName => {
+          if (!integrations.has(integrationName)) {
+            integrations.set(integrationName, {
+              name: integrationName,
+              description: `${integrationName} integration`,
+              source: `@auto-engineer/${integrationName.toLowerCase()}-integration`
+            });
+          }
+        });
+      }
     });
   });
-  
-  // Transform flows to match FlowSchema format
-  const transformedFlows = parsedFlows.map(flow => ({
-    name: flow.name,
-    description: (flow as any).description || undefined,
-    slices: flow.slices.map(slice => {
-      const baseSlice = {
-        type: slice.type,
-        name: slice.name,
-        description: slice.description || undefined,
-        stream: slice.stream || undefined,
-        via: slice.via || undefined
-      };
-      
-      if (slice.type === 'command') {
-        return {
-          ...baseSlice,
-          client: {
-            description: slice.client?.description || '',
-            specs: extractSpecs(slice.client?.specs || [])
-          },
-          server: {
-            description: slice.server?.description || '',
-            gwt: transformSpecsToGwt(slice.server?.specs || []),
-            data: slice.server?.data || undefined
-          }
-        };
-      } else if (slice.type === 'query') {
-        return {
-          ...baseSlice,
-          client: {
-            description: slice.client?.description || '',
-            specs: extractSpecs(slice.client?.specs || [])
-          },
-          request: slice.request || undefined,
-          server: {
-            description: slice.server?.description || '',
-            gwt: transformQuerySpecsToGwt(slice.server?.specs || []),
-            data: slice.server?.data || undefined
-          }
-        };
-      } else if (slice.type === 'react') {
-        return {
-          ...baseSlice,
-          server: {
-            description: slice.server?.description || undefined,
-            gwt: transformReactSpecsToGwt(slice.server?.specs || []),
-            data: slice.server?.data || undefined
-          }
-        };
-      }
-      
-      return baseSlice;
-    })
-  }));
-  
+
+  // Return the properly typed schema
   return {
-    variant: 'specs',
-    flows: transformedFlows,
+    variant: 'specs' as const,
+    flows: flows,
     messages: Array.from(messages.values()),
-    integrations: []
+    integrations: Array.from(integrations.values())
   };
 };
 
-const extractMessage = (messageData: any, messageType: 'command' | 'event' | 'state'): any | null => {
-  if (!messageData || !messageData.type) return null;
-  
-  // Convert the message data to field format
-  const fields = Object.entries(messageData.data || {}).map(([name, value]) => ({
-    name,
-    type: value instanceof Date || (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) ? 'Date' : 
-          typeof value === 'string' ? 'string' : 
-          typeof value === 'number' ? 'number' : 
-          typeof value === 'boolean' ? 'boolean' : 
-          'unknown',
+const createMessage = (
+    name: string,
+    data: Record<string, unknown>,
+    messageType: 'command' | 'event' | 'state'
+): Message => {
+  // Infer fields from example data
+  const fields = Object.entries(data).map(([fieldName, value]) => ({
+    name: fieldName,
+    type: inferType(value),
     required: true,
     description: undefined,
     defaultValue: undefined
   }));
-  
-  const message: any = {
-    type: messageType,
-    name: messageData.type,
-    fields,
-    description: undefined,
-    metadata: {
-      version: 1
-    }
-  };
-  
+
+
+  const metadata = { version: 1 };
+
   if (messageType === 'event') {
-    message.source = 'internal';
+    return {
+      type: 'event',
+      name,
+      fields,
+      source: 'internal',
+      metadata,
+    };
   }
-  
-  return message;
-};
 
-const extractSpecs = (specs: any[]): string[] => {
-  return specs.flatMap(spec => {
-    if (typeof spec === 'string') return [spec];
-    if (spec.description) return [spec.description];
-    if (spec.should && Array.isArray(spec.should)) return spec.should;
-    return [];
-  });
-};
-
-const transformSpecsToGwt = (specs: any[]): any[] => {
-  return specs.map(spec => {
-    if (spec.when && spec.then) {
-      const gwtItem: any = {
-        when: {
-          commandRef: spec.when.type,
-          exampleData: spec.when.data || {}
-        },
-        then: spec.then.map((event: any) => ({
-          eventRef: event.type,
-          exampleData: event.data || {}
-        }))
-      };
-      
-      if (spec.given) {
-        gwtItem.given = spec.given.map((event: any) => ({
-          eventRef: event.type,
-          exampleData: event.data || {}
-        }));
-      }
-      
-      return gwtItem;
-    }
+  if (messageType === 'command') {
     return {
-      when: { commandRef: 'UnknownCommand', exampleData: {} },
-      then: [{ eventRef: 'UnknownEvent', exampleData: {} }]
+      type: 'command',
+      name,
+      fields,
+      metadata,
     };
-  });
+  }
+
+  return {
+    type: 'state',
+    name,
+    fields,
+    metadata,
+  };
 };
 
-const transformQuerySpecsToGwt = (specs: any[]): any[] => {
-  return specs.map(spec => {
-    if (spec.given && spec.then) {
-      return {
-        given: spec.given.map((event: any) => ({
-          eventRef: event.type,
-          exampleData: event.data || {}
-        })),
-        then: spec.then.map((state: any) => ({
-          stateRef: state.type,
-          exampleData: state.data || {}
-        }))
-      };
-    }
-    return {
-      given: [{ eventRef: 'UnknownEvent', exampleData: {} }],
-      then: [{ stateRef: 'UnknownState', exampleData: {} }]
-    };
-  });
+const inferType = (value: unknown): string => {
+  if (value === null || value === undefined) return 'unknown';
+
+  if (value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value))) {
+    return 'Date';
+  }
+
+  if (Array.isArray(value)) {
+    return inferArrayType(value);
+  }
+
+  if (typeof value === 'object') {
+    return inferObjectType(value as Record<string, unknown>);
+  }
+
+  return typeof value;
 };
 
-const transformReactSpecsToGwt = (specs: any[]): any[] => {
-  return specs.map(spec => {
-    if (spec.when && spec.then) {
-      return {
-        when: Array.isArray(spec.when) ? spec.when.map((event: any) => ({
-          eventRef: event.type,
-          exampleData: event.data || {}
-        })) : [{
-          eventRef: spec.when.type,
-          exampleData: spec.when.data || {}
-        }],
-        then: spec.then.map((command: any) => ({
-          commandRef: command.type,
-          exampleData: command.data || {}
-        }))
-      };
-    }
-    return {
-      when: [{ eventRef: 'UnknownEvent', exampleData: {} }],
-      then: [{ commandRef: 'UnknownCommand', exampleData: {} }]
-    };
-  });
+const inferArrayType = (value: unknown[]): string => {
+  if (value.length === 0) return 'Array<unknown>';
+  const itemType = inferType(value[0]);
+  if (typeof value[0] === 'object' && !Array.isArray(value[0])) {
+    const objType = Object.entries(value[0] as Record<string, unknown>)
+        .map(([k, v]) => `${k}: ${inferType(v)}`)
+        .join(', ');
+    return `Array<{${objType}}>`;
+  }
+  return `Array<${itemType}>`;
 };
 
-export const getFlows = async () => {
+const inferObjectType = (value: Record<string, unknown>): string => {
+  const objType = Object.entries(value)
+      .map(([k, v]) => `${k}: ${inferType(v)}`)
+      .join(', ');
+  return `{${objType}}`;
+};
+
+export const getFlows = async (cwd: string = process.cwd()) => {
   registry.clearAll();
+
   const files = await fg('**/*.flow.ts', {
-    cwd: packageRoot,
+    cwd,
     absolute: true,
     ignore: ['**/node_modules/**', '**/dist/**', '**/.turbo/**'],
   });
 
-  console.log('[getFlows] searching in:', packageRoot);
+  console.log('[getFlows] searching in:', cwd);
   console.log('[getFlows] matched files:', files);
 
   await Promise.all(files.map((file) => import(pathToFileURL(file).href)));
@@ -251,13 +209,13 @@ export const getFlows = async () => {
 
   return {
     flows,
-    toSchema: (): Record<string, unknown> => flowsToSchema(flows),
+    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows),
   };
 };
 
 export const getFlow = async (filePath: string) => {
   registry.clearAll();
-  
+
   const absolutePath = resolve(filePath);
 
   await import(`${pathToFileURL(absolutePath).href}?t=${Date.now()}`);
@@ -266,28 +224,28 @@ export const getFlow = async (filePath: string) => {
 
   return {
     flows,
-    toSchema: (): Record<string, unknown> => flowsToSchema(flows),
+    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows),
   };
 };
 
 export const convertFlowToJson = async (filePath: string, outputPath?: string): Promise<string> => {
   const result = await getFlow(filePath);
   const schema = result.toSchema();
-  
+
   // Validate against SpecSchema
   try {
     SpecsSchema.parse(schema);
-    console.error('✓ Schema validation passed');
+    console.log('✓ Schema validation passed');
   } catch (error) {
     console.error('⚠ Schema validation failed:', error instanceof z.ZodError ? error.format() : error);
   }
-  
+
   const json = JSON.stringify(schema, null, 2);
-  
+
   if (outputPath !== undefined && outputPath !== null && outputPath.length > 0) {
     writeFileSync(outputPath, json);
     console.log(`Flow converted to JSON and saved to: ${outputPath}`);
   }
-  
+
   return json;
 };

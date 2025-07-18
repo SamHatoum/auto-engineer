@@ -10,32 +10,27 @@ import {
   pushSpec,
   startShouldBlock,
   endShouldBlock,
+  setSliceData,
 } from './flow-context';
 import type { DataSinkItem, DataSourceItem, DataItem } from './types';
 
 export const flow = (name: string, fn: () => void) => {
-  const ctx = startFlow(name);
+  const flowObj = startFlow(name);
   fn();
-  registry.register(ctx);
+  registry.register(flowObj);
   clearCurrentFlow();
 };
 
 export const client = (fn: () => void) => {
-  const slice = getCurrentSlice();
-  if (slice) {
-    startClientBlock(slice, '');
-    fn();
-    endClientBlock();
-  }
+  startClientBlock('');
+  fn();
+  endClientBlock();
 };
 
 export const server = (fn: () => void) => {
-  const slice = getCurrentSlice();
-  if (slice) {
-    startServerBlock(slice, '');
-    fn();
-    endServerBlock();
-  }
+  startServerBlock('');
+  fn();
+  endServerBlock();
 };
 
 export const request = (_query: unknown) => ({
@@ -59,14 +54,12 @@ export interface SliceTypes {
   react: 'react';
 }
 
-// Use the interface directly instead of a type alias
 export const SliceType = {
   COMMAND: 'command' as const,
   QUERY: 'query' as const,
   REACT: 'react' as const,
 } as const;
 
-// Export interface for slice type values
 export interface SliceTypeValueInterface {
   readonly value: 'command' | 'query' | 'react';
 }
@@ -97,13 +90,7 @@ export function data(items: DataItem[]): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice for data configuration');
 
-  const server = slice.server as Record<string, unknown>;
-  if (typeof server !== 'object' || server === null) throw new Error('data() can only be called within a server block');
-
-  const sliceType = slice.type as string;
-  if (!sliceType) throw new Error('Invalid slice type');
-
-  // Command slices can now have both data sources and sinks
+  const sliceType = slice.type;
 
   if (sliceType === SliceType.QUERY) {
     const hasSink = items.some((item) => '__type' in item && item.__type === 'sink');
@@ -112,6 +99,5 @@ export function data(items: DataItem[]): void {
     }
   }
 
-  // Store the data items
-  server.data = items;
+  setSliceData(items);
 }

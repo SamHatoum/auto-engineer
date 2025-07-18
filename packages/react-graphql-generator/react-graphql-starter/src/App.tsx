@@ -7,7 +7,7 @@ import { Index } from '@/pages/Index';
 import { NotFound } from '@/pages/NotFound';
 import { apolloClient } from '@/apolloClient';
 
-const App = () => (
+export const App = () => (
   <ApolloProvider client={apolloClient}>
     {/* <TooltipProvider> */}
     {/* <Toaster /> */}
@@ -22,5 +22,3 @@ const App = () => (
     {/* </TooltipProvider> */}
   </ApolloProvider>
 );
-
-export default App;
