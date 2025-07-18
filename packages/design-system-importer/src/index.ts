@@ -43,18 +43,33 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
   await fs.writeFile(outPath, md);
 }
 
+export async function copyDesignSystemDocs(inputDir: string, outputDir: string): Promise<void> {
+  const srcPath = path.join(inputDir, 'design-system.md');
+  const destPath = path.join(outputDir, 'design-system.md');
+  await fs.mkdir(outputDir, { recursive: true });
+  await fs.copyFile(srcPath, destPath);
+}
+
 if (require.main === module) {
   const [, , inputDir, outputDir] = process.argv;
   if (!inputDir || !outputDir) {
     console.error('Usage: tsx src/index.ts <inputDir> <outputDir>');
     process.exit(1);
   }
-  generateDesignSystemMarkdown(inputDir, outputDir)
+  // generateDesignSystemMarkdown(inputDir, outputDir)
+  //   .then(() => {
+  //     console.log(`design-system.md generated in ${outputDir}`);
+  //   })
+  //   .catch((err) => {
+  //     console.error('Error generating design-system.md:', err);
+  //     process.exit(1);
+  //   });
+  copyDesignSystemDocs(inputDir, outputDir)
     .then(() => {
-      console.log(`design-system.md generated in ${outputDir}`);
+      console.log(`design-system.md copied to ${outputDir}`);
     })
     .catch((err) => {
-      console.error('Error generating design-system.md:', err);
+      console.error('Error copying design-system.md:', err);
       process.exit(1);
     });
 }

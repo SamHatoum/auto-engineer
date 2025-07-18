@@ -53,12 +53,13 @@ export class InformationArchitectAgent {
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
   ): string {
+    console.log(JSON.stringify(atoms, null, 2));
     return `
 You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 
 IMPORTANT: Only generate pages and components that are directly referenced in the provided flows. Do NOT add any extra pages or components, and do NOT make assumptions outside the flows. If something is not mentioned in the flows, it should NOT appear in the output.
 
-$${atoms ? `Here is a list of available atomic components (atoms) from the design system. Use these atoms and their props as much as possible. Only create new atoms if absolutely necessary.\n\nAtoms:\n${JSON.stringify(atoms, null, 2)}\n` : ''}
+$${atoms ? `Here is a list of available atomic components (atoms) from the design system. Use these atoms and their props as much as possible. Only create new atoms if absolutely necessary. And only put the new atoms created into the schema. \n\nAtoms:\n${JSON.stringify(atoms, null, 2)}\n` : ''}
 Flows:
 ${JSON.stringify(flows, null, 2)}
 
@@ -88,6 +89,9 @@ Instructions:
     - layout (listing the organisms used)
     - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
     - data_requirements (array, as above, for page-level data fetching)
+- For each component or page, if there are any specs defined in the flows using specs('ComponentOrPageName', ...), extract all should(...) statements from .client(() => { ... }) blocks and assign them as an array of strings to a 'specs' field for the corrosponding component/page.
+- Only include specs from .client(() => { ... }) blocks, not from server() or other blocks.
+- If no specs are found for a component/page, omit the 'specs' field.
 
 Use the following structure as a template for your response:
 ----

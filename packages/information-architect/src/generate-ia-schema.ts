@@ -11,11 +11,16 @@ async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> 
   } catch {
     return [];
   }
-  // Find the section starting with '## Components' and parse the list
-  const match = content.match(/## Components([\s\S]*)/);
-  if (!match) return [];
-  const lines = match[1].split('\n').map(line => line.trim()).filter(line => line.startsWith('- '));
-  return lines.map(line => line.replace(/^-\s*/, ''));
+  // Find all lines that start with '### ' and extract the component name
+  const lines = content.split('\n');
+  const components: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^###\s+(.+)/);
+    if (match) {
+      components.push(match[1].trim());
+    }
+  }
+  return components;
 }
 
 async function main() {
