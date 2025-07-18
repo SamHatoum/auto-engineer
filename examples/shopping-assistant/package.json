@@ -1,0 +1,6 @@
+{
+  "name": "shopping-assistant",
+  "dependencies": {
+    "@auto-engineer/flowlang": "file:../auto-engineer/packages/flowlang"
+  }
+}

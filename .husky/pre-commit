@@ -1,2 +1,2 @@
-pnpm turbo run format:fix lint:fix
+pnpm check
 git add -A

@@ -1,5 +1,11 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
-  - 'examples/*'
-  - 'integrations/*'
+  - apps/*
+  - packages/*
+  - examples/*
+  - integrations/*
+  - '!examples/shopping-assistant'
+
+overrides:
+  punycode: ^2.3.1
+  '@auto-engineer/flowlang': link:packages/flowlang
+  '@auto-engineer/ai-gateway': link:packages/ai-gateway

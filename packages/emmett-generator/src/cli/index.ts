@@ -10,6 +10,7 @@ import {SpecsSchemaType} from '@auto-engineer/flowlang';
 import {fileURLToPath} from 'url';
 import {dirname} from 'path';
 import {execa} from 'execa';
+import { log } from 'console';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,10 +33,6 @@ async function main() {
     const content = await readFile(absSchema, 'utf8');
     const spec = JSON.parse(content) as SpecsSchemaType;
     const serverDir = join(absDest, 'server');
-    if (await fs.pathExists(serverDir)) {
-        console.log('🧹 Removing existing server directory...');
-        await fs.remove(serverDir);
-    }
 
     await ensureDirExists(serverDir);
 
@@ -152,7 +149,8 @@ async function writePackage(dest: string): Promise<void> {
             'fast-glob',
             'reflect-metadata',
             'zod',
-            'apollo-server'
+            'apollo-server',
+            'uuid',
         ]),
         devDependencies: resolveDeps([
             'typescript',
@@ -160,6 +158,15 @@ async function writePackage(dest: string): Promise<void> {
             'tsx',
         ]),
     };
+
+    const existingPkg = await fs.readJson(path.join(dest, 'package.json')).catch(() => ({})) as Record<string, unknown>;
+    console.log('found existing package.json', existingPkg);
+    packageJson.dependencies = {
+        ...(existingPkg.dependencies as Record<string, string>),
+        ...packageJson.dependencies,
+    };
+    
+    console.log('merged existing package.json dependecies', packageJson);
 
     await fs.writeJson(path.join(dest, 'package.json'), packageJson, { spaces: 2 });
 }
@@ -197,7 +204,7 @@ export default defineConfig({
 }
 
 async function generateSchemaScript(serverDir: string, workingDir: string): Promise<void> {
-    const contextDir = path.resolve(`${workingDir}`, 'context');
+    const contextDir = path.resolve(`${workingDir}`, '.context');
     await ensureDirExists(contextDir);
 
     const scriptsDir = join(serverDir, 'scripts');
@@ -219,7 +226,7 @@ async function main() {
     });
     const printedSchema = printSchema(schema);
 
-    const contextDir = path.resolve('${workingDir}', 'context');
+    const contextDir = path.resolve('${workingDir}', '.context');
     const schemaPath = path.join(contextDir, 'schema.graphql');
     await writeFile(schemaPath, printedSchema, 'utf-8');
 
@@ -246,19 +253,19 @@ async function installDependenciesAndGenerateSchema(serverDir: string, workingDi
     console.log('📦 Installing dependencies...');
 
     try {
-        await execa('npm', ['install'], {cwd: serverDir});
+        await execa('pnpm', ['install'], {cwd: serverDir});
         console.log('✅ Dependencies installed successfully');
 
         console.log('🔄 Generating GraphQL schema...');
         await execa('tsx', ['scripts/generate-schema.ts'], {cwd: serverDir});
 
-        const schemaPath = join(workingDir, 'context', 'schema.graphql');
+        const schemaPath = join(workingDir, '.context', 'schema.graphql');
         console.log(`✅ GraphQL schema generated at: ${schemaPath}`);
     } catch (error) {
         console.warn(
             `⚠️  Failed to install dependencies or generate schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
-        console.warn('You can manually run: cd server && npm install && npx tsx generate-schema.ts');
+        console.warn('You can manually run: cd server && pnpm install && npx tsx generate-schema.ts');
     }
 
 

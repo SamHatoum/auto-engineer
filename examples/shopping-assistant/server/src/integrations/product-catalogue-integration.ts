@@ -52,7 +52,7 @@ export const ProductCatalog: Integration<'product-catalog'> = {
   __brand: 'Integration' as const,
   type: 'product-catalog' as const,
   name: 'ProductCatalogService',
-  State: {
+  Queries: {
     Products: async (): Promise<Products> => {
       try {
         const products = (await client.get<Product[]>('/api/products')).data;
@@ -144,5 +144,4 @@ export const ProductCatalog: Integration<'product-catalog'> = {
       }
     }
   },
-  Events: {},
 };

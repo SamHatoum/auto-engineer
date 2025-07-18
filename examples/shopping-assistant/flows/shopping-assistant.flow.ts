@@ -16,33 +16,14 @@ import {
   type Event,
   type State,
 } from '@auto-engineer/flowlang';
-import { ProductCatalog, type Products } from '@examples/product-catalogue-integration';
-import { AI } from '@auto-engineer/ai-integration';
+import { type Products } from '../server/src/integrations/product-catalogue-integration';
+import { AI, DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
   {
     sessionId: string;
-    shopperId: string;
     criteria: string;
-    timestamp: Date;
-  }
->;
-
-type WishlistRequested = Event<
-  'WishlistRequested',
-  {
-    sessionId: string;
-    criteria: string;
-    timestamp: Date;
-  }
->;
-
-type ChatCompleted = Event<
-  'ChatCompleted',
-  {
-    sessionId: string;
-    suggestedItems: { productId: string; name: string; quantity: number; reason: string }[];
     timestamp: Date;
   }
 >;
@@ -51,7 +32,6 @@ type ItemsAddedToCart = Event<
   'ItemsAddedToCart',
   {
     cartId: string;
-    shopperId: string;
     items: { productId: string; quantity: number }[];
     timestamp: Date;
   }
@@ -60,24 +40,8 @@ type ItemsAddedToCart = Event<
 type EnterShoppingCriteria = Command<
   'EnterShoppingCriteria',
   {
-    shopperId: string;
-    criteria: string;
-  }
->;
-
-type RequestWishlist = Command<
-  'RequestWishlist',
-  {
     sessionId: string;
     criteria: string;
-  }
->;
-
-type DoChat = Command<
-  'DoChat',
-  {
-    sessionId: string;
-    prompt: string;
   }
 >;
 
@@ -97,23 +61,12 @@ type SuggestedItems = State<
   }
 >;
 
-type ShoppingSession = State<
-  'ShoppingSession',
-  {
-    sessionId: string;
-    shopperId: string;
-    criteria: string;
-    status: 'active' | 'completed';
-  }
->;
-
 const { Events, Commands, State } = createBuilders()
-  .events<ShoppingCriteriaEntered | WishlistRequested | ChatCompleted | ItemsAddedToCart>()
-  .commands<EnterShoppingCriteria | RequestWishlist | DoChat | AddItemsToCart>()
+  .events<ShoppingCriteriaEntered | ChatCompleted | ItemsAddedToCart>()
+  .commands<EnterShoppingCriteria | DoChat | AddItemsToCart>()
   .state<{
     Products: Products['data'];
     SuggestedItems: SuggestedItems['data'];
-    ShoppingSession: ShoppingSession['data'];
   }>();
 
 flow('Seasonal Assistant', () => {
@@ -126,18 +79,17 @@ flow('Seasonal Assistant', () => {
       });
     })
     .server(() => {
-      data([sink().event('ShoppingCriteriaEntered').toStream('shopping-session-{id}')]);
+      data([sink().event('ShoppingCriteriaEntered').toStream('shopping-session-${sessionId}')]);
       specs('When shopper submits criteria, a shopping session is started', () => {
         when(
           Commands.EnterShoppingCriteria({
-            shopperId: 'shopper-123',
+            sessionId: 'shopper-123',
             criteria:
               'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
           }),
         ).then([
           Events.ShoppingCriteriaEntered({
             sessionId: 'session-abc',
-            shopperId: 'shopper-123',
             criteria:
               'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
             timestamp: new Date(),
@@ -151,7 +103,6 @@ flow('Seasonal Assistant', () => {
       when([
         Events.ShoppingCriteriaEntered({
           sessionId: 'session-abc',
-          shopperId: 'shopper-123',
           criteria:
             'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
           timestamp: new Date(),
@@ -169,7 +120,9 @@ flow('Seasonal Assistant', () => {
   commandSlice('Do Chat').server(() => {
     data([
       sink().command('DoChat').toIntegration(AI),
-      source().state('Products').fromIntegration(ProductCatalog),
+        // .withData(source().state('Products').fromIntegration(ProductCatalog))
+        // .additionalImplementInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
+      sink().event('ChatCompleted').toStream('shopping-session-${sessionId}'),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
@@ -216,8 +169,6 @@ flow('Seasonal Assistant', () => {
             sessionId: 'session-abc',
             prompt:
               'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-            // sysmte prompt will say : find the the right tools in the MCP server, based on the GQL schmea descrotions, to get the data you need
-            // as per the specs hints
           }),
         )
         .then([
@@ -368,7 +319,6 @@ flow('Seasonal Assistant', () => {
         ).then([
           Events.ItemsAddedToCart({
             cartId: 'cart-xyz',
-            shopperId: 'shopper-123',
             items: [
               { productId: 'prod-soccer-ball', quantity: 1 },
               { productId: 'prod-craft-kit', quantity: 1 },
@@ -381,3 +331,5 @@ flow('Seasonal Assistant', () => {
       });
     });
 });
+
+console.log('AI Integration:', AI);

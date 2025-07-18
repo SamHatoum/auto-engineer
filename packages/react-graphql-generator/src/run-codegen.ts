@@ -37,12 +37,12 @@ export function runCodegen(projectPath: string): void {
     }
   }
 
-  console.log('▶ Installing dependencies via `npx yarn`...');
-  const installOutput = runCommand('npx yarn', resolvedPath);
+  console.log('▶ Installing dependencies via `npx pnpm`...');
+  const installOutput = runCommand('npx pnpm', resolvedPath);
   console.log(installOutput);
 
   console.log('\n▶ Running codegen...');
-  const output = runCommand('npx yarn codegen', resolvedPath);
+  const output = runCommand('npx pnpm codegen', resolvedPath);
   console.log(output);
   console.log('✅ Codegen completed.');
 }

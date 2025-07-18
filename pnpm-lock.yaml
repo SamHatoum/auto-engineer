@@ -11,6 +11,15 @@ importers:
 
   .:
     dependencies:
+      '@auto-engineer/ai-gateway':
+        specifier: link:packages/ai-gateway
+        version: link:packages/ai-gateway
+      '@auto-engineer/flowlang':
+        specifier: link:packages/flowlang
+        version: link:packages/flowlang
+      axios:
+        specifier: ^1.7.9
+        version: 1.10.0
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -146,7 +155,7 @@ importers:
         specifier: ^4.20.3
         version: 4.20.3
 
-  examples/cart-service:
+  examples/cart-api:
     dependencies:
       cors:
         specifier: ^2.8.5
@@ -581,120 +590,7 @@ importers:
         specifier: ^7.0.4
         version: 7.0.4(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3)
 
-  examples/emmett-graphql-backend:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-      '@auto-engineer/mailchimp-integration':
-        specifier: workspace:*
-        version: link:../../integrations/mailchimp-integration
-      '@auto-engineer/twilio-integration':
-        specifier: workspace:*
-        version: link:../../integrations/twilio-integration
-      '@event-driven-io/emmett':
-        specifier: ^0.38.2
-        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
-      '@examples/product-catalogue-integration':
-        specifier: workspace:*
-        version: link:../product-catalogue-integration
-      apollo-server:
-        specifier: ^3.13.0
-        version: 3.13.0(graphql@16.11.0)
-      apollo-server-express:
-        specifier: ^3.13.0
-        version: 3.13.0(express@4.21.2)(graphql@16.11.0)
-      express:
-        specifier: ^4.21.2
-        version: 4.21.2
-      fast-glob:
-        specifier: ^3.3.3
-        version: 3.3.3
-      graphql:
-        specifier: ^16.11.0
-        version: 16.11.0
-      graphql-scalars:
-        specifier: ^1.24.2
-        version: 1.24.2(graphql@16.11.0)
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
-      type-graphql:
-        specifier: ^2.0.0-rc.2
-        version: 2.0.0-rc.2(graphql-scalars@1.24.2(graphql@16.11.0))(graphql@16.11.0)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
-      web-streams-polyfill:
-        specifier: ^4.1.0
-        version: 4.1.0
-    devDependencies:
-      '@types/express':
-        specifier: ^5.0.3
-        version: 5.0.3
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.8
-      '@types/uuid':
-        specifier: ^10.0.0
-        version: 10.0.0
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@20.19.8)(typescript@5.8.3)
-      tsconfig-paths:
-        specifier: ^4.2.0
-        version: 4.2.0
-      tsx:
-        specifier: ^4.20.3
-        version: 4.20.3
-      vite:
-        specifier: ^6.3.5
-        version: 6.3.5(@types/node@20.19.8)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3)
-      vite-tsconfig-paths:
-        specifier: ^5.1.4
-        version: 5.1.4(typescript@5.8.3)(vite@6.3.5(@types/node@20.19.8)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3))
-
-  examples/flows:
-    dependencies:
-      '@auto-engineer/ai-integration':
-        specifier: workspace:*
-        version: link:../../integrations/ai-integration
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-      '@auto-engineer/mailchimp-integration':
-        specifier: workspace:*
-        version: link:../../integrations/mailchimp-integration
-      '@auto-engineer/twilio-integration':
-        specifier: workspace:*
-        version: link:../../integrations/twilio-integration
-      '@event-driven-io/emmett':
-        specifier: ^0.38.2
-        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.0.14)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
-      '@examples/emmett-graphql-backend':
-        specifier: workspace:*
-        version: link:../emmett-graphql-backend
-      '@examples/product-catalogue-integration':
-        specifier: workspace:*
-        version: link:../product-catalogue-integration
-
-  examples/product-catalogue-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-      axios:
-        specifier: ^1.10.0
-        version: 1.10.0
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.19
-        version: 20.19.8
-      typescript:
-        specifier: ^5.3.3
-        version: 5.5.4
-
-  examples/product-catalogue-service:
+  examples/product-catalogue-api:
     dependencies:
       cors:
         specifier: ^2.8.5
@@ -745,24 +641,6 @@ importers:
       vitest:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.8)(lightningcss@1.30.1)
-
-  integrations/ai-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-
-  integrations/mailchimp-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
-
-  integrations/twilio-integration:
-    dependencies:
-      '@auto-engineer/flowlang':
-        specifier: workspace:*
-        version: link:../../packages/flowlang
 
   packages/ai-gateway:
     dependencies:
@@ -2867,17 +2745,11 @@ packages:
   '@types/express-serve-static-core@4.19.6':
     resolution: {integrity: sha512-N4LZ2xG7DatVqhCZzOGb1Yi5lMbXSZcmdLDe9EzSndPV2HpWYWzRbaerl2n27irrm94EPpprqa8KpskPT085+A==}
 
-  '@types/express-serve-static-core@5.0.7':
-    resolution: {integrity: sha512-R+33OsgWw7rOhD1emjU7dzCDHucJrgJXMA5PYCzJxVil0dsyx5iBEPHqpPfiKNJQb7lZ1vxwoLR4Z87bBUpeGQ==}
-
   '@types/express@4.17.14':
     resolution: {integrity: sha512-TEbt+vaPFQ+xpxFLFssxUDXj5cWCxZJjIcB7Yg0k0GMHGtgtQgpvx/MUQUeAkNbA9AAGrwkAsoeItdTgS7FMyg==}
 
   '@types/express@4.17.23':
     resolution: {integrity: sha512-Crp6WY9aTYP3qPi2wGDo9iUe/rceX01UMhnF1jmwDcKCFM6cx7YhGP/Mpr3y9AASpfHixIG0E6azCcL5OcDHsQ==}
-
-  '@types/express@5.0.3':
-    resolution: {integrity: sha512-wGA0NX93b19/dZC1J18tKWVIYWyyF2ZjT9vin/NRu0qzzvfVzWjs04iq2rQ3H65vCTQYlRqs3YHfY7zjdV+9Kw==}
 
   '@types/figlet@1.7.0':
     resolution: {integrity: sha512-KwrT7p/8Eo3Op/HBSIwGXOsTZKYiM9NpWRBJ5sVjWP/SmlS+oxxRvJht/FNAtliJvja44N3ul1yATgohnVBV0Q==}
@@ -4325,9 +4197,6 @@ packages:
   globby@11.1.0:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
     engines: {node: '>=10'}
-
-  globrex@0.1.2:
-    resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -6062,20 +5931,6 @@ packages:
       '@swc/wasm':
         optional: true
 
-  tsconfck@3.1.6:
-    resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
-    engines: {node: ^18 || >=20}
-    hasBin: true
-    peerDependencies:
-      typescript: ^5.0.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  tsconfig-paths@4.2.0:
-    resolution: {integrity: sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg==}
-    engines: {node: '>=6'}
-
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -6318,14 +6173,6 @@ packages:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
     hasBin: true
-
-  vite-tsconfig-paths@5.1.4:
-    resolution: {integrity: sha512-cYj0LRuLV2c2sMqhqhGpaO3LretdtMn/BVX4cPLanIZuwwrkVl+lK84E/miEXkCHWXuq65rhNN4rXsBcOB3S4w==}
-    peerDependencies:
-      vite: '*'
-    peerDependenciesMeta:
-      vite:
-        optional: true
 
   vite@5.4.19:
     resolution: {integrity: sha512-qO3aKv3HoQC8QKiNSTuUM1l9o/XX3+c+VTgLHbJWHZGeTPVAg2XwazI9UWzoxjIJCGCV2zU60uqMzjeLZuULqA==}
@@ -7381,16 +7228,6 @@ snapshots:
     dependencies:
       '@eslint/core': 0.15.1
       levn: 0.4.1
-
-  '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)':
-    dependencies:
-      '@types/async-retry': 1.4.9
-      '@types/uuid': 10.0.0
-      async-retry: 1.3.3
-      commander: 12.1.0
-      ts-node: 10.9.2(@types/node@20.19.8)(typescript@5.8.3)
-      uuid: 11.1.0
-      web-streams-polyfill: 4.1.0
 
   '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.0.14)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)':
     dependencies:
@@ -8551,13 +8388,6 @@ snapshots:
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.5
 
-  '@types/express-serve-static-core@5.0.7':
-    dependencies:
-      '@types/node': 20.19.8
-      '@types/qs': 6.14.0
-      '@types/range-parser': 1.2.7
-      '@types/send': 0.17.5
-
   '@types/express@4.17.14':
     dependencies:
       '@types/body-parser': 1.19.6
@@ -8570,12 +8400,6 @@ snapshots:
       '@types/body-parser': 1.19.6
       '@types/express-serve-static-core': 4.19.6
       '@types/qs': 6.14.0
-      '@types/serve-static': 1.15.8
-
-  '@types/express@5.0.3':
-    dependencies:
-      '@types/body-parser': 1.19.6
-      '@types/express-serve-static-core': 5.0.7
       '@types/serve-static': 1.15.8
 
   '@types/figlet@1.7.0': {}
@@ -8678,7 +8502,7 @@ snapshots:
 
   '@types/swagger-ui-express@4.1.8':
     dependencies:
-      '@types/express': 5.0.3
+      '@types/express': 4.17.23
       '@types/serve-static': 1.15.8
 
   '@types/through@0.0.33':
@@ -10461,8 +10285,6 @@ snapshots:
       merge2: 1.4.1
       slash: 3.0.0
 
-  globrex@0.1.2: {}
-
   gopd@1.2.0: {}
 
   graceful-fs@4.2.11: {}
@@ -12158,16 +11980,6 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  tsconfck@3.1.6(typescript@5.8.3):
-    optionalDependencies:
-      typescript: 5.8.3
-
-  tsconfig-paths@4.2.0:
-    dependencies:
-      json5: 2.2.3
-      minimist: 1.2.8
-      strip-bom: 3.0.0
-
   tslib@2.8.1: {}
 
   tsx@4.20.3:
@@ -12458,17 +12270,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-
-  vite-tsconfig-paths@5.1.4(typescript@5.8.3)(vite@6.3.5(@types/node@20.19.8)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3)):
-    dependencies:
-      debug: 4.4.1(supports-color@5.5.0)
-      globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@5.8.3)
-    optionalDependencies:
-      vite: 6.3.5(@types/node@20.19.8)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   vite@5.4.19(@types/node@20.19.8)(lightningcss@1.30.1):
     dependencies:

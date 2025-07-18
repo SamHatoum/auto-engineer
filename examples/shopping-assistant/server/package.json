@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@auto-engineer/ai-gateway": "file:../../auto-engineer/packages/ai-gateway",
+    "@auto-engineer/flowlang": "file:../../auto-engineer/packages/flowlang",
+    "axios": "^1.10.0"
+  }
+}
