@@ -33,10 +33,9 @@ export function getStreamFromSink(slice: Slice): { streamPattern?: string; strea
       break;
   }
   const sink = (slice.server?.data ?? []).find(
-    (item): item is DataSink & { destination: { type: 'stream'; pattern: string } } =>
-      (item as DataSink)?.destination?.type === 'stream',
-  );
-  if (sink) {
+    (item) => (item as DataSink)?.destination?.type === 'stream',
+  ) as DataSink | undefined;
+  if (sink && sink.destination.type === 'stream' && 'pattern' in sink.destination) {
     streamPattern = sink.destination.pattern;
     if (streamPattern != null) {
       streamId = resolveStreamId(streamPattern, exampleData);

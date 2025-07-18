@@ -1,5 +1,5 @@
 import { Integration, Event, Command } from '@auto-engineer/flowlang';
-import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI, AIProvider, startServer } from '@auto-engineer/ai-gateway';
 
 export type ChatCompleted = Event<
   'ChatCompleted',
@@ -9,8 +9,6 @@ export type ChatCompleted = Event<
     timestamp: Date;
   }
 >;
-
-// configure the MCP an MCP server
 
 export type DoChat = Command<
   'DoChat',
@@ -31,7 +29,10 @@ export const AI: Integration<'ai'> = {
       const fullPrompt = systemPrompt !== undefined && systemPrompt !== ''
         ? `${systemPrompt}\n\n${prompt}`
         : prompt;
-      return await generateTextWithAI(fullPrompt, AIProvider.Anthropic);
+      return await generateTextWithAI(fullPrompt, AIProvider.Anthropic, { includeTools: true });
     },
   }
 };
+
+console.log('Starting MCP server');
+await startServer();

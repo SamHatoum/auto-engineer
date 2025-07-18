@@ -5,6 +5,7 @@ import { google } from '@ai-sdk/google';
 import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
 import { z } from 'zod';
+import { getRegisteredToolsForAI } from './mcp-server.js';
 
 interface AIToolValidationError extends Error {
   cause?: {
@@ -37,6 +38,7 @@ export interface AIOptions {
   temperature?: number;
   maxTokens?: number;
   streamCallback?: (token: string) => void;
+  includeTools?: boolean;
 }
 
 export interface StructuredAIOptions<T> extends Omit<AIOptions, 'streamCallback'> {
@@ -96,6 +98,11 @@ export async function generateTextWithAI(
   const model = finalOptions.model ?? getDefaultModel(provider);
   const modelInstance = getModel(provider, model);
 
+  if (finalOptions.includeTools === true) {
+    const result = await generateTextWithToolsAI(prompt, provider, options);
+    return result.text;
+  }
+
   const result = await generateText({
     model: modelInstance,
     prompt,
@@ -152,6 +159,33 @@ export async function generateTextStreamingWithAI(
   }
 
   return collectedResult;
+}
+
+export async function generateTextWithToolsAI(
+  prompt: string,
+  provider: AIProvider,
+  options: AIOptions = {},
+): Promise<{ text: string; toolCalls?: unknown[] }> {
+  const finalOptions = { ...defaultOptions, ...options };
+  const model = finalOptions.model ?? getDefaultModel(provider);
+  const modelInstance = getModel(provider, model);
+
+  const registeredTools = finalOptions.includeTools === true ? getRegisteredToolsForAI() : {};
+  const hasTools = Object.keys(registeredTools).length > 0;
+
+  const result = await generateText({
+    model: modelInstance,
+    prompt,
+    temperature: finalOptions.temperature,
+    maxTokens: finalOptions.maxTokens,
+    ...(hasTools && { tools: registeredTools }),
+    ...(hasTools && { toolChoice: 'auto' }),
+  });
+
+  return {
+    text: result.text,
+    toolCalls: result.toolCalls,
+  };
 }
 
 export function getAvailableProviders(): AIProvider[] {
@@ -333,5 +367,10 @@ export {
   registerTools, 
   startServer, 
   isServerStarted,
-  type ToolHandler
+  getRegisteredTools,
+  getRegisteredToolsForAI,
+  getToolHandler,
+  executeRegisteredTool,
+  type ToolHandler,
+  type RegisteredTool
 } from './mcp-server.js';

@@ -2,14 +2,13 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-// Define proper types for MCP tool handlers
 interface ToolResult {
   content: Array<{
     type: 'text';
     text: string;
   }>;
   isError?: boolean;
-  [key: string]: unknown; // Index signature for additional properties
+  [key: string]: unknown;
 }
 
 interface ToolDescription {
@@ -22,6 +21,17 @@ type ToolHandler<T extends Record<string, unknown> = Record<string, unknown>> = 
   params: T
 ) => Promise<ToolResult>;
 
+interface RegisteredTool {
+  name: string;
+  description: ToolDescription;
+  handler: ToolHandler<Record<string, unknown>>;
+  aiSdkTool: {
+    parameters: z.ZodSchema;
+    description: string;
+    execute?: (args: Record<string, unknown>) => Promise<string>;
+  };
+}
+
 const server = new McpServer({
   name: 'frontend-implementation',
   version: '0.1.0',
@@ -30,6 +40,7 @@ const server = new McpServer({
 const transport = new StdioServerTransport();
 
 let isStarted = false;
+const toolRegistry = new Map<string, RegisteredTool>();
 
 async function cleanup() {
   console.log('Cleaning up...');
@@ -46,12 +57,26 @@ process.on('SIGINT', () => {
 
 export { server };
 
-// Helper function to adapt our handler to MCP's expected signature
 function createMcpHandler<T extends Record<string, unknown>>(
   handler: ToolHandler<T>
 ): (args: Record<string, unknown>, extra: unknown) => Promise<ToolResult> {
   return (args: Record<string, unknown>, _extra: unknown) => {
     return handler(args as T);
+  };
+}
+
+
+function createAiSdkTool(description: ToolDescription, handler: ToolHandler) {
+  // Create a Zod object schema from the input schema
+  const parameterSchema = z.object(description.inputSchema);
+  
+  return {
+    parameters: parameterSchema,
+    description: description.description,
+    execute: async (args: Record<string, unknown>) => {
+      const result = await handler(args);
+      return result.content[0]?.text || '';
+    },
   };
 }
 
@@ -63,8 +88,19 @@ export function registerTool<T extends Record<string, unknown> = Record<string, 
   if (isStarted) {
     throw new Error('Cannot register tools after server has started');
   }
+  
   const mcpHandler = createMcpHandler(handler);
-  server.registerTool(name, description, mcpHandler as unknown as ToolHandler);
+  const aiSdkTool = createAiSdkTool(description, handler as ToolHandler<Record<string, unknown>>);
+  
+  const registeredTool: RegisteredTool = {
+    name,
+    description,
+    handler: handler as ToolHandler<Record<string, unknown>>,
+    aiSdkTool,
+  };
+  
+  toolRegistry.set(name, registeredTool);
+  server.registerTool(name, description, mcpHandler);
 }
 
 export function registerTools<T extends Record<string, unknown> = Record<string, unknown>>(
@@ -78,8 +114,7 @@ export function registerTools<T extends Record<string, unknown> = Record<string,
     throw new Error('Cannot register tools after server has started');
   }
   tools.forEach(tool => {
-    const mcpHandler = createMcpHandler(tool.handler);
-    server.registerTool(tool.name, tool.description, mcpHandler as unknown as ToolHandler);
+    registerTool(tool.name, tool.description, tool.handler);
   });
 }
 
@@ -98,6 +133,36 @@ export function isServerStarted() {
   return isStarted;
 }
 
-// Export the types for external use
-export type { ToolResult, ToolDescription, ToolHandler };
+export function getRegisteredTools(): RegisteredTool[] {
+  return Array.from(toolRegistry.values());
+}
 
+export function getRegisteredToolsForAI(): Record<string, {
+  parameters: z.ZodSchema;
+  description: string;
+  execute?: (args: Record<string, unknown>) => Promise<string>;
+}> {
+  const tools: Record<string, {
+    parameters: z.ZodSchema;
+    description: string;
+    execute?: (args: Record<string, unknown>) => Promise<string>;
+  }> = {};
+  for (const tool of toolRegistry.values()) {
+    tools[tool.name] = tool.aiSdkTool;
+  }
+  return tools;
+}
+
+export function getToolHandler(name: string): ToolHandler | undefined {
+  return toolRegistry.get(name)?.handler;
+}
+
+export async function executeRegisteredTool(name: string, params: Record<string, unknown>): Promise<ToolResult> {
+  const tool = toolRegistry.get(name);
+  if (!tool) {
+    throw new Error(`Tool '${name}' not found`);
+  }
+  return await tool.handler(params);
+}
+
+export type { ToolResult, ToolDescription, ToolHandler, RegisteredTool };
