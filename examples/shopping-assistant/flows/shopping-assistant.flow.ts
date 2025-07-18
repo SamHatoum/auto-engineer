@@ -16,7 +16,7 @@ import {
   type Event,
   type State,
 } from '@auto-engineer/flowlang';
-import { type Products } from '../server/src/integrations/product-catalogue-integration';
+import { ProductCatalog, type Products } from '../server/src/integrations/product-catalogue-integration';
 import { AI, DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
 
 type ShoppingCriteriaEntered = Event<
@@ -119,9 +119,9 @@ flow('Seasonal Assistant', () => {
 
   commandSlice('Do Chat').server(() => {
     data([
-      sink().command('DoChat').toIntegration(AI),
-        // .withData(source().state('Products').fromIntegration(ProductCatalog))
-        // .additionalImplementInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
+      sink().command('DoChat').toIntegration(AI)
+        .withState(source().state('Products').fromIntegration(ProductCatalog))
+        .additionalInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
       sink().event('ChatCompleted').toStream('shopping-session-${sessionId}'),
     ]);
 

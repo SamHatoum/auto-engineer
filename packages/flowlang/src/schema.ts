@@ -68,6 +68,8 @@ export const DataSinkSchema = z
     target: MessageTargetSchema,
     destination: DestinationSchema,
     transform: z.string().optional().describe('Optional transformation function name'),
+    _additionalInstructions: z.string().optional().describe('Additional instructions'),
+    _withState: z.lazy(() => DataSourceSchema).optional().describe('Optional state data source for command'),
   })
   .describe('Data sink configuration for outbound data flow');
 
@@ -76,6 +78,7 @@ export const DataSourceSchema = z
     target: MessageTargetSchema,
     origin: OriginSchema,
     transform: z.string().optional().describe('Optional transformation function name'),
+    _additionalInstructions: z.string().optional().describe('Additional instructions'),
   })
   .describe('Data source configuration for inbound data flow');
 
@@ -142,6 +145,7 @@ const BaseSliceSchema = z
     description: z.string().optional(),
     stream: z.string().optional().describe('Event stream pattern for this slice'),
     via: z.array(z.string()).optional().describe('Integration names used by this slice'),
+    additionalInstructions: z.string().optional().describe('Additional instructions'),
   })
   .describe('Base properties shared by all slice types');
 

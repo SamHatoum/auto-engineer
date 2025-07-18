@@ -24,7 +24,8 @@
       "Bash(tsx scripts/convert-flow-exec:*)",
       "Bash(tsx:*)",
       "Bash(npm test:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(pnpm run:*)"
     ],
     "deny": []
   }

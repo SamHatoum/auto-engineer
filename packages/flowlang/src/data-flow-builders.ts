@@ -1,6 +1,53 @@
 import type { DataSinkItem, DataSourceItem, MessageTarget, Integration } from './types';
 import { createIntegrationOrigin } from './types';
 
+// Extended interfaces that add chainable methods
+export interface ChainableSinkMethods {
+  additionalInstructions(instructions: string): ChainableSink;
+  withState(source: DataSourceItem | ChainableSource): ChainableSink;
+}
+
+export interface ChainableSourceMethods {
+  additionalInstructions(instructions: string): ChainableSource;
+}
+
+export type ChainableSink = DataSinkItem & ChainableSinkMethods;
+export type ChainableSource = DataSourceItem & ChainableSourceMethods;
+
+// Helper functions to create chainable items
+function createChainableSink(sinkItem: DataSinkItem): ChainableSink {
+  const chainable = sinkItem as ChainableSink;
+  
+  (chainable as ChainableSinkMethods).additionalInstructions = function(instructions: string): ChainableSink {
+    return createChainableSink({
+      ...sinkItem,
+      _additionalInstructions: instructions,
+    });
+  };
+  
+  (chainable as ChainableSinkMethods).withState = function(source: DataSourceItem | ChainableSource): ChainableSink {
+    return createChainableSink({
+      ...sinkItem,
+      _withState: source,
+    });
+  };
+  
+  return chainable;
+}
+
+function createChainableSource(sourceItem: DataSourceItem): ChainableSource {
+  const chainable = sourceItem as ChainableSource;
+  
+  (chainable as ChainableSourceMethods).additionalInstructions = function(instructions: string): ChainableSource {
+    return createChainableSource({
+      ...sourceItem,
+      _additionalInstructions: instructions,
+    });
+  };
+  
+  return chainable;
+}
+
 // Field selector interface for partial object selection
 export interface FieldSelector {
   [key: string]: boolean | FieldSelector;
@@ -9,9 +56,15 @@ export interface FieldSelector {
 // Base builder for message targeting
 abstract class MessageTargetBuilder<TResult> {
   protected target: Partial<MessageTarget> = {};
+  protected instructions?: string;
 
   fields(selector: FieldSelector): this {
     this.target.fields = selector as Record<string, unknown>;
+    return this;
+  }
+
+  additionalInstructions(instructions: string): this {
+    this.instructions = instructions;
     return this;
   }
 
@@ -25,36 +78,44 @@ export class EventSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
     this.target = { type: 'Event', name };
   }
 
-  toStream(pattern: string): DataSinkItem {
-    return {
+  toStream(pattern: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'stream', pattern },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  toIntegration(...systems: Integration[]): DataSinkItem {
-    return {
+  toIntegration(...systems: Integration[]): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'integration', systems: systems.map((s) => s.name) },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  toDatabase(collection: string): DataSinkItem {
-    return {
+  toDatabase(collection: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'database', collection },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  toTopic(name: string): DataSinkItem {
-    return {
+  toTopic(name: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'topic', name },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSink(sinkItem);
   }
 
   build(): DataSinkItem {
@@ -64,42 +125,61 @@ export class EventSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
 
 // Command sink builder
 export class CommandSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
+  private stateSource?: DataSourceItem;
+
   constructor(name: string) {
     super();
     this.target = { type: 'Command', name };
   }
 
-  toIntegration(...systems: (Integration | string)[]): DataSinkItem {
-    return {
+  withState(source: DataSourceItem | ChainableSource): this {
+    this.stateSource = source;
+    return this;
+  }
+
+  toIntegration(...systems: (Integration | string)[]): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'integration', systems: systems.map((s) => (typeof s === 'string' ? s : s.name)) },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
+      ...(this.stateSource != null && { _withState: this.stateSource }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  hints(hint: string): DataSinkItem {
-    return {
+  hints(hint: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'integration', systems: [] },
       transform: hint,
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
+      ...(this.stateSource != null && { _withState: this.stateSource }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  toDatabase(collection: string): DataSinkItem {
-    return {
+  toDatabase(collection: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'database', collection },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
+      ...(this.stateSource != null && { _withState: this.stateSource }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  toTopic(name: string): DataSinkItem {
-    return {
+  toTopic(name: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'topic', name },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
+      ...(this.stateSource != null && { _withState: this.stateSource }),
     };
+    return createChainableSink(sinkItem);
   }
 
   build(): DataSinkItem {
@@ -114,20 +194,24 @@ export class StateSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
     this.target = { type: 'State', name };
   }
 
-  toDatabase(collection: string): DataSinkItem {
-    return {
+  toDatabase(collection: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'database', collection },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSink(sinkItem);
   }
 
-  toStream(pattern: string): DataSinkItem {
-    return {
+  toStream(pattern: string): ChainableSink {
+    const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
       destination: { type: 'stream', pattern },
       __type: 'sink' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSink(sinkItem);
   }
 
   build(): DataSinkItem {
@@ -142,44 +226,54 @@ export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
     this.target = { type: 'State', name };
   }
 
-  fromProjection(name: string): DataSourceItem {
-    return {
+  fromProjection(name: string, idField?: string): ChainableSource {
+    const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
-      origin: { type: 'projection', name },
+      origin: { type: 'projection', name, ...(idField != null && idField !== '' && { idField }) },
       __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSource(sourceItem);
   }
 
-  fromReadModel(name: string): DataSourceItem {
-    return {
+  fromReadModel(name: string): ChainableSource {
+    const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
       origin: { type: 'readModel', name },
       __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSource(sourceItem);
   }
 
-  fromDatabase(collection: string, query?: Record<string, unknown>): DataSourceItem {
-    return {
+  fromDatabase(collection: string, query?: Record<string, unknown>): ChainableSource {
+    const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
       origin: { type: 'database', collection, query },
       __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSource(sourceItem);
   }
 
-  fromApi(endpoint: string, method?: string): DataSourceItem {
-    return {
+  fromApi(endpoint: string, method?: string): ChainableSource {
+    const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
       origin: { type: 'api', endpoint, method },
       __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSource(sourceItem);
   }
 
-  fromIntegration(...systems: (Integration | string)[]): DataSourceItem {
-    return {
+  fromIntegration(...systems: (Integration | string)[]): ChainableSource {
+    const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
       origin: createIntegrationOrigin(systems.map((s) => (typeof s === 'string' ? s : s.name))),
       __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
+    return createChainableSource(sourceItem);
   }
 
   build(): DataSourceItem {

@@ -96,6 +96,7 @@ export interface Origin {
   endpoint?: string;
   method?: string;
   systems?: string[];
+  idField?: string;
 }
 
 // Helper functions to create origins
@@ -113,12 +114,15 @@ export interface DataSink {
   target: MessageTarget;
   destination: Destination;
   transform?: string;
+  _additionalInstructions?: string;
+  _withState?: DataSource;
 }
 
 export interface DataSource {
   target: MessageTarget;
   origin: Origin;
   transform?: string;
+  _additionalInstructions?: string;
 }
 
 // Branded types for type safety in arrays
