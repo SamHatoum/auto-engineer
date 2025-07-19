@@ -14,7 +14,7 @@ export const mockProducts: ProductCatalogItem[] = [
     category: 'Sports',
     price: 10,
     tags: ['soccer', 'sports'],
-    imageUrl: 'https://target.scene7.com/is/image/Target/GUEST_0f2394de-3e15-409c-8345-69b0bf919809',
+    imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-craft-kit',
@@ -22,7 +22,7 @@ export const mockProducts: ProductCatalogItem[] = [
     category: 'Arts & Crafts',
     price: 25,
     tags: ['crafts', 'art', 'creative'],
-    imageUrl: 'https://target.scene7.com/is/image/Target/GUEST_5130a51a-0117-4203-ba7f-f1fe7aa218bb',
+    imageUrl: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-laptop-bag',
@@ -30,7 +30,7 @@ export const mockProducts: ProductCatalogItem[] = [
     category: 'School Supplies',
     price: 45,
     tags: ['computers', 'tech', 'school'],
-    imageUrl: 'https://target.scene7.com/is/image/Target/GUEST_794814ba-fb85-4be6-863c-d1764d1f1792',
+    imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-mtg-starter',
@@ -38,7 +38,7 @@ export const mockProducts: ProductCatalogItem[] = [
     category: 'Games',
     price: 30,
     tags: ['magic', 'tcg', 'games'],
-    imageUrl: 'https://target.scene7.com/is/image/Target/GUEST_c164af43-fe9d-4a34-a9cb-281eb5c73742',
+    imageUrl: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-pencils',

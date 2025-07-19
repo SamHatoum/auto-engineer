@@ -23,11 +23,11 @@ export function TopBar() {
         {/* Right Side: Nav Links */}
         <NavigationMenu>
           <NavigationMenuList className="flex items-center gap-5">
-            <NavigationMenuItem>Circle™</NavigationMenuItem>
-            <NavigationMenuItem>Circle™ Card</NavigationMenuItem>
-            <NavigationMenuItem>Circle 360™</NavigationMenuItem>
+            <NavigationMenuItem>Rewards</NavigationMenuItem>
+            <NavigationMenuItem>Store Card</NavigationMenuItem>
+            <NavigationMenuItem>Premium Membership</NavigationMenuItem>
             <NavigationMenuItem>Registry & Wish List</NavigationMenuItem>
-            <NavigationMenuItem>Weekly Ad</NavigationMenuItem>
+            <NavigationMenuItem>Weekly Deals</NavigationMenuItem>
             <NavigationMenuItem>Find Stores</NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
