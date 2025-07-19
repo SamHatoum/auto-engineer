@@ -49,7 +49,8 @@ switch (event.type) {
     const example = slice.type === 'query'
             ? queryGwt?.then.find(t => t.stateRef === targetName)?.exampleData
             : gwtMapping[event.type]?.[0]?.then?.[0]?.exampleData;
-    const targetFields = slice.server?.data?.[0]?.target?.fields;
+    const targetDef = messages.find(m => m.name === slice.server?.data?.[0]?.target?.name);
+    const targetFields = Object.fromEntries((targetDef?.fields ?? []).map(f => [f.name, f]));
     let usedFields = [];
     let isRemovalEvent = false;
     if (typeof example !== 'undefined') {
@@ -75,7 +76,7 @@ case '<%= event.type %>': {
     * - Ensure consumers of this projection (e.g., UI) handle the chosen approach appropriately.
 <% } else { -%>
     * This event adds or updates the document.
-    * Review and adjust the fields as needed for your read model.
+    * Implement the correct fields as needed for your read model.
 <% } -%>
 */
 <% if (isRemovalEvent) { -%>
@@ -88,7 +89,24 @@ case '<%= event.type %>': {
     <% for (let i = 0; i < usedFields.length; i++) {
         const field = usedFields[i];
         const isLast = i === usedFields.length - 1;
-    %>          <%= field %>: event.data.<%= field %><%= isLast ? '' : ',' %>
+        const def = (targetFields ?? {})[field];
+        const type = def?.type ?? 'string';
+
+        let placeholder = 'undefined';
+        if (type === 'string' || type === 'ID') {
+            placeholder = "''";
+        } else if (type === 'number') {
+            placeholder = '0';
+        } else if (type === 'boolean') {
+            placeholder = 'false';
+        } else if (type === 'Date') {
+            placeholder = 'new Date()';
+        } else if (type.startsWith('Array<')) {
+            placeholder = '[]';
+        } else {
+            placeholder = '{} as any';
+        }
+    %>          <%= field %>: /* TODO: map from event.data */ <%- placeholder %><%= isLast ? '' : ',' %>
     <% } -%>
     };
 <% } -%>

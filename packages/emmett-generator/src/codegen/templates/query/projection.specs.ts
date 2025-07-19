@@ -187,60 +187,60 @@ describe('projection.ts.ejs', () => {
     const projectionFile = plans.find((p) => p.outputPath.endsWith('projection.ts'));
 
     expect(projectionFile?.contents).toMatchInlineSnapshot(`
-          "import {
-            inMemorySingleStreamProjection,
-            type ReadEvent,
-            type InMemoryReadEventMetadata,
-          } from '@event-driven-io/emmett';
-          import type { AvailableListings } from './state';
-          import type { ListingCreated, ListingRemoved } from '../create-listing/events';
+      "import {
+        inMemorySingleStreamProjection,
+        type ReadEvent,
+        type InMemoryReadEventMetadata,
+      } from '@event-driven-io/emmett';
+      import type { AvailableListings } from './state';
+      import type { ListingCreated, ListingRemoved } from '../create-listing/events';
 
-          type AllEvents = ListingCreated | ListingRemoved;
+      type AllEvents = ListingCreated | ListingRemoved;
 
-          export const projection = inMemorySingleStreamProjection<AvailableListings, AllEvents>({
-            collectionName: 'available-properties-projection',
-            canHandle: ['ListingCreated', 'ListingRemoved'],
-            getDocumentId: (event) => event.data.propertyId,
-            evolve: (
-              document: AvailableListings | null,
-              event: ReadEvent<AllEvents, InMemoryReadEventMetadata>,
-            ): AvailableListings | null => {
-              switch (event.type) {
-                case 'ListingCreated': {
-                  /**
-                   * ## IMPLEMENTATION INSTRUCTIONS ##
-                   * This event adds or updates the document.
-                   * Review and adjust the fields as needed for your read model.
-                   */
-                  return {
-                    propertyId: event.data.propertyId,
-                    title: event.data.title,
-                    pricePerNight: event.data.pricePerNight,
-                    location: event.data.location,
-                    maxGuests: event.data.maxGuests,
-                  };
-                }
+      export const projection = inMemorySingleStreamProjection<AvailableListings, AllEvents>({
+        collectionName: 'available-properties-projection',
+        canHandle: ['ListingCreated', 'ListingRemoved'],
+        getDocumentId: (event) => event.data.propertyId,
+        evolve: (
+          document: AvailableListings | null,
+          event: ReadEvent<AllEvents, InMemoryReadEventMetadata>,
+        ): AvailableListings | null => {
+          switch (event.type) {
+            case 'ListingCreated': {
+              /**
+               * ## IMPLEMENTATION INSTRUCTIONS ##
+               * This event adds or updates the document.
+               * Implement the correct fields as needed for your read model.
+               */
+              return {
+                propertyId: /* TODO: map from event.data */ '',
+                title: /* TODO: map from event.data */ '',
+                pricePerNight: /* TODO: map from event.data */ 0,
+                location: /* TODO: map from event.data */ '',
+                maxGuests: /* TODO: map from event.data */ 0,
+              };
+            }
 
-                case 'ListingRemoved': {
-                  /**
-                   * ## IMPLEMENTATION INSTRUCTIONS ##
-                   * This event might indicate removal of a AvailableListings.
-                   *
-                   * - If the intent is to **remove the document**, return \`null\`.
-                   * - If the intent is to **soft delete**, consider adding a \`status\` field (e.g., \`status: 'removed'\`).
-                   * - Ensure consumers of this projection (e.g., UI) handle the chosen approach appropriately.
-                   */
-                  return null;
-                }
-                default:
-                  return document;
-              }
-            },
-          });
+            case 'ListingRemoved': {
+              /**
+               * ## IMPLEMENTATION INSTRUCTIONS ##
+               * This event might indicate removal of a AvailableListings.
+               *
+               * - If the intent is to **remove the document**, return \`null\`.
+               * - If the intent is to **soft delete**, consider adding a \`status\` field (e.g., \`status: 'removed'\`).
+               * - Ensure consumers of this projection (e.g., UI) handle the chosen approach appropriately.
+               */
+              return null;
+            }
+            default:
+              return document;
+          }
+        },
+      });
 
-          export default projection;
-          "
-        `);
+      export default projection;
+      "
+    `);
   });
   it('should generate a valid query resolver using ID type', async () => {
     const spec: SpecsSchema = {
@@ -325,11 +325,18 @@ describe('projection.ts.ejs', () => {
           const model = new ReadModel<Wishlist>(ctx.eventStore, 'WishlistProjection');
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
-          // Filter the collection using the provided arguments.
-          // You can access the projection via model.find and use .find(filterFn).
+          // You can query the projection using the ReadModel API:
+          //
+          // - model.getAll() — fetch all documents
+          // - model.getById(id) — fetch a single document by ID (default key: 'id')
+          // - model.find(filterFn) — filter documents using a predicate
+          // - model.first(filterFn) — fetch the first document matching a predicate
+          //
+          // Example below uses \`.find()\` to filter
+          // change the logic for the query as needed to meet the requirements for the current slice.
 
           return model.find((item) => {
-            if (sessionId && item.sessionId !== sessionId) return false;
+            if (sessionId !== undefined && item.sessionId !== sessionId) return false;
 
             return true;
           });

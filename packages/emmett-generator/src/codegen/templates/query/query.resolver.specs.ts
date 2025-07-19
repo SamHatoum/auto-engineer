@@ -68,56 +68,63 @@ describe('query.resolver.ts.ejs', () => {
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`
-          "import { Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
-          import { type GraphQLContext, ReadModel } from '../../../shared';
+      "import { Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
+      import { type GraphQLContext, ReadModel } from '../../../shared';
 
-          @ObjectType()
-          export class AvailableListings {
-            @Field(() => String)
-            propertyId!: string;
+      @ObjectType()
+      export class AvailableListings {
+        @Field(() => String)
+        propertyId!: string;
 
-            @Field(() => String)
-            title!: string;
+        @Field(() => String)
+        title!: string;
 
-            @Field(() => Number)
-            pricePerNight!: number;
+        @Field(() => Number)
+        pricePerNight!: number;
 
-            @Field(() => String)
-            location!: string;
+        @Field(() => String)
+        location!: string;
 
-            @Field(() => Number)
-            maxGuests!: number;
+        @Field(() => Number)
+        maxGuests!: number;
 
-            [key: string]: unknown;
-          }
+        [key: string]: unknown;
+      }
 
-          @Resolver()
-          export class SearchListingsQueryResolver {
-            @Query(() => [AvailableListings])
-            async searchProperties(
-              @Ctx() ctx: GraphQLContext,
-              @Arg('location', () => String, { nullable: true }) location?: string,
-              @Arg('maxPrice', () => Number, { nullable: true }) maxPrice?: number,
-              @Arg('minGuests', () => Number, { nullable: true }) minGuests?: number,
-            ): Promise<AvailableListings[]> {
-              const model = new ReadModel<AvailableListings>(ctx.eventStore, 'AvailablePropertiesProjection');
+      @Resolver()
+      export class SearchListingsQueryResolver {
+        @Query(() => [AvailableListings])
+        async searchProperties(
+          @Ctx() ctx: GraphQLContext,
+          @Arg('location', () => String, { nullable: true }) location?: string,
+          @Arg('maxPrice', () => Number, { nullable: true }) maxPrice?: number,
+          @Arg('minGuests', () => Number, { nullable: true }) minGuests?: number,
+        ): Promise<AvailableListings[]> {
+          const model = new ReadModel<AvailableListings>(ctx.eventStore, 'AvailablePropertiesProjection');
 
-              // ## IMPLEMENTATION INSTRUCTIONS ##
-              // Filter the collection using the provided arguments.
-              // You can access the projection via model.find and use .find(filterFn).
+          // ## IMPLEMENTATION INSTRUCTIONS ##
+          // You can query the projection using the ReadModel API:
+          //
+          // - model.getAll() — fetch all documents
+          // - model.getById(id) — fetch a single document by ID (default key: 'id')
+          // - model.find(filterFn) — filter documents using a predicate
+          // - model.first(filterFn) — fetch the first document matching a predicate
+          //
+          // Example below uses \`.find()\` to filter
+          // change the logic for the query as needed to meet the requirements for the current slice.
 
-              return model.find((item) => {
-                if (location && !item.location.toLowerCase().includes(location.toLowerCase())) return false;
+          return model.find((item) => {
+            if (location !== undefined && item.location !== location) return false;
 
-                if (maxPrice && item.pricePerNight > maxPrice) return false;
+            if (maxPrice !== undefined && item.maxPrice !== maxPrice) return false;
 
-                if (minGuests && item.maxGuests < minGuests) return false;
+            if (minGuests !== undefined && item.minGuests !== minGuests) return false;
 
-                return true;
-              });
-            }
-          }
-          "
-        `);
+            return true;
+          });
+        }
+      }
+      "
+    `);
   });
 });
