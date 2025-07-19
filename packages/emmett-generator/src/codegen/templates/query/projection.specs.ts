@@ -242,4 +242,100 @@ describe('projection.ts.ejs', () => {
           "
         `);
   });
+  it('should generate a valid query resolver using ID type', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'wishlist-flow',
+          slices: [
+            {
+              type: 'query',
+              name: 'view-wishlist',
+              request: `
+              query GetWishlist($sessionId: ID!) {
+                wishlist(sessionId: $sessionId) {
+                  sessionId
+                  items
+                }
+              }
+            `,
+              client: {
+                description: '',
+                specs: [],
+              },
+              server: {
+                description: '',
+                data: [
+                  {
+                    origin: {
+                      type: 'projection',
+                      idField: 'sessionId',
+                      name: 'WishlistProjection',
+                    },
+                    target: {
+                      type: 'State',
+                      name: 'Wishlist',
+                    },
+                  },
+                ],
+                gwt: [],
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'Wishlist',
+          fields: [
+            { name: 'sessionId', type: 'string', required: true },
+            { name: 'items', type: 'string', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
+
+    expect(resolverFile?.contents).toMatchInlineSnapshot(`
+      "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID } from 'type-graphql';
+      import { type GraphQLContext, ReadModel } from '../../../shared';
+
+      @ObjectType()
+      export class Wishlist {
+        @Field(() => String)
+        sessionId!: string;
+
+        @Field(() => String)
+        items!: string;
+
+        [key: string]: unknown;
+      }
+
+      @Resolver()
+      export class ViewWishlistQueryResolver {
+        @Query(() => [Wishlist])
+        async wishlist(
+          @Ctx() ctx: GraphQLContext,
+          @Arg('sessionId', () => ID, { nullable: true }) sessionId?: string,
+        ): Promise<Wishlist[]> {
+          const model = new ReadModel<Wishlist>(ctx.eventStore, 'WishlistProjection');
+
+          // ## IMPLEMENTATION INSTRUCTIONS ##
+          // Filter the collection using the provided arguments.
+          // You can access the projection via model.find and use .find(filterFn).
+
+          return model.find((item) => {
+            if (sessionId && item.sessionId !== sessionId) return false;
+
+            return true;
+          });
+        }
+      }
+      "
+    `);
+  });
 });

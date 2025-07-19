@@ -5,9 +5,11 @@ const queryName = parsedRequest?.queryName ?? camelCase(sliceName);
 const viewType = target?.name ? pascalCase(target.name) : 'UnknownView';
 const projectionType = projection?.name ? pascalCase(projection.name) : 'UnknownProjection';
 const message = messages?.find(m => m.name === viewType);
-const resolverClassName = `${pascalCase(slice.name)}QueryResolver`
+const resolverClassName = `${pascalCase(slice.name)}QueryResolver`;
+
+const usesID = parsedRequest?.args?.some(arg => graphqlType(arg.tsType) === 'ID');
 %>
-import { Query, Resolver, Arg, Ctx,ObjectType, Field } from 'type-graphql';
+import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %> } from 'type-graphql';
 import { type GraphQLContext, ReadModel } from '../../../shared';
 
 @ObjectType()
@@ -19,8 +21,7 @@ export class <%= viewType %> {
 %>
 @Field(() => <%= gqlType %>)
 <%= field.name %>!: <%- tsType %>;
-<%   }
-%>
+<%   } %>
 [key: string]: unknown;
 <% } else { %>
     [key: string]: unknown;
@@ -35,7 +36,8 @@ async <%= queryName %>(
 <%     for (let i = 0; i < parsedRequest.args.length; i++) {
     const arg = parsedRequest.args[i];
     const gqlType = graphqlType(arg.tsType);
-%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%- arg.tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
+    const tsType = arg.tsType === 'ID' ? 'string' : arg.tsType;
+%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%- tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
 <%     }
 } %>
 ): Promise<<%= viewType %>[]> {
@@ -50,13 +52,13 @@ return model.find((item) => {
         for (const arg of parsedRequest.args) {
 if (arg.name === 'location') { %>
     if (location && !item.location.toLowerCase().includes(location.toLowerCase())) return false;
-<%     } else if (arg.name === 'maxPrice') { %>
+<%      } else if (arg.name === 'maxPrice') { %>
     if (maxPrice && item.pricePerNight > maxPrice) return false;
-<%     } else if (arg.name === 'minGuests') { %>
+<%      } else if (arg.name === 'minGuests') { %>
     if (minGuests && item.maxGuests < minGuests) return false;
-<%     } else { %>
+<%      } else { %>
     if (<%= arg.name %> && item.<%= arg.name %> !== <%= arg.name %>) return false;
-<%     }
+<%      }
 }
 } %>
 return true;

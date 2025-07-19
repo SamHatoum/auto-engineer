@@ -43,6 +43,7 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
   const template = ejs.compile(content, { async: true });
   const graphqlType = (tsType: string): string => {
     if (!tsType) return 'String';
+    if (tsType === 'ID') return 'ID';
     if (tsType === 'string') return 'String';
     if (tsType === 'number') return 'Number';
     if (tsType === 'boolean') return 'Boolean';
