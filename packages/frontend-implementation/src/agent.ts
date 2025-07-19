@@ -1,7 +1,7 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { getTsErrors, getBuildErrors, getConsoleErrors, closeBrowser } from '@auto-engineer/frontend-checks';
+import { getTsErrors, getBuildErrors, closeBrowser } from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
 // Utility to extract props from interface
@@ -400,51 +400,7 @@ Do not include explanations, markdown, or code blocks.
   return true;
 }
 
-async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
-  const consoleErrors = await getConsoleErrors("http://localhost:8081");
-  console.log('Found console errors', consoleErrors);
-  if (consoleErrors.length === 0) return false;
 
-  const errorFeedback = consoleErrors.join("\n");
-  const fixupPrompt = `${makeBasePrompt(ctx)}\n
-After your previous changes, the application produced the following console errors when running:\n\n${errorFeedback}\n
-You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
-
-Strict rules:
-- Do not silence errors — resolve them fully and correctly
-- Fix all errors in each file in one go
-- Reuse existing logic or types instead of re-creating similar ones
-- Do not submit partial updates; provide the full updated content of the file
-
-Output must be a **JSON array** only. Each item must include:
-- \`action\`: "update"
-- \`file\`: relative path to the updated file
-- \`description\`: "Fix console errors"
-- \`content\`: full new content of the file, as a string
-
-Do not include explanations, markdown, or code blocks.
-`;
-  const fixupPlanText = await callAI(fixupPrompt);
-  let fixupPlan: Fix[] = [];
-  try {
-    fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
-  } catch (e) {
-    await closeBrowser();
-    console.error("Could not parse fixup plan from LLM:", e instanceof Error ? e.message : String(e));
-    // console.debug('Could not parse fixup plan from LLM:', fixupPlanText, e);
-  }
-  console.log('Fixup plan', fixupPlan);
-  for (const fix of fixupPlan) {
-    if (fix.action === 'update' && fix.file && fix.content) {
-      const outPath = path.join(projectDir, fix.file);
-      await fs.mkdir(path.dirname(outPath), { recursive: true });
-      await fs.writeFile(outPath, fix.content, "utf-8");
-      console.log(`Fixed ${fix.file} for console errors`);
-    }
-  }
-  await closeBrowser();
-  return true;
-}
 
 async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   const maxIterations = 5;

@@ -1,5 +1,5 @@
 import { Integration, Event, Command } from '@auto-engineer/flowlang';
-import { generateTextWithAI, AIProvider, startServer } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 
 export type ChatCompleted = Event<
   'ChatCompleted',
@@ -33,13 +33,3 @@ export const AI: Integration<'ai'> = {
     },
   }
 };
-
-async function startMCPServer() {
-  console.log('Starting MCP server');
-  await startServer();
-}
-
-// Only start server when running directly (not when imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
-  startMCPServer().catch(console.error);
-}

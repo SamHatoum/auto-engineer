@@ -43,7 +43,7 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
   await fs.writeFile(outPath, md);
 }
 
-async function copyFile(inputDir: string, outputDir: string, file: string): Promise<any> {
+async function copyFile(inputDir: string, outputDir: string, file: string): Promise<void> {
   const srcPath = path.join(inputDir, file);
   const destPath = path.join(outputDir, file);
   await fs.mkdir(outputDir, { recursive: true });

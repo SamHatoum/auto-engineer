@@ -37,8 +37,8 @@ export function runCodegen(projectPath: string): void {
     }
   }
 
-  console.log('▶ Installing dependencies via `npx pnpm`...');
-  const installOutput = runCommand('npx pnpm', resolvedPath);
+  console.log('▶ Installing dependencies via `npx pnpm` in', resolvedPath);
+  const installOutput = runCommand('npx pnpm install', resolvedPath);
   console.log(installOutput);
 
   console.log('\n▶ Running codegen...');

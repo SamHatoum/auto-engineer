@@ -141,8 +141,8 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   request(query: unknown): FluentQuerySliceBuilder {
     if (typeof query === 'string') {
       this.slice.request = query;
-    } else if (query && typeof query === 'object' && (query as any).kind === 'Document') {
-      this.slice.request = print(<ASTNode>query); // ✅ convert AST to SDL string
+    } else if (query !== null && query !== undefined && typeof query === 'object' && 'kind' in query && query.kind === 'Document') {
+      this.slice.request = print(query as ASTNode); // ✅ convert AST to SDL string
     } else {
       throw new Error('Invalid GraphQL query format');
     }

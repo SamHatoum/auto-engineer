@@ -6,6 +6,7 @@ import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
 import { z } from 'zod';
 import { getRegisteredToolsForAI } from './mcp-server.js';
+import { startServer } from './mcp-server.js';
 
 interface AIToolValidationError extends Error {
   cause?: {
@@ -99,6 +100,7 @@ export async function generateTextWithAI(
   const modelInstance = getModel(provider, model);
 
   if (finalOptions.includeTools === true) {
+    await startServer();
     const result = await generateTextWithToolsAI(prompt, provider, options);
     return result.text;
   }
@@ -173,19 +175,87 @@ export async function generateTextWithToolsAI(
   const registeredTools = finalOptions.includeTools === true ? getRegisteredToolsForAI() : {};
   const hasTools = Object.keys(registeredTools).length > 0;
 
-  const result = await generateText({
-    model: modelInstance,
-    prompt,
-    temperature: finalOptions.temperature,
-    maxTokens: finalOptions.maxTokens,
-    ...(hasTools && { tools: registeredTools }),
-    ...(hasTools && { toolChoice: 'auto' }),
-  });
+  // Build conversation messages
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+    { role: 'user', content: prompt }
+  ];
+
+  let finalResult = '';
+  const allToolCalls: unknown[] = [];
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+
+    const result = await generateText({
+      model: modelInstance,
+      messages,
+      temperature: finalOptions.temperature,
+      maxTokens: finalOptions.maxTokens,
+      ...(hasTools && { 
+        tools: registeredTools,
+        toolChoice: 'auto' as const
+      }),
+    });
+
+    // Add assistant message to conversation
+    if (result.text) {
+      messages.push({ role: 'assistant', content: result.text });
+      finalResult = result.text;
+    }
+
+    // If there are tool calls, execute them and continue conversation
+    if (result.toolCalls !== undefined && result.toolCalls.length > 0) {
+      allToolCalls.push(...result.toolCalls);
+      
+      // Execute tools and create a simple follow-up prompt
+      const toolResults = await executeToolCalls(result.toolCalls, registeredTools);
+      
+      // Add the tool results as a user message and request a final response
+      messages.push({
+        role: 'user',
+        content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`
+      });
+      
+      // Continue the conversation to get AI's response to tool results
+      continue;
+    }
+
+    // If no tool calls, we're done
+    break;
+  }
 
   return {
-    text: result.text,
-    toolCalls: result.toolCalls,
+    text: finalResult,
+    toolCalls: allToolCalls,
   };
+}
+
+async function executeToolCalls(
+  toolCalls: unknown[], 
+  registeredTools: Record<string, { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }>
+): Promise<string> {
+  let toolResults = '';
+  
+  for (const toolCall of toolCalls) {
+    try {
+      const toolCallObj = toolCall as { toolName: string; args: Record<string, unknown> };
+      const tool = registeredTools[toolCallObj.toolName];
+      if (tool?.execute) {
+        const toolResult = await tool.execute(toolCallObj.args);
+        toolResults += `Tool ${toolCallObj.toolName} returned: ${String(toolResult)}\n\n`;
+      } else {
+        toolResults += `Error: Tool ${toolCallObj.toolName} not found or missing execute function\n\n`;
+      }
+    } catch (error) {
+      const toolCallObj = toolCall as { toolName: string };
+      console.error(`Tool execution error for ${toolCallObj.toolName}:`, error);
+      toolResults += `Error executing tool ${toolCallObj.toolName}: ${String(error)}\n\n`;
+    }
+  }
+  
+  return toolResults;
 }
 
 export function getAvailableProviders(): AIProvider[] {

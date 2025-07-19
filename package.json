@@ -13,7 +13,7 @@
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
-    "check": "turbo run lint:fix format:fix type-check test",
+    "check": "turbo run lint format:fix type-check test",
     "clean": "tsx scripts/clean.ts",
     "reset": "pnpm clean && pnpm install && pnpm build",
     "changeset": "changeset",

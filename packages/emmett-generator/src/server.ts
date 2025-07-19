@@ -18,7 +18,6 @@ async function start() {
   const messageBus: CommandProcessor = getInMemoryMessageBus(); // ensure correct type
   await Promise.all(registrations.map((r) => r.register(messageBus, eventStore)));
   const resolvers = await loadResolvers('src/domain/flows/**/*.resolver.{ts,js}');
-  console.log('🚀 Loaded resolvers:', resolvers);
   const schema = await buildSchema({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolvers: resolvers as unknown as [(...args: any[]) => any, ...Array<(...args: any[]) => any>],
@@ -32,9 +31,6 @@ async function start() {
   });
   const { url } = await server.listen({ port: 4000 });
   console.log(`🚀 GraphQL server ready at ${url}`);
-  console.log(`📡 Loaded ${loadedProjections.length} projections`);
-  console.log('✅ Projections loaded:', loadedProjections);
-  console.log(`📦 Loaded ${registrations.length} slice register modules`);
 }
 
 void start();

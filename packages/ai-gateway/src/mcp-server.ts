@@ -68,7 +68,10 @@ function createMcpHandler<T extends Record<string, unknown>>(
 
 function createAiSdkTool(description: ToolDescription, handler: ToolHandler) {
   // Create a Zod object schema from the input schema
-  const parameterSchema = z.object(description.inputSchema);
+  // If inputSchema is empty, create a schema that accepts any object
+  const parameterSchema = Object.keys(description.inputSchema).length > 0 
+    ? z.object(description.inputSchema)
+    : z.object({}).passthrough();
   
   return {
     parameters: parameterSchema,
@@ -119,14 +122,12 @@ export function registerTools<T extends Record<string, unknown> = Record<string,
 }
 
 export async function startServer() {
-  if (isStarted) {
-    console.warn('Server is already started');
-    return;
-  }
+  if (isStarted) return;
+  
 
   await server.connect(transport);
   isStarted = true;
-  console.error('AI Gateway MCP Server running on stdio');
+  console.log('AI Gateway MCP Server running on stdio');
 }
 
 export function isServerStarted() {

@@ -8,48 +8,66 @@ interface GqlOperation {
   raw: string;
 }
 
+interface DataRequirement {
+  type: 'query' | 'mutation';
+  details?: {
+    gql?: string;
+  };
+}
+
 function extractOperationName(gql: string): string {
   const match = gql.match(/(query|mutation)\s+(\w+)/);
   return match ? match[2] : 'UnknownOperation';
 }
 
-function extractGqlOperationsFromIAScheme(schema: IAScheme): GqlOperation[] {
-  const operations: GqlOperation[] = [];
+function isValidDataRequirement(req: unknown): req is DataRequirement {
+  return (
+    typeof req === 'object' &&
+    req !== null &&
+    'type' in req &&
+    (req.type === 'query' || req.type === 'mutation') &&
+    'details' in req &&
+    typeof req.details === 'object' &&
+    req.details !== null &&
+    'gql' in req.details &&
+    typeof req.details.gql === 'string'
+  );
+}
 
-  function walk(obj: unknown): void {
-    if (typeof obj !== 'object' || obj === null) return;
+function processDataRequirements(record: Record<string, unknown>, operations: GqlOperation[]): void {
+  const dataReqs = record['data_requirements'];
+  if (!Array.isArray(dataReqs)) return;
 
-    if (Array.isArray(obj)) {
-      obj.forEach(walk);
-      return;
-    }
-
-    const record = obj as Record<string, unknown>;
-
-    if (Array.isArray(record['data_requirements'])) {
-      const reqs = record['data_requirements'] as any[];
-      for (const req of reqs) {
-        if (
-          typeof req === 'object' &&
-          req !== null &&
-          (req.type === 'query' || req.type === 'mutation') &&
-          typeof req.details?.gql === 'string'
-        ) {
-          operations.push({
-            operationType: req.type,
-            operationName: extractOperationName(req.details.gql),
-            raw: req.details.gql.trim(),
-          });
-        }
-      }
-    }
-
-    for (const value of Object.values(record)) {
-      walk(value);
+  for (const req of dataReqs) {
+    if (isValidDataRequirement(req)) {
+      operations.push({
+        operationType: req.type,
+        operationName: extractOperationName(req.details!.gql!),
+        raw: req.details!.gql!.trim(),
+      });
     }
   }
+}
 
-  walk(schema);
+function walk(obj: unknown, operations: GqlOperation[]): void {
+  if (typeof obj !== 'object' || obj === null) return;
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => walk(item, operations));
+    return;
+  }
+
+  const record = obj as Record<string, unknown>;
+  processDataRequirements(record, operations);
+
+  for (const value of Object.values(record)) {
+    walk(value, operations);
+  }
+}
+
+function extractGqlOperationsFromIAScheme(schema: IAScheme): GqlOperation[] {
+  const operations: GqlOperation[] = [];
+  walk(schema, operations);
   return operations;
 }
 
