@@ -17,8 +17,10 @@ import {
   type State,
 } from '@auto-engineer/flowlang';
 
-import { ProductCatalog } from '../server/src/integrations/product-catalogue-integration';
-import { AI } from '../server/src/integrations/ai-integration';
+// @ts-ignore
+const { ProductCatalog } = await import('../server/src/integrations/product-catalogue-integration');
+// @ts-ignore
+const { AI } = await import('../server/src/integrations/ai-integration');
 
 import type { Products } from '../server/src/integrations/product-catalogue-integration';
 import type { DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
@@ -237,8 +239,8 @@ flow('Seasonal Assistant', () => {
       data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection', 'sessionId')]);
 
       specs('Suggested items are available for viewing', () => {
-        when(
-          Events.ChatCompleted({
+        given(
+          [Events.ChatCompleted({
             sessionId: 'session-abc',
             suggestedItems: [
               {
@@ -267,8 +269,8 @@ flow('Seasonal Assistant', () => {
               },
             ],
             timestamp: new Date(),
-          }),
-        ).then([
+          })])
+        .then([
           State.SuggestedItems({
             sessionId: 'session-abc',
             items: [

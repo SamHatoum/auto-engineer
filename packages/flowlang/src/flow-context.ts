@@ -43,10 +43,8 @@ export function addSlice(slice: Slice): void {
   context.currentSliceIndex = context.flow.slices.length - 1;
 }
 
-export function startClientBlock(description: string = ''): void {
+export function startClientBlock(slice: Slice, description: string = ''): void {
   if (!context) throw new Error('No active flow context');
-  const slice = getCurrentSlice();
-  if (!slice) throw new Error('No active slice');
 
   if (slice.type === 'command' || slice.type === 'query') {
     slice.client = {
@@ -63,10 +61,8 @@ export function endClientBlock(): void {
   }
 }
 
-export function startServerBlock(description: string = ''): void {
+export function startServerBlock(slice: Slice, description: string = ''): void {
   if (!context) throw new Error('No active flow context');
-  const slice = getCurrentSlice();
-  if (!slice) throw new Error('No active slice');
 
   if (slice.type === 'command') {
     slice.server = {
@@ -82,7 +78,7 @@ export function startServerBlock(description: string = ''): void {
     };
   } else if (slice.type === 'react') {
     slice.server = {
-      description,
+      description: description || undefined,
       gwt: [],
       data: undefined
     };
@@ -107,7 +103,7 @@ export function pushSpec(description: string): void {
   }
 }
 
-export function startShouldBlock(description?: string): void {
+export function recordShouldBlock(description?: string): void {
   if ((description != null) && context?.currentSpecTarget === 'client') {
     const slice = getCurrentSlice();
     if (slice && (slice.type === 'command' || slice.type === 'query')) {
@@ -116,11 +112,7 @@ export function startShouldBlock(description?: string): void {
   }
 }
 
-export function endShouldBlock(): void {
-  // No-op for compatibility
-}
-
-export function startGwtSpec(): void {
+export function recordGwtSpec(): void {
   if (!context || !context.currentSpecTarget) throw new Error('No active spec target');
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
@@ -150,14 +142,27 @@ export function startGwtSpec(): void {
 export function recordGiven(events: Array<{ type: string; data: Record<string, unknown> }>): void {
   if (!context || context.currentSpecIndex === null) throw new Error('No active GWT spec');
   const slice = getCurrentSlice();
-  if (!slice || slice.type !== 'command') throw new Error('Given can only be used in command slices');
+  if (!slice) throw new Error('No active slice');
 
-  const spec = slice.server.gwt[context.currentSpecIndex];
-  if ('given' in spec) {
-    spec.given = events.map(event => ({
-      eventRef: event.type,
-      exampleData: event.data
-    }));
+  // Given can be used in both command and query slices
+  if (slice.type === 'command') {
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    if ('given' in spec) {
+      spec.given = events.map(event => ({
+        eventRef: event.type,
+        exampleData: event.data
+      }));
+    }
+  } else if (slice.type === 'query') {
+    const spec = slice.server.gwt[context.currentSpecIndex];
+    if ('given' in spec) {
+      spec.given = events.map(event => ({
+        eventRef: event.type,
+        exampleData: event.data
+      }));
+    }
+  } else {
+    throw new Error('Given can only be used in command or query slices');
   }
 }
 
@@ -168,17 +173,23 @@ export function recordWhen(command: { type: string; data: Record<string, unknown
 
   if (slice.type === 'command') {
     const spec = slice.server.gwt[context.currentSpecIndex];
-    spec.when = {
-      commandRef: command.type,
-      exampleData: command.data
-    };
+    if ('when' in spec) {
+      spec.when = {
+        commandRef: command.type,
+        exampleData: command.data
+      };
+    }
   } else if (slice.type === 'react') {
     // For react slices, when is an array of events
     const spec = slice.server.gwt[context.currentSpecIndex];
-    spec.when = [{
-      eventRef: command.type,
-      exampleData: command.data
-    }];
+    if ('when' in spec) {
+      spec.when = [{
+        eventRef: command.type,
+        exampleData: command.data
+      }];
+    }
+  } else {
+    throw new Error('When can only be used in command or react slices');
   }
 }
 
@@ -188,10 +199,12 @@ export function recordWhenEvents(events: Array<{ type: string; data: Record<stri
   if (!slice || slice.type !== 'react') throw new Error('When events can only be used in react slices');
 
   const spec = slice.server.gwt[context.currentSpecIndex];
-  spec.when = events.map(event => ({
-    eventRef: event.type,
-    exampleData: event.data
-  }));
+  if ('when' in spec) {
+    spec.when = events.map(event => ({
+      eventRef: event.type,
+      exampleData: event.data
+    }));
+  }
 }
 
 export function recordThen(...items: Array<{ type: string; data: Record<string, unknown> }>): void {
@@ -201,22 +214,37 @@ export function recordThen(...items: Array<{ type: string; data: Record<string, 
 
   if (slice.type === 'command') {
     const spec = slice.server.gwt[context.currentSpecIndex];
-    spec.then = items.map(item => ({
-      eventRef: item.type,
-      exampleData: item.data
-    }));
+    if ('then' in spec) {
+      spec.then = items.map(item => {
+        // Check if it's an error
+        if (item.type === 'Error' || 'errorType' in item.data) {
+          return {
+            errorType: (item.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
+            message: item.data.message as string | undefined
+          };
+        }
+        return {
+          eventRef: item.type,
+          exampleData: item.data
+        };
+      });
+    }
   } else if (slice.type === 'query') {
     const spec = slice.server.gwt[context.currentSpecIndex];
-    spec.then = items.map(item => ({
-      stateRef: item.type,
-      exampleData: item.data
-    }));
+    if ('then' in spec) {
+      spec.then = items.map(item => ({
+        stateRef: item.type,
+        exampleData: item.data
+      }));
+    }
   } else if (slice.type === 'react') {
     const spec = slice.server.gwt[context.currentSpecIndex];
-    spec.then = items.map(item => ({
-      commandRef: item.type,
-      exampleData: item.data
-    }));
+    if ('then' in spec) {
+      spec.then = items.map(item => ({
+        commandRef: item.type,
+        exampleData: item.data
+      }));
+    }
   }
 }
 
@@ -229,11 +257,6 @@ export function setQueryRequest(request: string): void {
 export function setSliceData(data: DataItem[]): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
-
-  if (slice.server === undefined) {
-    throw new Error('Data can only be set in server block');
-  }
-
   // Separate sinks and sources
   const sinks = data.filter((item): item is DataSinkItem => item.__type === 'sink');
   const sources = data.filter((item): item is DataSourceItem => item.__type === 'source');

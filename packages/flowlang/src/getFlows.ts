@@ -83,6 +83,17 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
               }
             });
           }
+          if ('origin' in dataItem && dataItem.origin?.type === 'integration') {
+            dataItem.origin.systems.forEach((system: string) => {
+              if (!integrations.has(system)) {
+                integrations.set(system, {
+                  name: system,
+                  description: `${system} integration`,
+                  source: `@auto-engineer/${system.toLowerCase()}-integration`
+                });
+              }
+            });
+          }
         });
       }
 

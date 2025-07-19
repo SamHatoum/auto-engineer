@@ -8,8 +8,7 @@ import {
   startServerBlock,
   endServerBlock,
   pushSpec,
-  startShouldBlock,
-  endShouldBlock,
+  recordShouldBlock,
   setSliceData,
 } from './flow-context';
 import type { DataSinkItem, DataSourceItem, DataItem } from './types';
@@ -22,15 +21,21 @@ export const flow = (name: string, fn: () => void) => {
 };
 
 export const client = (fn: () => void) => {
-  startClientBlock('');
-  fn();
-  endClientBlock();
+  const slice = getCurrentSlice();
+  if (slice) {
+    startClientBlock(slice, '');
+    fn();
+    endClientBlock();
+  }
 };
 
 export const server = (fn: () => void) => {
-  startServerBlock('');
-  fn();
-  endServerBlock();
+  const slice = getCurrentSlice();
+  if (slice) {
+    startServerBlock(slice, '');
+    fn();
+    endServerBlock();
+  }
 };
 
 export const request = (_query: unknown) => ({
@@ -38,14 +43,13 @@ export const request = (_query: unknown) => ({
 });
 
 export const should = (description: string) => {
-  startShouldBlock(description);
+  recordShouldBlock(description);
 };
 
 export const specs = (description: string, fn: () => void) => {
   pushSpec(description);
-  startShouldBlock();
+  recordShouldBlock();
   fn();
-  endShouldBlock();
 };
 
 export interface SliceTypes {

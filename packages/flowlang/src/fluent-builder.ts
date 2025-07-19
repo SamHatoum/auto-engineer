@@ -4,7 +4,7 @@ import {
   startClientBlock,
   endClientBlock,
   startServerBlock,
-  endServerBlock,
+  endServerBlock, getCurrentSlice,
 } from './flow-context';
 import {CommandSlice, QuerySlice, ReactSlice} from "./index";
 import { print, ASTNode } from 'graphql';
@@ -59,9 +59,12 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
     if (callback) {
-      startClientBlock(description);
-      callback();
-      endClientBlock();
+      const slice = getCurrentSlice();
+      if (slice) {
+        startClientBlock(slice, description);
+        callback();
+        endClientBlock();
+      }
     }
 
     return this;
@@ -74,9 +77,12 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
     if (callback) {
-      startServerBlock(description);
-      callback();
-      endServerBlock();
+      const slice = getCurrentSlice();
+      if (slice) {
+        startServerBlock(slice, description);
+        callback();
+        endServerBlock();
+      }
     }
 
     return this;
@@ -115,9 +121,12 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
     if (callback) {
-      startClientBlock(description);
-      callback();
-      endClientBlock();
+      const slice = getCurrentSlice();
+      if (slice) {
+        startClientBlock(slice, description);
+        callback();
+        endClientBlock();
+      }
     }
 
     return this;
@@ -130,9 +139,12 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
     if (callback) {
-      startServerBlock(description);
-      callback();
-      endServerBlock();
+      const slice = getCurrentSlice();
+      if (slice) {
+        startServerBlock(slice, description);
+        callback();
+        endServerBlock();
+      }
     }
 
     return this;
@@ -169,9 +181,12 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
     if (callback) {
-      startServerBlock(description);
-      callback();
-      endServerBlock();
+      const slice = getCurrentSlice();
+      if (slice) {
+        startServerBlock(slice, description);
+        callback();
+        endServerBlock();
+      }
     }
 
     return this;
