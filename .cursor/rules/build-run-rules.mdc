@@ -1,8 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-Always use pnpm
-When running git commands that push remotely or perform destructive actions, ask me first.
-Test your work. After you make edits, find a way to either run a command or test to ensure it worked.
