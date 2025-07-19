@@ -127,7 +127,6 @@ export async function startServer() {
 
   await server.connect(transport);
   isStarted = true;
-  console.log('AI Gateway MCP Server running on stdio');
 }
 
 export function isServerStarted() {
