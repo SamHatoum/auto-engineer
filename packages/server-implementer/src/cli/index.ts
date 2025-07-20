@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import {runAllSlices} from "../agent/runAllSlices.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import {runFlows} from "../agent/runFlows";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -23,5 +23,5 @@ if (isMain) {
         process.exit(1);
     }
     
-    void runAllSlices(flowsDir);
+    void runFlows(flowsDir);
 }

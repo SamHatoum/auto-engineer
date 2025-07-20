@@ -5,6 +5,8 @@ import { readFile, writeFile, access } from 'fs/promises';
 import { execa } from 'execa';
 import { SYSTEM_PROMPT } from '../prompts/systemPrompt.js';
 import { extractCodeBlock } from '../utils/extractCodeBlock.js';
+import {existsSync} from "fs";
+import { unlink } from 'fs/promises';
 
 const availableProviders = getAvailableProviders();
 const AI_PROVIDER = availableProviders[0];
@@ -22,56 +24,71 @@ type TestAndTypecheckResult = {
     typecheckErrors: string;
 };
 
+type VitestAssertionResult = {
+    status: string;
+    fullName: string;
+    failureMessages?: string[];
+};
 
-export async function runSlice(sliceDir: string): Promise<void> {
-    console.log(`✏️ Implementing slice: ${sliceDir}`);
+type VitestTestResult = {
+    file: string;
+    status: string;
+    assertionResults: VitestAssertionResult[];
+};
 
+type VitestReport = {
+    testResults?: VitestTestResult[];
+};
+
+
+export async function runSlice(sliceDir: string, flow: string): Promise<void> {
+    const sliceName = path.basename(sliceDir);
+    console.log(`✏️ Implementing slice: ${sliceName} for flow: ${flow}`);
     let contextFiles = await loadContextFiles(sliceDir);
     const filesToImplement = findFilesToImplement(contextFiles);
-
     for (const [targetFile] of filesToImplement) {
         await implementFileFromAI(sliceDir, targetFile, contextFiles);
     }
-
     let result = await runTestsAndTypecheck(sliceDir);
     reportTestAndTypecheckResults(sliceDir, result);
-
     const failedFiles = new Set([...result.failedTestFiles, ...result.failedTypecheckFiles]);
-
-    for (let attempt = 1; attempt <= 3 && failedFiles.size > 0; attempt++) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
+        if (failedFiles.size === 0) {
+            console.log(`✅ All issues resolved after attempt ${attempt - 1}`);
+            break;
+        }
         console.log(`🔁 Retry attempt ${attempt} for ${failedFiles.size} files...`);
-
         contextFiles = await loadContextFiles(sliceDir);
-
         for (const filePath of failedFiles) {
             const fileName = path.basename(filePath);
-            const prompt = buildRetryPrompt(fileName, contextFiles, result.testErrors, result.typecheckErrors);
-
-            const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
+            const retryPrompt = buildRetryPrompt(fileName, contextFiles, result.testErrors, result.typecheckErrors);
+            console.log(`🔮 Retrying ${fileName}`);
+            const aiOutput = await generateTextWithAI(retryPrompt, AI_PROVIDER);
             const cleanedCode = extractCodeBlock(aiOutput);
-
             await writeFile(path.join(sliceDir, fileName), cleanedCode, 'utf-8');
             console.log(`♻️ Retried and updated ${fileName}`);
         }
-
         result = await runTestsAndTypecheck(sliceDir);
         reportTestAndTypecheckResults(sliceDir, result);
-
         failedFiles.clear();
         result.failedTestFiles.forEach(f => failedFiles.add(f));
         result.failedTypecheckFiles.forEach(f => failedFiles.add(f));
+        if (failedFiles.size > 0) {
+            console.log(`🚫 Still failing after attempt ${attempt}:`);
+            for (const filePath of failedFiles) {
+                console.log(`   - ${path.relative(sliceDir, filePath)}`);
+            }
+        }
     }
 }
 
 async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
     const files = await fg(['*.ts'], { cwd: sliceDir });
     const context: Record<string, string> = {};
-
     for (const file of files) {
         const absPath = path.join(sliceDir, file);
         context[file] = await readFile(absPath, 'utf-8');
     }
-
     return context;
 }
 
@@ -163,6 +180,7 @@ export async function runTestsAndTypecheck(sliceDir: string): Promise<TestAndTyp
     };
 }
 
+
 async function runTests(sliceDir: string, rootDir: string) {
     const testFiles = await fg(['*.spec.ts', '*.specs.ts'], { cwd: sliceDir });
 
@@ -171,9 +189,15 @@ async function runTests(sliceDir: string, rootDir: string) {
         return { success: true, testErrors: '', failedTestFiles: [] };
     }
 
+    const reportPath = path.join(rootDir, 'vitest-results.json');
+    if (existsSync(reportPath)) {
+        await writeFile(reportPath, '', 'utf-8'); // clear old results
+    }
+
     try {
         const relativePaths = testFiles.map(f => path.join(sliceDir, f).replace(`${rootDir}/`, ''));
-        const result = await execa('npx', ['vitest', 'run', ...relativePaths], {
+
+        const result = await execa('npx', ['vitest', 'run', '--reporter=json', '--outputFile=vitest-results.json', ...relativePaths], {
             cwd: rootDir,
             stdio: 'pipe',
             reject: false,
@@ -182,26 +206,29 @@ async function runTests(sliceDir: string, rootDir: string) {
         const output = (result.stdout ?? '') + (result.stderr ?? '');
         console.log('Test output:', output);
 
-        if (result.exitCode !== 0 || output.includes('FAIL') || output.includes('failed')) {
-            const filteredOutput = filterTestErrors(output, sliceDir);
-            const failPatterns = [
-                /FAIL\s+(\S+\.specs?\.ts)/g,
-                /❯\s+(\S+\.specs?\.ts)/g,
-                /(\S+\.specs?\.ts)\s+>/g,
-                /\s+(\S+\.specs?\.ts)\s+\d+ms/g,
-            ];
+        const reportRaw = await readFile(reportPath, 'utf-8');
+        const report = JSON.parse(reportRaw) as VitestReport;
+        const testResults = report.testResults ?? [];
+        
+        const failedFiles = testResults
+            .filter((r: VitestTestResult) => r.status === 'failed')
+            .map((r: VitestTestResult) => path.resolve(rootDir, r.file))
+            .filter((f: string) => f.startsWith(sliceDir));
 
-            return {
-                success: false,
-                testErrors: filteredOutput,
-                failedTestFiles: extractFailedFiles(filteredOutput, failPatterns, rootDir, sliceDir),
-            };
-        }
+        const failedTestSummaries = testResults
+            .filter((r: VitestTestResult) => r.status === 'failed')
+            .map((r: VitestTestResult) => {
+                const lines = r.assertionResults
+                    .filter((a: VitestAssertionResult) => a.status === 'failed')
+                    .map((a: VitestAssertionResult) => `❌ ${a.fullName}\n${a.failureMessages?.join('\n') ?? ''}`);
+                return `📄 ${r.file}\n${lines.join('\n')}`;
+            })
+            .join('\n\n');
 
         return {
-            success: true,
-            testErrors: '',
-            failedTestFiles: [],
+            success: failedFiles.length === 0,
+            testErrors: failedTestSummaries,
+            failedTestFiles: failedFiles,
         };
     } catch (err: unknown) {
         const execaErr = err as { stdout?: string; stderr?: string };
@@ -212,6 +239,8 @@ async function runTests(sliceDir: string, rootDir: string) {
             testErrors: output,
             failedTestFiles: testFiles.map(f => path.join(sliceDir, f)),
         };
+    } finally {
+        await unlink(reportPath).catch(() => {});
     }
 }
 
@@ -242,16 +271,6 @@ function getTypecheckPatterns(): RegExp[] {
         /error TS\d+: (.+) '([^']+\.ts)'/gm,
         /^([^:]+\.ts):\d+:\d+\s+-\s+error/gm,
     ];
-}
-
-function filterTestErrors(output: string, sliceDir: string): string {
-    const lines = output.split('\n');
-    const sliceErrorLines = lines.filter(line => 
-        line.includes(sliceDir) && 
-        !line.includes('node_modules') &&
-        (line.includes('FAIL') || line.includes('failed') || line.includes('error'))
-    );
-    return sliceErrorLines.join('\n');
 }
 
 function extractFailedFiles(output: string, patterns: RegExp[], rootDir: string, sliceDir?: string): string[] {
