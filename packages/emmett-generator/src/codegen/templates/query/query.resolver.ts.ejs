@@ -6,8 +6,12 @@ const viewType = target?.name ? pascalCase(target.name) : 'UnknownView';
 const projectionType = projection?.name ? pascalCase(projection.name) : 'UnknownProjection';
 const message = messages?.find(m => m.name === viewType);
 const resolverClassName = `${pascalCase(slice.name)}QueryResolver`;
-
 const usesID = parsedRequest?.args?.some(arg => graphqlType(arg.tsType) === 'ID');
+
+const embeddedTypes = [];
+function getEmbeddedObjectTypeName(parentName, fieldName) {
+    return `${parentName}${pascalCase(fieldName)}`;
+}
 %>
 import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %> } from 'type-graphql';
 import { type GraphQLContext, ReadModel } from '../../../shared';
@@ -18,15 +22,45 @@ export class <%= viewType %> {
         for (const field of message.fields) {
     const gqlType = graphqlType(field.type ?? 'string');
     const tsType = field.type ?? 'string';
+    const isInlineArray = tsType.startsWith('Array<{') || tsType.startsWith('{') || tsType.includes('[]');
+    const fieldTypeName = getEmbeddedObjectTypeName(viewType, field.name);
+
+if (isInlineArray) {
+    embeddedTypes.push({ parentName: viewType, fieldName: field.name, typeName: fieldTypeName, tsType });
 %>
-@Field(() => <%= gqlType %>)
-<%= field.name %>!: <%- tsType %>;
-<%   } %>
+@Field(() => [<%= fieldTypeName %>])
+<%= field.name %>!: <%= fieldTypeName %>[];
+<%      } else { %>
+    @Field(() => <%= gqlType %>)
+    <%= field.name %>!: <%= tsType %>;
+<%      }
+} %>
 [key: string]: unknown;
 <% } else { %>
     [key: string]: unknown;
 <% } %>
 }
+
+<% for (const { typeName, tsType } of embeddedTypes) {
+    const match = tsType.match(/Array<\{([^}]*)\}>/);
+    const rawFields = match?.[1]?.split(/[,;]/) ?? [];
+    const parsedFields = rawFields
+            .map(f => {
+                const [name, type] = f.trim().split(':').map(x => x.trim());
+                if (!name || !type) return null;
+                return { name, tsType: type, gqlType: graphqlType(type) };
+            })
+            .filter(Boolean);
+%>
+
+@ObjectType()
+export class <%= typeName %> {
+<% for (const f of parsedFields) { %>
+    @Field(() => <%= f.gqlType %>)
+    <%= f.name %>!: <%= f.tsType %>;
+<% } %>
+}
+<% } %>
 
 @Resolver()
 export class <%= resolverClassName %> {
@@ -37,9 +71,8 @@ async <%= queryName %>(
     const arg = parsedRequest.args[i];
     const gqlType = graphqlType(arg.tsType);
     const tsType = arg.tsType === 'ID' ? 'string' : arg.tsType;
-%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%- tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
-<%     }
-} %>
+%>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%= tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
+<%     } } %>
 ): Promise<<%= viewType %>[]> {
 const model = new ReadModel<<%= viewType %>>(ctx.eventStore, '<%= projectionType %>');
 
@@ -58,8 +91,7 @@ return model.find((item) => {
 <% if (parsedRequest?.args?.length) {
         for (const arg of parsedRequest.args) { %>
     if (<%= arg.name %> !== undefined && item.<%= arg.name %> !== <%= arg.name %>) return false;
-<%  }
-} %>
+<%    } } %>
 return true;
 });
 }
