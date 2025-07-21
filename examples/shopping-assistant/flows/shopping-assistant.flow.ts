@@ -97,7 +97,7 @@ flow('Seasonal Assistant', () => {
           }),
         ).then([
           Events.ShoppingCriteriaEntered({
-            sessionId: 'session-abc',
+            sessionId: 'shopper-123',
             criteria:
               'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
             timestamp: new Date(),

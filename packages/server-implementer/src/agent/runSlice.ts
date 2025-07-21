@@ -32,6 +32,7 @@ type VitestAssertionResult = {
 
 type VitestTestResult = {
     file: string;
+    name?: string;
     status: string;
     assertionResults: VitestAssertionResult[];
 };
@@ -55,7 +56,7 @@ export async function runSlice(sliceDir: string, flow: string): Promise<void> {
     if (hasFailures) {
         await retryFailedFiles(sliceDir, flow, result);
         if (result.failedTestFiles.length > 0) {
-            await retryFailedTests(sliceDir, result, flow);
+            await retryFailedTests(sliceDir, flow, result);
         }
     } else {
         console.log(`✅ All tests and checks passed on first attempt.`);
@@ -87,23 +88,18 @@ async function retryFailedFiles(sliceDir: string, flow: string, initialResult: T
         result = await runTestsAndTypecheck(sliceDir);
         reportTestAndTypecheckResults(sliceDir, result);
     }
-
-    // If test fix introduced a new type error, handle it before continuing
     if (result.failedTypecheckFiles.length > 0) {
         console.log(`⚠️ Fixing tests caused typecheck errors. Retrying typecheck fixes...`);
-        // Create a new result object with only typecheck errors
         const typecheckOnlyResult = {
             ...result,
             testErrors: '',  // Clear test errors since we're only fixing typecheck
             failedTestFiles: [] // Clear failed test files
         };
         result = await retryFailedFiles(sliceDir, path.basename(sliceDir), typecheckOnlyResult);
-
         // After fixing typecheck, re-run everything to get fresh results
         const freshResult = await runTestsAndTypecheck(sliceDir);
         reportTestAndTypecheckResults(sliceDir, freshResult);
         result = freshResult;
-
         if (result.failedTestFiles.length === 0) {
             console.log(`✅ All test issues resolved after fixing type errors.`);
         }
@@ -209,7 +205,7 @@ export async function runTestsAndTypecheck(sliceDir: string): Promise<TestAndTyp
     };
 }
 
-async function retryFailedTests(sliceDir: string, result: TestAndTypecheckResult, flow: string) {
+async function retryFailedTests(sliceDir: string, flow: string, result: TestAndTypecheckResult) {
     let contextFiles = await loadContextFiles(sliceDir);
 
     for (let attempt = 1; attempt <= 5; attempt++) {
@@ -247,8 +243,6 @@ No commentary or markdown outside the code block.
 `.trim();
 
         console.log('🔮 Asking AI to suggest a fix for test failures...');
-        console.log('🧪 testErrors:\n', result.testErrors);
-        console.log('📨 smartPrompt:\n', smartPrompt);
         const aiOutput = await generateTextWithAI(smartPrompt, AI_PROVIDER);
         const cleaned = extractCodeBlock(aiOutput);
         const match = cleaned.match(/^\/\/ File: (.+?)\n([\s\S]*)/m);
@@ -257,11 +251,9 @@ No commentary or markdown outside the code block.
             break;
         }
 
-        const [fileName, code] = match;
+        const [, fileName, code] = match;
         const absPath = path.join(sliceDir, fileName.trim());
         await writeFile(absPath, code.trim(), 'utf-8');
-        console.log('writing file ', absPath);
-        console.log('writing code ', code.trim());
         console.log(`♻️ Updated ${fileName.trim()} to fix tests`);
         contextFiles = await loadContextFiles(sliceDir);
 
@@ -309,20 +301,7 @@ async function runTests(sliceDir: string, rootDir: string) {
             cwd: rootDir,
             stdio: 'pipe',
             reject: false,
-        });
-
-
-        // Run the tests
-        // const {stdout, stderr} = await execa('npx', [
-        //     'vitest',
-        //     'run',
-        //     '--reporter=json',
-        //     `--outputFile=${reportPath}`,
-        //     ...testFiles
-        // ], {
-        //     cwd: sliceDir,
-        //     reject: false, // Don't reject on non-zero exit code
-        // });
+        })
 
         // Wait a bit for the file to be written
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -332,20 +311,35 @@ async function runTests(sliceDir: string, rootDir: string) {
             try {
                 const reportRaw = await readFile(reportPath, 'utf-8');
                 const report = JSON.parse(reportRaw) as VitestReport;
-                console.log('test results', report);
                 const testResults = report.testResults ?? [];
-
                 const failedFiles = testResults
                     .filter((r: VitestTestResult) => r.status === 'failed')
-                    .map((r: VitestTestResult) => path.join(sliceDir, path.basename(r.file)));
+                    .map((r: VitestTestResult) => {
+                        const fileName = r.name ?? r.file;
+                        if (!fileName) {
+                            console.warn('⚠️ Skipping test result with missing name or file:', r);
+                            return path.join(sliceDir, 'unknown');
+                        }
+                        return path.join(sliceDir, path.basename(fileName));
+                    });
 
                 const failedTestSummaries = testResults
                     .filter((r: VitestTestResult) => r.status === 'failed')
                     .map((r: VitestTestResult) => {
-                        const lines = r.assertionResults
-                            .filter((a: VitestAssertionResult) => a.status === 'failed')
-                            .map((a: VitestAssertionResult) => `❌ ${a.fullName}\n${a.failureMessages?.join('\n') ?? ''}`);
-                        return `📄 ${path.basename(r.file)}\n${lines.join('\n')}`;
+                        const fileName = path.basename(r.name ?? r.file ?? 'unknown');
+
+                        if (r.assertionResults.length > 0) {
+                            const lines = r.assertionResults
+                                .filter((a: VitestAssertionResult) => a.status === 'failed')
+                                .map((a: VitestAssertionResult) => `❌ ${a.fullName}\n${a.failureMessages?.join('\n') ?? ''}`);
+                            return `📄 ${fileName}\n${lines.join('\n')}`;
+                        }
+                        // fallback: use top-level message
+                        if ('message' in r && typeof r.message === 'string' && r.message.trim() !== '') {
+                            return `📄 ${fileName}\n${r.message}`;
+                        }
+
+                        return `📄 ${fileName}\n⚠️ Test suite failed but no assertion or error message found.`;
                     })
                     .join('\n\n');
 
