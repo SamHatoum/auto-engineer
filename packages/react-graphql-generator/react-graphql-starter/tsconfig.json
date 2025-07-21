@@ -28,6 +28,7 @@
     "exactOptionalPropertyTypes": false,
     "forceConsistentCasingInFileNames": false,
     "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
 
     /* Paths / Aliases */
     "baseUrl": ".",
