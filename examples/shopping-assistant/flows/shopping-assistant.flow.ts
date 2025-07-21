@@ -37,7 +37,7 @@ type ShoppingCriteriaEntered = Event<
 type ItemsAddedToCart = Event<
   'ItemsAddedToCart',
   {
-    cartId: string;
+    sessionId: string;
     items: { productId: string; quantity: number }[];
     timestamp: Date;
   }
@@ -330,7 +330,7 @@ flow('Seasonal Assistant', () => {
           }),
         ).then([
           Events.ItemsAddedToCart({
-            cartId: 'cart-xyz',
+            sessionId: 'session-abc',
             items: [
               { productId: 'prod-soccer-ball', quantity: 1 },
               { productId: 'prod-craft-kit', quantity: 1 },
