@@ -63,7 +63,7 @@ type SuggestedItems = State<
   'SuggestedItems',
   {
     sessionId: string;
-    items: { productId: string; name: string; quantity: number; reason: string }[];
+    suggestions: { productId: string; name: string; quantity: number; reason: string }[];
   }
 >;
 
@@ -79,11 +79,11 @@ flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
     .client(() => {
       specs('Assistant Chat Interface', () => {
+        should('generate a persisted session id for a visit');
         should('allow shopper to describe their shopping needs in natural language');
         should('provide a text input for entering criteria');
         should('show examples of what to include (age, interests, budget)');
         should('show a button to submit the criteria');
-
       });
     })
     .server(() => {
@@ -93,7 +93,7 @@ flow('Seasonal Assistant', () => {
           Commands.EnterShoppingCriteria({
             sessionId: 'shopper-123',
             criteria:
-              'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.'
+              'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
           }),
         ).then([
           Events.ShoppingCriteriaEntered({
@@ -127,9 +127,13 @@ flow('Seasonal Assistant', () => {
 
   commandSlice('Do Chat').server(() => {
     data([
-      sink().command('DoChat').toIntegration(AI)
+      sink()
+        .command('DoChat')
+        .toIntegration(AI)
         .withState(source().state('Products').fromIntegration(ProductCatalog))
-        .additionalInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
+        .additionalInstructions(
+          'add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
+        ),
       sink().event('ChatCompleted').toStream('shopping-session-${sessionId}'),
     ]);
 
@@ -216,9 +220,9 @@ flow('Seasonal Assistant', () => {
 
   querySlice('views suggested items')
     .request(gql`
-      query GetSuggestedItems($sessionId: ID!) {
-        suggestedItems(sessionId: $sessionId) {
-          items {
+      query Suggestions($sessionId: ID!) {
+        suggestions(sessionId: $sessionId) {
+          suggestion {
             productId
             name
             quantity
@@ -239,8 +243,8 @@ flow('Seasonal Assistant', () => {
       data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection', 'sessionId')]);
 
       specs('Suggested items are available for viewing', () => {
-        given(
-          [Events.ChatCompleted({
+        given([
+          Events.ChatCompleted({
             sessionId: 'session-abc',
             suggestedItems: [
               {
@@ -269,11 +273,11 @@ flow('Seasonal Assistant', () => {
               },
             ],
             timestamp: new Date(),
-          })])
-        .then([
+          }),
+        ]).then([
           State.SuggestedItems({
             sessionId: 'session-abc',
-            items: [
+            suggestions: [
               {
                 productId: 'prod-soccer-ball',
                 name: 'Super Soccer Ball',
