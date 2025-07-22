@@ -5,8 +5,7 @@ import {readFile, writeFile, access} from 'fs/promises';
 import {execa} from 'execa';
 import {SYSTEM_PROMPT} from '../prompts/systemPrompt.js';
 import {extractCodeBlock} from '../utils/extractCodeBlock.js';
-import {existsSync} from "fs";
-import {unlink} from 'fs/promises';
+import {runTests} from "./runTests";
 
 const availableProviders = getAvailableProviders();
 const AI_PROVIDER = availableProviders[0];
@@ -24,21 +23,17 @@ type TestAndTypecheckResult = {
     typecheckErrors: string;
 };
 
-type VitestAssertionResult = {
+export type VitestAssertionResult = {
     status: string;
     fullName: string;
     failureMessages?: string[];
 };
 
-type VitestTestResult = {
+export type VitestTestResult = {
     file: string;
     name?: string;
     status: string;
     assertionResults: VitestAssertionResult[];
-};
-
-type VitestReport = {
-    testResults?: VitestTestResult[];
 };
 
 
@@ -51,31 +46,27 @@ export async function runSlice(sliceDir: string, flow: string): Promise<void> {
         await implementFileFromAI(sliceDir, targetFile, contextFiles);
     }
     const result = await runTestsAndTypecheck(sliceDir);
-    reportTestAndTypecheckResults(sliceDir, result);
-    const hasFailures = result.failedTestFiles.length > 0 || result.failedTypecheckFiles.length > 0;
-    if (hasFailures) {
-        await retryFailedFiles(sliceDir, flow, result);
-        if (result.failedTestFiles.length > 0) {
-            await retryFailedTests(sliceDir, flow, result);
-        }
-    } else {
+    reportTestAndTypecheckResults(sliceDir, flow, result);
+    if (result.success) {
         console.log(`✅ All tests and checks passed on first attempt.`);
+        return;
+    }
+    await retryFailedFiles(sliceDir, flow, result);
+    if (result.failedTestFiles.length > 0) {
+        await retryFailedTests(sliceDir, flow, result);
     }
 }
 
 async function retryFailedFiles(sliceDir: string, flow: string, initialResult: TestAndTypecheckResult) {
     let contextFiles = await loadContextFiles(sliceDir);
     let result = initialResult;
-
     for (let attempt = 1; attempt <= 5; attempt++) {
         if (result.failedTypecheckFiles.length === 0) {
             console.log(`✅ Typecheck issues resolved after attempt ${attempt - 1}`);
             break;
         }
-
         console.log(`🔁 Typecheck retry attempt ${attempt} for ${result.failedTypecheckFiles.length} files...`);
         contextFiles = await loadContextFiles(sliceDir);
-
         for (const filePath of result.failedTypecheckFiles) {
             const fileName = path.basename(filePath);
             const retryPrompt = buildRetryPrompt(fileName, contextFiles, result.testErrors, result.typecheckErrors);
@@ -86,7 +77,7 @@ async function retryFailedFiles(sliceDir: string, flow: string, initialResult: T
             console.log(`♻️ Updated ${fileName} to fix typecheck errors`);
         }
         result = await runTestsAndTypecheck(sliceDir);
-        reportTestAndTypecheckResults(sliceDir, result);
+        reportTestAndTypecheckResults(sliceDir, flow, result);
     }
     if (result.failedTypecheckFiles.length > 0) {
         console.log(`⚠️ Fixing tests caused typecheck errors. Retrying typecheck fixes...`);
@@ -98,7 +89,7 @@ async function retryFailedFiles(sliceDir: string, flow: string, initialResult: T
         result = await retryFailedFiles(sliceDir, path.basename(sliceDir), typecheckOnlyResult);
         // After fixing typecheck, re-run everything to get fresh results
         const freshResult = await runTestsAndTypecheck(sliceDir);
-        reportTestAndTypecheckResults(sliceDir, freshResult);
+        reportTestAndTypecheckResults(sliceDir, flow, freshResult);
         result = freshResult;
         if (result.failedTestFiles.length === 0) {
             console.log(`✅ All test issues resolved after fixing type errors.`);
@@ -192,10 +183,8 @@ async function implementFileFromAI(sliceDir: string, targetFile: string, context
 
 export async function runTestsAndTypecheck(sliceDir: string): Promise<TestAndTypecheckResult> {
     const rootDir = await findProjectRoot(sliceDir);
-
     const testResult = await runTests(sliceDir, rootDir);
     const typecheckResult = await runTypecheck(sliceDir, rootDir);
-
     return {
         success: testResult.success && typecheckResult.success,
         failedTestFiles: testResult.failedTestFiles,
@@ -207,18 +196,14 @@ export async function runTestsAndTypecheck(sliceDir: string): Promise<TestAndTyp
 
 async function retryFailedTests(sliceDir: string, flow: string, result: TestAndTypecheckResult) {
     let contextFiles = await loadContextFiles(sliceDir);
-
     for (let attempt = 1; attempt <= 5; attempt++) {
         if (result.failedTestFiles.length === 0) {
             console.log(`✅ Test failures resolved after attempt ${attempt - 1}`);
             break;
         }
-
         console.log(`🔁 Test retry attempt ${attempt} for ${result.failedTestFiles.length} files...`);
-
         const smartPrompt = `
 ${SYSTEM_PROMPT}
-
 ---
 🧪 The current implementation has test failures.
 
@@ -253,12 +238,12 @@ No commentary or markdown outside the code block.
 
         const [, fileName, code] = match;
         const absPath = path.join(sliceDir, fileName.trim());
+        console.log('🔧 Applying AI fix to:', absPath);
         await writeFile(absPath, code.trim(), 'utf-8');
         console.log(`♻️ Updated ${fileName.trim()} to fix tests`);
         contextFiles = await loadContextFiles(sliceDir);
-
         result = await runTestsAndTypecheck(sliceDir);
-        reportTestAndTypecheckResults(sliceDir, result);
+        reportTestAndTypecheckResults(sliceDir, flow, result);
         // If test fix introduced a new type error, handle it before continuing
         if (result.failedTypecheckFiles.length > 0) {
             console.log(`⚠️ Fixing tests caused typecheck errors. Retrying typecheck fixes...`);
@@ -279,108 +264,6 @@ No commentary or markdown outside the code block.
     }
 }
 
-
-// eslint-disable-next-line complexity
-async function runTests(sliceDir: string, rootDir: string) {
-    console.log(`🔍 Running tests in ${path.basename(sliceDir)}...`);
-    const testFiles = await fg(['*.spec.ts', '*.specs.ts'], {cwd: sliceDir});
-    if (testFiles.length === 0) {
-        console.warn(`⚠️ No test files found in ${sliceDir}`);
-        return {success: true, testErrors: '', failedTestFiles: []};
-    } else {
-        console.log(`🔍 Found test files in ${path.basename(sliceDir)}:`, testFiles);
-    }
-    const relativePaths = testFiles.map(f => path.join(sliceDir, f).replace(`${rootDir}/`, ''));
-    const reportPath = path.join(sliceDir, 'vitest-results.json');
-    try {
-
-        const {
-            stdout,
-            stderr
-        } = await execa('npx', ['vitest', 'run', '--reporter=json', `--outputFile=${reportPath}`, ...relativePaths], {
-            cwd: rootDir,
-            stdio: 'pipe',
-            reject: false,
-        })
-
-        // Wait a bit for the file to be written
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Check if the report file exists and read it
-        if (existsSync(reportPath)) {
-            try {
-                const reportRaw = await readFile(reportPath, 'utf-8');
-                const report = JSON.parse(reportRaw) as VitestReport;
-                const testResults = report.testResults ?? [];
-                const failedFiles = testResults
-                    .filter((r: VitestTestResult) => r.status === 'failed')
-                    .map((r: VitestTestResult) => {
-                        const fileName = r.name ?? r.file;
-                        if (!fileName) {
-                            console.warn('⚠️ Skipping test result with missing name or file:', r);
-                            return path.join(sliceDir, 'unknown');
-                        }
-                        return path.join(sliceDir, path.basename(fileName));
-                    });
-
-                const failedTestSummaries = testResults
-                    .filter((r: VitestTestResult) => r.status === 'failed')
-                    .map((r: VitestTestResult) => {
-                        const fileName = path.basename(r.name ?? r.file ?? 'unknown');
-
-                        if (r.assertionResults.length > 0) {
-                            const lines = r.assertionResults
-                                .filter((a: VitestAssertionResult) => a.status === 'failed')
-                                .map((a: VitestAssertionResult) => `❌ ${a.fullName}\n${a.failureMessages?.join('\n') ?? ''}`);
-                            return `📄 ${fileName}\n${lines.join('\n')}`;
-                        }
-                        // fallback: use top-level message
-                        if ('message' in r && typeof r.message === 'string' && r.message.trim() !== '') {
-                            return `📄 ${fileName}\n${r.message}`;
-                        }
-
-                        return `📄 ${fileName}\n⚠️ Test suite failed but no assertion or error message found.`;
-                    })
-                    .join('\n\n');
-
-                return {
-                    success: failedFiles.length === 0,
-                    testErrors: failedTestSummaries || stdout || stderr || 'Tests failed but no error details available',
-                    failedTestFiles: failedFiles,
-                };
-            } catch (parseErr) {
-                console.error('Failed to parse test results:', parseErr);
-                return {
-                    success: false,
-                    testErrors: stdout || stderr || 'Failed to parse test results',
-                    failedTestFiles: testFiles.map(f => path.join(sliceDir, f)),
-                };
-            }
-        } else {
-            // No report file, use stdout/stderr
-            return {
-                success: false,
-                testErrors: stdout || stderr || 'Test execution failed - no report generated',
-                failedTestFiles: testFiles.map(f => path.join(sliceDir, f)),
-            };
-        }
-    } catch (err: unknown) {
-        const execaErr = err as { stdout?: string; stderr?: string };
-        const output = (execaErr.stdout ?? '') + (execaErr.stderr ?? '');
-        console.error('Test execution error:', output);
-        return {
-            success: false,
-            testErrors: output || 'Test execution failed with no output',
-            failedTestFiles: testFiles.map(f => path.join(sliceDir, f)),
-        };
-    } finally {
-        // Clean up the report file
-        if (existsSync(reportPath)) {
-            await unlink(reportPath).catch(() => {
-            });
-        }
-    }
-}
 
 async function runTypecheck(sliceDir: string, rootDir: string) {
     try {
@@ -478,13 +361,13 @@ async function findProjectRoot(startDir: string): Promise<string> {
     throw new Error('❌ Could not find project root');
 }
 
-function reportTestAndTypecheckResults(sliceDir: string, result: TestAndTypecheckResult) {
+function reportTestAndTypecheckResults(sliceDir: string, flow: string, result: TestAndTypecheckResult) {
     const sliceName = path.basename(sliceDir);
     if (result.success) {
-        console.log(`✅ All Tests and checks passed for: ${sliceName}`);
+        console.log(`✅ All Tests and checks passed for: ${sliceName} in flow ${flow}`);
         return;
     }
-    console.error(`❌ ${sliceName} failed tests or type-checks.`);
+    console.error(`❌ ${sliceName} in floe ${flow} failed tests or type-checks.`);
     if (result.failedTestFiles.length) {
         const files = result.failedTestFiles.map(f => path.relative(sliceDir, f));
         console.log(`🧪 Failed test files: ${files.join(', ')}`);
