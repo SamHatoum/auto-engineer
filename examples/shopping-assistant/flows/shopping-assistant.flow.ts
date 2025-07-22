@@ -51,6 +51,30 @@ type EnterShoppingCriteria = Command<
   }
 >;
 
+type SuggestedItems = State<
+  'SuggestedItems',
+  {
+    sessionId: string;
+    items: { productId: string; name: string; quantity: number; reason: string }[];
+  }
+>;
+
+type SuggestShoppingItems = Command<
+  'SuggestShoppingItems',
+  {
+    sessionId: string;
+    prompt: string;
+  }
+>;
+
+type ShoppingItemsSuggested = Event<
+  'ShoppingItemsSuggested',
+  {
+    sessionId: string;
+    suggestedItems: { productId: string; name: string; quantity: number; reason: string }[];
+  }
+>;
+
 type AddItemsToCart = Command<
   'AddItemsToCart',
   {
@@ -59,17 +83,9 @@ type AddItemsToCart = Command<
   }
 >;
 
-type SuggestedItems = State<
-  'SuggestedItems',
-  {
-    sessionId: string;
-    suggestions: { productId: string; name: string; quantity: number; reason: string }[];
-  }
->;
-
 const { Events, Commands, State } = createBuilders()
-  .events<ShoppingCriteriaEntered | ChatCompleted | ItemsAddedToCart>()
-  .commands<EnterShoppingCriteria | DoChat | AddItemsToCart>()
+  .events<ShoppingCriteriaEntered | ShoppingItemsSuggested | ChatCompleted | ItemsAddedToCart>()
+  .commands<EnterShoppingCriteria | SuggestShoppingItems | DoChat | AddItemsToCart>()
   .state<{
     Products: Products['data'];
     SuggestedItems: SuggestedItems['data'];
@@ -79,13 +95,25 @@ flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
     .client(() => {
       specs('Assistant Chat Interface', () => {
-        should('generate a persisted session id for a visit');
         should('allow shopper to describe their shopping needs in natural language');
         should('provide a text input for entering criteria');
         should('show examples of what to include (age, interests, budget)');
         should('show a button to submit the criteria');
+        should('generate a persisted session id for a visit');
+        should('show the header on top of every page');
       });
     })
+    .request(gql`
+      mutation EnterShoppingCriteria($input: EnterShoppingCriteriaInput!) {
+        enterShoppingCriteria(input: $input) {
+          success
+          error {
+            type
+            message
+          }
+        }
+      }
+    `)
     .server(() => {
       data([sink().event('ShoppingCriteriaEntered').toStream('shopping-session-${sessionId}')]);
       specs('When shopper submits criteria, a shopping session is started', () => {
@@ -116,7 +144,7 @@ flow('Seasonal Assistant', () => {
           timestamp: new Date(),
         }),
       ]).then([
-        Commands.DoChat({
+        Commands.SuggestShoppingItems({
           sessionId: 'session-abc',
           prompt:
             'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
@@ -125,16 +153,12 @@ flow('Seasonal Assistant', () => {
     });
   });
 
-  commandSlice('Do Chat').server(() => {
+  commandSlice('Suggest Shopping Items').server(() => {
     data([
       sink()
-        .command('DoChat')
-        .toIntegration(AI)
-        .withState(source().state('Products').fromIntegration(ProductCatalog))
-        .additionalInstructions(
-          'add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
-        ),
-      sink().event('ChatCompleted').toStream('shopping-session-${sessionId}'),
+        .command('SuggestShoppingItems').toIntegration(AI).withState(source().state('Products').fromIntegration(ProductCatalog))
+        .additionalInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
+      sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
@@ -177,14 +201,14 @@ flow('Seasonal Assistant', () => {
         }),
       ])
         .when(
-          Commands.DoChat({
+          Commands.SuggestShoppingItems({
             sessionId: 'session-abc',
             prompt:
               'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
           }),
         )
         .then([
-          Events.ChatCompleted({
+          Events.ShoppingItemsSuggested({
             sessionId: 'session-abc',
             suggestedItems: [
               {
@@ -211,8 +235,7 @@ flow('Seasonal Assistant', () => {
                 quantity: 1,
                 reason: 'Ideal starter set for Magic the Gathering enthusiasts',
               },
-            ],
-            timestamp: new Date(),
+            ]
           }),
         ]);
     });
@@ -220,9 +243,9 @@ flow('Seasonal Assistant', () => {
 
   querySlice('views suggested items')
     .request(gql`
-      query Suggestions($sessionId: ID!) {
-        suggestions(sessionId: $sessionId) {
-          suggestion {
+      query GetSuggestedItems($sessionId: ID!) {
+        suggestedItems(sessionId: $sessionId) {
+          items {
             productId
             name
             quantity
@@ -277,7 +300,7 @@ flow('Seasonal Assistant', () => {
         ]).then([
           State.SuggestedItems({
             sessionId: 'session-abc',
-            suggestions: [
+            items: [
               {
                 productId: 'prod-soccer-ball',
                 name: 'Super Soccer Ball',

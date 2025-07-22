@@ -165,6 +165,7 @@ const CommandSliceSchema = BaseSliceSchema.extend({
         description: z.string(),
         specs: z.array(z.string()).describe('UI specifications (should statements)'),
     }),
+    request: z.string().describe('Command request (GraphQL, REST endpoint, or other query format)').optional(),
     server: z.object({
         description: z.string(),
         data: z.array(DataSinkSchema).optional().describe('Data sinks for command slices'),

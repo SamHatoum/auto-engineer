@@ -17,6 +17,7 @@ export interface FluentCommandSliceBuilder {
   server(description: string, fn: () => void): FluentCommandSliceBuilder;
   via(integration: Integration | Integration[]): FluentCommandSliceBuilder;
   retries(count: number): FluentCommandSliceBuilder;
+  request(mutation: unknown): FluentCommandSliceBuilder;
 }
 
 export interface FluentQuerySliceBuilder {
@@ -97,6 +98,17 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   retries(count: number): FluentCommandSliceBuilder {
     // Store retries in additionalInstructions or metadata
     this.slice.additionalInstructions = `retries: ${count}`;
+    return this;
+  }
+
+  request(query: unknown): FluentCommandSliceBuilder {
+    if (typeof query === 'string') {
+      this.slice.request = query;
+    } else if (query !== null && query !== undefined && typeof query === 'object' && 'kind' in query && query.kind === 'Document') {
+      this.slice.request = print(query as ASTNode); // ✅ convert AST to SDL string
+    } else {
+      throw new Error('Invalid GraphQL query format');
+    }
     return this;
   }
 }
