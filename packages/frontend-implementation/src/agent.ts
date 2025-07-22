@@ -1,7 +1,7 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { getTsErrors, getBuildErrors, closeBrowser } from '@auto-engineer/frontend-checks';
+import { getTsErrors, getBuildErrors, closeBrowser, getConsoleErrors } from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
 // Utility to extract props from interface
@@ -85,8 +85,35 @@ async function callAI(prompt: string, options?: { temperature?: number; maxToken
   return (await generateTextWithAI(prompt, provider, { temperature, maxTokens })).trim();
 }
 
+// Copy the Scheme type from index.ts for local use
+interface Scheme {
+  generatedComponents?: { type: string; items?: Record<string, unknown> }[];
+  atoms?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
+  molecules?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
+  organisms?: {
+    description?: string;
+    items?: Record<string, unknown>;
+  };
+  pages?: {
+    description?: string;
+    items?: Record<string, {
+      route: string;
+      description: string;
+      layout?: unknown;
+      navigation?: unknown;
+      [key: string]: unknown;
+    }>;
+  };
+}
+
 interface ProjectContext {
-  scheme: unknown;
+  scheme: Scheme | undefined;
   files: string[];
   atoms: { name: string; props: { name: string; type: string }[] }[];
   keyFileContents: Record<string, string>;
@@ -101,9 +128,9 @@ async function getProjectContext(
   userPreferences: string,
 ): Promise<ProjectContext> {
   const schemePath = iaSchemeDir;
-  let scheme: unknown = undefined;
+  let scheme: Scheme | undefined = undefined;
   try {
-    scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as unknown;
+    scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as Scheme;
   } catch (err: unknown) {
     if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
       throw err;
@@ -362,19 +389,23 @@ async function fixBuildErrors(ctx: ProjectContext, projectDir: string): Promise<
 
   const errorFeedback = buildErrors.join('\n');
   const fixupPrompt = `${makeBasePrompt(ctx)}\n
-After your previous changes, the application produced the following Vite build errors:\n\n${errorFeedback}\n
+After your previous changes, the application produced the following build errors:\n\n${errorFeedback}\n
 You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
 
+Before generating code, analyze and validate your solution against every error. Use existing component props, imports, and shared interfaces from the project. Do not invent new structures unless absolutely necessary.
+
 Strict rules:
+- Never use unsafe imports or invalid module references
 - Do not silence errors — resolve them fully and correctly
 - Fix all errors in each file in one go
-- Reuse existing logic or types instead of re-creating similar ones
+- Reuse existing logic instead of re-creating similar ones
+- Do not modify the GraphQL files
 - Do not submit partial updates; provide the full updated content of the file
 
 Output must be a **JSON array** only. Each item must include:
 - \`action\`: "update"
 - \`file\`: relative path to the updated file
-- \`description\`: "Fix Vite build errors"
+- \`description\`: "Fix build errors"
 - \`content\`: full new content of the file, as a string
 
 Do not include explanations, markdown, or code blocks.
@@ -384,56 +415,116 @@ Do not include explanations, markdown, or code blocks.
   try {
     fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
   } catch (e) {
-    await closeBrowser?.();
-    console.error('Could not parse Vite build fixup plan from LLM:', e instanceof Error ? e.message : String(e));
-    // console.debug('Could not parse Vite build fixup plan from LLM:', fixupPlanText, e);
+    console.error('Could not parse build fixup plan from LLM:', e instanceof Error ? e.message : String(e));
+    // console.debug('Could not parse build fixup plan from LLM:', fixupPlanText, e);
   }
-  console.log('Fixup plan', fixupPlan);
+  console.log('Fixup plan has', fixupPlan.length, 'items');
   for (const fix of fixupPlan) {
     if (fix.action === 'update' && fix.file && fix.content) {
       const outPath = path.join(projectDir, fix.file);
       await fs.mkdir(path.dirname(outPath), { recursive: true });
       await fs.writeFile(outPath, fix.content, 'utf-8');
-      console.log(`Fixed ${fix.file} for Vite build errors`);
+      console.log(`Fixed build errors in ${fix.file}`);
     }
   }
   return true;
 }
 
+// Helper to extract all page routes from the IA scheme
+function extractPageRoutesFromScheme(scheme: Scheme | undefined): string[] {
+  if (
+    scheme?.pages?.items &&
+    typeof scheme.pages.items === 'object'
+  ) {
+    return Object.values(scheme.pages.items)
+      .map((page) => (typeof page === 'object' && 'route' in page && typeof page.route === 'string' ? page.route : undefined))
+      .filter((route): route is string => typeof route === 'string');
+  }
+  return [];
+}
 
+async function checkRouteErrors(baseUrl: string, routes: string[]): Promise<string[]> {
+  const allConsoleErrors: string[] = [];
+  for (const route of routes) {
+    const url = baseUrl + (route.startsWith('/') ? route : '/' + route);
+    console.log(`Checking console errors for ${url}`);
+    const errors = await getConsoleErrors(url);
+    if (Array.isArray(errors) && errors.length > 0) {
+      allConsoleErrors.push(...errors.map((e: string) => `[${route}] ${e}`));
+    }
+  }
+  return allConsoleErrors;
+}
+
+async function applyFixes(fixupPlan: Fix[], projectDir: string): Promise<void> {
+  for (const fix of fixupPlan) {
+    if (fix.action !== 'update' || !fix.file || !fix.content) continue;
+    const outPath = path.join(projectDir, fix.file);
+    await fs.mkdir(path.dirname(outPath), { recursive: true });
+    await fs.writeFile(outPath, fix.content, "utf-8");
+    console.log(`Fixed console errors in ${fix.file}`);
+  }
+}
+
+async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
+  const baseUrl = "http://localhost:8080";
+  let routes = extractPageRoutesFromScheme(ctx.scheme);
+  if (routes.length === 0) {
+    routes = ['/'];
+  }
+
+  const allConsoleErrors = await checkRouteErrors(baseUrl, routes);
+  console.log('Found', allConsoleErrors.length, 'console errors');
+  if (allConsoleErrors.length === 0) {
+    await closeBrowser();
+    return false;
+  }
+
+  const errorFeedback = allConsoleErrors.join("\n");
+  const fixupPrompt = `${makeBasePrompt(ctx)}\n
+After your previous changes, the application produced the following console errors when running on the following routes:\n\n${errorFeedback}\n
+You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
+
+Before generating code, analyze and validate your solution against every error. Use existing types, props, and logic from the project. Do not invent new structures unless absolutely necessary.
+
+Strict rules:
+- Ignore connection or network errors
+- Never use \`any\`, unsafe type assertions, or silence errors
+- Do not silence errors — resolve them fully and correctly
+- Fix all errors in each file in one go
+- Reuse existing logic or types instead of re-creating similar ones
+- Do not submit partial updates; provide the full updated content of the file
+
+Output must be a **JSON array** only. Each item must include:
+- \`action\`: "update"
+- \`file\`: relative path to the updated file
+- \`description\`: "Fix console errors"
+- \`content\`: full new content of the file, as a string
+
+Do not include explanations, markdown, or code blocks.
+`;
+  let fixupPlan: Fix[] = [];
+  try {
+    fixupPlan = JSON.parse(extractJsonArray(await callAI(fixupPrompt))) as Fix[];
+  } catch (e) {
+    console.error('Could not parse console fixup plan from LLM:', e instanceof Error ? e.message : String(e));
+  }
+
+  console.log('Fixup plan has', fixupPlan.length, 'items');
+  await applyFixes(fixupPlan, projectDir);
+  await closeBrowser();
+  return true;
+}
 
 async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   const maxIterations = 5;
   for (let i = 0; i < maxIterations; ++i) {
     if (await fixTsErrors(ctx, projectDir)) continue;
     if (await fixBuildErrors(ctx, projectDir)) continue;
-    // if (await fixConsoleErrors(ctx, projectDir)) continue;
+    if (await fixConsoleErrors(ctx, projectDir)) continue;
     break;
   }
 }
-
-// async function fixConsoleErrors(ctx: ProjectContext, projectDir: string) {
-//   const consoleErrors = await getConsoleErrors("http://localhost:8081");
-//   if (consoleErrors.length > 0) {
-//     const errorFeedback = consoleErrors.join("\n");
-//     const fixupPrompt = `${makeBasePrompt(ctx)}\nAfter your previous changes, the application produced the following console errors when running:\n\n${errorFeedback}\n\nPlease provide the necessary code changes to fix these errors. You can choose to update one or more files.\nOutput a JSON array of planned changes, each with:\n  - action: "update"\n  - file: relative file path\n  - description: "Fix console errors"\n  - content: the full new code for the file\n\nRespond with only a JSON array, no explanation, no markdown, no code block.`;
-//     const fixupPlanText = await callAI(fixupPrompt);
-//     let fixupPlan: Fix[] = [];
-//     try {
-//       fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
-//     } catch {
-//       console.error("Could not parse fixup plan from LLM:", fixupPlanText);
-//     }
-//     for (const fix of fixupPlan) {
-//       if (fix.action === 'update' && fix.file && fix.content) {
-//         const outPath = path.join(projectDir, fix.file);
-//         await fs.mkdir(path.dirname(outPath), { recursive: true });
-//         await fs.writeFile(outPath, fix.content, "utf-8");
-//         console.log(`Fixed ${fix.file}`);
-//       }
-//     }
-//   }
-// }
 
 export async function runAIAgent(projectDir: string, iaSchemeDir: string, userPreferencesPath: string) {
   const userPreferences = await fs.readFile(path.join(__dirname, userPreferencesPath), 'utf-8');
