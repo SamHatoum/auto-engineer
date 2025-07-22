@@ -23,6 +23,33 @@ async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> 
   return components;
 }
 
+async function getUniqueSchemaPath(outputDir: string): Promise<{ filePath: string; existingSchema: object | undefined }> {
+  await fs.mkdir(outputDir, { recursive: true });
+  const baseFileName = 'auto-ia-scheme';
+  const basePath = path.join(outputDir, baseFileName);
+  let existingSchema: object | undefined = undefined;
+
+  try {
+    existingSchema = JSON.parse(await fs.readFile(`${basePath}.json`, 'utf-8')) as object;
+    console.log('Existing IA schema found and will be taken into account.');
+  } catch (err: unknown) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
+      console.error('Error reading existing IA schema:', err);
+      process.exit(1);
+    }
+    // If file does not exist or is invalid, continue with existingSchema as undefined
+  }
+
+  let filePath = `${basePath}.json`;
+  let counter = 1;
+  while (await fs.access(filePath).then(() => true).catch(() => false)) {
+    filePath = `${basePath}-${counter}.json`;
+    counter++;
+  }
+
+  return { filePath, existingSchema };
+}
+
 async function main() {
   const [, , outputDir, ...flowFiles] = process.argv;
   if (!outputDir) {
@@ -31,30 +58,14 @@ async function main() {
   }
 
   const flows: string[] = await Promise.all(flowFiles.map((flow) => fs.readFile(flow, 'utf-8')));
-
-  await fs.mkdir(outputDir, { recursive: true });
-  const outPath = path.join(outputDir, 'auto-ia-scheme.json');
-
-  let existingSchema: object | undefined = undefined;
-  try {
-    existingSchema = JSON.parse(await fs.readFile(outPath, 'utf-8')) as object;
-    console.log('Existing IA schema found and will be taken into account.');
-  } catch (err: unknown) {
-    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
-      console.error('Error reading existing IA schema:', err);
-      process.exit(1);
-    }
-    // If file does not exist, just continue with existingSchema as undefined
-  }
-
+  const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
   const atomNames = await getAtomsFromMarkdown(outputDir);
   const atoms = atomNames.map(name => ({ name, props: [] }));
 
-  // processFlowsWithAI only accepts three arguments
   const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms);
 
-  await fs.writeFile(outPath, JSON.stringify(iaSchema, null, 2));
-  console.log(`Generated IA schema written to ${outPath}`);
+  await fs.writeFile(filePath, JSON.stringify(iaSchema, null, 2));
+  console.log(`Generated IA schema written to ${filePath}`);
 }
 
 main().catch((err) => {
