@@ -267,7 +267,7 @@ flow('Seasonal Assistant', () => {
 
       specs('Suggested items are available for viewing', () => {
         given([
-          Events.ChatCompleted({
+          Events.ShoppingItemsSuggested({
             sessionId: 'session-abc',
             suggestedItems: [
               {
@@ -295,7 +295,6 @@ flow('Seasonal Assistant', () => {
                 reason: 'Ideal starter set for Magic the Gathering enthusiasts',
               },
             ],
-            timestamp: new Date(),
           }),
         ]).then([
           State.SuggestedItems({
