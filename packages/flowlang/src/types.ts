@@ -1,9 +1,10 @@
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Integration<
     Type extends string = string,
-    Q extends Record<string, (...args: unknown[]) => unknown> = Record<string, never>,
-    C extends Record<string, unknown> = Record<string, never>,
-    R extends Record<string, (...args: unknown[]) => unknown> = Record<string, never>,
+    Q extends Record<string, (...args: any[]) => any> = Record<string, (...args: any[]) => any>,
+    C extends Record<string, (...args: any[]) => any> = Record<string, (...args: any[]) => any>,
+    R extends Record<string, (...args: any[]) => any> = Record<string, (...args: any[]) => any>,
 > {
     readonly __brand: 'Integration';
     readonly type: Type;
