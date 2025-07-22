@@ -10,7 +10,7 @@
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
+    "format": "prettier \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "check": "turbo run lint format:fix type-check test",
@@ -38,7 +38,7 @@
     "generate:client": "pnpm --filter @auto-engineer/react-graphql-generator start ../../examples/design-system/components/ui ../../../shopping-assistant/client ../../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/schema.graphql && cd ../shopping-assistant/client && pnpm install && pnpm codegen",
     "implement:client": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../shopping-assistant/client ../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/design-system-principles.md",
     "regenerate:client": "rm -rf ../shopping-assistant/client && pnpm generate:client && pnpm implement:client",
-    "generate:all": "pnpm init:example && pnpm generate:schema && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:server && pnpm generate:client && pnpm implement:server && pnpm implement:client",
+    "generate:all": "pnpm init:example && pnpm generate:schema && pnpm generate:server && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:client && pnpm implement:server && pnpm implement:client",
     "## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": ""
   },
   "devDependencies": {
