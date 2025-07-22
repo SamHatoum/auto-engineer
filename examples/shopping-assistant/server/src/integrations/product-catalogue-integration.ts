@@ -2,6 +2,23 @@ import type { State, Integration } from '@auto-engineer/flowlang';
 import axios from 'axios';
 import { registerTool, z } from '@auto-engineer/ai-gateway';
 
+export const ProductSchema = z.object({
+  productId: z.string(),
+  name: z.string(),
+  category: z.string(),
+  price: z.number(),
+  tags: z.array(z.string()),
+  imageUrl: z.string().url(),
+});
+
+export const ProductsSchema = z.object({
+  type: z.literal('Products'),
+  data: z.object({
+    products: z.array(ProductSchema),
+  }),
+});
+
+
 export type Product = {
   productId: string;
   name: string;
@@ -162,6 +179,9 @@ registerTool<Record<string, unknown>>(
     title: 'Get All Products',
     description: 'Fetches all products from the product catalog',
     inputSchema: {},
+    schema: ProductsSchema,
+    schemaName: 'Products',
+    schemaDescription: 'A list of products with id, name, category, price, tags, and imageUrl',
   },
   async () => {
     const queries = ProductCatalog.Queries;

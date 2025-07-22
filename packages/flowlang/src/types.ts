@@ -1,10 +1,16 @@
-export interface Integration<T extends string = string> {
+
+export interface Integration<
+    Type extends string = string,
+    Q extends Record<string, (...args: unknown[]) => unknown> = Record<string, never>,
+    C extends Record<string, unknown> = Record<string, never>,
+    R extends Record<string, (...args: unknown[]) => unknown> = Record<string, never>,
+> {
     readonly __brand: 'Integration';
-    readonly type: T;
+    readonly type: Type;
     readonly name: string;
-    readonly Queries?: Record<string, CallableFunction>;
-    readonly Commands?: Record<string, CallableFunction>;
-    readonly Reactions?: Record<string, CallableFunction>;
+    readonly Queries?: Q;
+    readonly Commands?: C;
+    readonly Reactions?: R;
 }
 
 export const createIntegration = <T extends string>(type: T, name: string): Integration<T> =>
