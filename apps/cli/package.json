@@ -34,7 +34,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/config": "workspace:*",
     "@auto-engineer/flowlang": "workspace:*",
     "@auto-engineer/flowlang-agent": "workspace:*",
     "@auto-engineer/message-bus": "workspace:*",

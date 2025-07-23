@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "build": "pnpm run build:flow-schema",
-    "build:flow-schema": "mkdir -p .context && tsx scripts/export-schema.ts"
+    "build:flow-schema": "mkdir -p .context && tsx scripts/export-schema.ts",
+    "start": "pnpm --parallel start"
   },
   "dependencies": {
     "@auto-engineer/flowlang": "file:../auto-engineer/packages/flowlang"

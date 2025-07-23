@@ -82,23 +82,8 @@ importers:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@20.19.8)(jiti@2.4.2)(lightningcss@1.30.1)(tsx@4.20.3)(yaml@2.8.0)
 
-  apps/api:
-    dependencies:
-      '@auto-engineer/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@auto-engineer/flowlang-agent':
-        specifier: workspace:*
-        version: link:../../packages/flow-agent
-      '@auto-engineer/message-bus':
-        specifier: workspace:*
-        version: link:../../packages/message-bus
-
   apps/cli:
     dependencies:
-      '@auto-engineer/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@auto-engineer/flowlang':
         specifier: workspace:*
         version: link:../../packages/flowlang
@@ -879,22 +864,12 @@ importers:
       ai:
         specifier: ^4.3.16
         version: 4.3.19(react@19.1.0)(zod@3.25.76)
-      zod:
-        specifier: ^3.25.67
-        version: 3.25.76
-
-  packages/config:
-    dependencies:
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.19
-        version: 20.19.8
-      typescript:
-        specifier: ^5.3.3
-        version: 5.5.4
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
 
   packages/design-system-importer: {}
 
@@ -1048,9 +1023,6 @@ importers:
       '@auto-engineer/ai-gateway':
         specifier: workspace:*
         version: link:../ai-gateway
-      '@auto-engineer/config':
-        specifier: workspace:*
-        version: link:../config
 
   packages/message-bus:
     devDependencies:

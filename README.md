@@ -9,16 +9,26 @@
 
 # Auto Engineer
 
-> Build production-grade applications with AI assistance. Not just another prototype tool.
+> Put your SDLC on Auto, and build production-grade apps with agents.
 
-##### _NOTE THIS IS AN EARLY PREVIEW - WE ARE WORKING HARD ON MAKING IT HAPPEN_
+##### _NOTE THIS IS AN EARLY PREVIEW_
+
+- We are working hard on making it happen
+- We are actively using Auto with real-world clients and use-cases
+- We are making a lot of design decisions as we battle test the approach
 
 Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the Discord for conversations.
+
+## Try it now
 
 ```bash
 # clone and cd into the repo
 # setup your .env var to use your AI key (supports all models, openai current default)
-pnpm i & pnpm start
+pnpm i && pnpm generate:all
+
+# once the job is complete, a directory one level above auto-engineer will be created
+cd ../shopping-assistant
+pnpm start
 ```
 
 ## 🎯 How It Works

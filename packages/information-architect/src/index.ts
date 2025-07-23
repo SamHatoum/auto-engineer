@@ -1,8 +1,5 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import { type UXSchema, type AIAgentOutput } from './types';
-import * as dotenv from 'dotenv';
-
-dotenv.config();
 
 function extractJsonFromMarkdown(text: string): string {
   return text.replace(/```(?:json)?\s*([\s\S]*?)\s*```/, '$1').trim();
