@@ -4,8 +4,8 @@ import * as path from 'path';
 export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
 
-  async cloneStarter(customDesignSystemDir?: string): Promise<this> {
-    const starterDir = path.resolve(__dirname, '../react-graphql-starter');
+  async cloneStarter(_starterDir: string, customDesignSystemDir: string): Promise<this> {
+    const starterDir = path.resolve(__dirname, _starterDir);
     await this.collectFiles(starterDir, '');
 
     if (customDesignSystemDir != null && customDesignSystemDir !== '') {
