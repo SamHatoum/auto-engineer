@@ -17,6 +17,7 @@ export type {
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
+export {registerIntegrations} from './integration-registry';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';
@@ -59,6 +60,7 @@ export {
   createTypedCommandBuilder,
   createTypedStateBuilder,
 } from './builders';
+
 
 // Testing helpers
 export { createFlowSpec, given, when } from './testing';

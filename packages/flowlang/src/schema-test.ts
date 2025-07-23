@@ -22,7 +22,7 @@ const commandSinkWithState = sink()
   .command('TestCommand')
   .withState(testSource)
   .additionalInstructions('Process with state context')
-  .toIntegration('TestIntegration');
+  .toIntegration('TestIntegration', 'DoSomething', 'command');
 
 console.log('Testing sink schema compatibility...');
 const sinkResult = DataSinkSchema.safeParse(testSink);

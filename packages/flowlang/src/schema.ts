@@ -26,6 +26,12 @@ const DestinationSchema = z
         z.object({
             type: z.literal('integration'),
             systems: z.array(z.string()).describe('Integration names to send to'),
+            message: z
+                .object({
+                    name: z.string(),
+                    type: z.enum(['command', 'query', 'reaction']),
+                })
+                .optional(),
         }),
         z.object({
             type: z.literal('database'),

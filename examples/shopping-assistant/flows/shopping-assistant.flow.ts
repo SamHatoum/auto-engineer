@@ -14,16 +14,20 @@ import {
   sink,
   type Command,
   type Event,
-  type State,
+  type State, registerIntegrations,
 } from '@auto-engineer/flowlang';
 
 // @ts-ignore
 const { ProductCatalog } = await import('../server/src/integrations/product-catalogue-integration');
+
 // @ts-ignore
 const { AI } = await import('../server/src/integrations/ai-integration');
 
 import type { Products } from '../server/src/integrations/product-catalogue-integration';
 import type { DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
+
+
+registerIntegrations(ProductCatalog, AI);
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
@@ -82,6 +86,32 @@ type AddItemsToCart = Command<
     items: { productId: string; quantity: number }[];
   }
 >;
+
+// declareMessages(() => ({
+//   Commands: [
+//     {
+//       name: 'DoChat',
+//       schema: z.object({
+//         sessionId: z.string(),
+//         prompt: z.string(),
+//       }),
+//     },
+//   ],
+//   State: [
+//     {
+//       name: 'Products',
+//       schema: z.object({
+//         products: z.array(
+//             z.object({
+//               productId: z.string(),
+//               name: z.string(),
+//               price: z.number(),
+//             }),
+//         ),
+//       }),
+//     },
+//   ],
+// }));
 
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | ShoppingItemsSuggested | ChatCompleted | ItemsAddedToCart>()
@@ -156,7 +186,7 @@ flow('Seasonal Assistant', () => {
   commandSlice('Suggest Shopping Items').server(() => {
     data([
       sink()
-        .command('SuggestShoppingItems').toIntegration(AI).withState(source().state('Products').fromIntegration(ProductCatalog))
+        .command('SuggestShoppingItems').toIntegration(AI, 'DoChat', 'command').withState(source().state('Products').fromIntegration(ProductCatalog))
         .additionalInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
       sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
     ]);
@@ -365,3 +395,5 @@ flow('Seasonal Assistant', () => {
       });
     });
 });
+
+

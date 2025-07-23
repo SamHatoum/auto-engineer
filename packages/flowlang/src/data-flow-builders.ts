@@ -137,14 +137,30 @@ export class CommandSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
     return this;
   }
 
-  toIntegration(...systems: (Integration | string)[]): ChainableSink {
+  toIntegration(
+      system: Integration | string,
+      messageName: string,
+      messageType: 'command' | 'query' | 'reaction'
+  ): ChainableSink {
     const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
-      destination: { type: 'integration', systems: systems.map((s) => (typeof s === 'string' ? s : s.name)) },
+      destination: {
+        type: 'integration',
+        systems: [typeof system === 'string' ? system : system.name],
+        ...(messageName && messageType
+            ? {
+              message: {
+                name: messageName,
+                type: messageType,
+              },
+            }
+            : {}),
+      },
       __type: 'sink' as const,
-      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
-      ...(this.stateSource != null && { _withState: this.stateSource }),
+      ...(this.instructions != null && { _additionalInstructions: this.instructions }),
+      ...(this.stateSource && { _withState: this.stateSource }),
     };
+
     return createChainableSink(sinkItem);
   }
 

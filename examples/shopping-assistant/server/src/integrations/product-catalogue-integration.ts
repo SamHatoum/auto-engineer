@@ -12,12 +12,8 @@ export const ProductSchema = z.object({
 });
 
 export const ProductsSchema = z.object({
-  type: z.literal('Products'),
-  data: z.object({
-    products: z.array(ProductSchema),
-  }),
+  products: z.array(ProductSchema),
 });
-
 
 export type Product = {
   productId: string;
@@ -29,33 +25,33 @@ export type Product = {
 };
 
 export type Products = State<
-  'Products',
-  {
-    products: Product[];
-  }
+    'Products',
+    {
+      products: Product[];
+    }
 >;
 
 export type ProductsByCategory = State<
-  'ProductsByCategory',
-  {
-    category: string;
-    products: Product[];
-  }
+    'ProductsByCategory',
+    {
+      category: string;
+      products: Product[];
+    }
 >;
 
 export type ProductSearchResults = State<
-  'ProductSearchResults',
-  {
-    query: string;
-    products: Product[];
-  }
+    'ProductSearchResults',
+    {
+      query: string;
+      products: Product[];
+    }
 >;
 
 export type ProductDetails = State<
-  'ProductDetails',
-  {
-    product: Product | null;
-  }
+    'ProductDetails',
+    {
+      product: Product | null;
+    }
 >;
 
 const client = axios.create({
@@ -66,11 +62,32 @@ const client = axios.create({
   },
 });
 
-export const ProductCatalog: Integration<'product-catalog'> = {
+type ProductCatalogQueries = {
+  Products: () => Promise<Products>;
+  ProductsByCategory: (params: { category: string }) => Promise<ProductsByCategory>;
+  ProductSearchResults: (params: { query: string }) => Promise<ProductSearchResults>;
+  ProductDetails: (params: { id: string }) => Promise<ProductDetails>;
+};
+
+export const ProductCatalog: Integration<'product-catalog', ProductCatalogQueries> = {
   __brand: 'Integration' as const,
   type: 'product-catalog' as const,
-  name: 'ProductCatalogService',
+  name: 'product-catalog',
   Queries: {
+    schema: {
+      Products: ProductsSchema,
+      // ProductsByCategory: z.object({
+      //   category: z.string(),
+      //   products: z.array(ProductSchema),
+      // }),
+      // ProductSearchResults: z.object({
+      //   query: z.string(),
+      //   products: z.array(ProductSchema),
+      // }),
+      // ProductDetails: z.object({
+      //   product: ProductSchema.nullable(),
+      // }),
+    },
     Products: async (): Promise<Products> => {
       try {
         const products = (await client.get<Product[]>('/api/products')).data;
@@ -163,6 +180,7 @@ export const ProductCatalog: Integration<'product-catalog'> = {
     }
   },
 };
+
 
 // Register MCP tools for ProductCatalog queries
 

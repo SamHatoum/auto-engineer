@@ -1,22 +1,22 @@
 import { Integration, Event, Command } from '@auto-engineer/flowlang';
-import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI, AIProvider, z } from '@auto-engineer/ai-gateway';
 
 export type ChatCompleted = Event<
-  'ChatCompleted',
-  {
-    sessionId: string;
-    suggestedItems: { productId: string; name: string; quantity: number; reason: string }[];
-    timestamp: Date;
-  }
+    'ChatCompleted',
+    {
+        sessionId: string;
+        suggestedItems: { productId: string; name: string; quantity: number; reason: string }[];
+        timestamp: Date;
+    }
 >;
 
 export type DoChat = Command<
-  'DoChat',
-  {
-    sessionId: string;
-    prompt: string;
-    systemPrompt?: string;
-  }
+    'DoChat',
+    {
+        sessionId: string;
+        prompt: string;
+        systemPrompt?: string;
+    }
 >;
 
 type AICommands = {
@@ -28,6 +28,13 @@ export const AI: Integration<'ai', Record<string, never>, AICommands> = {
     type: 'ai' as const,
     name: 'AI',
     Commands: {
+        schema: {
+            DoChat: z.object({
+                sessionId: z.string(),
+                prompt: z.string(),
+                systemPrompt: z.string().optional(),
+            }),
+        },
         DoChat: async <T>(command: DoChat): Promise<T> => {
             const { prompt, systemPrompt } = command.data;
             const fullPrompt =

@@ -1,17 +1,27 @@
+import { ZodTypeAny } from "zod";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+type IntegrationHandler = (...args: any[]) => Promise<any>;
+
+// Enhanced WithSchema type that includes schemas for each handler
+type WithSchema<T extends Record<string, IntegrationHandler>> = T & {
+    schema?: {
+        [K in keyof T]?: ZodTypeAny;
+    };
+};
+
 export interface Integration<
     Type extends string = string,
-    Q extends Record<string, (...args: any[]) => any> = Record<string, (...args: any[]) => any>,
-    C extends Record<string, (...args: any[]) => any> = Record<string, (...args: any[]) => any>,
-    R extends Record<string, (...args: any[]) => any> = Record<string, (...args: any[]) => any>,
+    Q extends Record<string, IntegrationHandler> = Record<string, IntegrationHandler>,
+    C extends Record<string, IntegrationHandler> = Record<string, IntegrationHandler>,
+    R extends Record<string, IntegrationHandler> = Record<string, IntegrationHandler>
 > {
     readonly __brand: 'Integration';
     readonly type: Type;
     readonly name: string;
-    readonly Queries?: Q;
-    readonly Commands?: C;
-    readonly Reactions?: R;
+    readonly Queries?: WithSchema<Q>;
+    readonly Commands?: WithSchema<C>;
+    readonly Reactions?: WithSchema<R>;
 }
 
 export const createIntegration = <T extends string>(type: T, name: string): Integration<T> =>
@@ -21,7 +31,7 @@ export const createIntegration = <T extends string>(type: T, name: string): Inte
         name,
     }) as Integration<T>;
 
-// Data flow types
+// Data flow types (keeping existing types)
 export interface MessageTarget {
     type: 'Event' | 'Command' | 'State';
     name: string;
@@ -36,6 +46,10 @@ export interface StreamDestination {
 export interface IntegrationDestination {
     type: 'integration';
     systems: string[];
+    message?: {
+        name: string;
+        type: 'command' | 'query' | 'reaction';
+    };
 }
 
 export interface DatabaseDestination {
@@ -47,14 +61,6 @@ export interface TopicDestination {
     type: 'topic';
     name: string;
 }
-
-// export interface Destination {
-//   type: string;
-//   pattern?: string;
-//   systems?: string[];
-//   collection?: string;
-//   name?: string;
-//}
 
 export type Destination =
     | StreamDestination
@@ -101,25 +107,12 @@ export interface IntegrationOrigin {
     systems: string[];
 }
 
-// export interface Origin {
-//   type: string;
-//   name?: string;
-//   collection?: string;
-//   query?: Record<string, unknown>;
-//   endpoint?: string;
-//   method?: string;
-//   systems?: string[];
-//   idField?: string;
-// }
-
-
 export type Origin =
     | ProjectionOriginWithId
     | ReadModelOrigin
     | DatabaseOrigin
     | ApiOrigin
     | IntegrationOrigin;
-
 
 export interface ProjectionOriginWithId {
     type: 'projection';

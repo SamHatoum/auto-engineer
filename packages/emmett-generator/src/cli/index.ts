@@ -181,8 +181,13 @@ async function writeTsconfig(dest: string): Promise<void> {
         include: ['src/**/*', 'vitest.config.ts'],
         exclude: ['dist', 'node_modules'],
     };
-
-    await fs.writeJson(path.join(dest, 'tsconfig.json'), tsconfig, { spaces: 2 });
+    const tsconfigPath = path.join(dest, 'tsconfig.json');
+    if (!(await fs.pathExists(tsconfigPath))) {
+        await fs.writeJson(tsconfigPath, tsconfig, { spaces: 2 });
+        console.log('✅ tsconfig.json created');
+    } else {
+        console.log('ℹ️ tsconfig.json already exists, skipping');
+    }
 }
 
 async function writeVitestConfig(dest: string): Promise<void> {
