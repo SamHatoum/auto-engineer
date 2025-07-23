@@ -4,9 +4,10 @@ import {
   startClientBlock,
   endClientBlock,
   startServerBlock,
-  endServerBlock, getCurrentSlice,
+  endServerBlock,
+  getCurrentSlice,
 } from './flow-context';
-import {CommandSlice, QuerySlice, ReactSlice} from "./index";
+import { CommandSlice, QuerySlice, ReactSlice } from './index';
 import { print, ASTNode } from 'graphql';
 
 export interface FluentCommandSliceBuilder {
@@ -43,7 +44,7 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
       type: 'command',
       name,
       client: { description: '', specs: [] },
-      server: { description: '', gwt: [], data: undefined }
+      server: { description: '', gwt: [], data: undefined },
     };
     addSlice(this.slice);
   }
@@ -91,7 +92,7 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
 
   via(integration: Integration | Integration[]): FluentCommandSliceBuilder {
     const integrations = Array.isArray(integration) ? integration : [integration];
-    this.slice.via = integrations.map(i => i.name);
+    this.slice.via = integrations.map((i) => i.name);
     return this;
   }
 
@@ -104,7 +105,13 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   request(query: unknown): FluentCommandSliceBuilder {
     if (typeof query === 'string') {
       this.slice.request = query;
-    } else if (query !== null && query !== undefined && typeof query === 'object' && 'kind' in query && query.kind === 'Document') {
+    } else if (
+      query !== null &&
+      query !== undefined &&
+      typeof query === 'object' &&
+      'kind' in query &&
+      query.kind === 'Document'
+    ) {
       this.slice.request = print(query as ASTNode); // ✅ convert AST to SDL string
     } else {
       throw new Error('Invalid GraphQL query format');
@@ -121,7 +128,7 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
       type: 'query',
       name,
       client: { description: '', specs: [] },
-      server: { description: '', gwt: [], data: undefined }
+      server: { description: '', gwt: [], data: undefined },
     };
     addSlice(this.slice);
   }
@@ -165,7 +172,13 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   request(query: unknown): FluentQuerySliceBuilder {
     if (typeof query === 'string') {
       this.slice.request = query;
-    } else if (query !== null && query !== undefined && typeof query === 'object' && 'kind' in query && query.kind === 'Document') {
+    } else if (
+      query !== null &&
+      query !== undefined &&
+      typeof query === 'object' &&
+      'kind' in query &&
+      query.kind === 'Document'
+    ) {
       this.slice.request = print(query as ASTNode); // ✅ convert AST to SDL string
     } else {
       throw new Error('Invalid GraphQL query format');
@@ -181,7 +194,7 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
     this.slice = {
       type: 'react',
       name,
-      server: { gwt: [], data: undefined }
+      server: { gwt: [], data: undefined },
     };
     addSlice(this.slice);
   }
@@ -206,7 +219,7 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
 
   via(integration: Integration | Integration[]): FluentReactionSliceBuilder {
     const integrations = Array.isArray(integration) ? integration : [integration];
-    this.slice.via = integrations.map(i => i.name);
+    this.slice.via = integrations.map((i) => i.name);
     return this;
   }
 

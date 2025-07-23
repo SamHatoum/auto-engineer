@@ -102,13 +102,16 @@ interface Scheme {
   };
   pages?: {
     description?: string;
-    items?: Record<string, {
-      route: string;
-      description: string;
-      layout?: unknown;
-      navigation?: unknown;
-      [key: string]: unknown;
-    }>;
+    items?: Record<
+      string,
+      {
+        route: string;
+        description: string;
+        layout?: unknown;
+        navigation?: unknown;
+        [key: string]: unknown;
+      }
+    >;
   };
 }
 
@@ -317,8 +320,9 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
+      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
@@ -432,12 +436,11 @@ Do not include explanations, markdown, or code blocks.
 
 // Helper to extract all page routes from the IA scheme
 function extractPageRoutesFromScheme(scheme: Scheme | undefined): string[] {
-  if (
-    scheme?.pages?.items &&
-    typeof scheme.pages.items === 'object'
-  ) {
+  if (scheme?.pages?.items && typeof scheme.pages.items === 'object') {
     return Object.values(scheme.pages.items)
-      .map((page) => (typeof page === 'object' && 'route' in page && typeof page.route === 'string' ? page.route : undefined))
+      .map((page) =>
+        typeof page === 'object' && 'route' in page && typeof page.route === 'string' ? page.route : undefined,
+      )
       .filter((route): route is string => typeof route === 'string');
   }
   return [];
@@ -461,13 +464,13 @@ async function applyFixes(fixupPlan: Fix[], projectDir: string): Promise<void> {
     if (fix.action !== 'update' || !fix.file || !fix.content) continue;
     const outPath = path.join(projectDir, fix.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
-    await fs.writeFile(outPath, fix.content, "utf-8");
+    await fs.writeFile(outPath, fix.content, 'utf-8');
     console.log(`Fixed console errors in ${fix.file}`);
   }
 }
 
 async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
-  const baseUrl = "http://localhost:8080";
+  const baseUrl = 'http://localhost:8080';
   let routes = extractPageRoutesFromScheme(ctx.scheme);
   if (routes.length === 0) {
     routes = ['/'];
@@ -480,7 +483,7 @@ async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promis
     return false;
   }
 
-  const errorFeedback = allConsoleErrors.join("\n");
+  const errorFeedback = allConsoleErrors.join('\n');
   const fixupPrompt = `${makeBasePrompt(ctx)}\n
 After your previous changes, the application produced the following console errors when running on the following routes:\n\n${errorFeedback}\n
 You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.

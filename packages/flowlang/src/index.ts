@@ -17,7 +17,7 @@ export type {
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
-export {registerIntegrations} from './integration-registry';
+export { registerIntegrations } from './integration-registry';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';
@@ -61,7 +61,6 @@ export {
   createTypedStateBuilder,
 } from './builders';
 
-
 // Testing helpers
 export { createFlowSpec, given, when } from './testing';
 
@@ -100,7 +99,7 @@ import {
   QuerySliceSchema,
   ReactSliceSchema,
   MessageSchema,
-  CommandSliceSchema
+  CommandSliceSchema,
 } from './schema';
 export type AppSchema = z.infer<typeof ImportedAppSchema>;
 

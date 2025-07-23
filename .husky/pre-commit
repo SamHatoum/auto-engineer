@@ -1,1 +1,2 @@
-pnpm check
+npx lint-staged
+pnpm turbo run type-check test

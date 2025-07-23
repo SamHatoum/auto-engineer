@@ -3,13 +3,6 @@
   "compilerOptions": {
     "outDir": "./dist"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.json",
-    "../information-architect/src/mock-flows.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.json", "../information-architect/src/mock-flows.ts"],
+  "exclude": ["node_modules", "dist"]
 }

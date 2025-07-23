@@ -14,7 +14,8 @@ import {
   sink,
   type Command,
   type Event,
-  type State, registerIntegrations,
+  type State,
+  registerIntegrations,
 } from '@auto-engineer/flowlang';
 
 // @ts-ignore
@@ -25,7 +26,6 @@ const { AI } = await import('../server/src/integrations/ai-integration');
 
 import type { Products } from '../server/src/integrations/product-catalogue-integration';
 import type { DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
-
 
 registerIntegrations(ProductCatalog, AI);
 
@@ -186,8 +186,12 @@ flow('Seasonal Assistant', () => {
   commandSlice('Suggest Shopping Items').server(() => {
     data([
       sink()
-        .command('SuggestShoppingItems').toIntegration(AI, 'DoChat', 'command').withState(source().state('Products').fromIntegration(ProductCatalog))
-        .additionalInstructions('add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data'),
+        .command('SuggestShoppingItems')
+        .toIntegration(AI, 'DoChat', 'command')
+        .withState(source().state('Products').fromIntegration(ProductCatalog))
+        .additionalInstructions(
+          'add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
+        ),
       sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
     ]);
 
@@ -265,7 +269,7 @@ flow('Seasonal Assistant', () => {
                 quantity: 1,
                 reason: 'Ideal starter set for Magic the Gathering enthusiasts',
               },
-            ]
+            ],
           }),
         ]);
     });
@@ -395,5 +399,3 @@ flow('Seasonal Assistant', () => {
       });
     });
 });
-
-

@@ -11,7 +11,7 @@ const runInContext = (flowPath: string, projectRoot: string): Promise<string> =>
 
     const child = spawn('npx', ['tsx', helperScript, flowPath], {
       cwd: projectRoot,
-      stdio: ['inherit', 'pipe', 'pipe']
+      stdio: ['inherit', 'pipe', 'pipe'],
     });
 
     let stdout = '';

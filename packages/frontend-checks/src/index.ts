@@ -5,7 +5,7 @@ class BrowserManager {
   private static instance: BrowserManager | null = null;
   private browser: Browser | null = null;
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): BrowserManager {
     if (BrowserManager.instance === null) {

@@ -12,8 +12,9 @@
     "preview": "vite preview",
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../../.prettierignore",
-    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../../.prettierignore",
-    "type:check": "tsc --noEmit"
+    "type:check": "tsc --noEmit",
+    "lint:fix": "eslint .",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../../.prettierignore"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

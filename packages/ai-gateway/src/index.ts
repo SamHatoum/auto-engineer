@@ -176,9 +176,7 @@ export async function generateTextWithToolsAI(
   const hasTools = Object.keys(registeredTools).length > 0;
 
   // Build conversation messages
-  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
-    { role: 'user', content: prompt }
-  ];
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [{ role: 'user', content: prompt }];
 
   let finalResult = '';
   const allToolCalls: unknown[] = [];
@@ -193,9 +191,9 @@ export async function generateTextWithToolsAI(
       messages,
       temperature: finalOptions.temperature,
       maxTokens: finalOptions.maxTokens,
-      ...(hasTools && { 
+      ...(hasTools && {
         tools: registeredTools,
-        toolChoice: 'auto' as const
+        toolChoice: 'auto' as const,
       }),
     });
 
@@ -208,16 +206,16 @@ export async function generateTextWithToolsAI(
     // If there are tool calls, execute them and continue conversation
     if (result.toolCalls !== undefined && result.toolCalls.length > 0) {
       allToolCalls.push(...result.toolCalls);
-      
+
       // Execute tools and create a simple follow-up prompt
       const toolResults = await executeToolCalls(result.toolCalls, registeredTools);
-      
+
       // Add the tool results as a user message and request a final response
       messages.push({
         role: 'user',
-        content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`
+        content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`,
       });
-      
+
       // Continue the conversation to get AI's response to tool results
       continue;
     }
@@ -233,11 +231,14 @@ export async function generateTextWithToolsAI(
 }
 
 async function executeToolCalls(
-  toolCalls: unknown[], 
-  registeredTools: Record<string, { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }>
+  toolCalls: unknown[],
+  registeredTools: Record<
+    string,
+    { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }
+  >,
 ): Promise<string> {
   let toolResults = '';
-  
+
   for (const toolCall of toolCalls) {
     try {
       const toolCallObj = toolCall as { toolName: string; args: Record<string, unknown> };
@@ -254,7 +255,7 @@ async function executeToolCalls(
       toolResults += `Error executing tool ${toolCallObj.toolName}: ${String(error)}\n\n`;
     }
   }
-  
+
   return toolResults;
 }
 
@@ -431,16 +432,16 @@ export async function streamStructuredDataWithAI<T>(
 export { z };
 
 // Export MCP server singleton functions
-export { 
+export {
   server as mcpServer,
-  registerTool, 
-  registerTools, 
-  startServer, 
+  registerTool,
+  registerTools,
+  startServer,
   isServerStarted,
   getRegisteredTools,
   getRegisteredToolsForAI,
   getToolHandler,
   executeRegisteredTool,
   type ToolHandler,
-  type RegisteredTool
+  type RegisteredTool,
 } from './mcp-server.js';

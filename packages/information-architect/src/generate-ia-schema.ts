@@ -23,7 +23,9 @@ async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> 
   return components;
 }
 
-async function getUniqueSchemaPath(outputDir: string): Promise<{ filePath: string; existingSchema: object | undefined }> {
+async function getUniqueSchemaPath(
+  outputDir: string,
+): Promise<{ filePath: string; existingSchema: object | undefined }> {
   await fs.mkdir(outputDir, { recursive: true });
   const baseFileName = 'auto-ia-scheme';
   const basePath = path.join(outputDir, baseFileName);
@@ -42,7 +44,12 @@ async function getUniqueSchemaPath(outputDir: string): Promise<{ filePath: strin
 
   let filePath = `${basePath}.json`;
   let counter = 1;
-  while (await fs.access(filePath).then(() => true).catch(() => false)) {
+  while (
+    await fs
+      .access(filePath)
+      .then(() => true)
+      .catch(() => false)
+  ) {
     filePath = `${basePath}-${counter}.json`;
     counter++;
   }
@@ -60,7 +67,7 @@ async function main() {
   const flows: string[] = await Promise.all(flowFiles.map((flow) => fs.readFile(flow, 'utf-8')));
   const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
   const atomNames = await getAtomsFromMarkdown(outputDir);
-  const atoms = atomNames.map(name => ({ name, props: [] }));
+  const atoms = atomNames.map((name) => ({ name, props: [] }));
 
   const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms);
 

@@ -25,33 +25,33 @@ export type Product = {
 };
 
 export type Products = State<
-    'Products',
-    {
-      products: Product[];
-    }
+  'Products',
+  {
+    products: Product[];
+  }
 >;
 
 export type ProductsByCategory = State<
-    'ProductsByCategory',
-    {
-      category: string;
-      products: Product[];
-    }
+  'ProductsByCategory',
+  {
+    category: string;
+    products: Product[];
+  }
 >;
 
 export type ProductSearchResults = State<
-    'ProductSearchResults',
-    {
-      query: string;
-      products: Product[];
-    }
+  'ProductSearchResults',
+  {
+    query: string;
+    products: Product[];
+  }
 >;
 
 export type ProductDetails = State<
-    'ProductDetails',
-    {
-      product: Product | null;
-    }
+  'ProductDetails',
+  {
+    product: Product | null;
+  }
 >;
 
 const client = axios.create({
@@ -130,9 +130,11 @@ export const ProductCatalog: Integration<'product-catalog', ProductCatalogQuerie
     },
     ProductSearchResults: async (params: { query: string }): Promise<ProductSearchResults> => {
       try {
-        const products = (await client.get<Product[]>('/api/products/search', {
-          params: { q: params.query },
-        })).data;
+        const products = (
+          await client.get<Product[]>('/api/products/search', {
+            params: { q: params.query },
+          })
+        ).data;
         return {
           type: 'ProductSearchResults',
           data: {
@@ -177,10 +179,9 @@ export const ProductCatalog: Integration<'product-catalog', ProductCatalogQuerie
           },
         };
       }
-    }
+    },
   },
 };
-
 
 // Register MCP tools for ProductCatalog queries
 
@@ -205,22 +206,26 @@ registerTool<Record<string, unknown>>(
     const queries = ProductCatalog.Queries;
     if (!queries?.Products) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.Products is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.Products is not available',
+          },
+        ],
         isError: true,
       };
     }
     const productsQuery = queries.Products as ProductsQuery;
     const result = await productsQuery();
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Tool for fetching products by category
@@ -241,22 +246,26 @@ registerTool<ProductsByCategoryParams>(
     const queries = ProductCatalog.Queries;
     if (!queries?.ProductsByCategory) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.ProductsByCategory is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.ProductsByCategory is not available',
+          },
+        ],
         isError: true,
       };
     }
     const categoryQuery = queries.ProductsByCategory as ProductsByCategoryQuery;
     const result = await categoryQuery({ category });
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Tool for searching products
@@ -277,22 +286,26 @@ registerTool<ProductSearchParams>(
     const queries = ProductCatalog.Queries;
     if (!queries?.ProductSearchResults) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.ProductSearchResults is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.ProductSearchResults is not available',
+          },
+        ],
         isError: true,
       };
     }
     const searchQuery = queries.ProductSearchResults as ProductSearchQuery;
     const result = await searchQuery({ query });
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Tool for getting product details
@@ -313,10 +326,12 @@ registerTool<ProductDetailsParams>(
     const queries = ProductCatalog.Queries;
     if (!queries?.ProductDetails) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.ProductDetails is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.ProductDetails is not available',
+          },
+        ],
         isError: true,
       };
     }
@@ -324,18 +339,22 @@ registerTool<ProductDetailsParams>(
     const result = await detailsQuery({ id });
     if (result.data.product === null) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: `Product with ID "${id}" not found`,
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: `Product with ID "${id}" not found`,
+          },
+        ],
         isError: true,
       };
     }
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );

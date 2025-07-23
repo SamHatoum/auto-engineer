@@ -5,10 +5,10 @@ import { writeFileSync } from 'fs';
 import { registry } from './flow-registry';
 import { SpecsSchema } from './schema';
 import { z } from 'zod';
-import {Flow, Message} from "./index";
-import {messageRegistry} from "./message-registry";
+import { Flow, Message } from './index';
+import { messageRegistry } from './message-registry';
 import { Integration } from './types';
-import {globalIntegrationRegistry, integrationRegistry} from "./integration-registry";
+import { globalIntegrationRegistry, integrationRegistry } from './integration-registry';
 
 // Helper function to extract Zod schema type information
 const extractZodType = (schema: z.ZodTypeAny): string => {
@@ -37,9 +37,9 @@ const extractZodType = (schema: z.ZodTypeAny): string => {
     case 'ZodObject': {
       const shape = (schema as z.ZodObject<z.ZodRawShape>)._def.shape();
       const entries = Object.entries(shape)
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-          .map(([key, val]) => `${key}: ${extractZodType(val as z.ZodTypeAny)}`)
-          .join(', ');
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        .map(([key, val]) => `${key}: ${extractZodType(val as z.ZodTypeAny)}`)
+        .join(', ');
       return `{${entries}}`;
     }
     default:
@@ -117,7 +117,10 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
 
     // Extract reaction schemas (these become event messages)
     if (integration.Reactions?.schema) {
-      console.log(`[extractMessagesFromIntegrations] Found Reactions.schema:`, Object.keys(integration.Reactions.schema));
+      console.log(
+        `[extractMessagesFromIntegrations] Found Reactions.schema:`,
+        Object.keys(integration.Reactions.schema),
+      );
       for (const [name, schema] of Object.entries(integration.Reactions.schema)) {
         if (schema) {
           const fields = zodSchemaToFields(schema);
@@ -142,11 +145,14 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
 const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
   // Extract messages and integrations from flows
   const messages = new Map<string, Message>();
-  const integrations = new Map<string, {
-    name: string;
-    description?: string;
-    source: string;
-  }>();
+  const integrations = new Map<
+    string,
+    {
+      name: string;
+      description?: string;
+      source: string;
+    }
+  >();
 
   // FIRST: Add all declared messages from messageRegistry
   for (const msg of messageRegistry.getAll()) {
@@ -155,7 +161,10 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
 
   // SECOND: Add messages from integration schemas
   const registeredIntegrations = globalIntegrationRegistry.getAll();
-  console.log(`[flowsToSchema] Found ${registeredIntegrations.length} registered integrations:`, registeredIntegrations.map(i => i.name));
+  console.log(
+    `[flowsToSchema] Found ${registeredIntegrations.length} registered integrations:`,
+    registeredIntegrations.map((i) => i.name),
+  );
   const integrationMessages = extractMessagesFromIntegrations(registeredIntegrations);
   console.log(`[flowsToSchema] Extracted ${integrationMessages.length} messages from integrations`);
   for (const msg of integrationMessages) {
@@ -165,14 +174,14 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
     }
   }
 
-  flows.forEach(flow => {
-    flow.slices.forEach(slice => {
+  flows.forEach((flow) => {
+    flow.slices.forEach((slice) => {
       // Extract messages from GWT specs
       if ('server' in slice && slice.server?.gwt !== undefined) {
-        slice.server.gwt.forEach(gwt => {
+        slice.server.gwt.forEach((gwt) => {
           // Process given
           if ('given' in gwt && gwt.given) {
-            gwt.given.forEach(event => {
+            gwt.given.forEach((event) => {
               if (!messages.has(event.eventRef)) {
                 messages.set(event.eventRef, createMessage(event.eventRef, event.exampleData, 'event'));
               }
@@ -188,7 +197,7 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
               }
             } else if (Array.isArray(gwt.when)) {
               // React slice
-              gwt.when.forEach(event => {
+              gwt.when.forEach((event) => {
                 if (!messages.has(event.eventRef)) {
                   messages.set(event.eventRef, createMessage(event.eventRef, event.exampleData, 'event'));
                 }
@@ -198,7 +207,7 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
 
           // Process then
           if ('then' in gwt && gwt.then !== undefined) {
-            gwt.then.forEach(item => {
+            gwt.then.forEach((item) => {
               if ('eventRef' in item) {
                 if (!messages.has(item.eventRef)) {
                   messages.set(item.eventRef, createMessage(item.eventRef, item.exampleData, 'event'));
@@ -226,17 +235,17 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
                 integrations.set(system, {
                   name: system,
                   description: `${system} integration`,
-                  source: `@auto-engineer/${system.toLowerCase()}-integration`
+                  source: `@auto-engineer/${system.toLowerCase()}-integration`,
                 });
               }
               if (
-                  'destination' in dataItem &&
-                  dataItem.destination.type === 'integration' &&
-                  'message' in dataItem.destination &&
-                  dataItem.destination.message
+                'destination' in dataItem &&
+                dataItem.destination.type === 'integration' &&
+                'message' in dataItem.destination &&
+                dataItem.destination.message
               ) {
                 const mapIntegrationTypeToMessageType = (
-                    t: 'command' | 'query' | 'reaction'
+                  t: 'command' | 'query' | 'reaction',
                 ): 'command' | 'event' | 'state' => {
                   switch (t) {
                     case 'command':
@@ -260,7 +269,7 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
                 integrations.set(system, {
                   name: system,
                   description: `${system} integration`,
-                  source: `@auto-engineer/${system.toLowerCase()}-integration`
+                  source: `@auto-engineer/${system.toLowerCase()}-integration`,
                 });
               }
             });
@@ -271,7 +280,7 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
                 integrations.set(system, {
                   name: system,
                   description: `${system} integration`,
-                  source: `@auto-engineer/${system.toLowerCase()}-integration`
+                  source: `@auto-engineer/${system.toLowerCase()}-integration`,
                 });
               }
             });
@@ -281,12 +290,12 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
 
       // Extract integrations from via
       if ('via' in slice && slice.via) {
-        slice.via.forEach(integrationName => {
+        slice.via.forEach((integrationName) => {
           if (!integrations.has(integrationName)) {
             integrations.set(integrationName, {
               name: integrationName,
               description: `${integrationName} integration`,
-              source: `@auto-engineer/${integrationName.toLowerCase()}-integration`
+              source: `@auto-engineer/${integrationName.toLowerCase()}-integration`,
             });
           }
         });
@@ -300,7 +309,7 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
       integrations.set(integration.name, {
         name: integration.name,
         description: `${integration.name} integration`,
-        source: `@auto-engineer/${integration.name.toLowerCase()}-integration`
+        source: `@auto-engineer/${integration.name.toLowerCase()}-integration`,
       });
     }
   }
@@ -310,14 +319,14 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
     variant: 'specs' as const,
     flows: flows,
     messages: Array.from(messages.values()),
-    integrations: Array.from(integrations.values())
+    integrations: Array.from(integrations.values()),
   };
 };
 
 const createMessage = (
-    name: string,
-    data: Record<string, unknown>,
-    messageType: 'command' | 'event' | 'state'
+  name: string,
+  data: Record<string, unknown>,
+  messageType: 'command' | 'event' | 'state',
 ): Message => {
   // Infer fields from example data
   const fields = Object.entries(data).map(([fieldName, value]) => ({
@@ -325,7 +334,7 @@ const createMessage = (
     type: inferType(value),
     required: true,
     description: undefined,
-    defaultValue: undefined
+    defaultValue: undefined,
   }));
 
   const metadata = { version: 1 };
@@ -380,8 +389,8 @@ const inferArrayType = (value: unknown[]): string => {
   const itemType = inferType(value[0]);
   if (typeof value[0] === 'object' && !Array.isArray(value[0])) {
     const objType = Object.entries(value[0] as Record<string, unknown>)
-        .map(([k, v]) => `${k}: ${inferType(v)}`)
-        .join(', ');
+      .map(([k, v]) => `${k}: ${inferType(v)}`)
+      .join(', ');
     return `Array<{${objType}}>`;
   }
   return `Array<${itemType}>`;
@@ -389,8 +398,8 @@ const inferArrayType = (value: unknown[]): string => {
 
 const inferObjectType = (value: Record<string, unknown>): string => {
   const objType = Object.entries(value)
-      .map(([k, v]) => `${k}: ${inferType(v)}`)
-      .join(', ');
+    .map(([k, v]) => `${k}: ${inferType(v)}`)
+    .join(', ');
   return `{${objType}}`;
 };
 
@@ -410,11 +419,17 @@ export const getFlows = async (cwd: string = process.cwd()) => {
 
   // Import all files and collect any integrations
   const importPromises = files.map(async (file) => {
-    const module = await import(pathToFileURL(file).href) as Record<string, unknown>;
+    const module = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
 
     // Look for exported integrations in the module
     for (const [exportName, exportValue] of Object.entries(module)) {
-      if (Boolean(exportValue) && typeof exportValue === 'object' && exportValue !== null && '__brand' in exportValue && (exportValue as { __brand?: string }).__brand === 'Integration') {
+      if (
+        Boolean(exportValue) &&
+        typeof exportValue === 'object' &&
+        exportValue !== null &&
+        '__brand' in exportValue &&
+        (exportValue as { __brand?: string }).__brand === 'Integration'
+      ) {
         console.log(`[getFlows] Found integration ${exportName} in ${file}`);
         integrationRegistry.register(exportValue as Integration);
       }

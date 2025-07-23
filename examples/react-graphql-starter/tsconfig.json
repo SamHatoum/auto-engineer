@@ -18,7 +18,7 @@
     "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
-//    "alwaysStrict": true,
+    //    "alwaysStrict": true,
 
     /* Quality Checks */
     "noUnusedLocals": false,

@@ -9,9 +9,7 @@
           "name": "enters shopping criteria into assistant",
           "client": {
             "description": "",
-            "specs": [
-              "Assistant Chat Interface"
-            ]
+            "specs": ["Assistant Chat Interface"]
           },
           "server": {
             "description": "",
@@ -119,9 +117,7 @@
                 },
                 "destination": {
                   "type": "integration",
-                  "systems": [
-                    "AI"
-                  ]
+                  "systems": ["AI"]
                 },
                 "__type": "sink"
               },
@@ -132,9 +128,7 @@
                 },
                 "origin": {
                   "type": "integration",
-                  "systems": [
-                    "ProductCatalogService"
-                  ]
+                  "systems": ["ProductCatalogService"]
                 },
                 "__type": "source"
               }
@@ -146,9 +140,7 @@
           "name": "views suggested items",
           "client": {
             "description": "",
-            "specs": [
-              "Suggested Items Screen"
-            ]
+            "specs": ["Suggested Items Screen"]
           },
           "request": {
             "kind": "Document",
@@ -313,9 +305,7 @@
           "name": "accepts items and adds to their cart",
           "client": {
             "description": "",
-            "specs": [
-              "Suggested Items Screen"
-            ]
+            "specs": ["Suggested Items Screen"]
           },
           "server": {
             "description": "",

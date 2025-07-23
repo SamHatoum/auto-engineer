@@ -1,5 +1,5 @@
 import { typedSink, typedSource } from './data-flow-builders';
-import {Message} from "./index";
+import { Message } from './index';
 
 // Generic interfaces for events and commands - these should be extended by consumers
 export interface EventUnion extends Record<string, unknown> {
@@ -126,12 +126,16 @@ export const createBuilders = () => ({
   }),
 });
 
-function extractCommandDefs<C extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>(): Message[] {
+function extractCommandDefs<
+  C extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> },
+>(): Message[] {
   const commandTypes = new Set<string>();
   try {
     const dummy = {} as C;
     if ('type' in dummy) commandTypes.add(dummy.type);
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   return Array.from(commandTypes).map((type) => ({
     type: 'command',
     name: type,
@@ -145,7 +149,9 @@ function extractEventDefs<E extends { type: string; data: Record<string, unknown
   try {
     const dummy = {} as E;
     if ('type' in dummy) eventTypes.add(dummy.type);
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
   return Array.from(eventTypes).map((type) => ({
     type: 'event',
     name: type,

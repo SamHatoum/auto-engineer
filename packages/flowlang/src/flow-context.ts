@@ -1,5 +1,5 @@
-import type {DataSinkItem, DataSourceItem, DataItem, DataSink, DataSource} from './types';
-import {Flow, Slice} from "./index";
+import type { DataSinkItem, DataSourceItem, DataItem, DataSink, DataSource } from './types';
+import { Flow, Slice } from './index';
 
 interface FlowContext {
   flow: Flow;
@@ -13,13 +13,13 @@ let context: FlowContext | null = null;
 export function startFlow(name: string): Flow {
   const flow: Flow = {
     name,
-    slices: []
+    slices: [],
   };
   context = {
     flow,
     currentSliceIndex: null,
     currentSpecTarget: null,
-    currentSpecIndex: null
+    currentSpecIndex: null,
   };
   return flow;
 }
@@ -49,7 +49,7 @@ export function startClientBlock(slice: Slice, description: string = ''): void {
   if (slice.type === 'command' || slice.type === 'query') {
     slice.client = {
       description,
-      specs: []
+      specs: [],
     };
     context.currentSpecTarget = 'client';
   }
@@ -68,19 +68,19 @@ export function startServerBlock(slice: Slice, description: string = ''): void {
     slice.server = {
       description,
       gwt: [],
-      data: undefined
+      data: undefined,
     };
   } else if (slice.type === 'query') {
     slice.server = {
       description,
       gwt: [],
-      data: undefined
+      data: undefined,
     };
   } else if (slice.type === 'react') {
     slice.server = {
       description: description || undefined,
       gwt: [],
-      data: undefined
+      data: undefined,
     };
   }
 
@@ -104,7 +104,7 @@ export function pushSpec(description: string): void {
 }
 
 export function recordShouldBlock(description?: string): void {
-  if ((description != null) && context?.currentSpecTarget === 'client') {
+  if (description != null && context?.currentSpecTarget === 'client') {
     const slice = getCurrentSlice();
     if (slice && (slice.type === 'command' || slice.type === 'query')) {
       slice.client.specs.push(description);
@@ -122,17 +122,17 @@ export function recordGwtSpec(): void {
     if (slice.type === 'command') {
       slice.server.gwt.push({
         when: { commandRef: '', exampleData: {} },
-        then: []
+        then: [],
       });
     } else if (slice.type === 'query') {
       slice.server.gwt.push({
         given: [],
-        then: []
+        then: [],
       });
     } else if (slice.type === 'react') {
       slice.server.gwt.push({
         when: [],
-        then: []
+        then: [],
       });
     }
     context.currentSpecIndex = slice.server.gwt.length - 1;
@@ -148,17 +148,17 @@ export function recordGiven(events: Array<{ type: string; data: Record<string, u
   if (slice.type === 'command') {
     const spec = slice.server.gwt[context.currentSpecIndex];
     if ('given' in spec) {
-      spec.given = events.map(event => ({
+      spec.given = events.map((event) => ({
         eventRef: event.type,
-        exampleData: event.data
+        exampleData: event.data,
       }));
     }
   } else if (slice.type === 'query') {
     const spec = slice.server.gwt[context.currentSpecIndex];
     if ('given' in spec) {
-      spec.given = events.map(event => ({
+      spec.given = events.map((event) => ({
         eventRef: event.type,
-        exampleData: event.data
+        exampleData: event.data,
       }));
     }
   } else {
@@ -176,17 +176,19 @@ export function recordWhen(command: { type: string; data: Record<string, unknown
     if ('when' in spec) {
       spec.when = {
         commandRef: command.type,
-        exampleData: command.data
+        exampleData: command.data,
       };
     }
   } else if (slice.type === 'react') {
     // For react slices, when is an array of events
     const spec = slice.server.gwt[context.currentSpecIndex];
     if ('when' in spec) {
-      spec.when = [{
-        eventRef: command.type,
-        exampleData: command.data
-      }];
+      spec.when = [
+        {
+          eventRef: command.type,
+          exampleData: command.data,
+        },
+      ];
     }
   } else {
     throw new Error('When can only be used in command or react slices');
@@ -200,9 +202,9 @@ export function recordWhenEvents(events: Array<{ type: string; data: Record<stri
 
   const spec = slice.server.gwt[context.currentSpecIndex];
   if ('when' in spec) {
-    spec.when = events.map(event => ({
+    spec.when = events.map((event) => ({
       eventRef: event.type,
-      exampleData: event.data
+      exampleData: event.data,
     }));
   }
 }
@@ -215,34 +217,35 @@ export function recordThen(...items: Array<{ type: string; data: Record<string, 
   if (slice.type === 'command') {
     const spec = slice.server.gwt[context.currentSpecIndex];
     if ('then' in spec) {
-      spec.then = items.map(item => {
+      spec.then = items.map((item) => {
         // Check if it's an error
         if (item.type === 'Error' || 'errorType' in item.data) {
           return {
-            errorType: (item.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
-            message: item.data.message as string | undefined
+            errorType:
+              (item.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
+            message: item.data.message as string | undefined,
           };
         }
         return {
           eventRef: item.type,
-          exampleData: item.data
+          exampleData: item.data,
         };
       });
     }
   } else if (slice.type === 'query') {
     const spec = slice.server.gwt[context.currentSpecIndex];
     if ('then' in spec) {
-      spec.then = items.map(item => ({
+      spec.then = items.map((item) => ({
         stateRef: item.type,
-        exampleData: item.data
+        exampleData: item.data,
       }));
     }
   } else if (slice.type === 'react') {
     const spec = slice.server.gwt[context.currentSpecIndex];
     if ('then' in spec) {
-      spec.then = items.map(item => ({
+      spec.then = items.map((item) => ({
         commandRef: item.type,
-        exampleData: item.data
+        exampleData: item.data,
       }));
     }
   }
@@ -268,14 +271,11 @@ export function setSliceData(data: DataItem[]): void {
     // Query slices only have sources in their data
     slice.server.data = sources.length > 0 ? sources : undefined;
   } else if (slice.type === 'react') {
-    slice.server.data =
-        data.length > 0 ? stripTypeDiscriminator(data) : undefined;
+    slice.server.data = data.length > 0 ? stripTypeDiscriminator(data) : undefined;
   }
 }
 
-function stripTypeDiscriminator(
-    items: DataItem[]
-): (DataSink | DataSource)[] {
+function stripTypeDiscriminator(items: DataItem[]): (DataSink | DataSource)[] {
   return items.map((item) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { __type, ...rest } = item;

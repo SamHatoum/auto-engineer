@@ -11,7 +11,8 @@
     "type-check": "tsc --noEmit",
     "generate-ia-schema": "tsx src/generate-ia-schema.ts",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.js",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "publishConfig": {
     "access": "public"
