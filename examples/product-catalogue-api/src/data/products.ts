@@ -15,7 +15,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 10,
     tags: ['soccer', 'sports'],
     imageUrl:
-      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://plus.unsplash.com/premium_photo-1658506638118-524a66dc5cee?q=80&w=3544&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-craft-kit',
@@ -23,8 +23,7 @@ export const mockProducts: ProductCatalogItem[] = [
     category: 'Arts & Crafts',
     price: 25,
     tags: ['crafts', 'art', 'creative'],
-    imageUrl:
-      'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    imageUrl: 'https://m.media-amazon.com/images/I/81ekd9gpb5L._UF894,1000_QL80_.jpg',
   },
   {
     productId: 'prod-laptop-bag',
@@ -33,7 +32,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 45,
     tags: ['computers', 'tech', 'school'],
     imageUrl:
-      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://images.unsplash.com/photo-1630522521764-9ec0064a7e6e?q=80&w=1587&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-mtg-starter',
@@ -42,7 +41,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 30,
     tags: ['magic', 'tcg', 'games'],
     imageUrl:
-      'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://www.fantasywelt.de/media/image/product/183022/lg/magic-the-gathering-bloomburrow-starter-kit-2024-en.jpg',
   },
   {
     productId: 'prod-pencils',
@@ -51,7 +50,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 8,
     tags: ['school', 'art', 'writing'],
     imageUrl:
-      'https://images.unsplash.com/photo-1572045188875-61013d06e517?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://images.unsplash.com/photo-1616014578457-c7f3cd043291?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-notebook',
@@ -60,7 +59,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 5,
     tags: ['school', 'writing', 'paper'],
     imageUrl:
-      'https://plus.unsplash.com/premium_photo-1684332005387-09423f85bdbb?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://images.unsplash.com/photo-1598620616337-cb8f766489bd?q=80&w=1943&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-running-shoes',
@@ -69,7 +68,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 35,
     tags: ['sports', 'running', 'shoes'],
     imageUrl:
-      'https://plus.unsplash.com/premium_photo-1661674577243-43cc46faabfb?q=80&w=3542&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://images.unsplash.com/photo-1571395770221-867c6e2251bc?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-paint-set',
@@ -78,7 +77,7 @@ export const mockProducts: ProductCatalogItem[] = [
     price: 15,
     tags: ['art', 'paint', 'creative'],
     imageUrl:
-      'https://images.unsplash.com/photo-1658402995914-22a4ba7e1a94?q=80&w=3546&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'https://images.unsplash.com/photo-1748100377329-429f657842de?q=80&w=3534&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
   },
   {
     productId: 'prod-craft-glue',
