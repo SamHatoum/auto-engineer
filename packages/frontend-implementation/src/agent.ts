@@ -1,7 +1,13 @@
-import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
+import { AIProvider, generateTextWithAI, generateTextWithImageAI } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { getTsErrors, getBuildErrors, closeBrowser, getConsoleErrors } from '@auto-engineer/frontend-checks';
+import {
+  closeBrowser,
+  getBuildErrors,
+  getConsoleErrors,
+  getPageScreenshot,
+  getTsErrors,
+} from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
 // Utility to extract props from interface
@@ -102,13 +108,16 @@ interface Scheme {
   };
   pages?: {
     description?: string;
-    items?: Record<string, {
-      route: string;
-      description: string;
-      layout?: unknown;
-      navigation?: unknown;
-      [key: string]: unknown;
-    }>;
+    items?: Record<
+      string,
+      {
+        route: string;
+        description: string;
+        layout?: unknown;
+        navigation?: unknown;
+        [key: string]: unknown;
+      }
+    >;
   };
 }
 
@@ -120,47 +129,52 @@ interface ProjectContext {
   fileTreeSummary: string[];
   graphqlOperations: Record<string, string>;
   userPreferences: string;
+  theme: string;
 }
 
-async function getProjectContext(
-  projectDir: string,
-  iaSchemeDir: string,
-  userPreferences: string,
-): Promise<ProjectContext> {
-  const schemePath = iaSchemeDir;
-  let scheme: Scheme | undefined = undefined;
+async function loadScheme(iaSchemeDir: string): Promise<Scheme | undefined> {
   try {
-    scheme = JSON.parse(await fs.readFile(schemePath, 'utf-8')) as Scheme;
+    return JSON.parse(await fs.readFile(path.join(iaSchemeDir, 'auto-ia-scheme.json'), 'utf-8')) as Scheme;
   } catch (err: unknown) {
     if (typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code !== 'ENOENT') {
       throw err;
     }
-    // If file does not exist, just continue with scheme as undefined
+    return undefined;
   }
-  const files = await listFiles(projectDir);
-  const atoms = await getAtomsWithProps(projectDir);
-  const graphqlOperationsFilesPath = files.filter((f) => f.startsWith('src/graphql/') && f.endsWith('.ts'));
-  const graphqlOperations: Record<string, string> = {};
-  for (const filePath of graphqlOperationsFilesPath) {
+}
+
+async function getGraphqlOperations(projectDir: string, files: string[]): Promise<Record<string, string>> {
+  const graphqlFiles = files.filter((f) => f.startsWith('src/graphql/') && f.endsWith('.ts'));
+  const operations: Record<string, string> = {};
+  for (const filePath of graphqlFiles) {
     try {
       const content = await fs.readFile(path.join(projectDir, filePath), 'utf-8');
-      const operation = path.basename(filePath, 'ts');
-      graphqlOperations[operation] = content;
+      operations[path.basename(filePath, '.ts')] = content;
     } catch (error) {
       console.error(`Error reading GraphQL operations file ${filePath}:`, error);
     }
   }
+  return operations;
+}
 
+async function getKeyFileContents(projectDir: string, files: string[]): Promise<Record<string, string>> {
   const keyFiles = files.filter((f) => ['src/index.css', 'src/globals.css'].includes(f));
-  const keyFileContents: Record<string, string> = {};
+  const contents: Record<string, string> = {};
   for (const file of keyFiles) {
     try {
-      keyFileContents[file] = await fs.readFile(path.join(projectDir, file), 'utf-8');
+      contents[file] = await fs.readFile(path.join(projectDir, file), 'utf-8');
     } catch {
       // ignore
     }
   }
-  const fileTreeSummary = [
+  return contents;
+}
+
+function getFileTreeSummary(
+  files: string[],
+  atoms: { name: string; props: { name: string; type: string }[] }[],
+): string[] {
+  return [
     ...files.filter(
       (f) =>
         f.startsWith('src/pages/') ||
@@ -170,6 +184,34 @@ async function getProjectContext(
     ),
     `src/components/atoms/ (atoms: ${atoms.map((a) => a.name).join(', ')})`,
   ];
+}
+
+async function getTheme(designSystem: string): Promise<string> {
+  try {
+    const themeMatch = designSystem.match(/## Theme\s*\n([\s\S]*?)(?=\n## |\n# |\n*$)/);
+    return themeMatch && themeMatch[1] ? themeMatch[1].trim() : '';
+  } catch (error) {
+    console.error(`Error reading design-system.md:`, error);
+    return '';
+  }
+}
+
+async function getProjectContext(
+  projectDir: string,
+  iaSchemeDir: string,
+  userPreferences: string,
+  designSystem: string,
+): Promise<ProjectContext> {
+  const files = await listFiles(projectDir);
+  const [scheme, atoms, graphqlOperations, keyFileContents, theme] = await Promise.all([
+    loadScheme(iaSchemeDir),
+    getAtomsWithProps(projectDir),
+    getGraphqlOperations(projectDir, files),
+    getKeyFileContents(projectDir, files),
+    getTheme(designSystem),
+  ]);
+  const fileTreeSummary = getFileTreeSummary(files, atoms);
+
   return {
     scheme,
     files,
@@ -178,6 +220,7 @@ async function getProjectContext(
     fileTreeSummary,
     graphqlOperations,
     userPreferences,
+    theme,
   };
 }
 
@@ -317,8 +360,9 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
         // ignore
       }
     }
-    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
-      }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
+    const codePrompt = `${makeBasePrompt(ctx)}\nHere is the planned change:\n${JSON.stringify(change, null, 2)}\n${
+      change.action === 'update' ? `Here is the current content of ${change.file}:\n${fileContent}\n` : ''
+    }Please output ONLY the full new code for the file (no markdown, no triple backticks, just code, ready to write to disk).`;
     const code = await callAI(codePrompt);
     const outPath = path.join(projectDir, change.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
@@ -368,7 +412,6 @@ Do not include explanations, markdown, or code blocks.
     fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
   } catch (e) {
     console.error('Could not parse TS fixup plan from LLM:', e instanceof Error ? e.message : String(e));
-    // console.debug('Could not parse TS fixup plan from LLM:', fixupPlanText, e);
   }
   console.log('Fixup plan has', fixupPlan.length, 'items');
   for (const fix of fixupPlan) {
@@ -416,7 +459,6 @@ Do not include explanations, markdown, or code blocks.
     fixupPlan = JSON.parse(extractJsonArray(fixupPlanText)) as Fix[];
   } catch (e) {
     console.error('Could not parse build fixup plan from LLM:', e instanceof Error ? e.message : String(e));
-    // console.debug('Could not parse build fixup plan from LLM:', fixupPlanText, e);
   }
   console.log('Fixup plan has', fixupPlan.length, 'items');
   for (const fix of fixupPlan) {
@@ -432,12 +474,11 @@ Do not include explanations, markdown, or code blocks.
 
 // Helper to extract all page routes from the IA scheme
 function extractPageRoutesFromScheme(scheme: Scheme | undefined): string[] {
-  if (
-    scheme?.pages?.items &&
-    typeof scheme.pages.items === 'object'
-  ) {
+  if (scheme?.pages?.items && typeof scheme.pages.items === 'object') {
     return Object.values(scheme.pages.items)
-      .map((page) => (typeof page === 'object' && 'route' in page && typeof page.route === 'string' ? page.route : undefined))
+      .map((page) =>
+        typeof page === 'object' && 'route' in page && typeof page.route === 'string' ? page.route : undefined,
+      )
       .filter((route): route is string => typeof route === 'string');
   }
   return [];
@@ -461,13 +502,13 @@ async function applyFixes(fixupPlan: Fix[], projectDir: string): Promise<void> {
     if (fix.action !== 'update' || !fix.file || !fix.content) continue;
     const outPath = path.join(projectDir, fix.file);
     await fs.mkdir(path.dirname(outPath), { recursive: true });
-    await fs.writeFile(outPath, fix.content, "utf-8");
-    console.log(`Fixed console errors in ${fix.file}`);
+    await fs.writeFile(outPath, fix.content, 'utf-8');
+    console.log(`Fixed errors in ${fix.file}`);
   }
 }
 
 async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
-  const baseUrl = "http://localhost:8080";
+  const baseUrl = 'http://localhost:8080';
   let routes = extractPageRoutesFromScheme(ctx.scheme);
   if (routes.length === 0) {
     routes = ['/'];
@@ -480,7 +521,7 @@ async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promis
     return false;
   }
 
-  const errorFeedback = allConsoleErrors.join("\n");
+  const errorFeedback = allConsoleErrors.join('\n');
   const fixupPrompt = `${makeBasePrompt(ctx)}\n
 After your previous changes, the application produced the following console errors when running on the following routes:\n\n${errorFeedback}\n
 You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
@@ -516,6 +557,119 @@ Do not include explanations, markdown, or code blocks.
   return true;
 }
 
+async function checkVisualErrors(baseUrl: string, routes: string[], theme: string): Promise<string> {
+  const screenshots = await getPageScreenshots(baseUrl, routes);
+
+  let allVisualErrors: string = "";
+  for (const screenshot of screenshots) {
+    console.log(`Checking visual errors for ${screenshot.route}`);
+    const error = await generateTextWithImageAI(
+      `
+      This is the theme used: ${theme}. 
+      When analyzing UI screenshots, only flag high-impact visual issues that significantly affect usability, accessibility, or user comprehension. Ignore minor spacing inconsistencies, slight misalignments, and non-critical aesthetic variations unless they create a clear functional or accessibility problem. Focus feedback on elements that:
+      - Do not flag color or style choices that match the theme.
+      - Do not critique placeholder contrast, alignment, or heading hierarchy unless the text is truly unreadable or confusing.
+      - Ignore small alignment shifts, whitespace distribution, and center-aligned titles.
+      - Only highlight contrast issues if they fail WCAG standards or make text functionally unreadable.
+      - Do not mention the lack of loading indicators unless it causes a clear usability failure (e.g., users stuck or misled).
+      - Focus only on issues that break flow, block interaction, or seriously reduce clarity.
+      - Allow intentionally unique design elements like center-aligned titles.
+      - Do not report white space as an issue when the layout is intentionally minimal.
+      - Skip pixel-perfect feedback unless there’s a clear visual or structural flaw.
+      - Focus on readability, navigability, accessibility, and broken UI flows.
+
+      
+      IMPORTANT: return in a nicely formatted markdown, easy to read for the user, not as array of markdown, pure markdown content! Include the route: ${screenshot.route} name, because I have multiple errors showing, and add an empty line at the end.
+      IMPORTANT: don't overly nest the markdown sections, just one # Visual Report, below it the name of the route: ## Route: _route_name_, and ### _types_of_issues_ per route (can have multiple under same route) and bullet list after that
+      IMPORTANT: return something only if you found valid errors, I don't want to show only the route name from the above request.
+      `,
+      screenshot.screenshot,
+      AIProvider.OpenAI,
+    );
+    if (error) {
+      allVisualErrors += error
+    }
+  }
+  return allVisualErrors;
+}
+
+async function getPageScreenshots(baseUrl: string, routes: string[]): Promise<{ route: string; screenshot: string }[]> {
+  const pageScreenshots: { route: string; screenshot: string }[] = [];
+  for (const route of routes) {
+    const url = baseUrl + (route.startsWith('/') ? route : '/' + route);
+    console.log(`Taking screenshot for ${url}`);
+    const screenshot = await getPageScreenshot(url);
+    if (screenshot) {
+      pageScreenshots.push({
+        route: route,
+        screenshot: screenshot,
+      });
+    }
+  }
+  await closeBrowser()
+  return pageScreenshots;
+}
+
+async function reportVisualErrors(ctx: ProjectContext): Promise<void> {
+  const baseUrl = 'http://localhost:8080';
+  let routes = extractPageRoutesFromScheme(ctx.scheme);
+  if (routes.length === 0) {
+    routes = ['/'];
+  }
+
+  const allVisualErrors = await checkVisualErrors(baseUrl, routes, ctx.theme);
+  console.log(allVisualErrors);
+}
+
+// async function fixVisualErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
+//   const baseUrl = 'http://localhost:8080';
+//   let routes = extractPageRoutesFromScheme(ctx.scheme);
+//   if (routes.length === 0) {
+//     routes = ['/'];
+//   }
+//
+//   const allVisualErrors = await checkVisualErrors(baseUrl, routes, ctx.theme);
+//   console.log('Found', allVisualErrors, 'visual errors');
+//   if (allVisualErrors.length === 0) {
+//     await closeBrowser();
+//     return false;
+//   }
+//
+//   const fixupPrompt = `${makeBasePrompt(ctx)}\n
+// After your previous changes, the application has the following visual errors:\n\n${allVisualErrors}\n
+// You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
+//
+// Before generating code, analyze and validate your solution against every error. Use existing types, props, and logic from the project. Do not invent new structures unless absolutely necessary.
+//
+// Strict rules:
+// - Ignore connection or network errors
+// - Never use \`any\`, unsafe type assertions, or silence errors
+// - Do not silence errors — resolve them fully and correctly
+// - Fix all errors in each file in one go
+// - Reuse existing logic or types instead of re-creating similar ones
+// - Do not submit partial updates; provide the full updated content of the file
+//
+// Output must be a **JSON array** only. Each item must include:
+// - \`action\`: "update"
+// - \`file\`: relative path to the updated file
+// - \`description\`: "Fix console errors"
+// - \`content\`: full new content of the file, as a string
+//
+// Do not include explanations, markdown, or code blocks.
+// `;
+//   let fixupPlan: Fix[] = [];
+//   try {
+//     fixupPlan = JSON.parse(extractJsonArray(await callAI(fixupPrompt))) as Fix[];
+//   } catch (e) {
+//     console.error('Could not parse visual fixup plan from LLM:', e instanceof Error ? e.message : String(e));
+//   }
+//
+//   console.log('Fixup plan has', fixupPlan.length, 'items');
+//   await applyFixes(fixupPlan, projectDir);
+//   await closeBrowser();
+//   return true;
+// }
+
 async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   const maxIterations = 5;
   for (let i = 0; i < maxIterations; ++i) {
@@ -526,11 +680,13 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   }
 }
 
-export async function runAIAgent(projectDir: string, iaSchemeDir: string, userPreferencesPath: string) {
+export async function runAIAgent(projectDir: string, iaSchemeDir: string, userPreferencesPath: string, designSystemPath: string) {
   const userPreferences = await fs.readFile(path.join(__dirname, userPreferencesPath), 'utf-8');
-  const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences);
+  const designSystem = await fs.readFile(path.join(__dirname, designSystemPath), 'utf-8');
+  const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);
+  await reportVisualErrors(ctx);
   console.log('AI project implementation complete!');
 }

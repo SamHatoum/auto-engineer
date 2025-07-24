@@ -86,3 +86,17 @@ export function getBuildErrors(projectPath: string): Promise<string[]> {
     });
   });
 }
+
+export async function getPageScreenshot(url: string): Promise<string> {
+  const browserManager = BrowserManager.getInstance();
+  const browser = await browserManager.getBrowser();
+  const page = await browser.newPage();
+
+  await page.goto(url, { waitUntil: 'networkidle' });
+
+  const buffer = await page.screenshot();
+
+  await page.close();
+
+  return buffer.toString('base64')
+}

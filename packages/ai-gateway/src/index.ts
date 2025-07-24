@@ -193,7 +193,7 @@ export async function generateTextWithToolsAI(
       messages,
       temperature: finalOptions.temperature,
       maxTokens: finalOptions.maxTokens,
-      ...(hasTools && { 
+      ...(hasTools && {
         tools: registeredTools,
         toolChoice: 'auto' as const
       }),
@@ -208,16 +208,16 @@ export async function generateTextWithToolsAI(
     // If there are tool calls, execute them and continue conversation
     if (result.toolCalls !== undefined && result.toolCalls.length > 0) {
       allToolCalls.push(...result.toolCalls);
-      
+
       // Execute tools and create a simple follow-up prompt
       const toolResults = await executeToolCalls(result.toolCalls, registeredTools);
-      
+
       // Add the tool results as a user message and request a final response
       messages.push({
         role: 'user',
         content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`
       });
-      
+
       // Continue the conversation to get AI's response to tool results
       continue;
     }
@@ -233,11 +233,11 @@ export async function generateTextWithToolsAI(
 }
 
 async function executeToolCalls(
-  toolCalls: unknown[], 
+  toolCalls: unknown[],
   registeredTools: Record<string, { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }>
 ): Promise<string> {
   let toolResults = '';
-  
+
   for (const toolCall of toolCalls) {
     try {
       const toolCallObj = toolCall as { toolName: string; args: Record<string, unknown> };
@@ -254,8 +254,40 @@ async function executeToolCalls(
       toolResults += `Error executing tool ${toolCallObj.toolName}: ${String(error)}\n\n`;
     }
   }
-  
+
   return toolResults;
+}
+
+export async function generateTextWithImageAI(
+  text: string,
+  imageBase64: string,
+  provider: AIProvider,
+  options: AIOptions = {},
+): Promise<string> {
+  const finalOptions = { ...defaultOptions, ...options };
+  const model = finalOptions.model ?? getDefaultModel(provider);
+  const modelInstance = getModel(provider, model);
+
+  if (provider !== AIProvider.OpenAI && provider !== AIProvider.XAI) {
+    throw new Error(`Provider ${provider} does not support image inputs`);
+  }
+
+  const result = await generateText({
+    model: modelInstance,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text },
+          { type: 'image', image: imageBase64 },
+        ],
+      },
+    ],
+    temperature: finalOptions.temperature,
+    maxTokens: finalOptions.maxTokens,
+  });
+
+  return result.text;
 }
 
 export function getAvailableProviders(): AIProvider[] {
@@ -431,11 +463,11 @@ export async function streamStructuredDataWithAI<T>(
 export { z };
 
 // Export MCP server singleton functions
-export { 
+export {
   server as mcpServer,
-  registerTool, 
-  registerTools, 
-  startServer, 
+  registerTool,
+  registerTools,
+  startServer,
   isServerStarted,
   getRegisteredTools,
   getRegisteredToolsForAI,
