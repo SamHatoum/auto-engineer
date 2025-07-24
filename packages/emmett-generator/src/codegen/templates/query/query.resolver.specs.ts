@@ -64,7 +64,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`
@@ -188,7 +188,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`

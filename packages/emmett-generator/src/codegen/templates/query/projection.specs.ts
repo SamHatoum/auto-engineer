@@ -183,7 +183,7 @@ describe('projection.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const projectionFile = plans.find((p) => p.outputPath.endsWith('projection.ts'));
 
     expect(projectionFile?.contents).toMatchInlineSnapshot(`
@@ -297,7 +297,7 @@ describe('projection.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`

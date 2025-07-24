@@ -188,7 +188,7 @@ describe('handle.ts.ejs (react slice)', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const handleFile = plans.find((p) => p.outputPath.endsWith('react.ts'));
 
     expect(handleFile?.contents).toMatchInlineSnapshot(`

@@ -3,19 +3,29 @@ IllegalStateError<% if (usedErrors.includes('ValidationError')) { %>, Validation
 } from '@event-driven-io/emmett';
 import type { State } from './state';
 import type { <%= Object.keys(gwtMapping).map(pascalCase).join(', ') %> } from './commands';
-<%
-const fallbackEvents = Object.values(gwtMapping).flatMap(scenarios =>
+<%const fallbackEvents = Object.values(gwtMapping).flatMap(scenarios =>
         scenarios.flatMap(s => s.then?.filter(t => 'eventRef' in t) || [])
 );
 const uniqueEventTypes = [...new Set(fallbackEvents.map(e => pascalCase(e.eventRef)))];
+
+// Infer integration result type info like in handle.ts.ejs
+const integrationData = (slice.server?.data ?? []).filter(d => d.destination?.type === 'integration');
+const integration = integrationData[0]; // support first only
+const integrationReturnType = integration?._withState?.target?.name;
+const integrationReturnSystem = integration?._withState?.origin?.systems?.[0];
+const integrationReturnImportSource = integrations?.find(i => i.name === integrationReturnSystem)?.source;
+const integrationReturnFields = messages?.find(m => m.name === integrationReturnType && m.type === 'state')?.fields ?? [];
 -%>
 <% if (uniqueEventTypes.length > 0) { -%>
     import type { <%= uniqueEventTypes.join(', ') %> } from './events';
 <% } -%>
+<% if (integrationReturnType && integrationReturnImportSource) { -%>
+    import type { <%= integrationReturnType %> } from '<%= integrationReturnImportSource %>';
+<% } -%>
 
 export const decide = (
 command: <%= Object.keys(gwtMapping).map(pascalCase).join(' | ') %>,
-state: State
+state: State<%= integrationReturnType ? `,\n  ${camelCase(integrationReturnType)}?: ${integrationReturnType}` : '' %>
 ): <%= uniqueEventTypes.length === 0
         ? 'never'
         : uniqueEventTypes.length === 1
@@ -37,11 +47,24 @@ case '<%= command %>': {
 * You should:
 * - Validate the command input fields
 * - Inspect the current domain `state` to determine if the command is allowed
-* - If invalid, throw one of the following domain errors `NotFoundError`, `ValidationError` or `IllegalStateError`
+<% if (integrationReturnType) { -%>
+    * - Use `<%= camelCase(integrationReturnType) %>` (integration result) to enrich or filter the output
+<% } -%>
+* - If invalid, throw one of the following domain errors: `NotFoundError`, `ValidationError`, or `IllegalStateError`
 * - If valid, return one or more events with the correct structure
 *
-* ⚠️ Only read from `state` — never mutate it. The `evolve.ts` file is responsible for updating state.
+* ⚠️ Only read from inputs — never mutate them. `evolve.ts` handles state updates.
+<% if (integrationReturnFields.length > 0) { -%>
+    *
+    * Integration result shape (<%= integrationReturnType %>):
+    * {
+    <%= integrationReturnFields.map(f =>
+            `       *   ${f.name}${f.required ? '' : '?'}: ${f.type}`
+    ).join('\n') %>
+    * }
+<% } -%>
 */
+
 <% for (const gwt of scenarios) {
     const error = gwt.then.find(t => 'errorType' in t);
 if (error && gwt.failingFields?.length) {

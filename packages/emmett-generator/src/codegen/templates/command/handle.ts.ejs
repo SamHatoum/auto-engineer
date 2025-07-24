@@ -1,9 +1,72 @@
+<%
+const integrationData = (slice.server?.data ?? []).filter(d => d.destination?.type === 'integration');
+
+const integrationImports = new Map();
+
+for (const d of integrationData) {
+    for (const system of d.destination?.systems ?? []) {
+        const integration = (integrations ?? []).find(i => i.name === system);
+        if (integration) {
+            integrationImports.set(system, integration.source);
+        }
+    }
+
+    const returnType = d._withState?.target?.name;
+    const returnSystem = d._withState?.origin?.systems?.[0];
+    if (returnType && returnSystem) {
+        const integration = (integrations ?? []).find(i => i.name === returnSystem);
+        if (integration) {
+            integrationImports.set(returnType, integration.source);
+        }
+    }
+}
+
+const additionalInstructions = (slice.server?.data ?? [])
+        .map(d => d._additionalInstructions)
+        .filter(Boolean);
+
+const integrationCalls = integrationData.map((d, i) => {
+    const system = d.destination.systems?.[0];
+    const messageName = d.destination.message?.name;
+    const returnType = d._withState?.target?.name;
+    const varName = returnType ? camelCase(returnType) : `result${i + 1}`;
+
+    const inputFields = messages.find(m => m.name === messageName && m.type === 'command')?.fields ?? [];
+    const inputLines = inputFields.map(f => `    // ${f.name}: ???`);
+
+    return {
+        varName,
+        call: `// TODO: Map fields from the incoming command to this integration input.
+// - Use relevant fields from \`command.data\` to populate the required inputs below.
+// - Some fields may require transformation or enrichment.
+// - If additional context is needed, construct it here.
+// const ${varName}${returnType ? `: ${returnType} | undefined` : ''} = await ${system}.Commands?.${messageName}${returnType ? `<${returnType}>` : ''}({
+//   type: '${messageName}',
+//   data: {
+//${inputLines.join('\n')}
+//   },
+// });`,
+    };
+});
+
+const hasIntegration = integrationCalls.length > 0;
+%>
+<% integrationImports.forEach((importSource, importName) => { %>import { <%= importName %> } from '<%= importSource %>';<% }); %>
 import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
 import { evolve } from './evolve';
 import { initialState } from './state';
 import { decide } from './decide';
 import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './commands';
 
+<% if (additionalInstructions.length) { -%>
+    /**
+    * ## IMPLEMENTATION INSTRUCTIONS ##
+    <% additionalInstructions.forEach(instr => { -%>
+        *
+        * <%= instr %>
+    <% }) -%>
+    */
+<% } -%>
 const handler = CommandHandler({
 evolve,
 initialState,
@@ -20,8 +83,20 @@ command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>
     <% } -%>
 
     try {
-    await handler(eventStore, streamId, (state) => decide(command, state));
-    return; // success (returns void)
+    <% integrationCalls.forEach(({ call }) => { -%>
+        <%= call %>
+
+    <% }) -%>
+    <%
+    const resultVarName = integrationCalls.find(call => !!call.varName)?.varName;
+    const needsReturnValue = typeof resultVarName === 'string';
+    %>
+    await handler(eventStore, streamId, (state) =>
+    <%- needsReturnValue
+            ? `// TODO: add ${resultVarName} as a parameter to decide once implemented above\n  decide(command, state, /* ${resultVarName} */)`
+            : `decide(command, state)` %>
+    );
+    return;// success (returns void)
     } catch (error: any) {
     return {
     type: 'SKIP',

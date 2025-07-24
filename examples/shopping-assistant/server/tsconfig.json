@@ -9,10 +9,20 @@
     "experimentalDecorators": true,
     "baseUrl": ".",
     "paths": {
-      "@auto-engineer/ai-integration": ["./src/integrations/ai-integration.ts"],
-      "@auto-engineer/product-catalogue-integration": ["./src/integrations/product-catalogue-integration.ts"]
+      "@auto-engineer/ai-integration": [
+        "./src/integrations/ai-integration.ts"
+      ],
+      "@auto-engineer/product-catalog-integration": [
+        "./src/integrations/product-catalogue-integration.ts"
+      ]
     }
   },
-  "include": ["src/**/*", "vitest.config.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": [
+    "src/**/*",
+    "vitest.config.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }
