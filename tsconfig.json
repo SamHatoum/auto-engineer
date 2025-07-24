@@ -8,7 +8,15 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true
   },
-  "include": ["**/src/**/*", "eslint.config.js", "vitest.config.ts", "commitlint.config.ts", "examples/ai-integration", "examples/product-catalogue-integration", "examples/shopping-assistant/integrations"],
+  "include": [
+    "**/src/**/*",
+    "eslint.config.js",
+    "vitest.config.ts",
+    "commitlint.config.ts",
+    "examples/ai-integration",
+    "examples/product-catalogue-integration",
+    "examples/shopping-assistant/integrations"
+  ],
   "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
     {

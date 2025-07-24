@@ -6,8 +6,5 @@
     "strict": true,
     "moduleDetection": "force"
   },
-  "include": [
-    "src/**/*",
-    "vitest.config.ts"
-  ]
+  "include": ["src/**/*", "vitest.config.ts"]
 }

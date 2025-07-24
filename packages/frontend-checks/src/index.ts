@@ -5,7 +5,7 @@ class BrowserManager {
   private static instance: BrowserManager | null = null;
   private browser: Browser | null = null;
 
-  private constructor() { }
+  private constructor() {}
 
   public static getInstance(): BrowserManager {
     if (BrowserManager.instance === null) {
@@ -98,5 +98,5 @@ export async function getPageScreenshot(url: string): Promise<string> {
 
   await page.close();
 
-  return buffer.toString('base64')
+  return buffer.toString('base64');
 }

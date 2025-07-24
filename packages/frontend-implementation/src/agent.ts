@@ -560,7 +560,7 @@ Do not include explanations, markdown, or code blocks.
 async function checkVisualErrors(baseUrl: string, routes: string[], theme: string): Promise<string> {
   const screenshots = await getPageScreenshots(baseUrl, routes);
 
-  let allVisualErrors: string = "";
+  let allVisualErrors: string = '';
   for (const screenshot of screenshots) {
     console.log(`Checking visual errors for ${screenshot.route}`);
     const error = await generateTextWithImageAI(
@@ -587,7 +587,7 @@ async function checkVisualErrors(baseUrl: string, routes: string[], theme: strin
       AIProvider.OpenAI,
     );
     if (error) {
-      allVisualErrors += error
+      allVisualErrors += error;
     }
   }
   return allVisualErrors;
@@ -606,7 +606,7 @@ async function getPageScreenshots(baseUrl: string, routes: string[]): Promise<{ 
       });
     }
   }
-  await closeBrowser()
+  await closeBrowser();
   return pageScreenshots;
 }
 
@@ -680,7 +680,12 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   }
 }
 
-export async function runAIAgent(projectDir: string, iaSchemeDir: string, userPreferencesPath: string, designSystemPath: string) {
+export async function runAIAgent(
+  projectDir: string,
+  iaSchemeDir: string,
+  userPreferencesPath: string,
+  designSystemPath: string,
+) {
   const userPreferences = await fs.readFile(path.join(__dirname, userPreferencesPath), 'utf-8');
   const designSystem = await fs.readFile(path.join(__dirname, designSystemPath), 'utf-8');
   const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);

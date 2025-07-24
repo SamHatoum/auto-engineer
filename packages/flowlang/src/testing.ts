@@ -39,7 +39,7 @@ export const createFlowSpec = () => {
               // Handle error cases
               recordThen({
                 type: 'Error',
-                data: { errorType: 'IllegalStateError', message: 'Error occurred' }
+                data: { errorType: 'IllegalStateError', message: 'Error occurred' },
               });
             },
           };
@@ -79,7 +79,7 @@ export const createFlowSpec = () => {
           thenThrows: (_errorMatcher: (error: Error) => boolean) => {
             recordThen({
               type: 'Error',
-              data: { errorType: 'IllegalStateError', message: 'Error occurred' }
+              data: { errorType: 'IllegalStateError', message: 'Error occurred' },
             });
           },
         };
@@ -94,12 +94,10 @@ export const when = (commandOrEvents: unknown | unknown[]) => createFlowSpec().w
 // GraphQL query testing helper
 export const gqlQuery = (query: string) => ({
   query,
-  then: (_expectedResponse: unknown) => {
-  },
+  then: (_expectedResponse: unknown) => {},
 });
 
 // Alternative when function for GraphQL queries
 export const whenQuery = (_query: unknown) => ({
-  then: (_expectedResponse: unknown) => {
-  },
+  then: (_expectedResponse: unknown) => {},
 });

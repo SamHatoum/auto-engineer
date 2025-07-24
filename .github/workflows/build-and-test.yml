@@ -9,15 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     # To use Turborepo Remote Caching, set the following environment variables for the job.
     # env:
-      # TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      # TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+    # TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+    # TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
       - uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 10
       - uses: actions/setup-node@v3
         with:
           node-version: '20.x'

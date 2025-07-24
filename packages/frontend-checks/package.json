@@ -10,7 +10,8 @@
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.js",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
     "typescript": "^5.4.5"

@@ -60,7 +60,7 @@ function convertJsonAstToSdl(request: string): string {
 
 export function parseGraphQlRequest(request: string): ParsedGraphQlQuery {
   const sdlRequest = convertJsonAstToSdl(request);
-  
+
   const ast = parse(sdlRequest);
   const op = ast.definitions.find(
     (d): d is OperationDefinitionNode => d.kind === 'OperationDefinition' && d.operation === 'query',

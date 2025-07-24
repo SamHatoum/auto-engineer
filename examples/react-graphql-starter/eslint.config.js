@@ -1,13 +1,26 @@
-import rootConfig from '../../../eslint.config.js';
+import rootConfig from '../../eslint.config.js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
   ...rootConfig,
-  { languageOptions: { parserOptions: { project: null } } },
-  { ignores: ['dist', 'eslint.config.ts'] },
+  {
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+        project: ['./tsconfig.json'],
+      },
+    },
+  },
+  {
+    ignores: ['dist', 'eslint.config.ts', 'postcss.config.js'],
+  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {

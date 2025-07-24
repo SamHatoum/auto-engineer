@@ -14,7 +14,7 @@ flow('Type Safety Examples', () => {
     // ✅ Valid - command slices can have sinks
     data([
       sink().event('OrderProcessed').toStream('orders-${orderId}'),
-      sink().command('SendEmail').toIntegration(EmailService),
+      sink().command('SendEmail').toIntegration(EmailService, 'SendOrderConfirmation', 'command'),
     ]);
 
     // ❌ This would be a TypeScript error:
@@ -42,7 +42,7 @@ flow('Type Safety Examples', () => {
     // ✅ Valid - react slices can mix both
     data([
       source().state('PaymentConfig').fromDatabase('config'),
-      sink().command('ChargePayment').toIntegration(PaymentGateway),
+      sink().command('ChargePayment').toIntegration(PaymentGateway, 'Charge', 'command'),
       sink().event('PaymentCharged').toStream('payments-${orderId}'),
     ]);
 

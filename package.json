@@ -7,13 +7,12 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "format": "prettier \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
-    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
-    "check": "turbo run lint format:fix type-check test",
+    "check": "turbo run lint format type-check test",
     "clean": "tsx scripts/clean.ts",
     "reset": "pnpm clean && pnpm install && pnpm build",
     "changeset": "changeset",
@@ -21,13 +20,13 @@
     "release": "changeset publish",
     "prepare": "husky",
     "install": "turbo run install build",
-    "start": "pnpm --filter @auto-engineer/cli start",
     "## ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
+    "start:cli": "pnpm --filter @auto-engineer/cli start",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
     "start:design-system": "cd examples/design-system && pnpm start",
     "start:product-api": "cd examples/product-catalogue-api && pnpm start",
     "start:cart-api": "cd examples/cart-api && pnpm start",
-    "start:product-mcp": "cd examples/shopping-assistant/server && tsx src/integrations/start-mcp-server.ts",
+    "start:examples": "pnpm --parallel --filter @examples/* start 2>&1 | grep -E '(localhost|Local)' || true",
     "## ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "init:example": "rm -rf ../shopping-assistant && cp -r ./examples/shopping-assistant ../shopping-assistant && rm -rf ../shopping-assistant/.turbo && cd ../shopping-assistant && pnpm install",
     "generate:schema": "cd ../shopping-assistant/server && pnpm install && pnpm build && cd .. && pnpm build:flow-schema",
@@ -35,7 +34,7 @@
     "import:design-system": "pnpm --filter @auto-engineer/design-system-importer start ../../examples/design-system ../../../shopping-assistant/.context",
     "generate:information-architecture": "pnpm --filter @auto-engineer/information-architect generate-ia-schema ../../../shopping-assistant/.context ../../../shopping-assistant/flows/shopping-assistant.flow.ts",
     "implement:server": "pnpm --filter @auto-engineer/server-implementer implement ../../../shopping-assistant/server",
-    "generate:client": "pnpm --filter @auto-engineer/react-graphql-generator start ../../examples/design-system/components/ui ../../../shopping-assistant/client ../../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/schema.graphql && cd ../shopping-assistant/client && pnpm install && pnpm codegen",
+    "generate:client": "pnpm --filter @auto-engineer/react-graphql-generator start ../../../examples/react-graphql-starter ../../examples/design-system/components/ui ../../../shopping-assistant/client ../../../../shopping-assistant/.context/auto-ia-scheme.json ../../../../shopping-assistant/.context/schema.graphql && cd ../shopping-assistant/client && pnpm install && pnpm codegen",
     "implement:client": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../shopping-assistant/client ../../../shopping-assistant/.context ../../../../shopping-assistant/.context/design-system-principles.md ../../../../shopping-assistant/.context/design-system.md",
     "regenerate:client": "rm -rf ../shopping-assistant/client && pnpm generate:client && pnpm implement:client",
     "generate:all": "pnpm init:example && pnpm generate:schema && pnpm generate:server && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:client && pnpm implement:server && pnpm implement:client",
@@ -54,6 +53,7 @@
     "@vitest/coverage-v8": "^3.2.3",
     "eslint": "^9.30.1",
     "husky": "^9.0.11",
+    "jiti": "^2.5.0",
     "playwright": "^1.54.1",
     "prettier": "^3.3.3",
     "tsx": "^4.7.1",
@@ -74,5 +74,11 @@
     "@auto-engineer/flowlang": "link:packages/flowlang",
     "axios": "^1.7.9",
     "dotenv": "^16.4.5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "pnpm format:fix",
+      "git add"
+    ]
   }
 }

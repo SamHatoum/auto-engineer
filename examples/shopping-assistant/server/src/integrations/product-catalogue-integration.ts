@@ -2,6 +2,19 @@ import type { State, Integration } from '@auto-engineer/flowlang';
 import axios from 'axios';
 import { registerTool, z } from '@auto-engineer/ai-gateway';
 
+export const ProductSchema = z.object({
+  productId: z.string(),
+  name: z.string(),
+  category: z.string(),
+  price: z.number(),
+  tags: z.array(z.string()),
+  imageUrl: z.string().url(),
+});
+
+export const ProductsSchema = z.object({
+  products: z.array(ProductSchema),
+});
+
 export type Product = {
   productId: string;
   name: string;
@@ -49,11 +62,32 @@ const client = axios.create({
   },
 });
 
-export const ProductCatalog: Integration<'product-catalog'> = {
+type ProductCatalogQueries = {
+  Products: () => Promise<Products>;
+  ProductsByCategory: (params: { category: string }) => Promise<ProductsByCategory>;
+  ProductSearchResults: (params: { query: string }) => Promise<ProductSearchResults>;
+  ProductDetails: (params: { id: string }) => Promise<ProductDetails>;
+};
+
+export const ProductCatalog: Integration<'product-catalog', ProductCatalogQueries> = {
   __brand: 'Integration' as const,
   type: 'product-catalog' as const,
-  name: 'ProductCatalogService',
+  name: 'product-catalog',
   Queries: {
+    schema: {
+      Products: ProductsSchema,
+      // ProductsByCategory: z.object({
+      //   category: z.string(),
+      //   products: z.array(ProductSchema),
+      // }),
+      // ProductSearchResults: z.object({
+      //   query: z.string(),
+      //   products: z.array(ProductSchema),
+      // }),
+      // ProductDetails: z.object({
+      //   product: ProductSchema.nullable(),
+      // }),
+    },
     Products: async (): Promise<Products> => {
       try {
         const products = (await client.get<Product[]>('/api/products')).data;
@@ -96,9 +130,11 @@ export const ProductCatalog: Integration<'product-catalog'> = {
     },
     ProductSearchResults: async (params: { query: string }): Promise<ProductSearchResults> => {
       try {
-        const products = (await client.get<Product[]>('/api/products/search', {
-          params: { q: params.query },
-        })).data;
+        const products = (
+          await client.get<Product[]>('/api/products/search', {
+            params: { q: params.query },
+          })
+        ).data;
         return {
           type: 'ProductSearchResults',
           data: {
@@ -143,7 +179,7 @@ export const ProductCatalog: Integration<'product-catalog'> = {
           },
         };
       }
-    }
+    },
   },
 };
 
@@ -162,27 +198,34 @@ registerTool<Record<string, unknown>>(
     title: 'Get All Products',
     description: 'Fetches all products from the product catalog',
     inputSchema: {},
+    schema: ProductsSchema,
+    schemaName: 'Products',
+    schemaDescription: 'A list of products with id, name, category, price, tags, and imageUrl',
   },
   async () => {
     const queries = ProductCatalog.Queries;
     if (!queries?.Products) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.Products is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.Products is not available',
+          },
+        ],
         isError: true,
       };
     }
     const productsQuery = queries.Products as ProductsQuery;
     const result = await productsQuery();
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Tool for fetching products by category
@@ -203,22 +246,26 @@ registerTool<ProductsByCategoryParams>(
     const queries = ProductCatalog.Queries;
     if (!queries?.ProductsByCategory) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.ProductsByCategory is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.ProductsByCategory is not available',
+          },
+        ],
         isError: true,
       };
     }
     const categoryQuery = queries.ProductsByCategory as ProductsByCategoryQuery;
     const result = await categoryQuery({ category });
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Tool for searching products
@@ -239,22 +286,26 @@ registerTool<ProductSearchParams>(
     const queries = ProductCatalog.Queries;
     if (!queries?.ProductSearchResults) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.ProductSearchResults is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.ProductSearchResults is not available',
+          },
+        ],
         isError: true,
       };
     }
     const searchQuery = queries.ProductSearchResults as ProductSearchQuery;
     const result = await searchQuery({ query });
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Tool for getting product details
@@ -275,10 +326,12 @@ registerTool<ProductDetailsParams>(
     const queries = ProductCatalog.Queries;
     if (!queries?.ProductDetails) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'ProductCatalog.Queries.ProductDetails is not available',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'ProductCatalog.Queries.ProductDetails is not available',
+          },
+        ],
         isError: true,
       };
     }
@@ -286,18 +339,22 @@ registerTool<ProductDetailsParams>(
     const result = await detailsQuery({ id });
     if (result.data.product === null) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: `Product with ID "${id}" not found`,
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: `Product with ID "${id}" not found`,
+          },
+        ],
         isError: true,
       };
     }
     return {
-      content: [{
-        type: 'text' as const,
-        text: JSON.stringify(result.data, null, 2),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result.data, null, 2),
+        },
+      ],
     };
-  }
+  },
 );

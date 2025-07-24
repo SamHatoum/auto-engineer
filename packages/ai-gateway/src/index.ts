@@ -176,9 +176,7 @@ export async function generateTextWithToolsAI(
   const hasTools = Object.keys(registeredTools).length > 0;
 
   // Build conversation messages
-  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
-    { role: 'user', content: prompt }
-  ];
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [{ role: 'user', content: prompt }];
 
   let finalResult = '';
   const allToolCalls: unknown[] = [];
@@ -195,7 +193,7 @@ export async function generateTextWithToolsAI(
       maxTokens: finalOptions.maxTokens,
       ...(hasTools && {
         tools: registeredTools,
-        toolChoice: 'auto' as const
+        toolChoice: 'auto' as const,
       }),
     });
 
@@ -215,7 +213,7 @@ export async function generateTextWithToolsAI(
       // Add the tool results as a user message and request a final response
       messages.push({
         role: 'user',
-        content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`
+        content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`,
       });
 
       // Continue the conversation to get AI's response to tool results
@@ -234,7 +232,10 @@ export async function generateTextWithToolsAI(
 
 async function executeToolCalls(
   toolCalls: unknown[],
-  registeredTools: Record<string, { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }>
+  registeredTools: Record<
+    string,
+    { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }
+  >,
 ): Promise<string> {
   let toolResults = '';
 
@@ -474,5 +475,5 @@ export {
   getToolHandler,
   executeRegisteredTool,
   type ToolHandler,
-  type RegisteredTool
+  type RegisteredTool,
 } from './mcp-server.js';

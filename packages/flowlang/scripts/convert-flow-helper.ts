@@ -6,7 +6,7 @@ import { join } from 'path';
 
 const main = async () => {
   const flowPath = process.argv[2];
-  
+
   if (!flowPath) {
     console.error('Usage: tsx convert-flow-helper.ts <flow-file>');
     process.exit(1);
@@ -15,7 +15,7 @@ const main = async () => {
   try {
     const absolutePath = resolve(flowPath);
     const flowDir = dirname(absolutePath);
-    
+
     // Create a temporary wrapper script file in the same directory as the flow file
     const tempScript = join(flowDir, `.convert-flow-wrapper-${Date.now()}.mjs`);
     const wrapperScript = `
@@ -35,13 +35,13 @@ const run = async () => {
 
 run();
 `;
-    
+
     writeFileSync(tempScript, wrapperScript);
-    
+
     return new Promise((resolve, reject) => {
       const child = spawn('npx', ['tsx', tempScript], {
         stdio: ['inherit', 'pipe', 'pipe'],
-        cwd: flowDir // Set working directory to the flow file's directory
+        cwd: flowDir, // Set working directory to the flow file's directory
       });
 
       let stdout = '';
@@ -62,7 +62,7 @@ run();
         } catch (e) {
           // Ignore cleanup errors
         }
-        
+
         if (stderr) {
           console.error(stderr.trim());
         }
@@ -70,7 +70,7 @@ run();
           // Extract JSON between markers
           const jsonStart = stdout.indexOf('__JSON_START__');
           const jsonEnd = stdout.indexOf('__JSON_END__');
-          
+
           if (jsonStart !== -1 && jsonEnd !== -1) {
             const jsonContent = stdout.substring(jsonStart + '__JSON_START__\n'.length, jsonEnd).trim();
             console.log(jsonContent);

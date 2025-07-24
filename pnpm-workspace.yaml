@@ -12,6 +12,4 @@ ignoredBuiltDependencies:
   - esbuild
 
 overrides:
-  '@auto-engineer/ai-gateway': link:packages/ai-gateway
-  '@auto-engineer/flowlang': link:packages/flowlang
   punycode: ^2.3.1

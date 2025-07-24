@@ -1,5 +1,5 @@
 import { FlowSchema } from './schema';
-import {Flow} from "./index";
+import { Flow } from './index';
 
 class FlowRegistry {
   private flows: Flow[] = [];

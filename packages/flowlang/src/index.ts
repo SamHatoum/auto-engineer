@@ -17,6 +17,7 @@ export type {
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
+export { registerIntegrations } from './integration-registry';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';
@@ -98,7 +99,7 @@ import {
   QuerySliceSchema,
   ReactSliceSchema,
   MessageSchema,
-  CommandSliceSchema
+  CommandSliceSchema,
 } from './schema';
 export type AppSchema = z.infer<typeof ImportedAppSchema>;
 

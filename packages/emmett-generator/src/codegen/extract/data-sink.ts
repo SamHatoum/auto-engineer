@@ -32,9 +32,9 @@ export function getStreamFromSink(slice: Slice): { streamPattern?: string; strea
       exampleData = (gwtSpecs as QueryGwtSpec[])[0]?.given?.[0]?.exampleData ?? {};
       break;
   }
-  const sink = (slice.server?.data ?? []).find(
-    (item) => (item as DataSink)?.destination?.type === 'stream',
-  ) as DataSink | undefined;
+  const sink = (slice.server?.data ?? []).find((item) => (item as DataSink)?.destination?.type === 'stream') as
+    | DataSink
+    | undefined;
   if (sink && sink.destination.type === 'stream' && 'pattern' in sink.destination) {
     streamPattern = sink.destination.pattern;
     if (streamPattern != null) {

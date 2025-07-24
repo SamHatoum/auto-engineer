@@ -17,34 +17,34 @@ export type ChainableSource = DataSourceItem & ChainableSourceMethods;
 // Helper functions to create chainable items
 function createChainableSink(sinkItem: DataSinkItem): ChainableSink {
   const chainable = sinkItem as ChainableSink;
-  
-  (chainable as ChainableSinkMethods).additionalInstructions = function(instructions: string): ChainableSink {
+
+  (chainable as ChainableSinkMethods).additionalInstructions = function (instructions: string): ChainableSink {
     return createChainableSink({
       ...sinkItem,
       _additionalInstructions: instructions,
     });
   };
-  
-  (chainable as ChainableSinkMethods).withState = function(source: DataSourceItem | ChainableSource): ChainableSink {
+
+  (chainable as ChainableSinkMethods).withState = function (source: DataSourceItem | ChainableSource): ChainableSink {
     return createChainableSink({
       ...sinkItem,
       _withState: source,
     });
   };
-  
+
   return chainable;
 }
 
 function createChainableSource(sourceItem: DataSourceItem): ChainableSource {
   const chainable = sourceItem as ChainableSource;
-  
-  (chainable as ChainableSourceMethods).additionalInstructions = function(instructions: string): ChainableSource {
+
+  (chainable as ChainableSourceMethods).additionalInstructions = function (instructions: string): ChainableSource {
     return createChainableSource({
       ...sourceItem,
       _additionalInstructions: instructions,
     });
   };
-  
+
   return chainable;
 }
 
@@ -137,14 +137,30 @@ export class CommandSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
     return this;
   }
 
-  toIntegration(...systems: (Integration | string)[]): ChainableSink {
+  toIntegration(
+    system: Integration | string,
+    messageName: string,
+    messageType: 'command' | 'query' | 'reaction',
+  ): ChainableSink {
     const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
-      destination: { type: 'integration', systems: systems.map((s) => (typeof s === 'string' ? s : s.name)) },
+      destination: {
+        type: 'integration',
+        systems: [typeof system === 'string' ? system : system.name],
+        ...(messageName && messageType
+          ? {
+              message: {
+                name: messageName,
+                type: messageType,
+              },
+            }
+          : {}),
+      },
       __type: 'sink' as const,
-      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
-      ...(this.stateSource != null && { _withState: this.stateSource }),
+      ...(this.instructions != null && { _additionalInstructions: this.instructions }),
+      ...(this.stateSource && { _withState: this.stateSource }),
     };
+
     return createChainableSink(sinkItem);
   }
 

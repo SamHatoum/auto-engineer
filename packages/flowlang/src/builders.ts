@@ -1,4 +1,5 @@
 import { typedSink, typedSource } from './data-flow-builders';
+import { Message } from './index';
 
 // Generic interfaces for events and commands - these should be extended by consumers
 export interface EventUnion extends Record<string, unknown> {
@@ -99,7 +100,7 @@ export interface TypedSourceFunction {
 export const createBuilders = () => ({
   events: <E extends { type: string; data: Record<string, unknown> }>() => ({
     commands: <C extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> }>() => ({
-      state: <S>() => {
+      state: <S extends object>() => {
         const Events = createEventBuilder<E>();
         const Commands = createCommandBuilder<C>();
         const State = createStateBuilder<S>();
@@ -114,11 +115,60 @@ export const createBuilders = () => ({
           State,
           sink,
           source,
+          __definitions: {
+            commands: extractCommandDefs<C>(),
+            events: extractEventDefs<E>(),
+            state: extractStateDefs<S>(),
+          },
         };
       },
     }),
   }),
 });
+
+function extractCommandDefs<
+  C extends { type: string; data: Record<string, unknown>; metadata?: Record<string, unknown> },
+>(): Message[] {
+  const commandTypes = new Set<string>();
+  try {
+    const dummy = {} as C;
+    if ('type' in dummy) commandTypes.add(dummy.type);
+  } catch {
+    /* empty */
+  }
+  return Array.from(commandTypes).map((type) => ({
+    type: 'command',
+    name: type,
+    fields: [], // no way to infer statically here
+    metadata: { version: 1 },
+  }));
+}
+
+function extractEventDefs<E extends { type: string; data: Record<string, unknown> }>(): Message[] {
+  const eventTypes = new Set<string>();
+  try {
+    const dummy = {} as E;
+    if ('type' in dummy) eventTypes.add(dummy.type);
+  } catch {
+    /* empty */
+  }
+  return Array.from(eventTypes).map((type) => ({
+    type: 'event',
+    name: type,
+    fields: [],
+    source: 'internal',
+    metadata: { version: 1 },
+  }));
+}
+
+function extractStateDefs<S extends object>(): Message[] {
+  return Object.keys({} as S).map((name) => ({
+    type: 'state',
+    name,
+    fields: [],
+    metadata: { version: 1 },
+  }));
+}
 
 // Alternative: Create explicit builders for better IDE support
 export const createTypedEventBuilder = <T extends { type: string; data: Record<string, unknown> }>() => {

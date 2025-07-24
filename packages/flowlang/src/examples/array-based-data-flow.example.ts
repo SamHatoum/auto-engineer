@@ -16,7 +16,7 @@ flow('E-commerce Order Flow', () => {
       sink().event('OrderProcessed').fields({ orderId: true, customerId: true }).toStream('orders-${orderId}'),
 
       // Command sink to external integration
-      sink().command('SendOrderEmail').toIntegration(EmailService),
+      sink().command('SendOrderEmail').toIntegration(EmailService, 'SendEmail', 'command'),
 
       // State sink to database
       sink().state('OrderSummary').toDatabase('order_summaries'),
@@ -51,7 +51,7 @@ flow('E-commerce Order Flow', () => {
       source().state('CustomerPreferences').fromReadModel('CustomerPreferencesModel'),
 
       // Send payment command
-      sink().command('ProcessPayment').toIntegration(PaymentGateway),
+      sink().command('ProcessPayment').toIntegration(PaymentGateway, 'ProcessPayment', 'command'),
 
       // Emit payment event
       sink().event('PaymentProcessed').toStream('payments-${orderId}'),

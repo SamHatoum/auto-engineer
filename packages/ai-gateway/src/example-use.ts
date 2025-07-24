@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import { 
-  registerTool, 
-  registerTools, 
-  startServer, 
-  isServerStarted,
-  type ToolHandler 
-} from '.';
+import { registerTool, registerTools, startServer, isServerStarted, type ToolHandler } from '.';
 
 // Example 1: Simple tool with basic types
 interface GreetingParams extends Record<string, unknown> {
@@ -30,14 +24,16 @@ registerTool<GreetingParams>(
       fr: `Bonjour, ${name}!`,
       de: `Hallo, ${name}!`,
     };
-    
+
     return {
-      content: [{
-        type: 'text' as const,
-        text: greetings[language],
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: greetings[language],
+        },
+      ],
     };
-  }
+  },
 );
 
 // Example 2: Calculator tool with validation
@@ -50,7 +46,7 @@ interface CalculatorParams extends Record<string, unknown> {
 const calculatorHandler: ToolHandler<CalculatorParams> = async ({ operation, a, b }) => {
   try {
     let result: number;
-    
+
     switch (operation) {
       case 'add':
         result = a + b;
@@ -64,29 +60,35 @@ const calculatorHandler: ToolHandler<CalculatorParams> = async ({ operation, a, 
       case 'divide':
         if (b === 0) {
           return {
-            content: [{
-              type: 'text' as const,
-              text: 'Error: Division by zero',
-            }],
+            content: [
+              {
+                type: 'text' as const,
+                text: 'Error: Division by zero',
+              },
+            ],
             isError: true,
           };
         }
         result = a / b;
         break;
     }
-    
+
     return {
-      content: [{
-        type: 'text' as const,
-        text: `${a} ${operation} ${b} = ${result}`,
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: `${a} ${operation} ${b} = ${result}`,
+        },
+      ],
     };
   } catch (error) {
     return {
-      content: [{
-        type: 'text' as const,
-        text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        },
+      ],
       isError: true,
     };
   }
@@ -103,7 +105,7 @@ registerTool<CalculatorParams>(
       b: z.number(),
     },
   },
-  calculatorHandler
+  calculatorHandler,
 );
 
 // Example 3: Batch registration of multiple tools
@@ -130,30 +132,34 @@ registerTool<DateFormatterParams>(
   },
   async ({ date, format }) => {
     const dateObj = new Date(date);
-    
+
     if (isNaN(dateObj.getTime())) {
       return {
-        content: [{
-          type: 'text' as const,
-          text: 'Invalid date format',
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: 'Invalid date format',
+          },
+        ],
         isError: true,
       };
     }
-    
+
     const formatters = {
       iso: () => dateObj.toISOString(),
       us: () => dateObj.toLocaleDateString('en-US'),
       eu: () => dateObj.toLocaleDateString('en-GB'),
     };
-    
+
     return {
-      content: [{
-        type: 'text' as const,
-        text: formatters[format](),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: formatters[format](),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Register text analyzer tool
@@ -169,31 +175,33 @@ registerTool<TextAnalyzerParams>(
   },
   async ({ text, analysis }) => {
     const analyzers = {
-      wordCount: () => `Word count: ${text.split(/\s+/).filter(w => w.length > 0).length}`,
+      wordCount: () => `Word count: ${text.split(/\s+/).filter((w) => w.length > 0).length}`,
       charCount: () => `Character count: ${text.length}`,
       sentiment: () => {
         // Simple sentiment analysis based on keywords
-        const positive = ['happy', 'good', 'great', 'excellent', 'wonderful'].some(word => 
-          text.toLowerCase().includes(word)
+        const positive = ['happy', 'good', 'great', 'excellent', 'wonderful'].some((word) =>
+          text.toLowerCase().includes(word),
         );
-        const negative = ['sad', 'bad', 'terrible', 'awful', 'horrible'].some(word => 
-          text.toLowerCase().includes(word)
+        const negative = ['sad', 'bad', 'terrible', 'awful', 'horrible'].some((word) =>
+          text.toLowerCase().includes(word),
         );
-        
+
         if (positive && !negative) return 'Sentiment: Positive 😊';
         if (negative && !positive) return 'Sentiment: Negative 😢';
         if (positive && negative) return 'Sentiment: Mixed 😐';
         return 'Sentiment: Neutral 😐';
       },
     };
-    
+
     return {
-      content: [{
-        type: 'text' as const,
-        text: analyzers[analysis](),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: analyzers[analysis](),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Example 3b: Using registerTools with same parameter types
@@ -214,10 +222,12 @@ registerTools<MathToolParams>([
       },
     },
     handler: async ({ x, y }) => ({
-      content: [{
-        type: 'text' as const,
-        text: `${x} + ${y} = ${x + y}`,
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: `${x} + ${y} = ${x + y}`,
+        },
+      ],
     }),
   },
   {
@@ -231,10 +241,12 @@ registerTools<MathToolParams>([
       },
     },
     handler: async ({ x, y }) => ({
-      content: [{
-        type: 'text' as const,
-        text: `${x} × ${y} = ${x * y}`,
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: `${x} × ${y} = ${x * y}`,
+        },
+      ],
     }),
   },
 ]);
@@ -259,10 +271,12 @@ registerTool<FileManagerParams>(
       action: z.enum(['create', 'read', 'list']),
       path: z.string(),
       content: z.string().optional(),
-      options: z.object({
-        recursive: z.boolean().optional(),
-        encoding: z.enum(['utf8', 'base64']).optional(),
-      }).optional(),
+      options: z
+        .object({
+          recursive: z.boolean().optional(),
+          encoding: z.enum(['utf8', 'base64']).optional(),
+        })
+        .optional(),
     },
   },
   async ({ action, path, content, options }) => {
@@ -272,14 +286,16 @@ registerTool<FileManagerParams>(
       read: () => `Contents of ${path}: ${content ?? '[empty]'}`,
       list: () => `Files in ${path}: file1.txt, file2.txt${options?.recursive === true ? ', subfolder/' : ''}`,
     };
-    
+
     return {
-      content: [{
-        type: 'text' as const,
-        text: mockResponses[action](),
-      }],
+      content: [
+        {
+          type: 'text' as const,
+          text: mockResponses[action](),
+        },
+      ],
     };
-  }
+  },
 );
 
 // Example usage in an application
@@ -287,7 +303,7 @@ async function main() {
   // Check if server is already started
   if (!isServerStarted()) {
     console.log('Starting MCP server with registered tools...');
-    
+
     // You can register more tools here before starting
     registerTool<{ message: string }>(
       'echo',
@@ -299,13 +315,15 @@ async function main() {
         },
       },
       async ({ message }) => ({
-        content: [{
-          type: 'text' as const,
-          text: `Echo: ${message}`,
-        }],
-      })
+        content: [
+          {
+            type: 'text' as const,
+            text: `Echo: ${message}`,
+          },
+        ],
+      }),
     );
-    
+
     // Start the server (this should only be called once in your application)
     await startServer();
     console.log('Server started successfully!');
@@ -318,4 +336,4 @@ async function main() {
 export { main };
 
 // Demonstrate the singleton pattern
-console.log('Example usage loaded. The same server instance will be used across all imports.'); 
+console.log('Example usage loaded. The same server instance will be used across all imports.');
