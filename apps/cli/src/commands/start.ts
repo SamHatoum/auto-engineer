@@ -648,7 +648,7 @@ const getAppPrompt = async (output: ReturnType<typeof createOutput>): Promise<st
     {
       type: 'input',
       name: 'appPrompt',
-      message: 'What would you like to start building together?',
+      message: 'What would you like to start building together?\n(NOTE: NOT FULLY FUNCTIONAL YET!)',
       validate: validateAppPrompt,
       transformer: (input: string) => input.trim(),
     },

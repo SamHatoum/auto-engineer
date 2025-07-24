@@ -1,5 +1,5 @@
-[![Discord Online](https://img.shields.io/discord/1336421551255457846?label=Online&logo=discord)](https://discord.gg/2K4hK9EX)
-[![Discord Users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2F2K4hK9EX%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Total&color=brightgreen&style=flat)](https://discord.gg/2K4hK9EX)
+[![Discord Online](https://img.shields.io/discord/1336421551255457846?label=Online&logo=discord)](https://discord.gg/rXR4ngqW)
+[![Discord Users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FrXR4ngqW%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Total&color=brightgreen&style=flat)](https://discord.gg/rXR4ngqW)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E=8.15.4-orange)](https://pnpm.io/)
@@ -11,7 +11,7 @@
 
 > Put your SDLC on Auto, and build production-grade apps with agents.
 
-##### _NOTE THIS IS AN EARLY PREVIEW_
+##### _EARLY PREVIEW_
 
 - We are working hard on making it happen
 - We are actively using Auto with real-world clients and use-cases
@@ -21,19 +21,34 @@ Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the
 
 ## Try it now
 
+Note: The developer experience will change significantly as we work with customers and users.
+
 ```bash
-# clone and cd into the repo
-# setup your .env var to use your AI key (supports all models, openai current default)
+# optional: start the example existing services and sites
+pnpm start:examples
+
+# add your *ANTHROPIC_API_KEY* to the .env file
 pnpm i && pnpm generate:all
 
-# once the job is complete, a directory one level above auto-engineer will be created
-cd ../shopping-assistant
-pnpm start
+# A shopping-assistant dir will be created one level above auto-engineer.
+# You should open this as a separate project in your IDE
+cd ../shopping-assistant && pnpm start
 ```
+
+You can now navigate and play with the locally running UI and graphql servers.
 
 ## 🎯 How It Works
 
-<img width="1193" alt="Screenshot 2025-06-25 at 7 26 44 PM" src="https://github.com/user-attachments/assets/873e96bf-ffd5-40cf-81a7-82caf195ee4a" />
+<img width="100%" height="100%" alt="Screenshot 2025-07-23 at 9 20 03 PM" src="https://github.com/user-attachments/assets/50041682-2ec1-4148-a6d1-d51fe0680385" />
+
+Auto automates the SDLC through a configurable pipeline of agentic and procedural modules. The process turns high-level models into production-ready code through these key stages:
+
+1.  **Flow Modeling**: You (or an AI) start by creating a high-level "Flow Model". This defines system behavior through command, query, and reaction "slices" that specify both frontend and backend requirements. This is where the core design work happens.
+2.  **IA Generation**: An "information architect" agent automatically generates an information architecture schema from your model, similar to how a UX designer creates a wireframes.
+3.  **Deterministic Scaffolding**: The IA schema is used to generate a complete, deterministic application scaffold.
+4.  **Prompt-Driven Implementation**: The scaffold is populated with placeholders containing implementation hints and in-situ prompts. The initial flow model also generates deterministic tests. This combination of fine-grained prompts and tests precisely guides the AI.
+5.  **AI Coding & Testing Loop**: An AI agent implements the code based on the prompts and context from previous steps. As code is written, tests are run. If they fail, the AI gets the error feedback and self-corrects, usually within 1-3 attempts.
+6.  **Comprehensive Quality Checks**: After passing the tests, the code goes through further checks, including linting, runtime validation, and AI-powered visual testing to ensure design system compliance.
 
 ## ✨ Features
 
@@ -57,9 +72,9 @@ It achieves this through a combination of techniques:
 - **Built-in Regression Testing**: Maintains system integrity by preventing breaking changes
 - **Self-Documenting System**: Provides full transparency into human and AI decisions over time
 
-## 🔄 FlowModels
+## 🔄 Flow Models
 
-Information Flow Modeling is the act of expressing a system as interfaces, commands, queries, events, and state. The majority of systems lend themselves to be easily modeled using Flow Models. Flow Models define system behaviors through vertical slices, and bridges the gap between technical and non-technical stakeholders by providing a common language that:
+Information Modeling is the act of expressing a system as interfaces, requests, commands, events, and state. The majority of systems lend themselves to be easily modeled using Flow Models. Flow Models define system behaviors through vertical slices, and bridges the gap between technical and non-technical stakeholders by providing a common language that:
 
 - **Describes Complete Flows**: Captures entire user journeys and system interactions
 - **Uses Vertical Slices**: Organizes functionality by domain-driven slices rather than technical layers
@@ -67,180 +82,189 @@ Information Flow Modeling is the act of expressing a system as interfaces, comma
 - **Specifies Behavior**: Defines both frontend and backend requirements in a single flow
 - **Includes Validation Rules**: Embeds business rules and acceptance criteria directly in the flow
 
+There are three types of slices in Flow Models:
+
+1. Commands: tell the system to do something
+2. Queries: get some data from the system
+3. Reactions: define when > then scenarios
+
+With these 3 basic building blocks, you can build the majority of information systems to power any kind of line-of-business application.
+
 ### Example Flow Model
 
 ```typescript
-import {
-  commandSlice,
-  querySlice,
-  reactSlice,
-  flow,
-  createBuilders,
-  should,
-  when,
-  specs,
-  gql,
-} from '@auto-engineer/flow-lang';
-
-import type { ListingCreated } from './slices/create-listing/events';
-import type { BookingRequested } from './slices/guest-submits-booking-request/events';
-import type { HostNotified } from './slices/host-manages-booking-request/events';
-import type { PropertyRemoved } from './slices/remove-property/events';
-import type { CreateListing } from './slices/create-listing/commands';
-import type { RequestBooking } from './slices/guest-submits-booking-request/commands';
-import type { NotifyHost } from './slices/host-manages-booking-request/commands';
-import type { RemoveProperty } from './slices/remove-property/commands';
-import type { AvailableProperty } from './shared/read-model';
-
-import { MailChimp } from '@auto-engineer/mailchimp-integration';
-import { Twilio } from '@auto-engineer/twilio-integration';
-
-const { Events, Commands, State } = createBuilders()
-  .events<ListingCreated | BookingRequested | HostNotified | PropertyRemoved>()
-  .commands<CreateListing | RequestBooking | NotifyHost | RemoveProperty>()
-  .state<{ AvailableProperties: AvailableProperty }>();
-
-flow('Host creates a listing', () => {
-  commandSlice('Create listing')
-    .stream('listing-${id}')
-    .client(() => {
-      specs('A form that allows hosts to create a listing', () => {
-        should('have fields for title, description, location, address');
-        should('have price per night input');
-        should('have max guests selector');
-        should('have amenities checklist');
-        should.not('be shown to guest users');
-      });
-    })
-    .server(() => {
-      specs('Host can create a new listing', () => {
-        when(
-          Commands.CreateListing({
-            propertyId: 'listing_123',
-            hostId: 'host_456',
-            location: 'San Francisco',
-            address: '123 Market St',
-            title: 'Modern Downtown Apartment',
-            description: 'Beautiful apartment with city views',
-            pricePerNight: 250,
-            maxGuests: 4,
-            amenities: ['wifi', 'kitchen', 'parking'],
+flow('Seasonal Assistant', () => {
+  commandSlice('Suggest Shopping Items').server(() => {
+    data([
+      sink()
+        .command('SuggestShoppingItems')
+        .toIntegration(AI, 'DoChat', 'command')
+        .withState(source().state('Products').fromIntegration(ProductCatalog))
+        .additionalInstructions(
+          'add this to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
+        ),
+      sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
+    ]);
+    specs('When chat is triggered, AI suggests items based on product catalog', () => {
+      given([
+        State.Products({
+          products: [
+            {
+              productId: 'prod-soccer-ball',
+              name: 'Super Soccer Ball',
+              price: 10,
+              imageUrl: 'https://example.com/soccer-ball.jpg',
+            },
+            {
+              productId: 'prod-craft-kit',
+              name: 'Deluxe Craft Kit',
+              price: 25,
+              imageUrl: 'https://example.com/craft-kit.jpg',
+            },
+            {
+              productId: 'prod-laptop-bag',
+              name: 'Tech Laptop Backpack',
+              price: 45,
+              imageUrl: 'https://example.com/laptop-bag.jpg',
+            },
+            {
+              productId: 'prod-mtg-starter',
+              name: 'Magic the Gathering Starter Set',
+              price: 30,
+              imageUrl: 'https://example.com/mtg-starter.jpg',
+            },
+          ],
+        }),
+      ])
+        .when(
+          Commands.SuggestShoppingItems({
+            sessionId: 'session-abc',
+            prompt: 'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts.',
           }),
-        ).then([
-          Events.ListingCreated({
-            propertyId: 'listing_123',
-            hostId: 'host_456',
-            location: 'San Francisco',
-            address: '123 Market St',
-            title: 'Modern Downtown Apartment',
-            description: 'Beautiful apartment with city views',
-            pricePerNight: 250,
-            maxGuests: 4,
-            amenities: ['wifi', 'kitchen', 'parking'],
-            listedAt: new Date('2024-01-15T10:00:00Z'),
+        )
+        .then([
+          Events.ShoppingItemsSuggested({
+            sessionId: 'session-abc',
+            suggestedItems: [
+              {
+                productId: 'prod-soccer-ball',
+                name: 'Super Soccer Ball',
+                quantity: 1,
+                reason: 'Perfect for your daughter who loves soccer',
+              },
+              {
+                productId: 'prod-craft-kit',
+                name: 'Deluxe Craft Kit',
+                quantity: 1,
+                reason: 'Great for creative activities and crafts',
+              },
+            ],
           }),
         ]);
-      });
     });
-});
+  });
 
-flow('Guest books a listing', () => {
-  querySlice('Search for available listings')
-    .client(() => {
-      specs('Listing Search Screen', () => {
-        should('have location filter');
-        should('have price range slider');
-        should('have guest count filter');
-      });
-    })
-    .request(gql`
-      query SearchListings($location: String, $maxPrice: Float, $minGuests: Int) {
-        searchListings(location: $location, maxPrice: $maxPrice, minGuests: $minGuests) {
-          propertyId
-          title
-          location
-          pricePerNight
-          maxGuests
-        }
-      }
-    `)
-    .server(() => {
-      specs('Listing becomes searchable after being created', () => {
-        when(
-          Events.ListingCreated({
-            propertyId: 'listing_123',
-            hostId: 'host_456',
-            location: 'San Francisco',
-            address: '123 Market St',
-            title: 'Modern Downtown Apartment',
-            description: 'Beautiful apartment with city views',
-            pricePerNight: 250,
-            maxGuests: 4,
-            amenities: ['wifi', 'kitchen', 'parking'],
-            listedAt: new Date('2024-01-15T10:00:00Z'),
-          }),
-        ).then([
-          State.AvailableProperties({
-            propertyId: 'listing_123',
-            title: 'Modern Downtown Apartment',
-            location: 'San Francisco',
-            pricePerNight: 250,
-            maxGuests: 4,
-          }),
-        ]);
-      });
-    });
-
-  reactSlice('Host is notified').server(() => {
-    specs('Host is notified when booking request is received', () => {
+  reactSlice('finds items in product catalogue').server(() => {
+    specs('When shopping criteria are entered, request wishlist creation', () => {
       when([
-        Events.BookingRequested({
-          bookingId: 'booking_456',
-          propertyId: 'listing_123',
-          hostId: 'host_456',
-          guestId: 'guest_789',
-          checkIn: '2024-02-01',
-          checkOut: '2024-02-05',
-          guests: 2,
-          message: 'Looking forward to our stay!',
-          status: 'pending_host_approval',
-          requestedAt: '2024-01-15T14:30:00Z',
-          expiresAt: '2024-01-16T14:30:00Z',
+        Events.ShoppingItemsSuggested({
+          sessionId: 'session-abc',
+          suggestedItems: [
+            {
+              productId: 'prod-soccer-ball',
+              name: 'Super Soccer Ball',
+              quantity: 1,
+              reason: 'Perfect for your daughter who loves soccer',
+            },
+            {
+              productId: 'prod-craft-kit',
+              name: 'Deluxe Craft Kit',
+              quantity: 1,
+              reason: 'Great for creative activities and crafts',
+            },
+          ],
         }),
       ]).then([
-        Commands.NotifyHost({
-          hostId: 'host_456',
-          notificationType: 'booking_request',
-          priority: 'high',
-          channels: ['email', 'sms'],
-          message: 'Looking forward to our stay!',
-          actionRequired: true,
+        Commands.AddItemsToCart({
+          sessionId: 'session-abc',
+          items: [
+            {
+              productId: 'prod-soccer-ball',
+              name: 'Super Soccer Ball',
+              quantity: 1,
+              reason: 'Perfect for your daughter who loves soccer',
+            },
+            {
+              productId: 'prod-craft-kit',
+              name: 'Deluxe Craft Kit',
+              quantity: 1,
+              reason: 'Great for creative activities and crafts',
+            },
+          ],
         }),
       ]);
     });
   });
 
-  commandSlice('Notify host')
-    .via([MailChimp, Twilio])
-    .retries(3)
+  querySlice('views suggested items')
+    .request(gql`
+      query GetSuggestedItems($sessionId: ID!) {
+        suggestedItems(sessionId: $sessionId) {
+          items {
+            productId
+            name
+            quantity
+            reason
+          }
+        }
+      }
+    `)
+    .client(() => {
+      specs('Suggested Items Screen', () => {
+        should('display all suggested items with names and reasons');
+        should('show quantity selectors for each item');
+        should('have an "Add to Cart" button for selected items');
+        should('allow removing items from the suggestions');
+      });
+    })
     .server(() => {
-      specs('Send notification using the specified integrations', () => {
-        when(
-          Commands.NotifyHost({
-            hostId: 'host_456',
-            notificationType: 'booking_request',
-            priority: 'high',
-            channels: ['email', 'sms'],
-            message: 'Looking forward to our stay!',
-            actionRequired: true,
+      data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection', 'sessionId')]);
+      specs('Suggested items are available for viewing', () => {
+        given([
+          Events.ShoppingItemsSuggested({
+            sessionId: 'session-abc',
+            suggestedItems: [
+              {
+                productId: 'prod-soccer-ball',
+                name: 'Super Soccer Ball',
+                quantity: 1,
+                reason: 'Perfect for your daughter who loves soccer',
+              },
+              {
+                productId: 'prod-craft-kit',
+                name: 'Deluxe Craft Kit',
+                quantity: 1,
+                reason: 'Great for creative activities and crafts',
+              },
+            ],
           }),
-        ).then([
-          Events.HostNotified({
-            bookingId: 'booking_456',
-            hostId: 'host_456',
-            notificationType: 'booking_request',
-            channels: ['email', 'sms'],
-            notifiedAt: '2024-01-15T14:30:00Z',
+        ]).then([
+          State.SuggestedItems({
+            sessionId: 'session-abc',
+            items: [
+              {
+                productId: 'prod-soccer-ball',
+                name: 'Super Soccer Ball',
+                quantity: 1,
+                reason: 'Perfect for your daughter who loves soccer',
+              },
+              {
+                productId: 'prod-craft-kit',
+                name: 'Deluxe Craft Kit',
+                quantity: 1,
+                reason: 'Great for creative activities and crafts',
+              },
+            ],
           }),
         ]);
       });
@@ -273,11 +297,14 @@ pnpm build
 
 # Run tests
 pnpm test
+
+# Run all checks
+pnpm check
 ```
 
 ## 🤝 Contributing
 
-Join our [Discord community](https://discord.gg/2K4hK9EX) to connect with other developers, get help, and share your ideas!
+Join our [Discord community](https://discord.gg/rXR4ngqW) to connect with other developers, get help, and share your ideas!
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
@@ -305,7 +332,7 @@ This project uses [commitlint](https://commitlint.js.org/) to enforce consistent
 ### Example commands and commit messages
 
 ```bash
-git commit -m "feat(packages/flow-modeling-agent): add new feature"
+git commit -m "feat(packages/message-bus): add new feature"
 git commit -m "fix(apps/cli): correct CLI argument parsing"
 git commit -m "chore(global): update repository settings"
 ```

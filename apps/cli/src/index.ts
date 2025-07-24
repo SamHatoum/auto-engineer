@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-import '@auto-engineer/config';
-
 import { Command } from 'commander';
 import chalk from 'chalk';
 import gradient from 'gradient-string';
