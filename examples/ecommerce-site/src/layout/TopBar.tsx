@@ -23,12 +23,24 @@ export function TopBar() {
         {/* Right Side: Nav Links */}
         <NavigationMenu>
           <NavigationMenuList className="flex items-center gap-5">
-            <NavigationMenuItem>Rewards</NavigationMenuItem>
-            <NavigationMenuItem>Store Card</NavigationMenuItem>
-            <NavigationMenuItem>Premium Membership</NavigationMenuItem>
-            <NavigationMenuItem>Registry & Wish List</NavigationMenuItem>
-            <NavigationMenuItem>Weekly Deals</NavigationMenuItem>
-            <NavigationMenuItem>Find Stores</NavigationMenuItem>
+            <NavigationMenuItem style={{ cursor: 'pointer' }}>Rewards</NavigationMenuItem>
+            <NavigationMenuItem style={{ cursor: 'pointer' }}>Store Card</NavigationMenuItem>
+            <NavigationMenuItem style={{ cursor: 'pointer' }}>
+              Premium Membership
+            </NavigationMenuItem>
+            <NavigationMenuItem style={{ cursor: 'pointer' }}>
+              Registry & Wish List
+            </NavigationMenuItem>
+            <NavigationMenuItem style={{ cursor: 'pointer' }}>Weekly Deals</NavigationMenuItem>
+            <NavigationMenuItem
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                window.open('http://localhost:8080');
+              }}
+            >
+              Shopping Assistant
+            </NavigationMenuItem>
+            <NavigationMenuItem style={{ cursor: 'pointer' }}>Find Stores</NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       </div>
