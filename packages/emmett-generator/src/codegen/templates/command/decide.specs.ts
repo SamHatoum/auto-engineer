@@ -536,5 +536,4 @@ describe('decide.ts.ejs', () => {
       "
     `);
   });
-
 });

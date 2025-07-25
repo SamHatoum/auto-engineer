@@ -251,7 +251,7 @@ describe('generateScaffoldFilePlans', () => {
         },
       ],
     };
-    
+
     const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations, 'src/domain/flows');
     const handleFile = plans.find((p) => p.outputPath.endsWith('handle.ts'));
 
