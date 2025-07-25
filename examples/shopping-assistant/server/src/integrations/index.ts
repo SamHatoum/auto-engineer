@@ -1,2 +1,2 @@
 export * from './ai-integration';
-export * from './product-catalogue-integration';
+export * from '@auto-engineer/product-catalog-integration';

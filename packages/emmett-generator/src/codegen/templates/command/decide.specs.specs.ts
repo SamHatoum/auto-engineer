@@ -82,7 +82,7 @@ describe('spec.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const specFile = plans.find((p) => p.outputPath.endsWith('specs.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`
@@ -133,5 +133,133 @@ describe('spec.ts.ejs', () => {
           });
           "
         `);
+  });
+  it('should include given events in the spec file when provided', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Guest removes a listing',
+          slices: [
+            {
+              type: 'command',
+              name: 'Remove listing',
+              client: { description: '', specs: [] },
+              server: {
+                description: '',
+                gwt: [
+                  {
+                    given: [
+                      {
+                        eventRef: 'ListingCreated',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                          listedAt: '2024-01-15T10:00:00Z',
+                          rating: 4.8,
+                          metadata: { foo: 'bar' },
+                        },
+                      },
+                    ],
+                    when: {
+                      commandRef: 'RemoveListing',
+                      exampleData: {
+                        propertyId: 'listing_123',
+                      },
+                    },
+                    then: [
+                      {
+                        eventRef: 'ListingRemoved',
+                        exampleData: {
+                          propertyId: 'listing_123',
+                          removedAt: '2024-01-16T10:00:00Z',
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'RemoveListing',
+          fields: [{ name: 'propertyId', type: 'string', required: true }],
+        },
+        {
+          type: 'event',
+          name: 'ListingCreated',
+          source: 'internal',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'listedAt', type: 'Date', required: true },
+            { name: 'rating', type: 'number', required: true },
+            { name: 'metadata', type: 'object', required: true },
+          ],
+        },
+        {
+          type: 'event',
+          name: 'ListingRemoved',
+          source: 'internal',
+          fields: [
+            { name: 'propertyId', type: 'string', required: true },
+            { name: 'removedAt', type: 'Date', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const specFile = plans.find((p) => p.outputPath.endsWith('specs.ts'));
+
+    expect(specFile?.contents).toMatchInlineSnapshot(`
+      "import { describe, it } from 'vitest';
+      import { DeciderSpecification } from '@event-driven-io/emmett';
+      import { decide } from './decide';
+      import { evolve } from './evolve';
+      import { initialState } from './state';
+
+      describe('Guest removes a listing | Remove listing', () => {
+        const given = DeciderSpecification.for({
+          decide,
+          evolve,
+          initialState,
+        });
+
+        it('should emit ListingRemoved for valid RemoveListing', () => {
+          given([
+            {
+              type: 'ListingCreated',
+              data: {
+                propertyId: 'listing_123',
+                listedAt: new Date('2024-01-15T10:00:00Z'),
+                rating: 4.8,
+                metadata: { foo: 'bar' },
+              },
+            },
+          ])
+            .when({
+              type: 'RemoveListing',
+              data: {
+                propertyId: 'listing_123',
+              },
+              metadata: { now: new Date() },
+            })
+
+            .then([
+              {
+                type: 'ListingRemoved',
+                data: {
+                  propertyId: 'listing_123',
+                  removedAt: new Date('2024-01-16T10:00:00Z'),
+                },
+              },
+            ]);
+        });
+      });
+      "
+    `);
   });
 });

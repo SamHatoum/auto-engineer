@@ -38,6 +38,7 @@ async function main() {
   const filePlans = await generateScaffoldFilePlans(
     spec.flows,
     spec.messages,
+    spec.integrations,
     join(serverDir, 'src', 'domain', 'flows'),
   );
   await writeScaffoldFilePlans(filePlans);

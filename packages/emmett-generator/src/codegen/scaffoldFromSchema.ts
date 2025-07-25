@@ -30,7 +30,7 @@ const defaultFilesByType: Record<string, string[]> = {
     'register.ts.ejs',
   ],
   query: ['projection.ts.ejs', 'state.ts.ejs', 'projection.specs.ts.ejs', 'query.resolver.ts.ejs'],
-  react: ['react.ts.ejs', 'react.specs.ts.ejs'],
+  react: ['react.ts.ejs', 'react.specs.ts.ejs', 'register.ts.ejs'],
 };
 
 export interface FilePlan {
@@ -40,7 +40,10 @@ export interface FilePlan {
 
 async function renderTemplate(templatePath: string, data: Record<string, unknown>): Promise<string> {
   const content = await fs.readFile(templatePath, 'utf8');
-  const template = ejs.compile(content, { async: true });
+  const template = ejs.compile(content, {
+    async: true,
+    escape: (text: string): string => text,
+  });
   const graphqlType = (tsType: string): string => {
     if (!tsType) return 'String';
     if (tsType === 'ID') return 'ID';
@@ -159,6 +162,7 @@ async function prepareTemplateData(
   commandSchemasByName: Record<string, Message>,
   projectionIdField: string | undefined,
   allMessages?: MessageDefinition[],
+  integrations?: SpecsSchemaType['integrations'],
 ): Promise<Record<string, unknown>> {
   const { streamPattern, streamId } = getStreamFromSink(slice);
   const gwtMapping = buildCommandGwtMapping(slice);
@@ -188,6 +192,7 @@ async function prepareTemplateData(
       slice.type === 'query' && allMessages
         ? allMessages.find((m) => m.name === slice.server?.data?.[0]?.target?.name)
         : undefined,
+    integrations,
   };
 }
 
@@ -218,12 +223,40 @@ function findEventSource(flows: Flow[], eventType: string): { flowName: string; 
   return null;
 }
 
+function annotateCommandSources(
+  commands: Message[],
+  flows: Flow[],
+  fallbackFlowName: string,
+  fallbackSliceName: string,
+): void {
+  for (const command of commands) {
+    const match = findCommandSource(flows, command.type);
+    command.sourceFlowName = match?.flowName ?? fallbackFlowName;
+    command.sourceSliceName = match?.sliceName ?? fallbackSliceName;
+  }
+}
+
+function findCommandSource(flows: Flow[], commandType: string): { flowName: string; sliceName: string } | null {
+  for (const flow of flows) {
+    for (const slice of flow.slices) {
+      if (slice.type !== 'command') continue;
+
+      const gwt = slice.server?.gwt ?? [];
+      if (gwt.some((g) => 'commandRef' in g.when && g.when.commandRef === commandType)) {
+        return { flowName: flow.name, sliceName: slice.name };
+      }
+    }
+  }
+  return null;
+}
+
 async function generateFilesForSlice(
   slice: Slice,
   flow: Flow,
   sliceDir: string,
   messages: MessageDefinition[],
   flows: Flow[],
+  integrations?: SpecsSchemaType['integrations'],
 ): Promise<FilePlan[]> {
   const templates = defaultFilesByType[slice.type];
   if (!templates?.length) return [];
@@ -235,6 +268,7 @@ async function generateFilesForSlice(
     extracted.events.map((e) => e.type),
   );
   annotateEventSources(extracted.events, flows, flow.name, slice.name);
+  annotateCommandSources(extracted.commands, flows, flow.name, slice.name);
 
   const templateData = await prepareTemplateData(
     slice,
@@ -245,6 +279,7 @@ async function generateFilesForSlice(
     extracted.commandSchemasByName,
     extracted.projectionIdField,
     messages,
+    integrations,
   );
 
   return Promise.all(templates.map((template) => generateFileForTemplate(template, slice, sliceDir, templateData)));
@@ -253,6 +288,7 @@ async function generateFilesForSlice(
 export async function generateScaffoldFilePlans(
   flows: Flow[],
   messages: SpecsSchemaType['messages'],
+  integrations?: SpecsSchemaType['integrations'],
   baseDir = 'src/domain/flows',
 ): Promise<FilePlan[]> {
   const allPlans: FilePlan[] = [];
@@ -262,7 +298,7 @@ export async function generateScaffoldFilePlans(
 
     for (const slice of flow.slices) {
       const sliceDir = ensureDirPath(flowDir, toKebabCase(slice.name));
-      const plans = await generateFilesForSlice(slice, flow, sliceDir, messages, flows);
+      const plans = await generateFilesForSlice(slice, flow, sliceDir, messages, flows, integrations);
       allPlans.push(...plans);
     }
   }
@@ -283,6 +319,6 @@ export async function scaffoldFromSchema(
   messages: SpecsSchemaType['messages'],
   baseDir = 'src/domain/flows',
 ): Promise<void> {
-  const plans = await generateScaffoldFilePlans(flows, messages, baseDir);
+  const plans = await generateScaffoldFilePlans(flows, messages, undefined, baseDir);
   await writeScaffoldFilePlans(plans);
 }

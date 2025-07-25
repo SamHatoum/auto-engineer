@@ -58,6 +58,12 @@ describe('react.specs.ts.ejs (react slice)', () => {
               name: 'Send notification to host',
               server: {
                 description: 'Sends a host notification command in response to BookingRequested',
+                data: [
+                  {
+                    target: { type: 'Command', name: 'NotifyHost' },
+                    destination: { type: 'stream', pattern: 'booking-${hostId}' },
+                  },
+                ],
                 gwt: [
                   {
                     when: [
@@ -87,43 +93,6 @@ describe('react.specs.ts.ejs (react slice)', () => {
                           priority: 'high',
                           channels: ['email', 'push'],
                           message: 'A guest has requested to book your place.',
-                          actionRequired: true,
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-            {
-              type: 'command',
-              name: 'notify host',
-              client: { description: '', specs: [] },
-              server: {
-                description: '',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'NotifyHost',
-                      exampleData: {
-                        hostId: 'host_123',
-                        notificationType: 'booking_request',
-                        priority: 'high',
-                        channels: ['email', 'push'],
-                        message: 'A guest has requested to book your place.',
-                        actionRequired: true,
-                      },
-                    },
-                    then: [
-                      {
-                        eventRef: 'HostNotified',
-                        exampleData: {
-                          bookingId: 'book_xyz789',
-                          hostId: 'host_123',
-                          notificationType: 'booking_request',
-                          channels: ['email', 'push'],
-                          message: 'hi.',
-                          notifiedAt: '2025-06-10T16:30:00.000Z',
                           actionRequired: true,
                         },
                       },
@@ -171,79 +140,75 @@ describe('react.specs.ts.ejs (react slice)', () => {
             { name: 'message', type: 'string', required: true },
           ],
         },
-        {
-          type: 'event',
-          name: 'HostNotified',
-          source: 'internal',
-          fields: [
-            { name: 'bookingId', type: 'string', required: true },
-            { name: 'hostId', type: 'string', required: true },
-            { name: 'notificationType', type: 'string', required: true },
-            { name: 'channels', type: 'string[]', required: true },
-            { name: 'notifiedAt', type: 'date', required: true },
-            { name: 'actionRequired', type: 'boolean', required: true },
-            { name: 'message', type: 'string', required: true },
-          ],
-        },
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
 
     const specFile = plans.find((p) => p.outputPath.endsWith('react.specs.ts'));
-
     expect(specFile?.contents).toMatchInlineSnapshot(`
-          "import { describe, it, beforeEach } from 'vitest';
-          import 'reflect-metadata';
-          import { getInMemoryEventStore, type InMemoryEventStore } from '@event-driven-io/emmett';
-          import { type ReactorContext, ReactorSpecification } from '../../../shared';
-          import { react } from './react';
-          import type { BookingRequested } from '../guest-submits-booking-request/events';
+      "import { describe, it, beforeEach } from 'vitest';
+      import 'reflect-metadata';
+      import { getInMemoryEventStore, type InMemoryEventStore, type CommandSender } from '@event-driven-io/emmett';
+      import { type ReactorContext, ReactorSpecification } from '../../../shared';
+      import { react } from './react';
+      import type { BookingRequested } from '../guest-submits-booking-request/events';
+      import type { NotifyHost } from '../send-notification-to-host/commands';
 
-          describe('ManageBookings | SendNotificationToHost', () => {
-            let eventStore: InMemoryEventStore;
-            let given: ReturnType<typeof ReactorSpecification.for<any, any, ReactorContext>>;
+      describe('ManageBookings | SendNotificationToHost', () => {
+        let eventStore: InMemoryEventStore;
+        let given: ReactorSpecification<BookingRequested, NotifyHost, ReactorContext>;
+        let messageBus: CommandSender;
 
-            beforeEach(() => {
-              eventStore = getInMemoryEventStore({});
-              given = ReactorSpecification.for(react(), (commandSender) => ({ eventStore, commandSender }));
+        beforeEach(() => {
+          eventStore = getInMemoryEventStore({});
+          given = ReactorSpecification.for<BookingRequested, NotifyHost, ReactorContext>(
+            () => react({ eventStore, commandSender: messageBus }),
+            (commandSender) => {
+              messageBus = commandSender;
+              return {
+                eventStore,
+                commandSender,
+                database: eventStore.database,
+              };
+            },
+          );
+        });
+
+        it('should send NotifyHost when BookingRequested is received', async () => {
+          await given([])
+            .when({
+              type: 'BookingRequested',
+              data: {
+                bookingId: 'book_xyz789',
+                hostId: 'host_123',
+                propertyId: 'prop_789',
+                guestId: 'guest_456',
+                checkIn: '2025-07-15',
+                checkOut: '2025-07-18',
+                guests: 2,
+                message: 'Hey',
+                status: 'pending_host_approval',
+                requestedAt: '2025-06-10T16:30:00.000Z',
+                expiresAt: '2025-06-11T16:30:00.000Z',
+              },
+            })
+
+            .then({
+              type: 'NotifyHost',
+              kind: 'Command',
+              data: {
+                hostId: 'host_123',
+                notificationType: 'booking_request',
+                priority: 'high',
+                channels: ['email', 'push'],
+                message: 'A guest has requested to book your place.',
+                actionRequired: true,
+              },
             });
-
-            it('should send NotifyHost when BookingRequested is received', async () => {
-              await given([])
-                .when({
-                  type: 'BookingRequested',
-                  data: {
-                    bookingId: 'book_xyz789',
-                    hostId: 'host_123',
-                    propertyId: 'prop_789',
-                    guestId: 'guest_456',
-                    checkIn: '2025-07-15',
-                    checkOut: '2025-07-18',
-                    guests: 2,
-                    message: 'Hey',
-                    status: 'pending_host_approval',
-                    requestedAt: '2025-06-10T16:30:00.000Z',
-                    expiresAt: '2025-06-11T16:30:00.000Z',
-                  },
-                })
-                .then([
-                  {
-                    type: 'NotifyHost',
-                    kind: 'Command',
-                    data: {
-                      hostId: 'host_123',
-                      notificationType: 'booking_request',
-                      priority: 'high',
-                      channels: ['email', 'push'],
-                      message: 'A guest has requested to book your place.',
-                      actionRequired: true,
-                    },
-                  },
-                ]);
-            });
-          });
-          "
-        `);
+        });
+      });
+      "
+    `);
   });
 });

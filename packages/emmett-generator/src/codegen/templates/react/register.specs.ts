@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flowlang';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 
-describe('handle.ts.ejs (react slice)', () => {
-  it('should generate correct react.ts', async () => {
+describe('register.ts.ejs (react slice)', () => {
+  it('should generate correct register.ts', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
       flows: [
@@ -189,53 +189,34 @@ describe('handle.ts.ejs (react slice)', () => {
     };
 
     const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
-    const handleFile = plans.find((p) => p.outputPath.endsWith('react.ts'));
+    const registerFile = plans.find((p) => p.outputPath.endsWith('send-notification-to-host/register.ts'));
 
-    expect(handleFile?.contents).toMatchInlineSnapshot(`
-      "import { inMemoryReactor, type MessageHandlerResult, IllegalStateError } from '@event-driven-io/emmett';
-      import type { BookingRequested } from '../guest-submits-booking-request/events';
-      import type { ReactorContext } from '../../../shared';
+    expect(registerFile?.contents).toMatchInlineSnapshot(`
+          "import { type CommandSender, type EventSubscription, type InMemoryEventStore } from '@event-driven-io/emmett';
+          import type { BookingRequested } from '../guest-submits-booking-request/events';
 
-      export const react = ({ eventStore, commandSender }: ReactorContext) =>
-        inMemoryReactor<BookingRequested>({
-          processorId: 'manage-bookings-send-notification-to-host',
-          canHandle: ['BookingRequested'],
-          connectionOptions: {
-            database: eventStore.database,
-          },
-          eachMessage: async (event, context): Promise<MessageHandlerResult> => {
-            /**
-             * ## IMPLEMENTATION INSTRUCTIONS ##
-             *
-             * - Inspect event data to determine if the command should be sent.
-             * - Replace the placeholder logic and \\\`throw\\\` below with real implementation.
-             * - Send one or more commands via: context.commandSender.send({...})
-             * - Optionally return a MessageHandlerResult for SKIP or error cases.
-             */
+          export async function register(messageBus: CommandSender & EventSubscription, eventStore: InMemoryEventStore) {
+            messageBus.subscribe(async (event: BookingRequested) => {
+              /**
+               * ## IMPLEMENTATION INSTRUCTIONS ##
+               *
+               * - Replace the placeholder logic with the  real implementation.
+               * - Send one or more commands via: messageBus.send({...})
+               */
 
-            throw new IllegalStateError('Not yet implemented: react in response to BookingRequested');
+              // await messageBus.send({
+              //   type: 'NotifyHost',
+              //   kind: 'Command',
+              //   data: {
+              //     // Map event fields to command fields here
+              //     // e.g., userId: event.data.userId,
+              //   },
+              // });
 
-            // Example:
-            // if (event.data.status !== 'expected') {
-            //   return {
-            //     type: 'SKIP',
-            //     reason: 'Condition not met',
-            //   };
-            // }
-
-            // await context.commandSender.send({
-            //   type: 'NotifyHost',
-            //   kind: 'Command',
-            //   data: {
-            //     // Map event fields to command fields here
-            //     // e.g., userId: event.data.userId,
-            //   },
-            // });
-
-            // return;
-          },
-        });
-      "
-    `);
+              return;
+            }, 'BookingRequested');
+          }
+          "
+        `);
   });
 });

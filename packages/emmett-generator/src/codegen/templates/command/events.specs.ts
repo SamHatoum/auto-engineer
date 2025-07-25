@@ -85,7 +85,7 @@ describe('events.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const eventFile = plans.find((p) => p.outputPath.endsWith('events.ts'));
 
     expect(eventFile?.contents).toMatchInlineSnapshot(`

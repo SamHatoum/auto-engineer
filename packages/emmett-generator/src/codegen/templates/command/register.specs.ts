@@ -90,7 +90,7 @@ describe('generateScaffoldFilePlans', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const registerFile = plans.find((p) => p.outputPath.endsWith('register.ts'));
 
     expect(registerFile?.contents).toMatchInlineSnapshot(`

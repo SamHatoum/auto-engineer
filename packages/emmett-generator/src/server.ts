@@ -6,17 +6,24 @@ import {
   getInMemoryEventStore,
   getInMemoryMessageBus,
   projections,
-  type CommandProcessor,
+  forwardToMessageBus,
 } from '@event-driven-io/emmett';
 
 async function start() {
   const loadedProjections = await loadProjections('src/domain/flows/**/projection.{ts,js}');
   const registrations = await loadRegisterFiles('src/domain/flows/**/register.{ts,js}');
+
+  const messageBus = getInMemoryMessageBus();
+
   const eventStore = getInMemoryEventStore({
     projections: projections.inline(loadedProjections),
+    hooks: {
+      onAfterCommit: forwardToMessageBus(messageBus),
+    },
   });
-  const messageBus: CommandProcessor = getInMemoryMessageBus(); // ensure correct type
+
   await Promise.all(registrations.map((r) => r.register(messageBus, eventStore)));
+
   const resolvers = await loadResolvers('src/domain/flows/**/*.resolver.{ts,js}');
   const schema = await buildSchema({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

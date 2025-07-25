@@ -64,7 +64,7 @@ describe('evolve.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const evolveFile = plans.find((p) => p.outputPath.endsWith('evolve.ts'));
 
     expect(evolveFile?.contents).toMatchInlineSnapshot(`

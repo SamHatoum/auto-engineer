@@ -177,7 +177,7 @@ describe('projection.specs.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const specFile = plans.find((p) => p.outputPath.endsWith('projection.spec.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`

@@ -53,7 +53,7 @@ describe('state.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const stateFile = plans.find((p) => p.outputPath.endsWith('state.ts'));
 
     expect(stateFile?.contents).toMatchInlineSnapshot(`

@@ -28,6 +28,7 @@
     "start:cart-api": "cd examples/cart-api && pnpm start",
     "start:examples": "pnpm --parallel --filter @examples/* start 2>&1 | grep -E '(localhost|Local)' || true",
     "## ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
+    "## CLI COMMAND PLACEHOLDERS -----------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "init:example": "rm -rf ../shopping-assistant && cp -r ./examples/shopping-assistant ../shopping-assistant && rm -rf ../shopping-assistant/.turbo && cd ../shopping-assistant && pnpm install",
     "generate:schema": "cd ../shopping-assistant/server && pnpm install && pnpm build && cd .. && pnpm build:flow-schema",
     "generate:server": "pnpm --filter @auto-engineer/emmett-generator generate:server ../../../shopping-assistant/.context/schema.json ../../../shopping-assistant",
@@ -38,7 +39,9 @@
     "implement:client": "pnpm --filter @auto-engineer/frontend-implementation ai-agent ../../../shopping-assistant/client ../../../shopping-assistant/.context ../../../../shopping-assistant/.context/design-system-principles.md ../../../../shopping-assistant/.context/design-system.md",
     "regenerate:client": "rm -rf ../shopping-assistant/client && pnpm generate:client && pnpm implement:client",
     "generate:all": "pnpm init:example && pnpm generate:schema && pnpm generate:server && pnpm import:design-system && pnpm generate:information-architecture && pnpm generate:client && pnpm implement:server && pnpm implement:client",
-    "## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": ""
+    "## LIFECYCLE TASKS ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
+    "rebuild:client": "pnpm generate:information-architecture &&pnpm generate:client && pnpm implement:client",
+    "rebuild:server": "pnpm generate:information-architecture &&pnpm generate:server && pnpm implement:server && pnpm rebuild:client"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",

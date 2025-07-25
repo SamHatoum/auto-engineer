@@ -64,7 +64,7 @@ describe('mutation.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
     const mutationFile = plans.find((p) => p.outputPath.endsWith('mutation.resolver.ts'));
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`

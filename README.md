@@ -21,21 +21,57 @@ Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the
 
 ## Try it now
 
-Note: The developer experience will change significantly as we work with customers and users.
+Prerequisites:
+
+- An Anthorpic API key ([Get one here](https://console.anthropic.com/settings/keys))
 
 ```bash
-# optional: start the example existing services and sites
+# Install and build all the dependencies
+pnpm install
+
+# Run this in a separate terminal to get familiar with the mock existing services and sites
 pnpm start:examples
 
-# add your *ANTHROPIC_API_KEY* to the .env file
-pnpm i && pnpm generate:all
+# Make sure your have a .env file and that the *ANTHROPIC_API_KEY* is set in there
+cp .env.example .env
 
-# A shopping-assistant dir will be created one level above auto-engineer.
-# You should open this as a separate project in your IDE
-cd ../shopping-assistant && pnpm start
+# Run this in a terminal window to the side and keep reading below
+pnpm generate:all
 ```
 
-You can now navigate and play with the locally running UI and graphql servers.
+## What's Happening?
+
+There is an example in `examples/shopping-assistant` that is copied to a level above the `auto-engineer` directory where you ran the above commands.
+
+The `shopping-assistant` is the project and `auto-engineer` works on that with you. In the near future, you'll access `auto-engineer through a CLI.
+
+Under this new `shopping-assistant` directory, you'll see `flows/shopping-assistant.flow.ts`. This is where you all the system design and specifications happen. The idea is that flow files are all you need to build out entire apps.
+
+When the `generate:all` task above has completed, you can run the generated code like this:
+
+```bash
+cd ../shopping-assistant
+pnpm start
+```
+
+You will see the URLs for a server and client. Feel free to explore the code.
+
+Next, try to modify the flow under `flows/shopping-assistant.flow.ts` by adding/changing some specs to the client section, then run this:
+
+```bash
+# run this command from the auto-engineer folder
+pnpm rebuild:client
+```
+
+Pay special attention to the integrations, where you see data `sources` and `sinks` being defined. This approach allows deep integration into external systems. See the `server/src/integrations` folder for more details.
+
+Note: The developer experience will improve dramatically as we work with customers and users. The end goal is to have you type:
+
+```shell
+npx auto start
+```
+
+This would start a Meteor-like experience where you modify the flows and other source files, and auto-engineer knows which tasks to rerun efficiently and rebuid the app.
 
 ## 🎯 How It Works
 
@@ -43,10 +79,10 @@ You can now navigate and play with the locally running UI and graphql servers.
 
 Auto automates the SDLC through a configurable pipeline of agentic and procedural modules. The process turns high-level models into production-ready code through these key stages:
 
-1.  **Flow Modeling**: You (or an AI) start by creating a high-level "Flow Model". This defines system behavior through command, query, and reaction "slices" that specify both frontend and backend requirements. This is where the core design work happens.
+1.  **Flow Modeling**: You (or an AI) start by creating a high-level ["Flow Model"](#-flow-models). This defines system behavior through command, query, and reaction "slices" that specify both frontend and backend requirements. This is where the core design work happens.
 2.  **IA Generation**: An "information architect" agent automatically generates an information architecture schema from your model, similar to how a UX designer creates a wireframes.
 3.  **Deterministic Scaffolding**: The IA schema is used to generate a complete, deterministic application scaffold.
-4.  **Prompt-Driven Implementation**: The scaffold is populated with placeholders containing implementation hints and in-situ prompts. The initial flow model also generates deterministic tests. This combination of fine-grained prompts and tests precisely guides the AI.
+4.  **Spec-Driven Precision**: The scaffold is populated with placeholders containing implementation hints and in-situ prompts. The initial flow model also generates deterministic tests. This combination of fine-grained prompts and tests precisely guides the AI.
 5.  **AI Coding & Testing Loop**: An AI agent implements the code based on the prompts and context from previous steps. As code is written, tests are run. If they fail, the AI gets the error feedback and self-corrects, usually within 1-3 attempts.
 6.  **Comprehensive Quality Checks**: After passing the tests, the code goes through further checks, including linting, runtime validation, and AI-powered visual testing to ensure design system compliance.
 
@@ -94,75 +130,97 @@ With these 3 basic building blocks, you can build the majority of information sy
 
 ```typescript
 flow('Seasonal Assistant', () => {
-  commandSlice('Suggest Shopping Items').server(() => {
-    data([
-      sink()
-        .command('SuggestShoppingItems')
-        .toIntegration(AI, 'DoChat', 'command')
-        .withState(source().state('Products').fromIntegration(ProductCatalog))
-        .additionalInstructions(
-          'add this to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
-        ),
-      sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
-    ]);
-    specs('When chat is triggered, AI suggests items based on product catalog', () => {
-      given([
-        State.Products({
-          products: [
-            {
-              productId: 'prod-soccer-ball',
-              name: 'Super Soccer Ball',
-              price: 10,
-              imageUrl: 'https://example.com/soccer-ball.jpg',
-            },
-            {
-              productId: 'prod-craft-kit',
-              name: 'Deluxe Craft Kit',
-              price: 25,
-              imageUrl: 'https://example.com/craft-kit.jpg',
-            },
-            {
-              productId: 'prod-laptop-bag',
-              name: 'Tech Laptop Backpack',
-              price: 45,
-              imageUrl: 'https://example.com/laptop-bag.jpg',
-            },
-            {
-              productId: 'prod-mtg-starter',
-              name: 'Magic the Gathering Starter Set',
-              price: 30,
-              imageUrl: 'https://example.com/mtg-starter.jpg',
-            },
-          ],
-        }),
-      ])
-        .when(
-          Commands.SuggestShoppingItems({
-            sessionId: 'session-abc',
-            prompt: 'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts.',
-          }),
-        )
-        .then([
-          Events.ShoppingItemsSuggested({
-            sessionId: 'session-abc',
-            suggestedItems: [
+  commandSlice('Suggest Shopping Items')
+    .client(() => {
+      specs('Assistant Chat Interface', () => {
+        should('allow shopper to describe their shopping needs in natural language');
+        should('provide a text input for entering criteria');
+        should('show examples of what to include (age, interests, budget)');
+        should('show a button to submit the criteria');
+        should('generate a persisted session id for a visit');
+        should('show the header on top of every page');
+      });
+    })
+    .request(gql`
+      mutation EnterShoppingCriteria($input: EnterShoppingCriteriaInput!) {
+        enterShoppingCriteria(input: $input) {
+          success
+          error {
+            type
+            message
+          }
+        }
+      }
+    `)
+    .server(() => {
+      data([
+        sink()
+          .command('SuggestShoppingItems')
+          .toIntegration(AI, 'DoChat', 'command')
+          .withState(source().state('Products').fromIntegration(ProductCatalog))
+          .additionalInstructions(
+            'add this to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
+          ),
+        sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
+      ]);
+      specs('When chat is triggered, AI suggests items based on product catalog', () => {
+        given([
+          State.Products({
+            products: [
               {
                 productId: 'prod-soccer-ball',
                 name: 'Super Soccer Ball',
-                quantity: 1,
-                reason: 'Perfect for your daughter who loves soccer',
+                price: 10,
+                imageUrl: 'https://example.com/soccer-ball.jpg',
               },
               {
                 productId: 'prod-craft-kit',
                 name: 'Deluxe Craft Kit',
-                quantity: 1,
-                reason: 'Great for creative activities and crafts',
+                price: 25,
+                imageUrl: 'https://example.com/craft-kit.jpg',
+              },
+              {
+                productId: 'prod-laptop-bag',
+                name: 'Tech Laptop Backpack',
+                price: 45,
+                imageUrl: 'https://example.com/laptop-bag.jpg',
+              },
+              {
+                productId: 'prod-mtg-starter',
+                name: 'Magic the Gathering Starter Set',
+                price: 30,
+                imageUrl: 'https://example.com/mtg-starter.jpg',
               },
             ],
           }),
-        ]);
+        ])
+          .when(
+            Commands.SuggestShoppingItems({
+              sessionId: 'session-abc',
+              prompt: 'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts.',
+            }),
+          )
+          .then([
+            Events.ShoppingItemsSuggested({
+              sessionId: 'session-abc',
+              suggestedItems: [
+                {
+                  productId: 'prod-soccer-ball',
+                  name: 'Super Soccer Ball',
+                  quantity: 1,
+                  reason: 'Perfect for your daughter who loves soccer',
+                },
+                {
+                  productId: 'prod-craft-kit',
+                  name: 'Deluxe Craft Kit',
+                  quantity: 1,
+                  reason: 'Great for creative activities and crafts',
+                },
+              ],
+            }),
+          ]);
+      });
     });
-  });
 
   reactSlice('finds items in product catalogue').server(() => {
     specs('When shopping criteria are entered, request wishlist creation', () => {
@@ -207,6 +265,14 @@ flow('Seasonal Assistant', () => {
   });
 
   querySlice('views suggested items')
+    .client(() => {
+      specs('Suggested Items Screen', () => {
+        should('display all suggested items with names and reasons');
+        should('show quantity selectors for each item');
+        should('have an "Add to Cart" button for selected items');
+        should('allow removing items from the suggestions');
+      });
+    })
     .request(gql`
       query GetSuggestedItems($sessionId: ID!) {
         suggestedItems(sessionId: $sessionId) {
@@ -219,14 +285,6 @@ flow('Seasonal Assistant', () => {
         }
       }
     `)
-    .client(() => {
-      specs('Suggested Items Screen', () => {
-        should('display all suggested items with names and reasons');
-        should('show quantity selectors for each item');
-        should('have an "Add to Cart" button for selected items');
-        should('allow removing items from the suggestions');
-      });
-    })
     .server(() => {
       data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection', 'sessionId')]);
       specs('Suggested items are available for viewing', () => {
