@@ -517,7 +517,7 @@ describe('decide.ts.ejs', () => {
              * ⚠️ Only read from inputs — never mutate them. \`evolve.ts\` handles state updates.
              *
              * Integration result shape (Products):
-             * products = {
+             * products?.data = {
              *   products: Array<{
              *     id: string;
              *     name: string };

@@ -77,7 +77,7 @@ case '<%= command %>': {
 <% if (integrationReturnFields.length > 0) { -%>
     *
     * Integration result shape (<%= integrationReturnType %>):
-    * <%= camelCase(integrationReturnType) %> = {
+    * <%= camelCase(integrationReturnType) %>?.data = {
     <%= integrationReturnFields.flatMap(formatFieldDocLine).join('\n') %>
     * }
 <% } -%>
