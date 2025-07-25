@@ -367,6 +367,10 @@ export async function generateStructuredDataWithAI<T>(
   const maxSchemaRetries = 3;
   let lastError: AIToolValidationError | undefined;
 
+  if (options.includeTools === true) await startServer();
+  const registeredTools = options.includeTools === true ? getRegisteredToolsForAI() : {};
+  const hasTools = Object.keys(registeredTools).length > 0;
+
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
       const model = getModel(provider, options.model);
@@ -381,6 +385,10 @@ export async function generateStructuredDataWithAI<T>(
         schemaDescription: options.schemaDescription,
         temperature: options.temperature,
         maxTokens: options.maxTokens,
+        ...(hasTools && {
+          tools: registeredTools,
+          toolChoice: 'auto' as const,
+        }),
       });
 
       return result.object;
