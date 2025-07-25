@@ -190,7 +190,7 @@ flow('Seasonal Assistant', () => {
         .toIntegration(AI, 'DoChat', 'command')
         .withState(source().state('Products').fromIntegration(ProductCatalog))
         .additionalInstructions(
-          'add the following to the DoChat systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
+          'add the following to the DoChat: schemaName: Products, systemPrompt: use the PRODUCT_CATALOGUE_PRODUCTS MCP tool to get product data',
         ),
       sink().event('ShoppingItemsSuggested').toStream('shopping-session-${sessionId}'),
     ]);

@@ -2,6 +2,7 @@
 const integrationData = (slice.server?.data ?? []).filter(d => d.destination?.type === 'integration');
 
 const integrationImports = new Map();
+const integrationSideEffectImports = new Set();
 
 for (const d of integrationData) {
     for (const system of d.destination?.systems ?? []) {
@@ -17,6 +18,7 @@ for (const d of integrationData) {
         const integration = (integrations ?? []).find(i => i.name === returnSystem);
         if (integration) {
             integrationImports.set(returnType, integration.source);
+            integrationSideEffectImports.add(integration.source);
         }
     }
 }
@@ -49,9 +51,16 @@ const integrationCalls = integrationData.map((d, i) => {
     };
 });
 
-const hasIntegration = integrationCalls.length > 0;
+const resultVarName = integrationCalls.find(call => !!call.varName)?.varName;
+const needsReturnValue = typeof resultVarName === 'string';
 %>
-<% integrationImports.forEach((importSource, importName) => { %>import { <%= importName %> } from '<%= importSource %>';<% }); %>
+
+<% integrationSideEffectImports.forEach((importSource) => { %>
+    import '<%= importSource %>';
+<% }); %>
+<% integrationImports.forEach((importSource, importName) => { %>
+    import { <%= importName %> } from '<%= importSource %>';
+<% }); %>
 import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
 import { evolve } from './evolve';
 import { initialState } from './state';
@@ -62,11 +71,11 @@ import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './
     /**
     * ## IMPLEMENTATION INSTRUCTIONS ##
     <% additionalInstructions.forEach(instr => { -%>
-        *
         * <%= instr %>
     <% }) -%>
     */
 <% } -%>
+
 const handler = CommandHandler({
 evolve,
 initialState,
@@ -87,16 +96,12 @@ command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>
         <%= call %>
 
     <% }) -%>
-    <%
-    const resultVarName = integrationCalls.find(call => !!call.varName)?.varName;
-    const needsReturnValue = typeof resultVarName === 'string';
-    %>
     await handler(eventStore, streamId, (state) =>
     <%- needsReturnValue
-            ? `// TODO: add ${resultVarName} as a parameter to decide once implemented above\n  decide(command, state, /* ${resultVarName} */)`
-            : `decide(command, state)` %>
+            ? `      // TODO: add ${resultVarName} as a parameter to decide once implemented above\n      decide(command, state, /* ${resultVarName} */)`
+            : `      decide(command, state)` %>
     );
-    return;// success (returns void)
+    return; // success (returns void)
     } catch (error: any) {
     return {
     type: 'SKIP',

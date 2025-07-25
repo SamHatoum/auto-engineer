@@ -256,8 +256,12 @@ describe('generateScaffoldFilePlans', () => {
     const handleFile = plans.find((p) => p.outputPath.endsWith('handle.ts'));
 
     expect(handleFile?.contents).toMatchInlineSnapshot(`
-      "import { AI } from '@auto-engineer/ai-integration';
+      "import '@auto-engineer/product-catalog-integration';
+
+      import { AI } from '@auto-engineer/ai-integration';
+
       import { Products } from '@auto-engineer/product-catalog-integration';
+
       import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
       import { evolve } from './evolve';
       import { initialState } from './state';
@@ -266,9 +270,9 @@ describe('generateScaffoldFilePlans', () => {
 
       /**
        * ## IMPLEMENTATION INSTRUCTIONS ##
-       *
        * Ensure systemPrompt includes product catalogue guidance
        */
+
       const handler = CommandHandler({
         evolve,
         initialState,

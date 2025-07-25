@@ -102,6 +102,7 @@ export async function generateTextWithAI(
   if (finalOptions.includeTools === true) {
     await startServer();
     const result = await generateTextWithToolsAI(prompt, provider, options);
+
     return result.text;
   }
 
@@ -473,6 +474,7 @@ export {
   getRegisteredTools,
   getRegisteredToolsForAI,
   getToolHandler,
+  getSchemaByName,
   executeRegisteredTool,
   type ToolHandler,
   type RegisteredTool,

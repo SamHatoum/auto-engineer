@@ -3,18 +3,38 @@ IllegalStateError<% if (usedErrors.includes('ValidationError')) { %>, Validation
 } from '@event-driven-io/emmett';
 import type { State } from './state';
 import type { <%= Object.keys(gwtMapping).map(pascalCase).join(', ') %> } from './commands';
-<%const fallbackEvents = Object.values(gwtMapping).flatMap(scenarios =>
+<%
+const fallbackEvents = Object.values(gwtMapping).flatMap(scenarios =>
         scenarios.flatMap(s => s.then?.filter(t => 'eventRef' in t) || [])
 );
 const uniqueEventTypes = [...new Set(fallbackEvents.map(e => pascalCase(e.eventRef)))];
 
-// Infer integration result type info like in handle.ts.ejs
 const integrationData = (slice.server?.data ?? []).filter(d => d.destination?.type === 'integration');
-const integration = integrationData[0]; // support first only
+const integration = integrationData[0];
 const integrationReturnType = integration?._withState?.target?.name;
 const integrationReturnSystem = integration?._withState?.origin?.systems?.[0];
 const integrationReturnImportSource = integrations?.find(i => i.name === integrationReturnSystem)?.source;
 const integrationReturnFields = messages?.find(m => m.name === integrationReturnType && m.type === 'state')?.fields ?? [];
+
+function formatFieldDocLine(field) {
+    const optional = field.required ? '' : '?';
+    const name = `${field.name}${optional}`;
+    const type = field.type;
+
+    if (type.startsWith('Array<{') && type.endsWith('}>')) {
+        const inner = type.slice(7, -1);
+        const entries = inner
+                .split(',')
+                .map(s => s.trim())
+                .map(pair => {
+                    const [k, v] = pair.split(':').map(p => p.trim());
+                    return `*     ${k}: ${v};`;
+                });
+        return [`*   ${name}: Array<{`, ...entries, `*   }>;`];
+    }
+
+    return [`*   ${name}: ${type};`];
+}
 -%>
 <% if (uniqueEventTypes.length > 0) { -%>
     import type { <%= uniqueEventTypes.join(', ') %> } from './events';
@@ -57,10 +77,8 @@ case '<%= command %>': {
 <% if (integrationReturnFields.length > 0) { -%>
     *
     * Integration result shape (<%= integrationReturnType %>):
-    * {
-    <%= integrationReturnFields.map(f =>
-            `       *   ${f.name}${f.required ? '' : '?'}: ${f.type}`
-    ).join('\n') %>
+    * <%= camelCase(integrationReturnType) %> = {
+    <%= integrationReturnFields.flatMap(formatFieldDocLine).join('\n') %>
     * }
 <% } -%>
 */

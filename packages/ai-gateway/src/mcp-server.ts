@@ -67,8 +67,6 @@ function createMcpHandler<T extends Record<string, unknown>>(
 }
 
 function createAiSdkTool(description: ToolDescription, handler: ToolHandler) {
-  // Create a Zod object schema from the input schema
-  // If inputSchema is empty, create a schema that accepts
   const parameterSchema =
     Object.keys(description.inputSchema).length > 0 ? z.object(description.inputSchema) : z.object({}).passthrough();
 
@@ -77,7 +75,21 @@ function createAiSdkTool(description: ToolDescription, handler: ToolHandler) {
     description: description.description,
     execute: async (args: Record<string, unknown>) => {
       const result = await handler(args);
-      return result.content[0]?.text || '';
+      const textOutput = result.content[0]?.text || '';
+
+      // If a schema is provided, parse and validate the JSON output
+      if (description.schema) {
+        try {
+          const parsed = JSON.parse(textOutput) as unknown;
+          description.schema.parse(parsed);
+          return textOutput; // Return original text output for consistency
+        } catch (parseError) {
+          console.warn(`Tool failed to parse/validate JSON output:`, parseError);
+          return textOutput; // Fallback to raw text
+        }
+      }
+
+      return textOutput;
     },
     ...(description.schema && { schema: description.schema }),
     ...(description.schemaName != null && { schemaName: description.schemaName }),
@@ -170,6 +182,16 @@ export async function executeRegisteredTool(name: string, params: Record<string,
     throw new Error(`Tool '${name}' not found`);
   }
   return await tool.handler(params);
+}
+
+export function getSchemaByName(schemaName: string): z.ZodSchema | undefined {
+  console.log();
+  for (const tool of toolRegistry.values()) {
+    if (tool.description?.schemaName === schemaName) {
+      return tool.description.schema;
+    }
+  }
+  return undefined;
 }
 
 export type { ToolResult, ToolDescription, ToolHandler, RegisteredTool };

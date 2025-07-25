@@ -1,5 +1,11 @@
 import { Integration, Event, Command } from '@auto-engineer/flowlang';
-import { generateTextWithAI, AIProvider, z } from '@auto-engineer/ai-gateway';
+import {
+  generateStructuredDataWithAI,
+  AIProvider,
+  z,
+  getSchemaByName,
+  generateTextWithAI,
+} from '@auto-engineer/ai-gateway';
 
 export type ChatCompleted = Event<
   'ChatCompleted',
@@ -16,6 +22,7 @@ export type DoChat = Command<
     sessionId: string;
     prompt: string;
     systemPrompt?: string;
+    schemaName?: string;
   }
 >;
 
@@ -33,23 +40,35 @@ export const AI: Integration<'ai', Record<string, never>, AICommands> = {
         sessionId: z.string(),
         prompt: z.string(),
         systemPrompt: z.string().optional(),
+        schemaName: z.string(),
       }),
     },
     DoChat: async <T>(command: DoChat): Promise<T> => {
-      const { prompt, systemPrompt } = command.data;
-      const fullPrompt =
-        systemPrompt?.trim() != null && systemPrompt !== ''
-          ? `${systemPrompt.trim()}\n\n${prompt.trim()}`
-          : prompt.trim();
+      const { prompt, systemPrompt, schemaName } = command.data;
 
+      const fullPrompt = systemPrompt?.trim() != null ? `${systemPrompt.trim()}\n\n${prompt.trim()}` : prompt.trim();
+
+      if (schemaName != null) {
+        const schema = getSchemaByName(schemaName);
+
+        if (schema) {
+          return await generateStructuredDataWithAI(fullPrompt, AIProvider.Anthropic, {
+            schema: schema as z.ZodSchema<T>,
+            schemaName,
+            schemaDescription: `AI output matching schema '${schemaName}'`,
+            includeTools: true,
+          });
+        }
+      }
       const raw = await generateTextWithAI(fullPrompt, AIProvider.Anthropic, {
         includeTools: true,
       });
+
       try {
         return JSON.parse(raw) as T;
       } catch (err) {
         throw new Error(
-          `Failed to parse AI response into expected shape: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to parse unstructured AI response: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     },
