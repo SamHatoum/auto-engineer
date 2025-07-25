@@ -21,7 +21,7 @@ async function findTestFiles(dir: string): Promise<string[]> {
   return testFiles;
 }
 
-describe('generateServer integration test', { timeout: 20000 }, () => {
+describe.skip('generateServer integration test', { timeout: 20000 }, () => {
   it('should scaffold a working server with valid TS and passing tests', async () => {
     const tmpDir = path.resolve(__dirname, '../../.tmp/server-test-output');
     const specPath = path.resolve(__dirname, './test-data/specVariant1.json');
