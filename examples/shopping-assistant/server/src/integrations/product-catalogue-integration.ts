@@ -11,8 +11,11 @@ export const ProductSchema = z.object({
   imageUrl: z.string().url(),
 });
 
-export const ProductsSchema = z.object({
-  products: z.array(ProductSchema),
+const ProductsSchema = z.object({
+  type: z.literal('Products'),
+  data: z.object({
+    products: z.array(ProductSchema),
+  }),
 });
 
 export type Product = {
