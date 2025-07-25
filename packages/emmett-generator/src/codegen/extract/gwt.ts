@@ -49,7 +49,7 @@ function mergeGwtConditions(gwts: GwtCondition[]): GwtCondition[] {
     const first = conditions[0];
     const combinedThen = conditions.flatMap((g) => g.then);
     return {
-      given: first.given,
+      given: conditions.flatMap((g) => g.given ?? []),
       when: first.when,
       then: combinedThen,
     };

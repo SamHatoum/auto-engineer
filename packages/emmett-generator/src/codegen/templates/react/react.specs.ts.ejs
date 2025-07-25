@@ -1,33 +1,47 @@
 <%
 const gwtList = slice.server?.gwt ?? [];
 const firstGwt = gwtList[0];
-const when = Array.isArray(firstGwt?.when) ? firstGwt.when[0] : firstGwt?.when;
-const firstEventType = when?.eventRef;
-const event = events.find(e => e.type === firstEventType);
-const eventImportPath = event ? toKebabCase(event.sourceSliceName) : 'unknown';
--%>
+const firstWhen = Array.isArray(firstGwt?.when) ? firstGwt.when[0] : firstGwt?.when;
+const firstThen = Array.isArray(firstGwt?.then) ? firstGwt.then[0] : firstGwt?.then;
+
+const eventType = firstWhen?.eventRef;
+const commandType = firstThen?.commandRef;
+
+const event = events.find(e => e.type === eventType);
+const command = commands.find(c => c.type === commandType);
+
+const eventImportPath = toKebabCase(event?.sourceSliceName ?? 'unknown');
+const commandImportPath = toKebabCase(command?.sourceSliceName ?? 'unknown');
+%>
 import { describe, it, beforeEach } from 'vitest';
 import 'reflect-metadata';
 import {
 getInMemoryEventStore,
 type InMemoryEventStore,
+type CommandSender,
 } from '@event-driven-io/emmett';
-import {
-type ReactorContext,
-ReactorSpecification,
-} from '../../../shared';
+import { type ReactorContext, ReactorSpecification } from '../../../shared';
 import { react } from './react';
-import type { <%= pascalCase(firstEventType) %> } from '../<%= eventImportPath %>/events';
+import type { <%= pascalCase(eventType) %> } from '../<%= eventImportPath %>/events';
+import type { <%= pascalCase(commandType) %> } from '../<%= commandImportPath %>/commands';
 
 describe('<%= pascalCase(flowName) %> | <%= pascalCase(slice.name) %>', () => {
 let eventStore: InMemoryEventStore;
-let given: ReturnType<typeof ReactorSpecification.for<any, any, ReactorContext>>;
+let given: ReactorSpecification<<%= pascalCase(eventType) %>, <%= pascalCase(commandType) %>, ReactorContext>;
+let messageBus: CommandSender;
 
 beforeEach(() => {
 eventStore = getInMemoryEventStore({});
-given = ReactorSpecification.for(
-react(),
-(commandSender) => ({ eventStore, commandSender })
+given = ReactorSpecification.for<<%= pascalCase(eventType) %>, <%= pascalCase(commandType) %>, ReactorContext>(
+() => react({ eventStore, commandSender: messageBus }),
+(commandSender) => {
+messageBus = commandSender;
+return {
+eventStore,
+commandSender,
+database: eventStore.database,
+};
+}
 );
 });
 
@@ -35,22 +49,32 @@ react(),
     const exampleEvent = Array.isArray(example.when) ? example.when[0] : example.when;
     const commands = example.then;
     const description = `should send ${commands.map(c => c.commandRef).join(', ')} when ${exampleEvent.eventRef} is received`;
--%>
+%>
 it('<%= description %>', async () => {
 await given([])
 .when({
 type: '<%= exampleEvent.eventRef %>',
-data: <%- JSON.stringify(exampleEvent.exampleData, null, 10) %>
+data: <%- formatDataObject(exampleEvent.exampleData, events.find(e => e.type === exampleEvent.eventRef)) %>
 })
-.then([
-<% for (const cmd of commands) { -%>
-    {
-    type: '<%= cmd.commandRef %>',
-    kind: 'Command',
-    data: <%- JSON.stringify(cmd.exampleData, null, 12) %>
-    },
-<% } -%>
-]);
+<% if (commands.length === 1) {
+    const commandSchema = commands[0];
+%>
+.then({
+type: '<%= commandSchema.commandRef %>',
+kind: 'Command',
+data: <%- formatDataObject(commandSchema.exampleData, messages.find(m => m.name === commandSchema.commandRef && m.type === 'command')) %>
 });
-<% } -%>
+<% } else { %>
+    .then([
+    <% for (const cmd of commands) { %>
+        {
+        type: '<%= cmd.commandRef %>',
+        kind: 'Command',
+        data: <%- formatDataObject(cmd.exampleData, messages.find(m => m.name === cmd.commandRef && m.type === 'command')) %>
+        },
+    <% } %>
+    ]);
+<% } %>
+});
+<% } %>
 });

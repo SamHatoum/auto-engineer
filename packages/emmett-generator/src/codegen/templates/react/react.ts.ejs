@@ -6,26 +6,28 @@ const then = Array.isArray(gwt?.then) ? gwt.then[0] : gwt?.then;
 const eventType = when?.eventRef;
 const commandType = then?.commandRef;
 const event = events.find(e => e.type === eventType);
-%>
+-%>
 import {
-type InMemoryReadEventMetadata,
+inMemoryReactor,
 type MessageHandlerResult,
-reactor,
 IllegalStateError,
 } from '@event-driven-io/emmett';
-import type { <%= pascalCase(eventType) %> } from '../<%= toKebabCase(event.sourceSliceName ?? 'unknown') %>/events';
+import type { <%= pascalCase(eventType) %> } from '../<%= toKebabCase(event?.sourceSliceName ?? 'unknown') %>/events';
 import type { ReactorContext } from '../../../shared';
 
-export const react = () =>
-reactor<<%= pascalCase(eventType) %>, InMemoryReadEventMetadata, ReactorContext>({
+export const react = ({ eventStore, commandSender }: ReactorContext) =>
+inMemoryReactor<<%= pascalCase(eventType) %>>({
 processorId: '<%= toKebabCase(flowName) %>-<%= toKebabCase(slice.name) %>',
 canHandle: ['<%= eventType %>'],
+connectionOptions: {
+database: eventStore.database,
+},
 eachMessage: async (event, context): Promise<MessageHandlerResult> => {
     /**
     * ## IMPLEMENTATION INSTRUCTIONS ##
     *
     * - Inspect event data to determine if the command should be sent.
-    * - Replace the placeholder logic and `throw` below with real implementation.
+    * - Replace the placeholder logic and \`throw\` below with real implementation.
     * - Send one or more commands via: context.commandSender.send({...})
     * - Optionally return a MessageHandlerResult for SKIP or error cases.
     */

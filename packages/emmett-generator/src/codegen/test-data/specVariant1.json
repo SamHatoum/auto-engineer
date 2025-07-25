@@ -40,6 +40,35 @@
           }
         },
         {
+          "type": "command",
+          "name": "Notify new item",
+          "description": "Handles the NotifyNewItem command",
+          "server": {
+            "description": "Sends a system notification and emits NotificationSent",
+            "gwt": [
+              {
+                "when": {
+                  "commandRef": "NotifyNewItem",
+                  "exampleData": {
+                    "itemId": "item_123",
+                    "message": "A new item was added to the system."
+                  }
+                },
+                "then": [
+                  {
+                    "eventRef": "NotificationSent",
+                    "exampleData": {
+                      "itemId": "item_123",
+                      "message": "A new item was added to the system.",
+                      "sentAt": "2024-01-15T10:00:00.000Z"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
           "type": "query",
           "name": "Get available items",
           "description": "Projection of available items",

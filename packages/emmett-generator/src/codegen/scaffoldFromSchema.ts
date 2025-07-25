@@ -30,7 +30,7 @@ const defaultFilesByType: Record<string, string[]> = {
     'register.ts.ejs',
   ],
   query: ['projection.ts.ejs', 'state.ts.ejs', 'projection.specs.ts.ejs', 'query.resolver.ts.ejs'],
-  react: ['react.ts.ejs', 'react.specs.ts.ejs'],
+  react: ['react.ts.ejs', 'react.specs.ts.ejs', 'register.ts.ejs'],
 };
 
 export interface FilePlan {
@@ -223,6 +223,33 @@ function findEventSource(flows: Flow[], eventType: string): { flowName: string; 
   return null;
 }
 
+function annotateCommandSources(
+  commands: Message[],
+  flows: Flow[],
+  fallbackFlowName: string,
+  fallbackSliceName: string,
+): void {
+  for (const command of commands) {
+    const match = findCommandSource(flows, command.type);
+    command.sourceFlowName = match?.flowName ?? fallbackFlowName;
+    command.sourceSliceName = match?.sliceName ?? fallbackSliceName;
+  }
+}
+
+function findCommandSource(flows: Flow[], commandType: string): { flowName: string; sliceName: string } | null {
+  for (const flow of flows) {
+    for (const slice of flow.slices) {
+      if (slice.type !== 'command') continue;
+
+      const gwt = slice.server?.gwt ?? [];
+      if (gwt.some((g) => 'commandRef' in g.when && g.when.commandRef === commandType)) {
+        return { flowName: flow.name, sliceName: slice.name };
+      }
+    }
+  }
+  return null;
+}
+
 async function generateFilesForSlice(
   slice: Slice,
   flow: Flow,
@@ -241,6 +268,7 @@ async function generateFilesForSlice(
     extracted.events.map((e) => e.type),
   );
   annotateEventSources(extracted.events, flows, flow.name, slice.name);
+  annotateCommandSources(extracted.commands, flows, flow.name, slice.name);
 
   const templateData = await prepareTemplateData(
     slice,

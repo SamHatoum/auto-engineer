@@ -181,9 +181,32 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
         slice.server.gwt.forEach((gwt) => {
           // Process given
           if ('given' in gwt && gwt.given) {
-            gwt.given.forEach((event) => {
-              if (!messages.has(event.eventRef)) {
-                messages.set(event.eventRef, createMessage(event.eventRef, event.exampleData, 'event'));
+            // eslint-disable-next-line complexity
+            gwt.given.forEach((item) => {
+              // Handle flow builder format (type + data)
+              if ('type' in item && '__messageCategory' in item) {
+                const messageCategory = item.__messageCategory;
+                const messageType =
+                  messageCategory === 'event' ? 'event' : messageCategory === 'command' ? 'command' : 'state';
+                const gwtMessage = createMessage(item.type as string, item.exampleData, messageType);
+                const existingMessage = messages.get(item.type as string);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(item.type as string, gwtMessage);
+                }
+              }
+              if ('eventRef' in item) {
+                const gwtMessage = createMessage(item.eventRef, item.exampleData, 'event');
+                const existingMessage = messages.get(item.eventRef);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(item.eventRef, gwtMessage);
+                }
+              }
+              if ('stateRef' in item) {
+                const gwtMessage = createMessage(item.stateRef as string, item.exampleData, 'state');
+                const existingMessage = messages.get(item.stateRef as string);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(item.stateRef as string, gwtMessage);
+                }
               }
             });
           }
@@ -192,14 +215,18 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
           if ('when' in gwt) {
             if ('commandRef' in gwt.when) {
               // Command slice
-              if (!messages.has(gwt.when.commandRef)) {
-                messages.set(gwt.when.commandRef, createMessage(gwt.when.commandRef, gwt.when.exampleData, 'command'));
+              const gwtMessage = createMessage(gwt.when.commandRef, gwt.when.exampleData, 'command');
+              const existingMessage = messages.get(gwt.when.commandRef);
+              if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                messages.set(gwt.when.commandRef, gwtMessage);
               }
             } else if (Array.isArray(gwt.when)) {
               // React slice
               gwt.when.forEach((event) => {
-                if (!messages.has(event.eventRef)) {
-                  messages.set(event.eventRef, createMessage(event.eventRef, event.exampleData, 'event'));
+                const gwtMessage = createMessage(event.eventRef, event.exampleData, 'event');
+                const existingMessage = messages.get(event.eventRef);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(event.eventRef, gwtMessage);
                 }
               });
             }
@@ -209,16 +236,22 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
           if ('then' in gwt && gwt.then !== undefined) {
             gwt.then.forEach((item) => {
               if ('eventRef' in item) {
-                if (!messages.has(item.eventRef)) {
-                  messages.set(item.eventRef, createMessage(item.eventRef, item.exampleData, 'event'));
+                const gwtMessage = createMessage(item.eventRef, item.exampleData, 'event');
+                const existingMessage = messages.get(item.eventRef);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(item.eventRef, gwtMessage);
                 }
               } else if ('commandRef' in item) {
-                if (!messages.has(item.commandRef)) {
-                  messages.set(item.commandRef, createMessage(item.commandRef, item.exampleData, 'command'));
+                const gwtMessage = createMessage(item.commandRef, item.exampleData, 'command');
+                const existingMessage = messages.get(item.commandRef);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(item.commandRef, gwtMessage);
                 }
               } else if ('stateRef' in item) {
-                if (!messages.has(item.stateRef)) {
-                  messages.set(item.stateRef, createMessage(item.stateRef, item.exampleData, 'state'));
+                const gwtMessage = createMessage(item.stateRef, item.exampleData, 'state');
+                const existingMessage = messages.get(item.stateRef);
+                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
+                  messages.set(item.stateRef, gwtMessage);
                 }
               }
             });

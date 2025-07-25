@@ -4,6 +4,7 @@ import {
   type ErrorConstructor,
   AssertionError,
   assertTrue,
+  type MessageProcessor,
 } from '@event-driven-io/emmett';
 
 interface CommandCheck<CommandType> {
@@ -34,9 +35,7 @@ interface ReactorSpecificationReturn<Event, Command, Context> {
 export interface ReactorSpecification<
   Event,
   Command,
-  Context extends { commandSender: CommandSender } = {
-    commandSender: CommandSender;
-  },
+  Context extends { commandSender: CommandSender } = { commandSender: CommandSender },
 > {
   (givenEvents: Event | Event[]): ReactorSpecificationReturn<Event, Command, Context>;
 }
@@ -66,27 +65,18 @@ function createMockCommandSender<Command>(): MockCommandSender<Command> {
   } as MockCommandSender<Command>;
 }
 
-function reactorSpecificationFor<Event, Command, Context extends { commandSender: CommandSender }>(
+type ReactorLike<Event, Context> =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  processorOrReactor: any,
+  | { handle: (events: Event[], context: Context) => Promise<any> }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | { eachMessage: (event: Event, context: Context) => Promise<any> }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | MessageProcessor<any, any, any>;
+
+function reactorSpecificationFor<Event, Command, Context extends { commandSender: CommandSender }>(
+  processorOrReactor: ReactorLike<Event, Context> | (() => ReactorLike<Event, Context>),
   createContext: (commandSender: CommandSender) => Context,
 ): ReactorSpecification<Event, Command, Context> {
-  const reactor = {
-    handle: async (events: unknown[], context: Context) => {
-      // Handle the case where we have a MessageProcessor with eachMessage
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
-      if (processorOrReactor.eachMessage) {
-        for (const event of events) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          await processorOrReactor.eachMessage(event, context);
-        }
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const result = processorOrReactor.handle(events, context);
-        await result;
-      }
-    },
-  };
   return (givenEvents: Event | Event[]) => {
     return {
       when: (whenEvent: Event | Event[], contextOverride?: Context) => {
@@ -98,15 +88,37 @@ function reactorSpecificationFor<Event, Command, Context extends { commandSender
           const givenArray = Array.isArray(givenEvents) ? givenEvents : givenEvents != null ? [givenEvents] : [];
           const whenArray = Array.isArray(whenEvent) ? whenEvent : [whenEvent];
           const allEvents = [...givenArray, ...whenArray];
-          let eventsToHandle = allEvents;
-          const getMetadata = () => ({});
-          eventsToHandle = allEvents.map((event) => ({
+
+          // Transform events to have metadata
+          const eventsWithMetadata = allEvents.map((event, index) => ({
             ...event,
             kind: 'Event' as const,
-            metadata: getMetadata(),
+            metadata: {
+              streamName: 'test-stream',
+              messageId: `test-${index}`,
+              streamPosition: BigInt(index + 1),
+              globalPosition: BigInt(index + 1),
+            },
           }));
+
           const contextWithMock = { ...context, commandSender: mockCommandSender };
-          await reactor.handle(eventsToHandle, contextWithMock);
+
+          // Get the actual reactor instance
+          const reactor = typeof processorOrReactor === 'function' ? processorOrReactor() : processorOrReactor;
+
+          // Handle different reactor types
+          if ('handle' in reactor && typeof reactor.handle === 'function') {
+            // It's a MessageProcessor or has a handle method
+            await reactor.handle(eventsWithMetadata, contextWithMock);
+          } else if ('eachMessage' in reactor && typeof reactor.eachMessage === 'function') {
+            // It has eachMessage
+            for (const event of eventsWithMetadata) {
+              await reactor.eachMessage(event, contextWithMock);
+            }
+          } else {
+            throw new Error('Reactor must have either a handle or eachMessage method');
+          }
+
           return mockCommandSender.sentCommands;
         };
 
