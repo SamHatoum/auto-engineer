@@ -22,8 +22,7 @@ import { cn } from '@/lib/utils';
 //   variable: "--font-inter",
 // })
 
-export const fontVariables =
-  cn();
-  // fontSans.variable,
-  // fontMono.variable,
-  // fontInter.variable
+export const fontVariables = cn();
+// fontSans.variable,
+// fontMono.variable,
+// fontInter.variable
