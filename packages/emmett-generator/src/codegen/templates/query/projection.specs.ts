@@ -198,7 +198,7 @@ describe('projection.ts.ejs', () => {
       type AllEvents = ListingCreated | ListingRemoved;
 
       export const projection = inMemorySingleStreamProjection<AvailableListings, AllEvents>({
-        collectionName: 'available-properties-projection',
+        collectionName: 'AvailablePropertiesProjection',
         canHandle: ['ListingCreated', 'ListingRemoved'],
         getDocumentId: (event) => event.data.propertyId,
         evolve: (

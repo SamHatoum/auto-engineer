@@ -31,7 +31,7 @@ export const projection = inMemorySingleStreamProjection<
 <%= pascalCase(slice.server?.data?.[0]?.target?.name || 'UnknownState') %>,
 AllEvents
 >({
-collectionName: '<%= toKebabCase(slice.server?.data?.[0]?.origin?.name || "unknown-collection") %>',
+collectionName: '<%= pascalCase(slice.server?.data?.[0]?.origin?.name || "unknown-collection") %>',
 canHandle: [<%- events.map(e => `'${e.type}'`).join(', ') %>],
 getDocumentId: (event) => event.data.<%= slice.server?.data?.[0]?.origin?.idField ?? 'id' %>,
 evolve: (
