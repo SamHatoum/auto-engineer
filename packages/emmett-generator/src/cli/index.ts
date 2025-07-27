@@ -137,10 +137,10 @@ async function writePackage(dest: string): Promise<void> {
     private: true,
     type: 'module',
     scripts: {
-      start: 'tsx src/server.ts',
+      start: 'tsx --no-deprecation src/server.ts',
       'type-check': 'tsc --noEmit',
       test: 'vitest run',
-      dev: 'tsx src/server.ts',
+      dev: 'tsx --no-deprecation src/server.ts',
     },
     dependencies: resolveDeps([
       '@event-driven-io/emmett',
