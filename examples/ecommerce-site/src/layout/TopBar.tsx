@@ -35,7 +35,7 @@ export function TopBar() {
             <NavigationMenuItem
               style={{ cursor: 'pointer' }}
               onClick={() => {
-                window.open('http://localhost:8080');
+                window.location.href = 'http://localhost:8080';
               }}
             >
               Shopping Assistant
