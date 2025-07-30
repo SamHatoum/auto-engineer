@@ -87,32 +87,6 @@ type AddItemsToCart = Command<
   }
 >;
 
-// declareMessages(() => ({
-//   Commands: [
-//     {
-//       name: 'DoChat',
-//       schema: z.object({
-//         sessionId: z.string(),
-//         prompt: z.string(),
-//       }),
-//     },
-//   ],
-//   State: [
-//     {
-//       name: 'Products',
-//       schema: z.object({
-//         products: z.array(
-//             z.object({
-//               productId: z.string(),
-//               name: z.string(),
-//               price: z.number(),
-//             }),
-//         ),
-//       }),
-//     },
-//   ],
-// }));
-
 const { Events, Commands, State } = createBuilders()
   .events<ShoppingCriteriaEntered | ShoppingItemsSuggested | ChatCompleted | ItemsAddedToCart>()
   .commands<EnterShoppingCriteria | SuggestShoppingItems | DoChat | AddItemsToCart>()
@@ -130,7 +104,7 @@ flow('Seasonal Assistant', () => {
         should('show examples of what to include (age, interests, budget)');
         should('show a button to submit the criteria');
         should('generate a persisted session id for a visit');
-        should('show the header on top of every page');
+        should('show the header on top of the page');
       });
     })
     .request(gql`
@@ -373,6 +347,7 @@ flow('Seasonal Assistant', () => {
       });
     })
     .server(() => {
+      data([sink().event('ItemsAddedToCart').toStream('shopping-session-${sessionId}')]);
       specs('When shopper accepts items, they are added to cart', () => {
         when(
           Commands.AddItemsToCart({
