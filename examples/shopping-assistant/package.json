@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm run build:flow-schema",
-    "build:flow-schema": "mkdir -p .context && tsx scripts/export-schema.ts",
+    "build:flow-schema": "node -e \"const fs=require('fs');const path=require('path');if(!fs.existsSync('.context'))fs.mkdirSync('.context',{recursive:true});\" && tsx scripts/export-schema.ts",
     "start": "dotenv -e .env -- pnpm --parallel start"
   },
   "dependencies": {
