@@ -174,7 +174,9 @@ export async function generateTextWithToolsAI(
   const modelInstance = getModel(provider, model);
 
   const registeredTools = finalOptions.includeTools === true ? getRegisteredToolsForAI() : {};
+  console.log('registeredTools', registeredTools);
   const hasTools = Object.keys(registeredTools).length > 0;
+  console.log('hasTools', hasTools);
 
   // Build conversation messages
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [{ role: 'user', content: prompt }];
@@ -187,7 +189,7 @@ export async function generateTextWithToolsAI(
   while (attempts < maxAttempts) {
     attempts++;
 
-    const result = await generateText({
+    const opts = {
       model: modelInstance,
       messages,
       temperature: finalOptions.temperature,
@@ -196,7 +198,10 @@ export async function generateTextWithToolsAI(
         tools: registeredTools,
         toolChoice: 'auto' as const,
       }),
-    });
+    };
+    console.log('opts', opts);
+    const result = await generateText(opts);
+    console.log('result', JSON.stringify(result, null, 2));
 
     // Add assistant message to conversation
     if (result.text) {
@@ -369,15 +374,18 @@ export async function generateStructuredDataWithAI<T>(
 
   if (options.includeTools === true) await startServer();
   const registeredTools = options.includeTools === true ? getRegisteredToolsForAI() : {};
+  console.log('registeredTools', registeredTools);
   const hasTools = Object.keys(registeredTools).length > 0;
+  console.log('hasTools', hasTools);
 
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
       const model = getModel(provider, options.model);
 
       const enhancedPrompt = attempt > 0 && lastError ? getEnhancedPrompt(prompt, lastError) : prompt;
+      console.log('enhancedPrompt', enhancedPrompt);
 
-      const result = await generateObject({
+      const opts = {
         model,
         prompt: enhancedPrompt,
         schema: options.schema,
@@ -389,8 +397,10 @@ export async function generateStructuredDataWithAI<T>(
           tools: registeredTools,
           toolChoice: 'auto' as const,
         }),
-      });
-
+      };
+      console.log('opts', opts);
+      const result = await generateObject(opts);
+      console.log('result', JSON.stringify(result, null, 2));
       return result.object;
     } catch (error: unknown) {
       lastError =

@@ -102,6 +102,8 @@ export function registerTool<T extends Record<string, unknown> = Record<string, 
   description: ToolDescription,
   handler: ToolHandler<T>,
 ) {
+  console.log(`🔧 Registering MCP tool: ${name}`);
+
   if (isStarted) {
     throw new Error('Cannot register tools after server has started');
   }
@@ -118,6 +120,7 @@ export function registerTool<T extends Record<string, unknown> = Record<string, 
 
   toolRegistry.set(name, registeredTool);
   server.registerTool(name, description, mcpHandler);
+  console.log(`✅ Tool ${name} registered successfully. Total tools: ${toolRegistry.size}`);
 }
 
 export function registerTools<T extends Record<string, unknown> = Record<string, unknown>>(
@@ -158,6 +161,7 @@ export function getRegisteredToolsForAI(): Record<
     execute?: (args: Record<string, unknown>) => Promise<string>;
   }
 > {
+  console.log(`📋 Getting registered tools for AI. Registry size: ${toolRegistry.size}`);
   const tools: Record<
     string,
     {
@@ -168,7 +172,9 @@ export function getRegisteredToolsForAI(): Record<
   > = {};
   for (const tool of toolRegistry.values()) {
     tools[tool.name] = tool.aiSdkTool;
+    console.log(`  - Tool: ${tool.name}`);
   }
+  console.log(`📊 Returning ${Object.keys(tools).length} tools for AI`);
   return tools;
 }
 
