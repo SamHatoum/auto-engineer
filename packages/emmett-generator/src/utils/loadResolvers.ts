@@ -8,7 +8,7 @@ export async function loadResolvers(source: string): Promise<Resolver[]> {
   const files = await fg(source, {
     absolute: true,
   });
-  const modules: unknown[] = await Promise.all(files.map((file) => import(file)));
+  const modules: unknown[] = await Promise.all(files.map((file) => import(`file://${file}`)));
   const allResolvers: Resolver[] = [];
 
   for (const mod of modules) {

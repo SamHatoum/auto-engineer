@@ -224,7 +224,7 @@ async function main() {
     });
     const printedSchema = printSchema(schema);
 
-    const contextDir = path.resolve('${workingDir}', '.context');
+    const contextDir = path.resolve(process.cwd(), '${workingDir}', '.context');
     const schemaPath = path.join(contextDir, 'schema.graphql');
     await writeFile(schemaPath, printedSchema, 'utf-8');
 
