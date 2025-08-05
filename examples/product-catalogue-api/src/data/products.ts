@@ -40,8 +40,7 @@ export const mockProducts: ProductCatalogItem[] = [
     category: 'Games',
     price: 30,
     tags: ['magic', 'tcg', 'games'],
-    imageUrl:
-      'https://www.fantasywelt.de/media/image/product/183022/lg/magic-the-gathering-bloomburrow-starter-kit-2024-en.jpg',
+    imageUrl: 'https://www.steelcitycollectibles.com/storage/img/uploads/products/full/mtgbloomstarterbox90586.jpg',
   },
   {
     productId: 'prod-pencils',
