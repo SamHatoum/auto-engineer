@@ -1,2 +1,2 @@
 export * from './types';
-export { MessageBus } from './message-bus';
+export { createMessageBus, type MessageBus } from './message-bus';

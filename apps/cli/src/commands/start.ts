@@ -6,8 +6,8 @@ import { Config } from '../utils/config.js';
 import { createOutput } from '../utils/terminal.js';
 import { handleError } from '../utils/errors.js';
 import { Analytics } from '../utils/analytics.js';
-import { MessageBus } from '@auto-engineer/message-bus';
-import { createFlowCommandHandler, CreateFlowCommand } from '@auto-engineer/flowlang-agent';
+import { createMessageBus } from '@auto-engineer/message-bus';
+import { createFlowCommandHandler, CreateFlowCommand, handleCreateFlowCommand } from '@auto-engineer/flowlang-agent';
 import { type AppSchema } from '@auto-engineer/flowlang';
 
 // Type definitions for better type safety
@@ -598,7 +598,7 @@ function renderColoredText(lines: string[]): string {
 }
 
 // Initialize message bus
-const messageBus = new MessageBus();
+const messageBus = createMessageBus();
 messageBus.registerCommandHandler(createFlowCommandHandler);
 
 interface StreamData {
@@ -614,23 +614,18 @@ async function sendFlowCommand(
 ): Promise<AppSchema> {
   const command: CreateFlowCommand = {
     type: 'CreateFlow',
+    data: {
+      prompt,
+      variant,
+      useStreaming: true,
+      streamCallback: onStream,
+    },
     requestId: `req-${Date.now()}`,
     timestamp: new Date(),
-    prompt,
-    variant,
-    useStreaming: true,
-    streamCallback: onStream,
   };
 
-  const response = await messageBus.sendCommand(command);
-
-  if (response.status === 'nack') {
-    throw new Error(response.error ?? 'Failed to create flow');
-  }
-
-  // Parse the response to get the FlowCreatedEvent
-  const event = JSON.parse(response.message ?? '{}') as { systemData: AppSchema };
-  return event.systemData;
+  // Use direct function call for now to get return value
+  return await handleCreateFlowCommand(command);
 }
 
 const validateAppPrompt = (input: string): true | string => {
