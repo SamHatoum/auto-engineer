@@ -1,1 +1,1 @@
-export * from './cart-integration.js';
+export * from './cart-integration';

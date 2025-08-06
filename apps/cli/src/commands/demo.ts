@@ -2,10 +2,10 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import ora from 'ora';
 import chalk from 'chalk';
-import { Config } from '../utils/config.js';
-import { createOutput } from '../utils/terminal.js';
-import { handleError } from '../utils/errors.js';
-import { Analytics } from '../utils/analytics.js';
+import { Config } from '../utils/config';
+import { createOutput } from '../utils/terminal';
+import { handleError } from '../utils/errors';
+import { Analytics } from '../utils/analytics';
 import markedTerminal from 'marked-terminal';
 import { marked } from 'marked';
 

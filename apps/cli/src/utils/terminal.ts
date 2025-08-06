@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Config } from './config.js';
+import { Config } from './config';
 
 export const supportsColor = (config: Config): boolean => {
   if (config.noColor) return false;

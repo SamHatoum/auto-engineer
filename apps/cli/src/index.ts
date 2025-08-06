@@ -4,14 +4,14 @@ import chalk from 'chalk';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
 
-import { loadConfig, validateConfig } from './utils/config.js';
-import { handleError } from './utils/errors.js';
-import { createOutput, supportsColor } from './utils/terminal.js';
-import { Analytics } from './utils/analytics.js';
+import { loadConfig, validateConfig } from './utils/config';
+import { handleError } from './utils/errors';
+import { createOutput, supportsColor } from './utils/terminal';
+import { Analytics } from './utils/analytics';
 
-import { createInitCommand } from './commands/init.js';
-import { createDemoCommand } from './commands/demo.js';
-import { createStartCommand } from './commands/start.js';
+import { createInitCommand } from './commands/init';
+import { createDemoCommand } from './commands/demo';
+import { createStartCommand } from './commands/start';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 

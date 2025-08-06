@@ -1,17 +1,25 @@
 {
   "name": "@auto-engineer/flowlang",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "create-auto-example": "./dist/bin/create-auto-example.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./commands/create-example": {
+      "types": "./dist/commands/create-example.d.ts",
+      "import": "./dist/commands/create-example.js"
     }
   },
   "dependencies": {
+    "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.3",
     "fast-glob": "^3.3.3",
     "graphql": "^16.11.0",
@@ -20,7 +28,7 @@
     "zod-to-json-schema": "^3.22.3"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && rm -rf dist/templates && cp -r src/templates dist/templates && chmod +x dist/bin/create-auto-example.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",

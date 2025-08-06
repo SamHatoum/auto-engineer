@@ -1,5 +1,5 @@
-import { Config } from './config.js';
-import { createOutput } from './terminal.js';
+import { Config } from './config';
+import { createOutput } from './terminal';
 
 export interface AnalyticsData {
   command: string;

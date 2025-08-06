@@ -1,1 +1,1 @@
-export * from './ai-integration.js';
+export * from './ai-integration';

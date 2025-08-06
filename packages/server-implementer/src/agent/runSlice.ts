@@ -3,8 +3,8 @@ import fg from 'fast-glob';
 import { generateTextWithAI, getAvailableProviders } from '@auto-engineer/ai-gateway';
 import { readFile, writeFile, access } from 'fs/promises';
 import { execa } from 'execa';
-import { SYSTEM_PROMPT } from '../prompts/systemPrompt.js';
-import { extractCodeBlock } from '../utils/extractCodeBlock.js';
+import { SYSTEM_PROMPT } from '../prompts/systemPrompt';
+import { extractCodeBlock } from '../utils/extractCodeBlock';
 import { runTests } from './runTests';
 
 const availableProviders = getAvailableProviders();

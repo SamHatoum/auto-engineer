@@ -1,4 +1,4 @@
-import { createError } from './errors.js';
+import { createError } from './errors';
 
 export interface Config {
   debug: boolean;

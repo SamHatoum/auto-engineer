@@ -1,1 +1,1 @@
-export * from './product-catalogue-integration.js';
+export * from './product-catalogue-integration';

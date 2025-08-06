@@ -2,8 +2,16 @@
   "name": "@auto-engineer/message-bus",
   "version": "0.0.1",
   "description": "Message bus for handling commands, events, and queries",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",

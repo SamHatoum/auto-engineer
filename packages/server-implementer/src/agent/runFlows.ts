@@ -1,6 +1,6 @@
 import fg from 'fast-glob';
 import path from 'path';
-import { runAllSlices } from './runAllSlices.js';
+import { runAllSlices } from './runAllSlices';
 
 export async function runFlows(baseDir: string): Promise<void> {
   const flowDirs = await fg('*', {

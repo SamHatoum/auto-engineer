@@ -1,10 +1,10 @@
 // test comment
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import { Config } from '../utils/config.js';
-import { createOutput } from '../utils/terminal.js';
-import { handleError } from '../utils/errors.js';
-import { Analytics } from '../utils/analytics.js';
+import { Config } from '../utils/config';
+import { createOutput } from '../utils/terminal';
+import { handleError } from '../utils/errors';
+import { Analytics } from '../utils/analytics';
 import path from 'path';
 import fs from 'fs/promises';
 
