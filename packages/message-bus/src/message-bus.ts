@@ -1,8 +1,8 @@
 import { Command, Event, CommandHandler } from './types';
 
-interface MessageBusState {
+type MessageBusState = {
   commandHandlers: Record<string, CommandHandler>;
-}
+};
 
 export function createMessageBus() {
   const state: MessageBusState = {

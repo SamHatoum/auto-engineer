@@ -15,7 +15,10 @@
     "commitlint.config.ts",
     "examples/ai-integration",
     "examples/product-catalogue-integration",
-    "examples/shopping-assistant/integrations"
+    "examples/shopping-assistant/integrations",
+    "integrations/ai-chat-completion/ai-integration.ts",
+    "integrations/cart/cart-integration.ts",
+    "integrations/product-catalogue/product-catalogue-integration.ts"
   ],
   "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
