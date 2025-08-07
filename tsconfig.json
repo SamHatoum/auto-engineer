@@ -10,6 +10,7 @@
   },
   "include": [
     "**/src/**/*",
+    "scripts/**/*",
     "eslint.config.ts",
     "vitest.config.ts",
     "commitlint.config.ts",
@@ -23,7 +24,7 @@
   "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
     {
-      "path": "./apps/cli"
+      "path": "./packages/cli"
     },
     {
       "path": "./packages/emmett-generator"
