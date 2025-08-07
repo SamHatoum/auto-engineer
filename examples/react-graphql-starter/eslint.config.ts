@@ -1,4 +1,4 @@
-import rootConfig from '../../eslint.config.js';
+import rootConfig from '../../eslint.config.ts';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';

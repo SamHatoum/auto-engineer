@@ -6,8 +6,8 @@ import { Config } from '../utils/config';
 import { createOutput } from '../utils/terminal';
 import { handleError } from '../utils/errors';
 import { Analytics } from '../utils/analytics';
-import { createMessageBus } from '@auto-engineer/message-bus';
-import { createFlowCommandHandler, CreateFlowCommand, handleCreateFlowCommand } from '@auto-engineer/flowlang-agent';
+// import { createMessageBus } from '@auto-engineer/message-bus';
+// import { createFlowCommandHandler, CreateFlowCommand, handleCreateFlowCommand } from '@auto-engineer/flowlang-agent';
 import { type AppSchema } from '@auto-engineer/flowlang';
 
 // Type definitions for better type safety
@@ -598,8 +598,8 @@ function renderColoredText(lines: string[]): string {
 }
 
 // Initialize message bus
-const messageBus = createMessageBus();
-messageBus.registerCommandHandler(createFlowCommandHandler);
+// const messageBus = createMessageBus();
+// messageBus.registerCommandHandler(createFlowCommandHandler);
 
 interface StreamData {
   flows?: Flow[];
@@ -608,24 +608,25 @@ interface StreamData {
 }
 
 async function sendFlowCommand(
-  prompt: string,
-  variant: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs',
-  onStream?: (data: unknown) => void,
+  _prompt: string,
+  _variant: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs',
+  _onStream?: (data: unknown) => void,
 ): Promise<AppSchema> {
-  const command: CreateFlowCommand = {
-    type: 'CreateFlow',
-    data: {
-      prompt,
-      variant,
-      useStreaming: true,
-      streamCallback: onStream,
-    },
-    requestId: `req-${Date.now()}`,
-    timestamp: new Date(),
-  };
+  // const command = { // CreateFlowCommand = {
+  //   type: 'CreateFlow',
+  //   data: {
+  //     prompt,
+  //     variant,
+  //     useStreaming: true,
+  //     streamCallback: onStream,
+  //   },
+  //   requestId: `req-${Date.now()}`,
+  //   timestamp: new Date(),
+  // };
 
   // Use direct function call for now to get return value
-  return await handleCreateFlowCommand(command);
+  // return await handleCreateFlowCommand(command);
+  return { variant: 'flow-names', flows: [] } as AppSchema;
 }
 
 const validateAppPrompt = (input: string): true | string => {

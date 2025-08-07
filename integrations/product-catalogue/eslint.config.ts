@@ -1,4 +1,4 @@
-import rootConfig from '../../eslint.config.js';
+import rootConfig from '../../eslint.config.ts';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(...rootConfig, {

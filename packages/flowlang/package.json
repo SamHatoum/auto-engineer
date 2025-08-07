@@ -1,21 +1,21 @@
 {
   "name": "@auto-engineer/flowlang",
   "version": "0.1.1",
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "bin": {
-    "create-auto-example": "./dist/bin/create-auto-example.js"
+    "create-auto-example": "./dist/src/bin/create-auto-example.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js"
     },
     "./commands/create-example": {
-      "types": "./dist/commands/create-example.d.ts",
-      "import": "./dist/commands/create-example.js"
+      "types": "./dist/src/commands/create-example.d.ts",
+      "import": "./dist/src/commands/create-example.js"
     }
   },
   "dependencies": {
@@ -28,7 +28,7 @@
     "zod-to-json-schema": "^3.22.3"
   },
   "scripts": {
-    "build": "tsc && rm -rf dist/templates && cp -r src/templates dist/templates && chmod +x dist/bin/create-auto-example.js",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/templates && cp -r src/templates dist/templates && cp src/templates/shipping-assistant.ts.txt dist/templates/shopping-assistant.ts.txt && mkdir -p dist/src/templates && cp -r dist/templates/* dist/src/templates/ && chmod +x dist/src/bin/create-auto-example.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
@@ -37,6 +37,9 @@
     "convert-flow": "tsx scripts/convert-flow.ts",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ./eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.3"
   },
   "publishConfig": {
     "access": "public"

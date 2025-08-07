@@ -1138,6 +1138,10 @@ importers:
       zod-to-json-schema:
         specifier: ^3.22.3
         version: 3.24.6(zod@3.25.76)
+    devDependencies:
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
 
   packages/frontend-checks:
     dependencies:
@@ -1185,6 +1189,9 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.8
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
       typescript:
         specifier: ^5.0.0
         version: 5.5.4

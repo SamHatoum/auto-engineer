@@ -5,6 +5,6 @@
     "rootDir": ".",
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*", "bin/**/*"],
+  "include": ["src/**/*", "bin/**/*", "scripts/print-schema.ts", "scripts/convert-flow*.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -12,6 +12,7 @@ import { Analytics } from './utils/analytics';
 import { createInitCommand } from './commands/init';
 import { createDemoCommand } from './commands/demo';
 import { createStartCommand } from './commands/start';
+import { createCreateExampleCommand } from './commands/create-example';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -87,6 +88,7 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   program.addCommand(createInitCommand(config, analytics));
   program.addCommand(createDemoCommand(config, analytics));
   program.addCommand(createStartCommand(config, analytics));
+  program.addCommand(createCreateExampleCommand(config, analytics));
 
   program.addHelpText(
     'after',

@@ -10,7 +10,7 @@
   },
   "include": [
     "**/src/**/*",
-    "eslint.config.js",
+    "eslint.config.ts",
     "vitest.config.ts",
     "commitlint.config.ts",
     "examples/ai-integration",

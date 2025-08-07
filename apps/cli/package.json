@@ -2,11 +2,12 @@
   "name": "@auto-engineer/cli",
   "version": "0.1.2",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "bin": {
-    "auto-engineer": "./dist/index.js",
-    "ag": "./dist/index.js"
+    "auto-engineer": "./dist/bin/auto.js",
+    "ag": "./dist/bin/auto.js",
+    "auto": "./dist/bin/auto.js"
   },
   "files": [
     "dist",
@@ -17,17 +18,18 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/bin/auto.js",
+    "build:tsx": "echo 'Using tsx runtime, no build needed'",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
     "start": "tsx src/index.ts start",
     "flow": "tsx src/index.ts flow",
     "prepublishOnly": "npm run build",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.js",
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "publishConfig": {

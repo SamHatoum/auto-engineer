@@ -76,7 +76,7 @@ export async function handleCreateExampleCommand(
       };
     }
 
-    const templatesDir = path.resolve(__dirname, '..', '..', 'templates');
+    const templatesDir = path.resolve(__dirname, '..', 'templates');
     const createdFiles: string[] = [];
 
     await fs.mkdir(targetDirectory, { recursive: true });
