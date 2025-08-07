@@ -7,8 +7,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "file:../../auto-engineer/packages/ai-gateway",
-    "@auto-engineer/flowlang": "file:../../auto-engineer/packages/flowlang",
+    "@auto-engineer/ai-gateway": "*",
+    "@auto-engineer/flowlang": "*",
     "axios": "^1.10.0"
   },
   "devDependencies": {

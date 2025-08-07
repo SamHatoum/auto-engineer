@@ -7,7 +7,7 @@
     "start": "dotenv -e .env -- pnpm --parallel start"
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "file:../auto-engineer/packages/flowlang"
+    "@auto-engineer/flowlang": "*"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",

@@ -12,7 +12,9 @@
     "generate-ia-schema": "tsx src/generate-ia-schema.ts",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "link:dev": "pnpm build && pnpm link --global",
+    "unlink:dev": "pnpm unlink --global"
   },
   "publishConfig": {
     "access": "public"
