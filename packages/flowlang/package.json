@@ -28,7 +28,7 @@
     "zod-to-json-schema": "^3.22.3"
   },
   "scripts": {
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/templates && cp -r src/templates dist/templates && cp src/templates/shipping-assistant.ts.txt dist/templates/shopping-assistant.ts.txt && mkdir -p dist/src/templates && cp -r dist/templates/* dist/src/templates/ && chmod +x dist/src/bin/create-auto-example.js",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/templates && cp -r src/templates dist/templates && mkdir -p dist/src/templates && cp -r dist/templates/* dist/src/templates/ && chmod +x dist/src/bin/create-auto-example.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",

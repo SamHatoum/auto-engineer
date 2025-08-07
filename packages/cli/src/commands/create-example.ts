@@ -34,6 +34,7 @@ export const createCreateExampleCommand = (config: Config, analytics: Analytics)
           requestId: `create-example-${Date.now()}`,
         };
 
+        // TODO use the bus
         const result = await handleCreateExampleCommand(createCommand);
 
         if (result.type === 'ExampleCreated') {

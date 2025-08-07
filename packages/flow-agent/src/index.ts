@@ -1,6 +1,6 @@
 import { streamStructuredDataWithAI } from '@auto-engineer/ai-gateway';
 import { AIProvider } from '@auto-engineer/ai-gateway';
-import { type CommandHandler } from '@auto-engineer/message-bus';
+import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { variantPrompts } from './prompt';
 import {
   FlowNamesSystemSchema,
@@ -11,28 +11,22 @@ import {
 } from '@auto-engineer/flowlang';
 import { z } from 'zod';
 
-export type CreateFlowCommand = {
-  readonly type: 'CreateFlow';
-  readonly data: {
+export type CreateFlowCommand = Command<
+  'CreateFlow',
+  {
     prompt: string;
     variant?: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs';
     streamCallback?: (partialData: unknown) => void;
     useStreaming?: boolean;
-  };
-  readonly timestamp?: Date;
-  readonly requestId?: string;
-  readonly correlationId?: string;
-};
+  }
+>;
 
-export type FlowCreatedEvent = {
-  readonly type: 'FlowCreated';
-  readonly data: {
+export type FlowCreatedEvent = Event<
+  'FlowCreated',
+  {
     systemData: AppSchema;
-  };
-  readonly timestamp?: Date;
-  readonly requestId?: string;
-  readonly correlationId?: string;
-};
+  }
+>;
 
 const provider = AIProvider.OpenAI;
 

@@ -18,10 +18,10 @@ import {
   registerIntegrations,
 } from '@auto-engineer/flowlang';
 
-import type { DoChat, ChatCompleted } from '@auto-engineer/ai-integration';
-import type { Products } from '@auto-engineer/product-catalogue-integration';
-const { AI } = await import('@auto-engineer/ai-integration');
-const { ProductCatalog } = await import('@auto-engineer/product-catalogue-integration');
+import type { DoChat, ChatCompleted } from '../server/src/integrations/ai-integration';
+import type { Products } from '../server/src/integrations/product-catalogue-integration';
+const { AI } = await import('../server/src/integrations//ai-integration');
+const { ProductCatalog } = await import('../server/src/integrations/product-catalogue-integration');
 registerIntegrations(ProductCatalog, AI);
 
 type ShoppingCriteriaEntered = Event<

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { type CommandHandler } from '@auto-engineer/message-bus';
+import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,53 +7,70 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export type CreateExampleCommand = {
-  readonly type: 'CreateExample';
-  readonly data: {
+export type CreateExampleCommand = Command<
+  'CreateExample',
+  {
     exampleName: string;
     targetDirectory: string;
-  };
-  readonly timestamp?: Date;
-  readonly requestId?: string;
-  readonly correlationId?: string;
-};
+  }
+>;
 
-export type ExampleCreatedEvent = {
-  readonly type: 'ExampleCreated';
-  readonly data: {
+export type ExampleCreatedEvent = Event<
+  'ExampleCreated',
+  {
     exampleName: string;
     targetDirectory: string;
     filesCreated: string[];
-  };
-  readonly timestamp?: Date;
-  readonly requestId?: string;
-  readonly correlationId?: string;
-};
+  }
+>;
 
-export type ExampleCreationFailedEvent = {
-  readonly type: 'ExampleCreationFailed';
-  readonly data: {
+export type ExampleCreationFailedEvent = Event<
+  'ExampleCreationFailed',
+  {
     exampleName: string;
     targetDirectory: string;
     error: string;
-  };
-  readonly timestamp?: Date;
-  readonly requestId?: string;
-  readonly correlationId?: string;
+  }
+>;
+
+const EXAMPLE_FOLDERS: Record<string, string> = {
+  'shopping-assistant': 'shopping-assitant', // Note: keeping the typo to match actual folder name
 };
 
-const EXAMPLE_FILES: Record<string, { source: string; target: string }[]> = {
-  'shopping-assistant': [
-    {
-      source: 'shipping-assistant.ts.txt',
-      target: 'shopping-assistant.flow.ts',
-    },
-    {
-      source: 'auto.config.ts.txt',
-      target: 'auto.config.ts',
-    },
-  ],
-};
+async function copyDirectoryRecursive(
+  sourceDir: string,
+  targetDir: string,
+  removeTxtExtension: boolean = true,
+): Promise<string[]> {
+  const createdFiles: string[] = [];
+
+  await fs.mkdir(targetDir, { recursive: true });
+
+  const entries = await fs.readdir(sourceDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const sourcePath = path.join(sourceDir, entry.name);
+    let targetName = entry.name;
+
+    // Remove .txt extension if present and requested
+    if (removeTxtExtension && entry.isFile() && targetName.endsWith('.txt')) {
+      targetName = targetName.slice(0, -4);
+    }
+
+    const targetPath = path.join(targetDir, targetName);
+
+    if (entry.isDirectory()) {
+      const subFiles = await copyDirectoryRecursive(sourcePath, targetPath, removeTxtExtension);
+      createdFiles.push(...subFiles);
+    } else {
+      const content = await fs.readFile(sourcePath, 'utf-8');
+      await fs.writeFile(targetPath, content);
+      createdFiles.push(path.relative(targetDir, targetPath));
+    }
+  }
+
+  return createdFiles;
+}
 
 export async function handleCreateExampleCommand(
   command: CreateExampleCommand,
@@ -61,14 +78,14 @@ export async function handleCreateExampleCommand(
   const { exampleName, targetDirectory } = command.data;
 
   try {
-    const exampleFiles = EXAMPLE_FILES[exampleName];
-    if (exampleFiles === undefined) {
+    const exampleFolder = EXAMPLE_FOLDERS[exampleName];
+    if (exampleFolder === undefined) {
       return {
         type: 'ExampleCreationFailed',
         data: {
           exampleName,
           targetDirectory,
-          error: `Unknown example: ${exampleName}. Available examples: ${Object.keys(EXAMPLE_FILES).join(', ')}`,
+          error: `Unknown example: ${exampleName}. Available examples: ${Object.keys(EXAMPLE_FOLDERS).join(', ')}`,
         },
         timestamp: new Date(),
         requestId: command.requestId,
@@ -77,18 +94,26 @@ export async function handleCreateExampleCommand(
     }
 
     const templatesDir = path.resolve(__dirname, '..', 'templates');
-    const createdFiles: string[] = [];
+    const sourceDir = path.join(templatesDir, exampleFolder);
 
-    await fs.mkdir(targetDirectory, { recursive: true });
-
-    for (const file of exampleFiles) {
-      const sourcePath = path.join(templatesDir, file.source);
-      const targetPath = path.join(targetDirectory, file.target);
-
-      const content = await fs.readFile(sourcePath, 'utf-8');
-      await fs.writeFile(targetPath, content);
-      createdFiles.push(file.target);
+    // Check if source directory exists
+    try {
+      await fs.access(sourceDir);
+    } catch {
+      return {
+        type: 'ExampleCreationFailed',
+        data: {
+          exampleName,
+          targetDirectory,
+          error: `Template directory not found: ${sourceDir}`,
+        },
+        timestamp: new Date(),
+        requestId: command.requestId,
+        correlationId: command.correlationId,
+      };
     }
+
+    const createdFiles = await copyDirectoryRecursive(sourceDir, targetDirectory, true);
 
     return {
       type: 'ExampleCreated',
