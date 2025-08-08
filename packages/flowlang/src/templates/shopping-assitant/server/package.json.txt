@@ -9,11 +9,11 @@
   "dependencies": {
     "@auto-engineer/ai-gateway": "*",
     "@auto-engineer/flowlang": "*",
-    "axios": "^1.10.0"
+    "axios": "^1.11.0"
   },
   "devDependencies": {
+    "@types/node": "^22.13.10",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
-    "@types/node": "^22.13.10"
+    "typescript": "^5.0.0"
   }
 }

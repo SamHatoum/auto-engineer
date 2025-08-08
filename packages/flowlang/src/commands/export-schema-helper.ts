@@ -3,25 +3,17 @@ import { getFlows } from '../getFlows';
 import { resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 
+// Store original console methods
+const originalLog = console.log;
+const originalError = console.error;
+
 const main = async () => {
   const directory = process.argv[2] || process.cwd();
 
   try {
-    // Suppress debug output by redirecting console methods temporarily
-    const originalLog = console.log;
-    const originalError = console.error;
-
-    // Only capture our final output
-    const outputs: string[] = [];
-    console.log = (...args) => {
-      // Only allow our final JSON output
-      const message = args.join(' ');
-      if (message.startsWith('{"success":')) {
-        outputs.push(message);
-      }
-      // Suppress all other console.log calls during execution
-    };
-    console.error = () => {}; // Suppress all error output during execution
+    // Temporarily disable console output during flow processing
+    console.log = () => {};
+    console.error = () => {};
 
     const flowsPath = resolve(directory, 'flows');
     const { toSchema } = await getFlows(flowsPath);
@@ -45,8 +37,11 @@ const main = async () => {
     );
   } catch (error) {
     // Restore console methods in case of error
-    console.log = console.log || (() => {});
-    console.error = console.error || (() => {});
+    console.log = originalLog;
+    console.error = originalError;
+
+    // Show the actual error for debugging
+    console.error('Actual error:', error);
 
     // Output error as JSON for parent process
     console.log(
