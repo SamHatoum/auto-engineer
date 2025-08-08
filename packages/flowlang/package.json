@@ -16,6 +16,10 @@
     "./commands/create-example": {
       "types": "./dist/src/commands/create-example.d.ts",
       "import": "./dist/src/commands/create-example.js"
+    },
+    "./commands/export-schema": {
+      "types": "./dist/src/commands/export-schema.d.ts",
+      "import": "./dist/src/commands/export-schema.js"
     }
   },
   "dependencies": {

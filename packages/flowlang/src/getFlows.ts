@@ -441,7 +441,7 @@ export const getFlows = async (cwd: string = process.cwd()) => {
   messageRegistry.messages.clear();
   integrationRegistry.clear();
 
-  const files = await fg('**/*.{flow,integration}.ts', {
+  const files = await fg('**/*.{flow,integration}.{ts,js,mjs}', {
     cwd,
     absolute: true,
     ignore: ['**/node_modules/**', '**/dist/**', '**/.turbo/**'],

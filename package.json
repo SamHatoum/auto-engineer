@@ -78,7 +78,7 @@
   "dependencies": {
     "@auto-engineer/ai-gateway": "link:packages/ai-gateway",
     "@auto-engineer/flowlang": "link:packages/flowlang",
-    "axios": "^1.7.9",
+    "axios": "^1.10.0",
     "dotenv": "^16.4.5"
   },
   "lint-staged": {

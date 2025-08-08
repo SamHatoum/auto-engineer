@@ -116,3 +116,19 @@ export type QuerySlice = z.infer<typeof QuerySliceSchema>;
 export type ReactSlice = z.infer<typeof ReactSliceSchema>;
 export type CommandSlice = z.infer<typeof CommandSliceSchema>;
 export type Message = z.infer<typeof MessageSchema>;
+
+// Commands
+export {
+  exportSchemaCommandHandler,
+  handleExportSchemaCommand,
+  type ExportSchemaCommand,
+  type SchemaExportedEvent,
+  type SchemaExportFailedEvent,
+} from './commands/export-schema';
+export {
+  createExampleCommandHandler,
+  handleCreateExampleCommand,
+  type CreateExampleCommand,
+  type ExampleCreatedEvent,
+  type ExampleCreationFailedEvent,
+} from './commands/create-example';
