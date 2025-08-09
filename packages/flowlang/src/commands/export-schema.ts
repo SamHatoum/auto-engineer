@@ -46,11 +46,11 @@ export async function handleExportSchemaCommand(
       let stdout = '';
       let stderr = '';
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      child.stderr.on('data', (data) => {
+      child.stderr.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
@@ -60,13 +60,13 @@ export async function handleExportSchemaCommand(
         }
 
         try {
-          const result = JSON.parse(stdout.trim());
-          if (result.success) {
+          const result = JSON.parse(stdout.trim()) as { success?: boolean; outputPath?: string; error?: string };
+          if (result.success === true) {
             resolve({
               type: 'SchemaExported',
               data: {
                 directory,
-                outputPath: result.outputPath,
+                outputPath: result.outputPath ?? '',
               },
               timestamp: new Date(),
               requestId: command.requestId,
@@ -77,7 +77,7 @@ export async function handleExportSchemaCommand(
               type: 'SchemaExportFailed',
               data: {
                 directory,
-                error: result.error,
+                error: result.error ?? 'Unknown error',
               },
               timestamp: new Date(),
               requestId: command.requestId,

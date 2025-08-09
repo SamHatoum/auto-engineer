@@ -171,9 +171,9 @@ export type State<
   readonly kind?: 'State';
 };
 
-export type DefaultCommandMetadata = {
+export interface DefaultCommandMetadata extends Record<string, unknown> {
   now: Date;
-};
+}
 
 export type Command<
   CommandType extends string = string,

@@ -4,9 +4,19 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./commands/generate-server": {
+      "types": "./dist/commands/generate-server.d.ts",
+      "import": "./dist/commands/generate-server.js"
+    }
+  },
   "scripts": {
     "generate:server": "tsx src/cli/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/codegen/templates && mkdir -p dist/codegen && cp -r src/codegen/templates dist/codegen/templates && cp src/server.ts dist/ && cp -r src/utils dist/ && cp -r src/domain dist/",
     "dev": "tsc --watch",
     "test": "vitest run",
     "type-check": "tsc --noEmit --project tsconfig.json",
@@ -19,6 +29,7 @@
   },
   "dependencies": {
     "@auto-engineer/flowlang": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.2",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",
@@ -31,7 +42,7 @@
     "graphql-scalars": "^1.24.2",
     "reflect-metadata": "^0.2.2",
     "type-graphql": "^2.0.0-rc.2",
-    "uuid": "^11.1.0",
+    "uuid": "^10.0.0",
     "web-streams-polyfill": "^4.1.0"
   },
   "publishConfig": {

@@ -34,50 +34,18 @@ docker run --rm auto-engineer/cli --help
 
 ## Quick Start
 
-1. **Initialize** your project:
-
-   ```bash
-   auto-engineer init
-   ```
-
-2. **Generate** code templates:
+1. **Generate** code templates:
 
    ```bash
    auto-engineer generate --type code
    ```
 
-3. **Analyze** your code:
+2. **Analyze** your code:
    ```bash
    auto-engineer analyze --format json
    ```
 
 ## Commands
-
-### `init`
-
-Initialize auto-engineer configuration for your project.
-
-```bash
-auto-engineer init [options]
-```
-
-**Options:**
-
-- `-y, --yes` - Skip prompts and use defaults
-- `-p, --path <path>` - Project path (default: current directory)
-
-**Examples:**
-
-```bash
-# Interactive initialization
-auto-engineer init
-
-# Quick initialization with defaults
-auto-engineer init --yes
-
-# Initialize in specific directory
-auto-engineer init --path ./my-project
-```
 
 ### `generate`
 
@@ -248,7 +216,7 @@ src/
 ├── commands/          # Command implementations
 │   ├── generate.ts
 │   ├── analyze.ts
-│   └── init.ts
+│   └── demo.ts
 ├── utils/             # Utility functions
 │   ├── config.ts      # Configuration management
 │   ├── errors.ts      # Error handling

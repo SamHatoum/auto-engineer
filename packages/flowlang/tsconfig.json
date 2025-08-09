@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "composite": true
   },
   "include": ["src/**/*", "bin/**/*", "scripts/print-schema.ts", "scripts/convert-flow*.ts"],
   "exclude": ["node_modules", "dist"]

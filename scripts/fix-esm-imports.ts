@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { readdir, readFile, writeFile } from 'fs/promises';
+import { readdir, readFile, writeFile, stat } from 'fs/promises';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -22,6 +23,16 @@ async function fixImports(dir: string): Promise<void> {
       // Fix relative imports
       content = content.replace(/from ['"](\.[^'"]+)['"];/g, (match, importPath) => {
         if (!importPath.endsWith('.js')) {
+          // Check if this might be a directory import
+          const possibleDirPath = join(dir, importPath);
+          try {
+            // Try to check if index.js exists in the directory
+            if (existsSync(possibleDirPath) && existsSync(join(possibleDirPath, 'index.js'))) {
+              return `from '${importPath}/index.js';`;
+            }
+          } catch (e) {
+            // If we can't check, just add .js as before
+          }
           return `from '${importPath}.js';`;
         }
         return match;
@@ -29,6 +40,16 @@ async function fixImports(dir: string): Promise<void> {
 
       content = content.replace(/export \* from ['"](\.[^'"]+)['"];/g, (match, importPath) => {
         if (!importPath.endsWith('.js')) {
+          // Check if this might be a directory import
+          const possibleDirPath = join(dir, importPath);
+          try {
+            // Try to check if index.js exists in the directory
+            if (existsSync(possibleDirPath) && existsSync(join(possibleDirPath, 'index.js'))) {
+              return `export * from '${importPath}/index.js';`;
+            }
+          } catch (e) {
+            // If we can't check, just add .js as before
+          }
           return `export * from '${importPath}.js';`;
         }
         return match;

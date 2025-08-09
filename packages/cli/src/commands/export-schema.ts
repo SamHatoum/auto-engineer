@@ -21,7 +21,7 @@ export const createExportSchemaCommand = (config: Config, analytics: Analytics):
         output.info(`Exporting flow schema from ${directory}/flows...`);
 
         // Import dynamically to avoid TypeScript module resolution issues
-        const { handleExportSchemaCommand } = await import('@auto-engineer/flowlang/commands/export-schema');
+        const { handleExportSchemaCommand } = await import('@auto-engineer/flowlang');
 
         const exportCommand = {
           type: 'ExportSchema' as const,

@@ -9,11 +9,10 @@ import { handleError } from './utils/errors';
 import { createOutput, supportsColor } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 
-import { createInitCommand } from './commands/init';
 import { createDemoCommand } from './commands/demo';
-import { createStartCommand } from './commands/start';
 import { createCreateExampleCommand } from './commands/create-example';
 import { createExportSchemaCommand } from './commands/export-schema';
+import { createGenerateServerCommand } from './commands/generate-server';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -86,23 +85,19 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   const program = createCLI();
   const analytics = new Analytics(config);
 
-  program.addCommand(createInitCommand(config, analytics));
   program.addCommand(createDemoCommand(config, analytics));
-  program.addCommand(createStartCommand(config, analytics));
   program.addCommand(createCreateExampleCommand(config, analytics));
   program.addCommand(createExportSchemaCommand(config, analytics));
+  program.addCommand(createGenerateServerCommand(config, analytics));
 
   program.addHelpText(
     'after',
     `
 Examples:
-  $ auto-engineer start                   Create flows interactively using AI
-  $ ag start                              Create flows interactively using AI (short alias)
-  $ auto-engineer demo                    Start demo mode
-  $ auto-engineer init                    Initialize configuration
-  $ auto-engineer generate --type code    Generate code templates
-  $ auto-engineer analyze --format json   Analyze code in JSON format
-  $ echo "code" | auto-engineer analyze   Analyze content from STDIN
+
+  $ auto-engineer create:example shopping-assistant
+  $ auto-engineer export:schema --directory .context/flows
+  $ auto-engineer generate:server .context/schema.json --destination .
 
 Environment Variables:
   DEBUG=auto-engineer                     Enable debug mode

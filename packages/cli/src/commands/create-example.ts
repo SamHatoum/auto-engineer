@@ -21,7 +21,7 @@ export const createCreateExampleCommand = (config: Config, analytics: Analytics)
 
         output.info(`Creating example "${exampleName}" in ${targetDirectory}...`);
 
-        // Import dynamically to avoid TypeScript module resolution issues
+        // Import the handler
         const { handleCreateExampleCommand } = await import('@auto-engineer/flowlang/commands/create-example');
 
         const createCommand = {
@@ -39,11 +39,11 @@ export const createCreateExampleCommand = (config: Config, analytics: Analytics)
 
         if (result.type === 'ExampleCreated') {
           output.success(`✅ Example "${exampleName}" created successfully!`);
-          output.info('');
-          output.info('Files created:');
-          result.data.filesCreated.forEach((file: string) => {
-            output.info(`  - ${file}`);
-          });
+          // output.info('');
+          // output.info('Files created:');
+          // result.data.filesCreated.forEach((file: string) => {
+          // output.info(`  - ${file}`);
+          // });
           output.info('');
           output.info('Next steps:');
           output.info('1. Review the generated files');

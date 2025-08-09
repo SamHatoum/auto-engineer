@@ -6,25 +6,35 @@ import {
   type CreateExampleCommand,
 } from '../commands/create-example';
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-
+function parseArguments(args: string[]): string | undefined {
   // Handle case where first arg is the command name itself
-  let exampleName: string | undefined;
   if (args.length >= 2 && args[0] === 'create-auto-example') {
-    exampleName = args[1];
-  } else if (args.length >= 1 && args[0] !== '--help' && args[0] !== '-h') {
-    exampleName = args[0];
+    return args[1];
   }
 
-  if (!exampleName || args[0] === '--help' || args[0] === '-h') {
-    console.log('Usage: npx @auto-engineer/flowlang <example-name>');
-    console.log('   or: create-auto-example <example-name>');
-    console.log('');
-    console.log('Available examples:');
-    console.log('  shopping-assistant');
-    console.log('');
-    console.log('This command will create example files in the current directory.');
+  if (args.length >= 1 && args[0] !== '--help' && args[0] !== '-h') {
+    return args[0];
+  }
+
+  return undefined;
+}
+
+function showHelp(): void {
+  console.log('Usage: npx @auto-engineer/flowlang <example-name>');
+  console.log('   or: create-auto-example <example-name>');
+  console.log('');
+  console.log('Available examples:');
+  console.log('  shopping-assistant');
+  console.log('');
+  console.log('This command will create example files in the current directory.');
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const exampleName = parseArguments(args);
+
+  if (exampleName === undefined || args[0] === '--help' || args[0] === '-h') {
+    showHelp();
     process.exit(0);
   }
 

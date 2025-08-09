@@ -28,6 +28,9 @@
     },
     {
       "path": "./packages/emmett-generator"
+    },
+    {
+      "path": "./packages/message-bus"
     }
   ]
 }

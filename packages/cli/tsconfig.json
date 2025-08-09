@@ -7,5 +7,5 @@
   },
   "include": ["src/**/*", "bin/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": []
+  "references": [{ "path": "../emmett-generator" }, { "path": "../flowlang" }, { "path": "../message-bus" }]
 }

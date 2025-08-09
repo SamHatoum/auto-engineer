@@ -9,10 +9,13 @@ export default tseslint.config(
       'scripts/clean.ts',
       'scripts/fix-esm-imports.ts',
       '**/bin/**/*',
+      '**/dist/**/*',
+      '**/node_modules/**/*',
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // ...tseslint.configs.strictTypeChecked,
   {
     languageOptions: {
       parserOptions: {

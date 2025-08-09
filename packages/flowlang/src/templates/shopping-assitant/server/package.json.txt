@@ -1,6 +1,7 @@
 {
-  "name": "@examples/shopping-assistant-server",
-  "version": "1.0.0",
+  "name": "generated-server",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -14,6 +15,6 @@
   "devDependencies": {
     "@types/node": "^22.13.10",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.5.0"
   }
 }
