@@ -13,6 +13,7 @@ import { createDemoCommand } from './commands/demo';
 import { createCreateExampleCommand } from './commands/create-example';
 import { createExportSchemaCommand } from './commands/export-schema';
 import { createGenerateServerCommand } from './commands/generate-server';
+import { createImplementServerCommand } from './commands/implement-server';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -89,6 +90,7 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   program.addCommand(createCreateExampleCommand(config, analytics));
   program.addCommand(createExportSchemaCommand(config, analytics));
   program.addCommand(createGenerateServerCommand(config, analytics));
+  program.addCommand(createImplementServerCommand(config, analytics));
 
   program.addHelpText(
     'after',
@@ -98,6 +100,7 @@ Examples:
   $ auto-engineer create:example shopping-assistant
   $ auto-engineer export:schema --directory .context/flows
   $ auto-engineer generate:server .context/schema.json --destination .
+  $ auto-engineer implement:server ./server
 
 Environment Variables:
   DEBUG=auto-engineer                     Enable debug mode
