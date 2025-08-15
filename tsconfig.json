@@ -24,13 +24,31 @@
   "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
     {
+      "path": "./packages/ai-gateway"
+    },
+    {
       "path": "./packages/cli"
+    },
+    {
+      "path": "./packages/design-system-importer"
     },
     {
       "path": "./packages/emmett-generator"
     },
     {
+      "path": "./packages/frontend-checks"
+    },
+    {
+      "path": "./packages/frontend-implementation"
+    },
+    {
+      "path": "./packages/information-architect"
+    },
+    {
       "path": "./packages/message-bus"
+    },
+    {
+      "path": "./packages/react-graphql-generator"
     }
   ]
 }

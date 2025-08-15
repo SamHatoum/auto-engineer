@@ -32,3 +32,5 @@ export async function main() {
 }
 
 void main();
+
+export * from './commands/generate-client';

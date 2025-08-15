@@ -213,7 +213,7 @@ import { buildSchema } from 'type-graphql';
 import { printSchema } from 'graphql';
 import { writeFile } from 'fs/promises';
 import * as path from 'path';
-import { loadResolvers } from '../utils/loadResolvers';
+import { loadResolvers } from '../src/utils/loadResolvers.js';
 
 async function main() {
   try {

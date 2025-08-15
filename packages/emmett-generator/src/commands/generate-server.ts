@@ -306,7 +306,7 @@ import { buildSchema } from 'type-graphql';
 import { printSchema } from 'graphql';
 import { writeFile } from 'fs/promises';
 import * as path from 'path';
-import { loadResolvers } from '../utils/loadResolvers';
+import { loadResolvers } from '../src/utils/loadResolvers.js';
 
 async function main() {
   try {
@@ -338,11 +338,22 @@ main().catch((err) => {
   await writeFile(schemaScriptPath, schemaScriptContent, 'utf-8');
 }
 
-async function installDependenciesAndGenerateSchema(serverDir: string, _workingDir: string): Promise<void> {
+async function installDependenciesAndGenerateSchema(serverDir: string, workingDir: string): Promise<void> {
+  console.log('📦 Installing dependencies...');
+
   try {
     await execa('pnpm', ['install'], { cwd: serverDir });
+    console.log('✅ Dependencies installed successfully');
+
+    console.log('🔄 Generating GraphQL schema...');
     await execa('tsx', ['scripts/generate-schema.ts'], { cwd: serverDir });
-  } catch {
-    // Best-effort; non-fatal
+
+    const schemaPath = join(workingDir, '.context', 'schema.graphql');
+    console.log(`✅ GraphQL schema generated at: ${schemaPath}`);
+  } catch (error) {
+    console.warn(
+      `⚠️  Failed to install dependencies or generate schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
+    console.warn('You can manually run: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
   }
 }

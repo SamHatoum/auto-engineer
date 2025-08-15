@@ -495,24 +495,36 @@ importers:
 
   packages/cli:
     dependencies:
+      '@auto-engineer/design-system-importer':
+        specifier: workspace:*
+        version: link:../design-system-importer
       '@auto-engineer/emmett-generator':
         specifier: workspace:*
         version: link:../emmett-generator
       '@auto-engineer/flowlang':
         specifier: workspace:*
         version: link:../flowlang
-      '@auto-engineer/flowlang-agent':
+      '@auto-engineer/frontend-implementation':
         specifier: workspace:*
-        version: link:../flow-agent
+        version: link:../frontend-implementation
+      '@auto-engineer/information-architect':
+        specifier: workspace:*
+        version: link:../information-architect
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../message-bus
+      '@auto-engineer/react-graphql-generator':
+        specifier: workspace:*
+        version: link:../react-graphql-generator
       chalk:
         specifier: ^5.3.0
         version: 5.4.1
       commander:
         specifier: ^12.0.0
         version: 12.1.0
+      execa:
+        specifier: ^9.6.0
+        version: 9.6.0
       figlet:
         specifier: ^1.7.0
         version: 1.8.2
@@ -554,7 +566,11 @@ importers:
         specifier: ^4.20.3
         version: 4.20.3
 
-  packages/design-system-importer: {}
+  packages/design-system-importer:
+    dependencies:
+      '@auto-engineer/message-bus':
+        specifier: workspace:*
+        version: link:../message-bus
 
   packages/emmett-generator:
     dependencies:
@@ -566,7 +582,7 @@ importers:
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.2
-        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.0.14)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.0.14)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.1.0)
       apollo-server:
         specifier: ^3.13.0
         version: 3.13.0(graphql@16.11.0)
@@ -601,8 +617,8 @@ importers:
         specifier: ^2.0.0-rc.2
         version: 2.0.0-rc.2(graphql-scalars@1.24.2(graphql@16.11.0))(graphql@16.11.0)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^10.0.0
+        version: 10.0.0
       web-streams-polyfill:
         specifier: ^4.1.0
         version: 4.1.0
@@ -694,6 +710,9 @@ importers:
       '@auto-engineer/frontend-checks':
         specifier: workspace:*
         version: link:../frontend-checks
+      '@auto-engineer/message-bus':
+        specifier: workspace:*
+        version: link:../message-bus
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0
         version: 1.15.1
@@ -716,6 +735,9 @@ importers:
       '@auto-engineer/ai-gateway':
         specifier: workspace:*
         version: link:../ai-gateway
+      '@auto-engineer/message-bus':
+        specifier: workspace:*
+        version: link:../message-bus
 
   packages/message-bus:
     devDependencies:
@@ -737,6 +759,9 @@ importers:
       '@auto-engineer/ai-gateway':
         specifier: workspace:*
         version: link:../ai-gateway
+      '@auto-engineer/message-bus':
+        specifier: workspace:*
+        version: link:../message-bus
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
@@ -7162,6 +7187,10 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
+  uuid@10.0.0:
+    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
+    hasBin: true
+
   uuid@11.1.0:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
@@ -8612,6 +8641,16 @@ snapshots:
     dependencies:
       '@eslint/core': 0.15.1
       levn: 0.4.1
+
+  '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.0.14)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.1.0)':
+    dependencies:
+      '@types/async-retry': 1.4.9
+      '@types/uuid': 10.0.0
+      async-retry: 1.3.3
+      commander: 12.1.0
+      ts-node: 10.9.2(@types/node@24.0.14)(typescript@5.8.3)
+      uuid: 10.0.0
+      web-streams-polyfill: 4.1.0
 
   '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.0.14)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)':
     dependencies:
@@ -15065,6 +15104,8 @@ snapshots:
   util-deprecate@1.0.2: {}
 
   utils-merge@1.0.1: {}
+
+  uuid@10.0.0: {}
 
   uuid@11.1.0: {}
 

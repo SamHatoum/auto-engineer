@@ -1,10 +1,21 @@
 {
   "name": "@auto-engineer/information-architect",
   "version": "0.1.0",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./commands/generate-ia": {
+      "types": "./dist/commands/generate-ia.d.ts",
+      "import": "./dist/commands/generate-ia.js"
+    }
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp src/auto-ux-schema.json dist/",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
@@ -20,6 +31,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*"
+    "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*"
   }
 }

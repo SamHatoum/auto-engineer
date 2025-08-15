@@ -13,7 +13,12 @@ import { createDemoCommand } from './commands/demo';
 import { createCreateExampleCommand } from './commands/create-example';
 import { createExportSchemaCommand } from './commands/export-schema';
 import { createGenerateServerCommand } from './commands/generate-server';
+import { createGenerateGQLSchemaCommand } from './commands/generate-gql-schema';
 import { createImplementServerCommand } from './commands/implement-server';
+import { createImportDesignSystemCommand } from './commands/import-design-system';
+import { createGenerateIACommand } from './commands/generate-ia';
+import { createGenerateClientCommand } from './commands/generate-client';
+import { createImplementClientCommand } from './commands/implement-client';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -90,7 +95,12 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   program.addCommand(createCreateExampleCommand(config, analytics));
   program.addCommand(createExportSchemaCommand(config, analytics));
   program.addCommand(createGenerateServerCommand(config, analytics));
+  program.addCommand(createGenerateGQLSchemaCommand(config, analytics));
   program.addCommand(createImplementServerCommand(config, analytics));
+  program.addCommand(createImportDesignSystemCommand(config, analytics));
+  program.addCommand(createGenerateIACommand(config, analytics));
+  program.addCommand(createGenerateClientCommand(config, analytics));
+  program.addCommand(createImplementClientCommand(config, analytics));
 
   program.addHelpText(
     'after',
@@ -100,7 +110,12 @@ Examples:
   $ auto-engineer create:example shopping-assistant
   $ auto-engineer export:schema --directory .context/flows
   $ auto-engineer generate:server .context/schema.json --destination .
+  $ auto-engineer generate:gql-schema ./server
   $ auto-engineer implement:server ./server
+  $ auto-engineer import:design-system ./design-system ./.context
+  $ auto-engineer generate:ia ./.context ./flows/*.flow.ts
+  $ auto-engineer generate:client ./starter ./design-system ./client ./ia-schema.json ./schema.graphql
+  $ auto-engineer implement:client ./client ./.context ./preferences.md ./design-system.md
 
 Environment Variables:
   DEBUG=auto-engineer                     Enable debug mode

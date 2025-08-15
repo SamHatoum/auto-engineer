@@ -1,11 +1,22 @@
 {
   "name": "@auto-engineer/react-graphql-generator",
   "version": "0.1.0",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./commands/generate-client": {
+      "types": "./dist/commands/generate-client.d.ts",
+      "import": "./dist/commands/generate-client.js"
+    }
+  },
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/generator/templates dist/generator/",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -22,6 +33,7 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "ejs": "^3.1.10",
     "graphql": "^16.11.0",
     "openai": "^4.104.0"

@@ -1,11 +1,22 @@
 {
   "name": "@auto-engineer/design-system-importer",
   "version": "0.1.0",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./commands/import-design-system": {
+      "types": "./dist/commands/import-design-system.d.ts",
+      "import": "./dist/commands/import-design-system.js"
+    }
+  },
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -20,5 +31,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@auto-engineer/message-bus": "workspace:*"
+  }
 }
