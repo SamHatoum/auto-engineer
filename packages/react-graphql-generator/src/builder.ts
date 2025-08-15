@@ -1,11 +1,16 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
 
   async cloneStarter(_starterDir: string, customDesignSystemDir: string): Promise<this> {
-    const starterDir = path.resolve(__dirname, _starterDir);
+    // If the path is already absolute, use it as is, otherwise resolve relative to __dirname
+    const starterDir = path.isAbsolute(_starterDir) ? _starterDir : path.resolve(__dirname, _starterDir);
     await this.collectFiles(starterDir, '');
 
     if (customDesignSystemDir != null && customDesignSystemDir !== '') {

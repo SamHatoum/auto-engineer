@@ -38,8 +38,18 @@ export function runCodegen(projectPath: string): void {
   }
 
   console.log('▶ Installing dependencies via `npx pnpm` in', resolvedPath);
-  const installOutput = runCommand('npx pnpm install', resolvedPath);
+  const installOutput = runCommand('npx pnpm install --include=dev', resolvedPath);
   console.log(installOutput);
+
+  // Fix execute permissions for node_modules/.bin files
+  const binDir = path.join(resolvedPath, 'node_modules', '.bin');
+  if (fs.existsSync(binDir)) {
+    try {
+      runCommand('chmod +x node_modules/.bin/*', resolvedPath);
+    } catch (error) {
+      console.warn('⚠️ Could not fix bin permissions:', error);
+    }
+  }
 
   console.log('\n▶ Running codegen...');
   const output = runCommand('npx pnpm codegen', resolvedPath);
