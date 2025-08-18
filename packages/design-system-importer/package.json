@@ -32,6 +32,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "workspace:*"
+    "@auto-engineer/message-bus": "^0.0.2"
   }
 }

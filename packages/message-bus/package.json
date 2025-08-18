@@ -1,6 +1,9 @@
 {
   "name": "@auto-engineer/message-bus",
   "version": "0.0.2",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Message bus for handling commands, events, and queries",
   "type": "module",
   "main": "./dist/index.js",

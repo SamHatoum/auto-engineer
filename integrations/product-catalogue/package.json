@@ -12,8 +12,8 @@
     }
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "workspace:*",
-    "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/flowlang": "^0.1.2",
+    "@auto-engineer/ai-gateway": "^0.1.1",
     "axios": "^1.6.0"
   },
   "scripts": {

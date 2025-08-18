@@ -28,8 +28,8 @@
     "unlink:dev": "pnpm unlink --global"
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "workspace:*",
-    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/flowlang": "^0.1.2",
+    "@auto-engineer/message-bus": "^0.0.2",
     "@event-driven-io/emmett": "^0.38.2",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",

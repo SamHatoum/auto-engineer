@@ -31,7 +31,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*",
-    "@auto-engineer/message-bus": "workspace:*"
+    "@auto-engineer/ai-gateway": "^0.1.1",
+    "@auto-engineer/message-bus": "^0.0.2"
   }
 }

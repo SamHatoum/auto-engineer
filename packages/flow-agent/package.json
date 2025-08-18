@@ -19,9 +19,9 @@
     "unlink:dev": "pnpm unlink --global"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*",
-    "@auto-engineer/flowlang": "workspace:*",
-    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/ai-gateway": "^0.1.1",
+    "@auto-engineer/flowlang": "^0.1.2",
+    "@auto-engineer/message-bus": "^0.0.2",
     "vitest": "^3.2.4",
     "zod": "^3.25.67",
     "zod-to-json-schema": "^3.24.6"

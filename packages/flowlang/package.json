@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/message-bus": "^0.0.2",
     "@event-driven-io/emmett": "^0.38.3",
     "fast-glob": "^3.3.3",
     "graphql": "^16.11.0",
