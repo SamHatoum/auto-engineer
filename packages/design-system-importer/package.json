@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/design-system-importer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,6 +32,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.0.2"
+    "@auto-engineer/message-bus": "^0.0.3"
   }
 }
