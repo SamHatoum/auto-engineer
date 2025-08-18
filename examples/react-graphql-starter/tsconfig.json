@@ -3,11 +3,12 @@
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
 
     /* Type Safety */
     "strict": false,
@@ -27,6 +28,7 @@
     "exactOptionalPropertyTypes": false,
     "forceConsistentCasingInFileNames": false,
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "allowSyntheticDefaultImports": true,
 
     /* Paths / Aliases */
@@ -35,6 +37,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "vite.config.ts", "codegen.ts", "tailwind.config.ts"],
+  "include": ["src/**/*", "vite.config.ts", "codegen.ts", "tailwind.config.ts", "eslint.config.ts"],
   "exclude": ["node_modules/**", "dist"]
 }

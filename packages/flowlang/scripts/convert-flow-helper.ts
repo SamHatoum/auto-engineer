@@ -47,11 +47,11 @@ run();
       let stdout = '';
       let stderr = '';
 
-      child.stdout.on('data', (data) => {
+      child.stdout.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      child.stderr.on('data', (data) => {
+      child.stderr.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
@@ -59,7 +59,7 @@ run();
         // Clean up temp file
         try {
           unlinkSync(tempScript);
-        } catch (e) {
+        } catch {
           // Ignore cleanup errors
         }
 
@@ -90,4 +90,4 @@ run();
   }
 };
 
-main();
+void main();

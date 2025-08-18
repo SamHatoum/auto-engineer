@@ -32,14 +32,14 @@
     "zod-to-json-schema": "^3.22.3"
   },
   "scripts": {
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/templates && cp -r src/templates dist/templates && mkdir -p dist/src/templates && cp -r dist/templates/* dist/src/templates/ && chmod +x dist/src/bin/create-auto-example.js",
+    "build": "tsx scripts/build.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
+    "lint": "eslint '{src,scripts}/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "convert-flow": "tsx scripts/convert-flow.ts",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ./eslint.config.ts",
+    "lint:fix": "eslint '{src,scripts}/**/*.ts' --fix --config ./eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "link:dev": "pnpm build && pnpm link --global",
     "unlink:dev": "pnpm unlink --global"

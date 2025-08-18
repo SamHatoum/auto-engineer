@@ -1,4 +1,4 @@
-import rootConfig from '../../eslint.config.ts';
+import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
@@ -9,7 +9,8 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
-  ...rootConfig,
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     languageOptions: {
       parserOptions: {
