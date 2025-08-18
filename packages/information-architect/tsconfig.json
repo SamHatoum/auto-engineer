@@ -1,9 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../ai-gateway" }, { "path": "../message-bus" }]
 }

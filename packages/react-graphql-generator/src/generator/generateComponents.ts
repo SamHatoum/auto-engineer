@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import ejs from 'ejs';
+import { fileURLToPath } from 'url';
 import { GeneratedFile, IAScheme } from '../types';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function generate(spec: IAScheme): GeneratedFile[] {
   const files: GeneratedFile[] = [];

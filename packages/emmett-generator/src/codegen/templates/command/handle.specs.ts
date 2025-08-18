@@ -246,7 +246,7 @@ describe('generateScaffoldFilePlans', () => {
         },
         {
           name: 'product-catalog',
-          source: '@auto-engineer/product-catalog-integration',
+          source: '@auto-engineer/product-catalogue-integration',
           description: '',
         },
       ],
@@ -256,11 +256,11 @@ describe('generateScaffoldFilePlans', () => {
     const handleFile = plans.find((p) => p.outputPath.endsWith('handle.ts'));
 
     expect(handleFile?.contents).toMatchInlineSnapshot(`
-      "import '@auto-engineer/product-catalog-integration';
+      "import '@auto-engineer/product-catalogue-integration';
 
       import { AI } from '@auto-engineer/ai-integration';
 
-      import { Products } from '@auto-engineer/product-catalog-integration';
+      import { Products } from '@auto-engineer/product-catalogue-integration';
 
       import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
       import { evolve } from './evolve';

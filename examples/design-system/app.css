@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-background: #ffffff;
@@ -20,13 +20,13 @@
   --color-border: #e5e5e5;
   --color-input: #e5e5e5;
   --color-ring: #d6d6d6;
-  
+
   --color-chart-1: #0066cc;
   --color-chart-2: #999999;
   --color-chart-3: #666666;
   --color-chart-4: #e60023;
   --color-chart-5: #ffcc00;
-  
+
   --color-sidebar: #ffffff;
   --color-sidebar-foreground: #111111;
   --color-sidebar-primary: #0066cc;
@@ -35,7 +35,7 @@
   --color-sidebar-accent-foreground: #111111;
   --color-sidebar-border: #e5e5e5;
   --color-sidebar-ring: #d6d6d6;
-  
+
   --radius-sm: calc(0.5rem - 4px);
   --radius-md: calc(0.5rem - 2px);
   --radius-lg: 0.5rem;

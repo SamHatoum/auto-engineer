@@ -1,17 +1,29 @@
 {
   "name": "@auto-engineer/flowlang",
-  "version": "0.1.0",
-  "main": "./dist/index.js",
+  "version": "0.1.1",
+  "main": "./dist/src/index.js",
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
+  "bin": {
+    "create-auto-example": "./dist/src/bin/create-auto-example.js"
+  },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js"
+    },
+    "./commands/create-example": {
+      "types": "./dist/src/commands/create-example.d.ts",
+      "import": "./dist/src/commands/create-example.js"
+    },
+    "./commands/export-schema": {
+      "types": "./dist/src/commands/export-schema.d.ts",
+      "import": "./dist/src/commands/export-schema.js"
     }
   },
   "dependencies": {
+    "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.3",
     "fast-glob": "^3.3.3",
     "graphql": "^16.11.0",
@@ -20,15 +32,20 @@
     "zod-to-json-schema": "^3.22.3"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsx scripts/build.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
+    "lint": "eslint '{src,scripts}/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "convert-flow": "tsx scripts/convert-flow.ts",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ./eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "lint:fix": "eslint '{src,scripts}/**/*.ts' --fix --config ./eslint.config.ts",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "link:dev": "pnpm build && pnpm link --global",
+    "unlink:dev": "pnpm unlink --global"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.3"
   },
   "publishConfig": {
     "access": "public"

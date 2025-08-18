@@ -483,7 +483,7 @@ describe('decide.ts.ejs', () => {
         },
         {
           name: 'product-catalog',
-          source: '@auto-engineer/product-catalog-integration',
+          source: '@auto-engineer/product-catalogue-integration',
           description: '',
         },
       ],
@@ -497,7 +497,7 @@ describe('decide.ts.ejs', () => {
       import type { State } from './state';
       import type { SuggestItems } from './commands';
       import type { ItemsSuggested } from './events';
-      import type { Products } from '@auto-engineer/product-catalog-integration';
+      import type { Products } from '@auto-engineer/product-catalogue-integration';
 
       export const decide = (command: SuggestItems, state: State, products?: Products): ItemsSuggested => {
         switch (command.type) {

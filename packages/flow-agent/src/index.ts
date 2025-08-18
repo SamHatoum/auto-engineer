@@ -1,11 +1,6 @@
 import { streamStructuredDataWithAI } from '@auto-engineer/ai-gateway';
 import { AIProvider } from '@auto-engineer/ai-gateway';
-import {
-  type CommandHandler,
-  type BaseCommand,
-  type AckNackResponse,
-  type BaseEvent,
-} from '@auto-engineer/message-bus';
+import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { variantPrompts } from './prompt';
 import {
   FlowNamesSystemSchema,
@@ -16,50 +11,51 @@ import {
 } from '@auto-engineer/flowlang';
 import { z } from 'zod';
 
-export interface CreateFlowCommand extends BaseCommand {
-  type: 'CreateFlow';
-  prompt: string;
-  variant?: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs';
-  streamCallback?: (partialData: unknown) => void;
-  useStreaming?: boolean;
-}
+export type CreateFlowCommand = Command<
+  'CreateFlow',
+  {
+    prompt: string;
+    variant?: 'flow-names' | 'slice-names' | 'client-server-names' | 'specs';
+    streamCallback?: (partialData: unknown) => void;
+    useStreaming?: boolean;
+  }
+>;
 
-export interface FlowCreatedEvent extends BaseEvent {
-  type: 'FlowCreated';
-  systemData: AppSchema;
-}
+export type FlowCreatedEvent = Event<
+  'FlowCreated',
+  {
+    systemData: AppSchema;
+  }
+>;
 
 const provider = AIProvider.OpenAI;
 
+// Temporary: Return result directly for CLI integration
+export async function handleCreateFlowCommand(command: CreateFlowCommand): Promise<AppSchema> {
+  const commandData = command.data;
+  const variant = commandData.variant ?? 'flow-names';
+
+  const systemData: AppSchema = await generateSystemData(variant, commandData.prompt, commandData.streamCallback);
+
+  const event: FlowCreatedEvent = {
+    type: 'FlowCreated',
+    data: {
+      systemData,
+    },
+    timestamp: new Date(),
+    requestId: command.requestId ?? undefined,
+  };
+
+  // In the new pattern, events would be published through the event system
+  console.log('Flow created event:', event);
+
+  return systemData;
+}
+
 export const createFlowCommandHandler: CommandHandler<CreateFlowCommand> = {
   name: 'CreateFlow',
-  handle: async (command: CreateFlowCommand): Promise<AckNackResponse> => {
-    try {
-      const variant = command.variant || 'flow-names';
-
-      const systemData: AppSchema = await generateSystemData(variant, command.prompt, command.streamCallback);
-
-      const event: FlowCreatedEvent = {
-        type: 'FlowCreated',
-        systemData,
-        timestamp: new Date(),
-        requestId: command.requestId,
-      };
-
-      return {
-        status: 'ack',
-        message: JSON.stringify(event),
-        timestamp: new Date(),
-        requestId: command.requestId,
-      };
-    } catch (error) {
-      return {
-        status: 'nack',
-        error: error instanceof Error ? error.message : 'Unknown error occurred while creating flow',
-        timestamp: new Date(),
-        requestId: command.requestId,
-      };
-    }
+  handle: async (command: CreateFlowCommand): Promise<void> => {
+    await handleCreateFlowCommand(command);
   },
 };
 

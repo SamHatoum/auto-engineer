@@ -13,10 +13,12 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../../.prettierignore",
     "type:check": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "lint:fix": "eslint .",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../../.prettierignore"
   },
   "dependencies": {
+    "@apollo/client": "^3.13.8",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -66,8 +68,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
-    "zod": "^3.25.63",
-    "@apollo/client": "^3.13.8"
+    "zod": "^3.25.63"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -75,9 +76,9 @@
     "@graphql-codegen/client-preset": "2.1.0",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@tailwindcss/typography": "^0.5.15",
-    "@types/node": "^22.5.5",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/node": "^22.16.5",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
@@ -86,7 +87,7 @@
     "globals": "^15.9.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
-    "typescript": "^5.5.3",
+    "typescript": "^5.4.5",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
   }

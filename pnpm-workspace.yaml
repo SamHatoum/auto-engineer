@@ -3,7 +3,6 @@ packages:
   - packages/*
   - examples/*
   - integrations/*
-  - '!examples/shopping-assistant'
 
 ignoredBuiltDependencies:
   - '@apollo/protobufjs'

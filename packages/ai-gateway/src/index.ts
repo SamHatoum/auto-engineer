@@ -5,8 +5,8 @@ import { google } from '@ai-sdk/google';
 import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
 import { z } from 'zod';
-import { getRegisteredToolsForAI } from './mcp-server.js';
-import { startServer } from './mcp-server.js';
+import { getRegisteredToolsForAI } from './mcp-server';
+import { startServer } from './mcp-server';
 
 interface AIToolValidationError extends Error {
   cause?: {
@@ -496,4 +496,4 @@ export {
   executeRegisteredTool,
   type ToolHandler,
   type RegisteredTool,
-} from './mcp-server.js';
+} from './mcp-server';

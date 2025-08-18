@@ -1,58 +1,35 @@
-export interface BaseCommand {
-  type: string;
+// Core CQRS types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DefaultRecord = Record<string, any>;
+
+export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord> = Readonly<{
+  type: CommandType;
+  data: Readonly<CommandData>;
   timestamp?: Date;
   requestId?: string;
   correlationId?: string;
-}
+}>;
 
-export interface BaseEvent {
-  type: string;
+export type Event<EventType extends string = string, EventData extends DefaultRecord = DefaultRecord> = Readonly<{
+  type: EventType;
+  data: EventData;
   timestamp?: Date;
   requestId?: string;
   correlationId?: string;
-}
+}>;
 
-export interface BaseQuery {
-  type: string;
-  timestamp?: Date;
-  requestId?: string;
-  correlationId?: string;
-}
+// Utility functions
+export function on<T>(_handler: (event: T) => void) {}
 
-export interface BaseResult {
-  type: string;
-  timestamp?: Date;
-  requestId?: string;
-  correlationId?: string;
-}
+export function dispatch<T>(_command: T) {}
+dispatch.parallel = <T>(_commands: T[]) => {};
+dispatch.sequence = <T>(_commands: T[]) => {};
+dispatch.custom = <T>(_commandFactory: () => T) => {};
 
-export interface AckResponse {
-  status: 'ack';
-  message?: string;
-  timestamp: Date;
-  requestId?: string;
-}
+export function fold<T>(_reducer: (event: T) => string) {}
 
-export interface NackResponse {
-  status: 'nack';
-  error: string;
-  timestamp: Date;
-  requestId?: string;
-}
-
-export type AckNackResponse = AckResponse | NackResponse;
-
-export interface CommandHandler<TCommand extends BaseCommand = BaseCommand> {
+// Command handler for new pattern
+export type CommandHandler<TCommand extends Command = Command> = {
   name: string;
-  handle: (command: TCommand) => Promise<AckNackResponse>;
-}
-
-export interface EventHandler<TEvent extends BaseEvent = BaseEvent> {
-  name: string;
-  handle: (event: TEvent) => Promise<AckNackResponse>;
-}
-
-export interface QueryHandler<TQuery extends BaseQuery = BaseQuery, TResult extends BaseResult = BaseResult> {
-  name: string;
-  handle: (query: TQuery) => Promise<TResult>;
-}
+  handle: (command: TCommand) => Promise<void>;
+};

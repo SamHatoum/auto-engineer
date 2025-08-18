@@ -6,19 +6,25 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Index } from '@/pages/Index';
 import { NotFound } from '@/pages/NotFound';
 import { apolloClient } from '@/apolloClient';
+import React from 'react';
 
-export const App = () => (
-  <ApolloProvider client={apolloClient}>
+// Type assertion workaround for React component type issues
+const ApolloProviderTyped = ApolloProvider as any;
+const RoutesTyped = Routes as any;
+const RouteTyped = Route as any;
+
+export const App: React.FC = () => (
+  <ApolloProviderTyped client={apolloClient}>
     {/* <TooltipProvider> */}
     {/* <Toaster /> */}
     {/* <Sonner /> */}
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
+      <RoutesTyped>
+        <RouteTyped path="/" element={<Index />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+        <RouteTyped path="*" element={<NotFound />} />
+      </RoutesTyped>
     </BrowserRouter>
     {/* </TooltipProvider> */}
-  </ApolloProvider>
+  </ApolloProviderTyped>
 );

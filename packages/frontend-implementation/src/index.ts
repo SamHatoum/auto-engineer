@@ -269,3 +269,5 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
+export * from './commands/implement-client';

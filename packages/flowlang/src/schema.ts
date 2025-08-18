@@ -354,6 +354,7 @@ export {
   CommandSchema,
   EventSchema,
   StateSchema,
+  IntegrationSchema,
   CommandSliceSchema,
   QuerySliceSchema,
   ReactSliceSchema,

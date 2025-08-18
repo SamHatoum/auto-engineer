@@ -140,3 +140,5 @@ export async function processFlowsWithAI(
   const agent = new InformationArchitectAgent();
   return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms);
 }
+
+export * from './commands/generate-ia';
