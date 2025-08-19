@@ -54,6 +54,7 @@ export class InformationArchitectAgent {
 You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 
 IMPORTANT: Only generate pages and components that are directly referenced in the provided flows. Do NOT add any extra pages or components, and do NOT make assumptions outside the flows. If something is not mentioned in the flows, it should NOT appear in the output.
+IMPORTANT: try your best to reuse the existing atoms, and try not to generate atoms with context: like Submit Button, because the submit part is mainly irrelevant, instead just use the Button atom if provided.
 
 $${atoms ? `Here is a list of available atomic components (atoms) from the design system. Use these atoms and their props as much as possible. Only create new atoms if absolutely necessary. And only put the new atoms created into the schema. \n\nAtoms:\n${JSON.stringify(atoms, null, 2)}\n` : ''}
 Flows:
@@ -92,21 +93,30 @@ Instructions:
 Use the following structure as a template for your response:
 ----
 {
-  "components": {
-    "ComponentName": {
-      "description": "What this component does.",
-      "composition": { "primitives": ["Primitive1", "Primitive2"] },
-      "data_requirements": [
-        {
-          "type": "query",
-          "description": "What data is fetched.",
-          "trigger": "When the query runs.",
-          "details": {
-            "source": "Where the data comes from.",
-            "gql": "GraphQL query or subscription"
+  "atoms": {
+    "items": {
+       "AtomName": {
+          ....
+       }
+     }
+  },
+  "molecules": {
+    "items": {
+      "ComponentName": {
+        "description": "What this component does.",
+        "composition": { "primitives": ["Primitive1", "Primitive2"] },
+        "data_requirements": [
+          {
+            "type": "query",
+            "description": "What data is fetched.",
+            "trigger": "When the query runs.",
+            "details": {
+              "source": "Where the data comes from.",
+              "gql": "GraphQL query or subscription"
+            }
           }
-        }
-      ]
+        ]
+      }
     }
     // ... more components
   },

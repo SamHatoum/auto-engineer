@@ -18,5 +18,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {}
+  "dependencies": {
+    "figma-api": "2.0.2-beta"
+  }
 }

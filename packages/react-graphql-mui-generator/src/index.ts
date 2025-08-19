@@ -9,15 +9,14 @@ import { runCodegen } from './run-codegen';
 import { IAScheme } from './types';
 
 export async function main() {
-  const [, , starterDir, designSystemDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath] = process.argv;
-  if (!designSystemDir || !targetDir) {
+  const [, , starterDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath] = process.argv;
+  if (!targetDir) {
     console.error('Usage: tsx src/index.ts <starter-dir> <target-dir>');
     process.exit(1);
   }
 
-  console.log('designSystemDir', designSystemDir);
   const builder = new FrontendScaffoldBuilder();
-  await builder.cloneStarter(starterDir, designSystemDir);
+  await builder.cloneStarter(starterDir);
   await builder.configureStarter(figmaVariablesPath);
   await builder.build(targetDir);
 
