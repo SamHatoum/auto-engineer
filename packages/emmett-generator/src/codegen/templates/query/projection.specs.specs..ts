@@ -12,7 +12,7 @@ describe('projection.specs.ts.ejs', () => {
           slices: [
             {
               type: 'command',
-              name: 'create-listing',
+              name: 'CreateListing',
               stream: 'listing-${propertyId}',
               client: { description: '', specs: [] },
               server: {
