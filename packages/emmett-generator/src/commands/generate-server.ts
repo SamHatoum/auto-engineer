@@ -69,6 +69,7 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
+// eslint-disable-next-line complexity
 export async function handleGenerateServerCommand(
   command: GenerateServerCommand,
 ): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
@@ -110,9 +111,9 @@ export async function handleGenerateServerCommand(
     debugSchema('Parsed schema:');
     debugSchema('  Flows: %d', spec.flows?.length || 0);
     debugSchema('  Messages: %d', spec.messages?.length || 0);
-    debugSchema('  Integrations: %d', spec.integrations?.length || 0);
+    debugSchema('  Integrations: %d', spec.integrations?.length ?? 0);
 
-    if (spec.flows?.length > 0) {
+    if (spec.flows !== undefined && spec.flows.length > 0) {
       debugSchema(
         'Flow names: %o',
         spec.flows.map((f) => f.name),
@@ -301,7 +302,7 @@ async function writePackage(dest: string): Promise<void> {
       rootPkg.dependencies?.[dep] ??
       rootPkg.devDependencies?.[dep];
 
-    if (version) {
+    if (version !== undefined) {
       debugFiles('  Found version for %s: %s', dep, version);
     }
     return version;
