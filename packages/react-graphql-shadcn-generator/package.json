@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/react-graphql-generator",
+  "name": "@auto-engineer/react-graphql-shadcn-generator",
   "version": "0.1.2",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/generate-client": {
-      "types": "./dist/commands/generate-client.d.ts",
-      "import": "./dist/commands/generate-client.js"
     }
   },
   "scripts": {

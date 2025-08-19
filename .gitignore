@@ -12,6 +12,15 @@ out
 *.tsbuildinfo
 .tmp
 
+# TypeScript compiled files in src directories (should never be there)
+**/src/**/*.js
+**/src/**/*.js.map
+**/src/**/*.d.ts
+**/src/**/*.d.ts.map
+# Except for legitimate JS config files
+!**/src/**/jest.config.js
+!**/src/**/vitest.config.js
+
 # Environment
 .env
 .env.*
