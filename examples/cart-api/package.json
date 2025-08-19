@@ -11,10 +11,10 @@
     "start": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.js",
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {

@@ -100,6 +100,9 @@ export function writeGqlOperationsToFolder(iaScheme: IAScheme, outputDir: string
   const graphqlDir = path.join(outputDir, 'graphql');
   fs.mkdirSync(graphqlDir, { recursive: true });
 
-  fs.writeFileSync(path.join(graphqlDir, 'queries.ts'), buildFileContent(queries), 'utf-8');
-  fs.writeFileSync(path.join(graphqlDir, 'mutations.ts'), buildFileContent(mutations), 'utf-8');
+  const queriesPath = path.join(graphqlDir, 'queries.ts');
+  const mutationsPath = path.join(graphqlDir, 'mutations.ts');
+
+  fs.writeFileSync(queriesPath, buildFileContent(queries), 'utf-8');
+  fs.writeFileSync(mutationsPath, buildFileContent(mutations), 'utf-8');
 }

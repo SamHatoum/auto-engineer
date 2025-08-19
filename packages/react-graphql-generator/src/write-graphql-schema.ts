@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 function getSchema(gqlSchemaPath: string): string {
-  const schemaPath = path.join(__dirname, gqlSchemaPath);
+  // gqlSchemaPath should already be an absolute path from the CLI
+  const schemaPath = path.isAbsolute(gqlSchemaPath) ? gqlSchemaPath : path.resolve(gqlSchemaPath);
   return fs.readFileSync(schemaPath, 'utf-8');
 }
 

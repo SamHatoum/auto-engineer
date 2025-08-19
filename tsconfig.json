@@ -10,20 +10,45 @@
   },
   "include": [
     "**/src/**/*",
-    "eslint.config.js",
+    "scripts/**/*",
+    "eslint.config.ts",
     "vitest.config.ts",
     "commitlint.config.ts",
     "examples/ai-integration",
     "examples/product-catalogue-integration",
-    "examples/shopping-assistant/integrations"
+    "examples/shopping-assistant/integrations",
+    "integrations/ai-chat-completion/ai-integration.ts",
+    "integrations/cart/cart-integration.ts",
+    "integrations/product-catalogue/product-catalogue-integration.ts"
   ],
   "exclude": ["**/dist/**", "**/node_modules/**"],
   "references": [
     {
-      "path": "./apps/cli"
+      "path": "./packages/ai-gateway"
+    },
+    {
+      "path": "./packages/cli"
+    },
+    {
+      "path": "./packages/design-system-importer"
     },
     {
       "path": "./packages/emmett-generator"
+    },
+    {
+      "path": "./packages/frontend-checks"
+    },
+    {
+      "path": "./packages/frontend-implementation"
+    },
+    {
+      "path": "./packages/information-architect"
+    },
+    {
+      "path": "./packages/message-bus"
+    },
+    {
+      "path": "./packages/react-graphql-generator"
     }
   ]
 }

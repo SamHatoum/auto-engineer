@@ -1,6 +1,10 @@
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { FrontendScaffoldBuilder } from './builder';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // import { deleteDirectory } from './delete-directory';
 import { generateComponents } from './generator/generateComponents';
 import { writeGqlOperationsToFolder } from './scaffold-gql-operations';
@@ -32,4 +36,9 @@ export async function main() {
   return 'Frontend Scaffold is running!';
 }
 
-void main();
+// Only run main if this file is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  void main();
+}
+
+export * from './commands/generate-client';

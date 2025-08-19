@@ -1,18 +1,20 @@
 {
   "name": "@auto-engineer/frontend-checks",
   "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "postinstall": "playwright install chromium",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.js",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "link:dev": "pnpm build && pnpm link --global",
+    "unlink:dev": "pnpm unlink --global"
   },
   "dependencies": {
     "typescript": "^5.4.5"

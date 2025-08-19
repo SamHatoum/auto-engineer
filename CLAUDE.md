@@ -108,3 +108,4 @@ The emmett-generator package creates:
 ALWAYS run `pnpm check` after you finish all your changes and fix any problems.
 ALWAYS use the IDE diagnostics tool to check all the files that are not commited remotely.
 ALWAYS perform a git log and see previous commits when tests fail. You need to look at `origin/main` and `origin/current_branch` to see why things were passing before any current changes. It's safe to assume that what's on git is working typically since every dev runs commit hooks and we have CI/CD checks.
+DO NOT EVER js with ts in my typsecript. Don't import .js files in my TS files. JS is a concern for the dist dir only

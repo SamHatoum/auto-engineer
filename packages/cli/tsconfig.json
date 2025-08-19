@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "composite": true
+  },
+  "include": ["src/**/*", "bin/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../design-system-importer" },
+    { "path": "../emmett-generator" },
+    { "path": "../flowlang" },
+    { "path": "../frontend-implementation" },
+    { "path": "../information-architect" },
+    { "path": "../message-bus" },
+    { "path": "../react-graphql-generator" }
+  ]
+}

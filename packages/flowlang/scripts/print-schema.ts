@@ -1,8 +1,13 @@
-import { CommandSliceSchema, FlowSchema, MessageSchema, QuerySliceSchema, ReactSliceSchema } from '../src';
+import {
+  CommandSliceSchema,
+  FlowSchema,
+  IntegrationSchema,
+  MessageSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+} from '../src';
 
 import { zodToJsonSchema } from 'zod-to-json-schema';
-
-let IntegrationSchema;
 const schemas = Object.fromEntries(
   Object.entries({
     flow: FlowSchema,

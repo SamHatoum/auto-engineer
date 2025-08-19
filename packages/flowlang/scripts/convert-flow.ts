@@ -17,11 +17,11 @@ const runInContext = (flowPath: string, projectRoot: string): Promise<string> =>
     let stdout = '';
     let stderr = '';
 
-    child.stdout.on('data', (data) => {
+    child.stdout.on('data', (data: string) => {
       stdout += data.toString();
     });
 
-    child.stderr.on('data', (data) => {
+    child.stderr.on('data', (data: string) => {
       stderr += data.toString();
     });
 
@@ -35,67 +35,86 @@ const runInContext = (flowPath: string, projectRoot: string): Promise<string> =>
   });
 };
 
-const main = async () => {
-  const args = process.argv.slice(2);
-
+const validateArgs = (args: string[]): void => {
   if (args.length === 0) {
     console.error('Usage: pnpm convert-flow <input-file.flow.ts> [output-file-or-dir]');
     process.exit(1);
   }
+};
 
-  const inputFile = args[0];
-  const outputFile = args[1];
-
+const validateInputFile = (inputFile: string): void => {
   if (!inputFile.endsWith('.flow.ts') && !inputFile.endsWith('.flow.js')) {
     console.error('Error: Input file must be a .flow.ts or .flow.js file');
     process.exit(1);
   }
+};
+
+const validateInputPath = (inputPath: string): void => {
+  if (!existsSync(inputPath)) {
+    console.error(`Error: File not found: ${inputPath}`);
+    process.exit(1);
+  }
+};
+
+const resolveOutputPath = (outputFile: string | undefined): string | undefined => {
+  if (outputFile === undefined || outputFile === '') {
+    return undefined;
+  }
+
+  const resolved = resolve(outputFile);
+  if (existsSync(resolved) && statSync(resolved).isDirectory()) {
+    return join(resolved, 'schema.json');
+  }
+  return resolved;
+};
+
+const findProjectRoot = (startDir: string): string => {
+  let projectRoot = startDir;
+  while (projectRoot !== '/' && !existsSync(`${projectRoot}/package.json`)) {
+    projectRoot = dirname(projectRoot);
+  }
+
+  if (!existsSync(`${projectRoot}/package.json`)) {
+    console.error('Error: Could not find package.json in flow directory or its parents');
+    process.exit(1);
+  }
+
+  return projectRoot;
+};
+
+const writeOutput = (outputPath: string | undefined, json: string): void => {
+  if (outputPath !== undefined && outputPath !== '') {
+    writeFileSync(outputPath, json);
+    console.log(`✓ Flow converted successfully to: ${outputPath}`);
+    console.log('📋 Schema validation performed during conversion');
+  } else {
+    console.log(json);
+  }
+};
+
+const main = async () => {
+  const args = process.argv.slice(2);
+  validateArgs(args);
+
+  const inputFile = args[0];
+  const outputFile = args[1];
+
+  validateInputFile(inputFile);
 
   try {
     const inputPath = resolve(inputFile);
+    validateInputPath(inputPath);
 
-    if (!existsSync(inputPath)) {
-      console.error(`Error: File not found: ${inputPath}`);
-      process.exit(1);
-    }
-
-    let outputPath: string | undefined;
-
-    if (outputFile) {
-      const resolved = resolve(outputFile);
-      if (existsSync(resolved) && statSync(resolved).isDirectory()) {
-        outputPath = join(resolved, 'schema.json');
-      } else {
-        outputPath = resolved;
-      }
-    }
+    const outputPath = resolveOutputPath(outputFile);
 
     console.log(`Converting flow: ${inputPath}`);
 
     const flowDir = dirname(inputPath);
-    let projectRoot = flowDir;
-    while (projectRoot !== '/' && !existsSync(`${projectRoot}/package.json`)) {
-      projectRoot = dirname(projectRoot);
-    }
-
-    if (!existsSync(`${projectRoot}/package.json`)) {
-      console.error('Error: Could not find package.json in flow directory or its parents');
-      process.exit(1);
-    }
-
-    // Get relative path from project root
+    const projectRoot = findProjectRoot(flowDir);
     const relativeFlowPath = relative(projectRoot, inputPath);
 
-    // Run the conversion in the correct context
     const json = await runInContext(relativeFlowPath, projectRoot);
-
-    if (outputPath) {
-      writeFileSync(outputPath, json);
-      console.log(`✓ Flow converted successfully to: ${outputPath}`);
-      console.log('📋 Schema validation performed during conversion');
-    } else {
-      console.log(json);
-    }
+    writeOutput(outputPath, json);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Error converting flow: ${message}`);
