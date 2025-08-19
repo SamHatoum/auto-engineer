@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/flowlang",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "./dist/src/index.js",
   "type": "module",
   "types": "./dist/src/index.d.ts",
