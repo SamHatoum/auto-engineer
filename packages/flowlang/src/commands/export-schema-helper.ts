@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { getFlows } from '../getFlows';
 import { resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
+import { pathToFileURL } from 'url';
 import createDebug from 'debug';
 
 const debug = createDebug('flowlang:export-schema-helper');
@@ -11,6 +11,23 @@ const main = async () => {
   debug('Starting export-schema-helper with directory: %s', directory);
 
   try {
+    // Import getFlows from the project's node_modules to ensure we use the same module context
+    const projectFlowlangPath = resolve(
+      directory,
+      'node_modules',
+      '@auto-engineer',
+      'flowlang',
+      'dist',
+      'src',
+      'getFlows.js',
+    );
+    debug('Importing getFlows from: %s', projectFlowlangPath);
+
+    const flowlangModule = (await import(pathToFileURL(projectFlowlangPath).href)) as {
+      getFlows: typeof import('../getFlows').getFlows;
+    };
+    const { getFlows } = flowlangModule;
+
     const flowsPath = resolve(directory, 'flows');
     debug('Resolved flows path: %s', flowsPath);
 
