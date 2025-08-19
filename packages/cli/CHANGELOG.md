@@ -1,5 +1,17 @@
 # @auto-engineer/cli
 
+## 0.2.0
+
+### Minor Changes
+
+- [`91a124f`](https://github.com/SamHatoum/auto-engineer/commit/91a124ff09ecb5893571d0d6fc86e51eaac7a3f0) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Fixes global bins.
+
+### Patch Changes
+
+- Updated dependencies [[`96c6f02`](https://github.com/SamHatoum/auto-engineer/commit/96c6f02989f9856a269367f42e288c7dbf5dd1d3), [`988ab04`](https://github.com/SamHatoum/auto-engineer/commit/988ab04530d41e116df9196434c0e57ff2ee11a8), [`9bf1a16`](https://github.com/SamHatoum/auto-engineer/commit/9bf1a164490e50445ca468aafd8dd9619c4f73cf), [`91a124f`](https://github.com/SamHatoum/auto-engineer/commit/91a124ff09ecb5893571d0d6fc86e51eaac7a3f0), [`8d7dbc7`](https://github.com/SamHatoum/auto-engineer/commit/8d7dbc719362aafa1e8473dd57fd783d8efe7e6b)]:
+  - @auto-engineer/flowlang@0.2.0
+  - @auto-engineer/emmett-generator@0.3.0
+
 ## 0.1.4
 
 ### Patch Changes
