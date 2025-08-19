@@ -11,23 +11,15 @@ const main = async () => {
   const directory = process.argv[2] || process.cwd();
 
   try {
-    // Temporarily disable console output during flow processing
-    console.log = () => {};
-    console.error = () => {};
-
     const flowsPath = resolve(directory, 'flows');
     const { toSchema } = await getFlows(flowsPath);
-    const json = JSON.stringify(toSchema(), null, 2);
+    const schema = toSchema();
+    const json = JSON.stringify(schema, null, 2);
     const contextDir = resolve(directory, '.context');
     const outPath = resolve(contextDir, 'schema.json');
 
     mkdirSync(contextDir, { recursive: true });
     writeFileSync(outPath, json);
-
-    // Restore console methods
-    console.log = originalLog;
-    console.error = originalError;
-
     // Output success as JSON for parent process
     console.log(
       JSON.stringify({

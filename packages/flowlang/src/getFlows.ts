@@ -452,7 +452,9 @@ export const getFlows = async (cwd: string = process.cwd()) => {
 
   // Import all files and collect any integrations
   const importPromises = files.map(async (file) => {
-    const module = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
+    // Add timestamp to force fresh import and avoid caching issues
+    const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
+    const module = (await import(url)) as Record<string, unknown>;
 
     // Look for exported integrations in the module
     for (const [exportName, exportValue] of Object.entries(module)) {
