@@ -6,7 +6,6 @@
   "types": "./dist/src/index.d.ts",
   "bin": {
     "auto-engineer": "./dist/bin/auto.js",
-    "ag": "./dist/bin/auto.js",
     "auto": "./dist/bin/auto.js"
   },
   "files": [
