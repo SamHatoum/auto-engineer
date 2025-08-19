@@ -32,6 +32,7 @@
     "access": "public"
   },
   "dependencies": {
+    "figma-api": "2.0.2-beta",
     "@auto-engineer/message-bus": "^0.0.3"
   }
 }

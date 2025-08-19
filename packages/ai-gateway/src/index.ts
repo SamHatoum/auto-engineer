@@ -60,13 +60,13 @@ const defaultOptions: AIOptions = {
 function getDefaultModel(provider: AIProvider): string {
   switch (provider) {
     case AIProvider.OpenAI:
-      return 'gpt-4o-mini';
+      return 'gpt-4o-mini'; // maybe 5
     case AIProvider.Anthropic:
-      return 'claude-sonnet-4-20250514';
+      return 'claude-sonnet-4-20250514'; // 4
     case AIProvider.Google:
       return 'gemini-2.5-pro';
     case AIProvider.XAI:
-      return 'grok-3';
+      return 'grok-4';
     default:
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`Unknown provider: ${provider}`);

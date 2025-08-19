@@ -253,11 +253,15 @@ function makeBasePrompt(ctx: ProjectContext): string {
     .join('\n');
 
   return `
-You are Auto, an expert AI frontend engineer specializing in scalable, clean, production-grade React applications using modern TypeScript, TailwindCSS, and GraphQL via Apollo Client.
+You are Auto, an expert AI frontend engineer specializing in scalable, clean, production-grade React applications using modern TypeScript, and GraphQL via Apollo Client.
 
 Your task: Analyze the current project and generate a complete plan to implement a well-structured, schema-compliant React app using atomic design and integrated GraphQL operations. You must ensure code clarity, maintainability, and adherence to project styling conventions.
 
 User Preferences: ${ctx.userPreferences}
+
+IMPLEMENTATION MUST:
+- DONT EVER CHANGE THE THEME TOKENS BY YOURSELF
+- If there are any page templates in the user preferences make sure to use that layout for pages.
 
 Component Design & Structure:
 - Follow atomic design:
@@ -275,14 +279,6 @@ Component Responsibilities:
 - Components must not include generic or redundant headings to represent structure.
 - Page-level wrappers must **not** introduce headings unless absolutely necessary.
 - Use semantic structure, branded color tokens, spacing, and layout to indicate purpose.
-
-Styling & UI Conventions:
-- Use **Tailwind CSS utility classes** exclusively.
-- Never hardcode colors — use only theme tokens defined in \`src/globals.css\`.
-- Follow **shadcn best practices**:
-  - Use variant tokens like \`default\`, \`destructive\`, \`outline\`, etc.
-  - Use branded \`primary\` colors consistently across CTA buttons, cards, and highlights.
-  - Avoid overwriting shadcn component styles unless extending properly.
 
 Code Standards:
 - Use **TypeScript** throughout.
@@ -321,6 +317,7 @@ ${JSON.stringify(ctx.fileTreeSummary, null, 2)}
 
 Here are the available atoms and their props:
 ${JSON.stringify(ctx.atoms, null, 2)}
+And if there are no atoms found, make sure to use what the user preferences suggest. Like using a library atom component for example.
 
 Here are the contents of key files:
 ${keyFileContents}
@@ -686,7 +683,7 @@ export async function runAIAgent(
   userPreferencesPath: string,
   designSystemPath: string,
 ) {
-  const userPreferences = await fs.readFile(path.join(__dirname, userPreferencesPath), 'utf-8');
+  const userPreferences = await fs.readFile(path.join(projectDir, 'design-system-principles.md'), 'utf-8');
   const designSystem = await fs.readFile(path.join(__dirname, designSystemPath), 'utf-8');
   const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);
   const plan = await planProject(ctx);

@@ -1,12 +1,15 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
-import { copyDesignSystemDocsAndUserPreferences } from '../index';
+import { importDesignSystemComponentsFromFigma, ImportStrategy, type FilterFunctionType } from '../index';
+import { FilterLoader } from '../utils/FilterLoader';
 
 export type ImportDesignSystemCommand = Command<
   'ImportDesignSystem',
   {
     inputDir: string;
     outputDir: string;
+    strategy?: keyof typeof ImportStrategy;
+    filterPath?: string;
   }
 >;
 
@@ -31,7 +34,7 @@ export type DesignSystemImportFailedEvent = Event<
 export async function handleImportDesignSystemCommand(
   command: ImportDesignSystemCommand,
 ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> {
-  const { inputDir, outputDir } = command.data;
+  const { inputDir, outputDir, strategy, filterPath } = command.data;
 
   try {
     // Check if input directory exists
@@ -55,7 +58,22 @@ export async function handleImportDesignSystemCommand(
       };
     }
 
-    await copyDesignSystemDocsAndUserPreferences(inputDir, outputDir);
+    const resolvedStrategy = strategy ? ImportStrategy[strategy] : ImportStrategy.WITH_COMPONENT_SETS;
+
+    let filterFn: FilterFunctionType | undefined;
+    let loader: FilterLoader | undefined;
+    if (typeof filterPath === 'string' && filterPath.trim().length > 0) {
+      try {
+        loader = new FilterLoader();
+        filterFn = await loader.loadFilter(filterPath);
+      } catch (e) {
+        console.warn(`Could not import filter from ${filterPath}. Skipping custom filter.`, e);
+      } finally {
+        if (loader) loader.cleanup();
+      }
+    }
+
+    await importDesignSystemComponentsFromFigma(outputDir, resolvedStrategy, filterFn);
     console.log(`Design system files processed from ${inputDir} to ${outputDir}`);
 
     return {

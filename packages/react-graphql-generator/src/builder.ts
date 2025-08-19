@@ -4,6 +4,9 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import ejs from 'ejs';
+import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
+import { flattenFigmaVariables } from './figma-helpers';
 
 export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
@@ -20,13 +23,11 @@ export class FrontendScaffoldBuilder {
           const atomsTarget = 'src/components/atoms';
           const files = (await fs.readdir(customDesignSystemDir)).filter((f) => f.endsWith('.tsx'));
           if (files.length > 0) {
-            // Remove all starter atoms from starterFiles
             for (const key of Array.from(this.starterFiles.keys())) {
               if (key.startsWith(atomsTarget + '/')) {
                 this.starterFiles.delete(key);
               }
             }
-            // Add custom atoms
             for (const file of files) {
               const content = await fs.readFile(path.join(customDesignSystemDir, file));
               this.starterFiles.set(path.join(atomsTarget, file), content);
@@ -50,6 +51,138 @@ export class FrontendScaffoldBuilder {
       } else if (entry.isFile()) {
         const content = await fs.readFile(absPath);
         this.starterFiles.set(relPath, content);
+      }
+    }
+  }
+
+  async configureStarter(variablesDir: string): Promise<void> {
+    for (const [relPath, content] of Array.from(this.starterFiles.entries())) {
+      if (relPath.endsWith('.ejs')) {
+        const targetPath = relPath.slice(0, -4);
+        const cssVariables = {
+          tokens: {
+            radius: '0.5rem',
+
+            background: '',
+            foreground: '',
+
+            card: '',
+            'card-foreground': '',
+
+            popover: '',
+            'popover-foreground': '',
+
+            primary: '',
+            'primary-foreground': '',
+
+            secondary: '',
+            'secondary-foreground': '',
+
+            muted: '',
+            'muted-foreground': '',
+
+            accent: '',
+            'accent-foreground': '',
+
+            destructive: '',
+            'destructive-foreground': '',
+
+            border: '',
+            input: '',
+            ring: '',
+
+            'chart-1': '',
+            'chart-2': '',
+            'chart-3': '',
+            'chart-4': '',
+            'chart-5': '',
+
+            sidebar: '',
+            'sidebar-foreground': '',
+            'sidebar-primary': '',
+            'sidebar-primary-foreground': '',
+            'sidebar-accent': '',
+            'sidebar-accent-foreground': '',
+            'sidebar-border': '',
+            'sidebar-ring': '',
+          },
+          darkTokens: {
+            background: '',
+            foreground: '',
+
+            card: '',
+            'card-foreground': '',
+
+            popover: '',
+            'popover-foreground': '',
+
+            primary: '',
+            'primary-foreground': '',
+
+            secondary: '',
+            'secondary-foreground': '',
+
+            muted: '',
+            'muted-foreground': '',
+
+            accent: '',
+            'accent-foreground': '',
+
+            destructive: '',
+            'destructive-foreground': '',
+
+            border: '',
+            input: '',
+            ring: '',
+
+            sidebar: '',
+            'sidebar-foreground': '',
+            'sidebar-primary': '',
+            'sidebar-primary-foreground': '',
+            'sidebar-accent': '',
+            'sidebar-accent-foreground': '',
+            'sidebar-border': '',
+            'sidebar-ring': '',
+          },
+        };
+
+        const filePath = path.resolve(__dirname, variablesDir);
+        const figmaVariables = await fs.readFile(filePath, 'utf-8');
+        const extractedVariables = flattenFigmaVariables(JSON.parse(figmaVariables));
+
+        console.log(JSON.stringify(extractedVariables, null, 2));
+        // return
+
+        const aiResponse = await generateTextWithAI(
+          `
+          I have these strictly named css variables: ${JSON.stringify(cssVariables)}
+          I also have these figma variables: ${JSON.stringify(extractedVariables)}
+          
+          INSTRUCTIONS:
+          - don't include the \`\`\`json prefix, just the actual JSON data
+          - return a JSON output ONLY, of the given css variables, and try your best to match all the figma variables to it.
+          - if there is not a match make sure to reset that value to a zero-like value.
+          - if the variable doesn't have a dark mode, map the same light mode to the dark mode as well.
+          - IMPORTANT: some of these given values are in hsl format, don't modify them, and make sure you always assign the value of the tokens as given to you. Sometimes values can consist of more that one value like this: 48 100% 50%
+          - return in the format:
+          {
+            "tokens": { ... },
+            "tokensDark": { ... }
+          }
+        `,
+          AIProvider.OpenAI,
+          { maxTokens: 4000 },
+        );
+
+        console.log('Ai Response', JSON.stringify(aiResponse, null, 2));
+
+        const { tokens, tokensDark } = JSON.parse(aiResponse) as { tokens: object; tokensDark: object };
+
+        const renderedContent = ejs.render(content.toString(), { tokens, tokensDark });
+
+        this.starterFiles.set(targetPath, Buffer.from(renderedContent));
+
+        this.starterFiles.delete(relPath);
       }
     }
   }
