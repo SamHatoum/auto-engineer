@@ -19,7 +19,10 @@ importers:
         version: link:packages/flowlang
       axios:
         specifier: ^1.10.0
-        version: 1.10.0
+        version: 1.10.0(debug@4.4.1)
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1(supports-color@5.5.0)
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -42,6 +45,9 @@ importers:
       '@eslint/js':
         specifier: ^9.30.1
         version: 9.31.0
+      '@types/debug':
+        specifier: ^4.1.12
+        version: 4.1.12
       '@types/node':
         specifier: ^20.11.24
         version: 20.19.8
@@ -715,7 +721,7 @@ importers:
         version: link:../../packages/flowlang
       axios:
         specifier: ^1.6.0
-        version: 1.10.0
+        version: 1.10.0(debug@4.4.1)
     devDependencies:
       '@eslint/js':
         specifier: ^8.57.0
@@ -737,7 +743,7 @@ importers:
         version: link:../../packages/flowlang
       axios:
         specifier: ^1.6.0
-        version: 1.10.0
+        version: 1.10.0(debug@4.4.1)
     devDependencies:
       '@eslint/js':
         specifier: ^8.57.0
@@ -15099,9 +15105,9 @@ snapshots:
 
   axe-core@4.10.3: {}
 
-  axios@1.10.0:
+  axios@1.10.0(debug@4.4.1):
     dependencies:
-      follow-redirects: 1.15.9
+      follow-redirects: 1.15.9(debug@4.4.1)
       form-data: 4.0.3
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -16689,7 +16695,9 @@ snapshots:
 
   flatted@3.3.3: {}
 
-  follow-redirects@1.15.9: {}
+  follow-redirects@1.15.9(debug@4.4.1):
+    optionalDependencies:
+      debug: 4.4.1(supports-color@5.5.0)
 
   for-each@0.3.5:
     dependencies:
