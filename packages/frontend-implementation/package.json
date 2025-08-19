@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/frontend-implementation",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,9 +32,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*",
-    "@auto-engineer/frontend-checks": "workspace:*",
-    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/ai-gateway": "^0.1.2",
+    "@auto-engineer/frontend-checks": "^0.1.1",
+    "@auto-engineer/message-bus": "^0.0.3",
     "@modelcontextprotocol/sdk": "^1.3.0",
     "openai": "^5.7.0",
     "vite": "^5.4.1",

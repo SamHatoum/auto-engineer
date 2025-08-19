@@ -6,7 +6,8 @@
     "build": "pnpm --parallel build"
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "*"
+    "@auto-engineer/flowlang": "latest",
+    "@auto-engineer/message-bus": "latest"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",

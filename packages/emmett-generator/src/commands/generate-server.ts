@@ -10,6 +10,14 @@ import { SpecsSchemaType } from '@auto-engineer/flowlang';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execa } from 'execa';
+import createDebug from 'debug';
+
+const debug = createDebug('emmett:generate-server');
+const debugSchema = createDebug('emmett:generate-server:schema');
+const debugFiles = createDebug('emmett:generate-server:files');
+const debugDeps = createDebug('emmett:generate-server:deps');
+const debugScaffold = createDebug('emmett:generate-server:scaffold');
+
 // Local CQRS types to avoid cross-package type resolution issues during build
 type DefaultRecord = Record<string, unknown>;
 export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord> = Readonly<{
@@ -61,16 +69,26 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
+// eslint-disable-next-line complexity
 export async function handleGenerateServerCommand(
   command: GenerateServerCommand,
 ): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
   const { schemaPath, destination } = command.data;
 
+  debug('Starting server generation');
+  debug('Schema path: %s', schemaPath);
+  debug('Destination: %s', destination);
+
   try {
     const absDest = resolve(destination);
     const absSchema = resolve(schemaPath);
 
+    debug('Resolved paths:');
+    debug('  Absolute destination: %s', absDest);
+    debug('  Absolute schema: %s', absSchema);
+
     if (!existsSync(absSchema)) {
+      debug('Schema file not found at %s', absSchema);
       return {
         type: 'ServerGenerationFailed',
         data: {
@@ -84,34 +102,86 @@ export async function handleGenerateServerCommand(
       };
     }
 
+    debugSchema('Reading schema file from %s', absSchema);
     const content = await readFile(absSchema, 'utf8');
+
+    debugSchema('Schema content length: %d bytes', content.length);
     const spec = JSON.parse(content) as SpecsSchemaType;
+
+    debugSchema('Parsed schema:');
+    debugSchema('  Flows: %d', spec.flows?.length || 0);
+    debugSchema('  Messages: %d', spec.messages?.length || 0);
+    debugSchema('  Integrations: %d', spec.integrations?.length ?? 0);
+
+    if (spec.flows !== undefined && spec.flows.length > 0) {
+      debugSchema(
+        'Flow names: %o',
+        spec.flows.map((f) => f.name),
+      );
+      spec.flows.forEach((flow) => {
+        debugSchema('  Flow "%s" has %d slices', flow.name, flow.slices?.length || 0);
+        flow.slices?.forEach((slice) => {
+          debugSchema('    Slice: %s (type: %s)', slice.name, slice.type);
+        });
+      });
+    }
+
     const serverDir = join(absDest, 'server');
+    debug('Server directory: %s', serverDir);
+    console.debug('🔄 Generating server...', serverDir);
 
     await ensureDirExists(serverDir);
+    debugFiles('Created server directory: %s', serverDir);
 
-    const filePlans = await generateScaffoldFilePlans(
-      spec.flows,
-      spec.messages,
-      spec.integrations,
-      join(serverDir, 'src', 'domain', 'flows'),
-    );
+    const domainFlowsPath = join(serverDir, 'src', 'domain', 'flows');
+    debugScaffold('Generating scaffold file plans');
+    debugScaffold('  Domain flows path: %s', domainFlowsPath);
+    debugScaffold('  Number of flows: %d', spec.flows?.length || 0);
+
+    const filePlans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations, domainFlowsPath);
+
+    debugScaffold('Generated %d file plans', filePlans.length);
+    if (filePlans.length > 0) {
+      debugScaffold('Sample file paths:');
+      filePlans.slice(0, 5).forEach((plan) => {
+        debugScaffold('  - %s', plan.outputPath);
+      });
+    }
+
     await writeScaffoldFilePlans(filePlans);
+    debugScaffold('Written all scaffold files');
 
     // Copy package resources from this package, not from process.cwd()
     const packageRoot = path.resolve(__dirname, '..');
+    debugFiles('Package root: %s', packageRoot);
+
+    debugFiles('Copying utility files...');
     await copyRootFilesFromSrc(path.join(packageRoot, 'utils'), path.join(serverDir, 'src', 'utils'));
+
+    debugFiles('Copying server.ts...');
     await copyRootFilesFromSrc(path.join(packageRoot, 'server.ts'), path.join(serverDir, 'src'));
+
+    debugFiles('Copying domain shared files...');
     await copySharedAndRootFiles(path.join(packageRoot, 'domain'), path.join(serverDir, 'src', 'domain'));
 
+    debugFiles('Writing package.json...');
     await writePackage(serverDir);
+
+    debugFiles('Writing tsconfig.json...');
     await writeTsconfig(serverDir);
+
+    debugFiles('Writing vitest config...');
     await writeVitestConfig(serverDir);
 
+    debugFiles('Generating GraphQL schema script...');
     await generateSchemaScript(serverDir, absDest);
 
     // Try to install deps and build GraphQL schema, but do not fail the whole command if this step fails
+    debugDeps('Installing dependencies and generating GraphQL schema...');
     await installDependenciesAndGenerateSchema(serverDir, absDest);
+
+    debug('Server generation completed successfully');
+    debug('Server directory: %s', serverDir);
 
     return {
       type: 'ServerGenerated',
@@ -126,6 +196,8 @@ export async function handleGenerateServerCommand(
       correlationId: command.correlationId,
     };
   } catch (error) {
+    debug('Server generation failed with error: %O', error);
+
     return {
       type: 'ServerGenerationFailed',
       data: {
@@ -153,27 +225,35 @@ export const generateServerCommandHandler: CommandHandler<GenerateServerCommand>
 };
 
 async function copyRootFilesFromSrc(from: string, to: string): Promise<void> {
+  debugFiles('copyRootFilesFromSrc: from=%s, to=%s', from, to);
+
   // If "from" is a file, copy it directly to directory "to" maintaining filename
   const fromStat = await fs.stat(from).catch(() => undefined);
   if (fromStat !== undefined && fromStat.isFile()) {
+    debugFiles('  Source is a file, copying directly');
     await fs.ensureDir(to);
     const destFile = path.join(to, path.basename(from));
     await fs.copy(from, destFile);
+    debugFiles('  Copied file to %s', destFile);
     return;
   }
 
   if (!(await fs.pathExists(from))) {
+    debugFiles('  Source path does not exist: %s', from);
     return;
   }
 
   await fs.ensureDir(to);
   const rootFiles = await fs.readdir(from);
+  debugFiles('  Found %d files in source directory', rootFiles.length);
+
   for (const file of rootFiles) {
     const srcFile = path.join(from, file);
     const stat = await fs.stat(srcFile);
     if (stat.isFile()) {
       const destFile = path.join(to, file);
       await fs.copy(srcFile, destFile);
+      debugFiles('  Copied: %s', file);
     }
   }
 }
@@ -196,9 +276,14 @@ async function copySharedAndRootFiles(from: string, to: string): Promise<void> {
 }
 
 async function writePackage(dest: string): Promise<void> {
+  debugFiles('Writing package.json to %s', dest);
+
   const packageRoot = path.resolve(__dirname, '../..');
   const localPkgPath = path.resolve(packageRoot, 'package.json');
   const rootPkgPath = path.resolve(packageRoot, '../../package.json');
+
+  debugFiles('  Local package path: %s', localPkgPath);
+  debugFiles('  Root package path: %s', rootPkgPath);
 
   const localPkg = (await fs.readJson(localPkgPath).catch(() => ({}))) as {
     dependencies?: Record<string, string>;
@@ -211,12 +296,16 @@ async function writePackage(dest: string): Promise<void> {
   };
 
   const getDepVersion = (dep: string): string | undefined => {
-    return (
+    const version =
       localPkg.dependencies?.[dep] ??
       localPkg.devDependencies?.[dep] ??
       rootPkg.dependencies?.[dep] ??
-      rootPkg.devDependencies?.[dep]
-    );
+      rootPkg.devDependencies?.[dep];
+
+    if (version !== undefined) {
+      debugFiles('  Found version for %s: %s', dep, version);
+    }
+    return version;
   };
 
   const resolveDeps = (deps: string[]): Record<string, string> => {
@@ -340,17 +429,23 @@ main().catch((err) => {
 
 async function installDependenciesAndGenerateSchema(serverDir: string, workingDir: string): Promise<void> {
   console.log('📦 Installing dependencies...');
+  debugDeps('Starting dependency installation in %s', serverDir);
 
   try {
+    debugDeps('Running: pnpm install');
     await execa('pnpm', ['install'], { cwd: serverDir });
     console.log('✅ Dependencies installed successfully');
+    debugDeps('Dependencies installed successfully');
 
     console.log('🔄 Generating GraphQL schema...');
+    debugDeps('Running: tsx scripts/generate-schema.ts');
     await execa('tsx', ['scripts/generate-schema.ts'], { cwd: serverDir });
 
     const schemaPath = join(workingDir, '.context', 'schema.graphql');
     console.log(`✅ GraphQL schema generated at: ${schemaPath}`);
+    debugDeps('GraphQL schema generated at: %s', schemaPath);
   } catch (error) {
+    debugDeps('Failed to install dependencies or generate schema: %O', error);
     console.warn(
       `⚠️  Failed to install dependencies or generate schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );

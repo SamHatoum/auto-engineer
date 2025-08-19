@@ -41,6 +41,8 @@ export async function handleExportSchemaCommand(
       const child = spawn('npx', ['tsx', helperScript, directory], {
         cwd: directory,
         stdio: ['inherit', 'pipe', 'pipe'],
+        env: { ...process.env, NODE_ENV: process.env.NODE_ENV ?? 'development' },
+        shell: true,
       });
 
       let stdout = '';
@@ -60,7 +62,15 @@ export async function handleExportSchemaCommand(
         }
 
         try {
-          const result = JSON.parse(stdout.trim()) as { success?: boolean; outputPath?: string; error?: string };
+          // Extract JSON from stdout - look for the last line that starts with '{'
+          const lines = stdout.trim().split('\n');
+          const jsonLine = lines.reverse().find((line) => line.trim().startsWith('{'));
+
+          if (jsonLine == null) {
+            throw new Error('No JSON output found');
+          }
+
+          const result = JSON.parse(jsonLine) as { success?: boolean; outputPath?: string; error?: string };
           if (result.success === true) {
             resolve({
               type: 'SchemaExported',

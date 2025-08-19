@@ -1,32 +1,52 @@
 #!/usr/bin/env node
-import { getFlows } from '../getFlows';
 import { resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
+import { pathToFileURL } from 'url';
+import createDebug from 'debug';
 
-// Store original console methods
-const originalLog = console.log;
-const originalError = console.error;
+const debug = createDebug('flowlang:export-schema-helper');
 
 const main = async () => {
   const directory = process.argv[2] || process.cwd();
+  debug('Starting export-schema-helper with directory: %s', directory);
 
   try {
-    // Temporarily disable console output during flow processing
-    console.log = () => {};
-    console.error = () => {};
+    // Import getFlows from the project's node_modules to ensure we use the same module context
+    const projectFlowlangPath = resolve(
+      directory,
+      'node_modules',
+      '@auto-engineer',
+      'flowlang',
+      'dist',
+      'src',
+      'getFlows.js',
+    );
+    debug('Importing getFlows from: %s', projectFlowlangPath);
+
+    const flowlangModule = (await import(pathToFileURL(projectFlowlangPath).href)) as {
+      getFlows: typeof import('../getFlows').getFlows;
+    };
+    const { getFlows } = flowlangModule;
 
     const flowsPath = resolve(directory, 'flows');
+    debug('Resolved flows path: %s', flowsPath);
+
     const { toSchema } = await getFlows(flowsPath);
-    const json = JSON.stringify(toSchema(), null, 2);
+    const schema = toSchema();
+    debug(
+      'Schema generated with %d flows, %d messages, %d integrations',
+      schema.flows.length,
+      schema.messages.length,
+      schema.integrations?.length ?? 0,
+    );
+
+    const json = JSON.stringify(schema, null, 2);
     const contextDir = resolve(directory, '.context');
     const outPath = resolve(contextDir, 'schema.json');
 
     mkdirSync(contextDir, { recursive: true });
     writeFileSync(outPath, json);
-
-    // Restore console methods
-    console.log = originalLog;
-    console.error = originalError;
+    debug('Schema written to: %s', outPath);
 
     // Output success as JSON for parent process
     console.log(
@@ -36,12 +56,7 @@ const main = async () => {
       }),
     );
   } catch (error) {
-    // Restore console methods in case of error
-    console.log = originalLog;
-    console.error = originalError;
-
-    // Show the actual error for debugging
-    console.error('Actual error:', error);
+    debug('Error occurred: %o', error);
 
     // Output error as JSON for parent process
     console.log(

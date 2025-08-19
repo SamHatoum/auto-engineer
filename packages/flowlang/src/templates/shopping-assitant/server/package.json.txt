@@ -8,8 +8,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "*",
-    "@auto-engineer/flowlang": "*",
+    "@auto-engineer/ai-gateway": "latest",
+    "@auto-engineer/flowlang": "latest",
     "axios": "^1.11.0"
   },
   "devDependencies": {
