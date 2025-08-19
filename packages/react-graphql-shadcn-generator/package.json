@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/design-system-importer",
+  "name": "@auto-engineer/react-graphql-shadcn-generator",
   "version": "0.1.2",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,15 +8,11 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/import-design-system": {
-      "types": "./dist/commands/import-design-system.d.ts",
-      "import": "./dist/commands/import-design-system.js"
     }
   },
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/generator/templates dist/generator/",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -32,7 +28,13 @@
     "access": "public"
   },
   "dependencies": {
-    "figma-api": "2.0.2-beta",
-    "@auto-engineer/message-bus": "^0.0.3"
+    "@auto-engineer/ai-gateway": "^0.1.2",
+    "@auto-engineer/message-bus": "^0.0.3",
+    "ejs": "^3.1.10",
+    "graphql": "^16.11.0",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5"
   }
 }

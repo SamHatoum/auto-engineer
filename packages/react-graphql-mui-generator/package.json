@@ -1,6 +1,6 @@
 {
-  "name": "@auto-engineer/react-graphql-generator",
-  "version": "0.1.2",
+  "name": "@auto-engineer/react-graphql-mui-generator",
+  "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/generate-client": {
-      "types": "./dist/commands/generate-client.d.ts",
-      "import": "./dist/commands/generate-client.js"
     }
   },
   "scripts": {

@@ -2,10 +2,17 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import * as Figma from 'figma-api';
+import { FigmaComponentsBuilder, type FilterFunctionType } from './FigmaComponentsBuilder';
+// import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
+
+const api = new Figma.Api({
+  personalAccessToken: process.env.FIGMA_PERSONAL_TOKEN as string,
+});
 
 async function getAllTsxFiles(dir: string): Promise<string[]> {
   let results: string[] = [];
@@ -47,6 +54,7 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
 }
 
 export * from './commands/import-design-system';
+export type { FilterFunctionType } from './FigmaComponentsBuilder';
 
 async function copyFile(inputDir: string, outputDir: string, file: string): Promise<void> {
   const srcPath = path.join(inputDir, file);
@@ -92,6 +100,97 @@ export async function copyDesignSystemDocsAndUserPreferences(inputDir: string, o
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function getFigmaComponents(): Promise<{ name: string; description: string; thumbnail: string }[]> {
+  let components: { name: string; description: string; thumbnail: string }[] = [];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const response = await api.getFileComponentSets({ file_key: process.env.FIGMA_FILE_ID });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    components = response.meta.component_sets.map(
+      (component: { name: string; description: string; thumbnail_url: string }) => ({
+        name: component.name,
+        description: component.description,
+        thumbnail: component.thumbnail_url,
+      }),
+    );
+    console.log('figma response: ', response);
+  } catch (e) {
+    console.error(e);
+  }
+  console.log(components.length);
+  return components;
+}
+
+export function generateMarkdownFromComponents(
+  components: { name: string; description: string; thumbnail: string }[],
+): string {
+  let md = '# Design System\n\n## Components\n\n';
+
+  if (components.length === 0) {
+    console.warn('No components found');
+  }
+
+  for (const component of components) {
+    md += `### ${component.name}\nDescription: ${component.description}\nImage: ![${component.name} image](${component.thumbnail})\n\n`;
+  }
+
+  return md;
+}
+
+export enum ImportStrategy {
+  WITH_COMPONENTS = 'WITH_COMPONENTS',
+  WITH_COMPONENT_SETS = 'WITH_COMPONENT_SETS',
+  WITH_ALL_FIGMA_INSTANCES = 'WITH_ALL_FIGMA_INSTANCES',
+}
+
+export async function importDesignSystemComponentsFromFigma(
+  outputDir: string,
+  strategy: ImportStrategy = ImportStrategy.WITH_COMPONENT_SETS,
+  filterFn?: FilterFunctionType,
+): Promise<void> {
+  const figmaComponentsBuilder = new FigmaComponentsBuilder();
+
+  if (strategy === ImportStrategy.WITH_COMPONENTS) {
+    await figmaComponentsBuilder.withFigmaComponents();
+  } else if (strategy === ImportStrategy.WITH_COMPONENT_SETS) {
+    await figmaComponentsBuilder.withFigmaComponentSets();
+  } else if (strategy === ImportStrategy.WITH_ALL_FIGMA_INSTANCES) {
+    await figmaComponentsBuilder.withAllFigmaInstanceNames();
+  }
+
+  // figmaComponentsBuilder.withFilteredNamesForMui();
+  // figmaComponentsBuilder.withFilteredNamesForShadcn();
+
+  if (filterFn) {
+    figmaComponentsBuilder.withFilter(filterFn);
+  }
+
+  const figmaComponents = figmaComponentsBuilder.build();
+
+  console.log(figmaComponents.length);
+
+  const generatedComponentsMDFile = generateMarkdownFromComponents(figmaComponents);
+  // const mdWithImageAnalysis = await generateTextWithAI(
+  //   `
+  // Given this markdown file content:
+  // ${generatedComponentsMDFile}
+  //
+  // ------ INSTRUCTIONS -------
+  // !IMPORTANT: Only return with Markdown content, nothing else, I will be putting this straight in a .md file. Don't even start the file with \`\`\`markdown
+  // For every component Image: Analyze the given image and add to the given component.
+  // - add more content to the "Description:" part of the component.
+  // - add "Hierarchy:" part under the component, returning the parts a component is build of. like [Button, Input]
+  // `,
+  //   AIProvider.OpenAI,
+  //   { temperature: 0.2, maxTokens: 8000 },
+  // );
+  // await fs.mkdir(outputDir, { recursive: true });
+  const outPath = path.join(outputDir, 'design-system.md');
+  await fs.writeFile(outPath, generatedComponentsMDFile);
+  // await copyFile("../../../examples/design-system/design-system-principles.md", outputDir, 'design-system-principles.md');
+}
+
 // Check if this file is being run directly
 if (process.argv[1] === __filename) {
   const [, , inputDir, outputDir] = process.argv;
@@ -107,12 +206,20 @@ if (process.argv[1] === __filename) {
   //     console.error('Error generating design-system.md:', err);
   //     process.exit(1);
   //   });
-  copyDesignSystemDocsAndUserPreferences(inputDir, outputDir)
+  // copyDesignSystemDocsAndUserPreferences(inputDir, outputDir)
+  //   .then(() => {
+  //     console.log(`design-system.md copied to ${outputDir}`);
+  //   })
+  //   .catch((err) => {
+  //     console.error('Error copying design-system.md:', err);
+  //     process.exit(1);
+  //   });
+  importDesignSystemComponentsFromFigma(outputDir)
     .then(() => {
-      console.log(`design-system.md copied to ${outputDir}`);
+      console.log(`design-system.md generated to ${outputDir}`);
     })
     .catch((err) => {
-      console.error('Error copying design-system.md:', err);
+      console.error('Error generating design-system.md:', err);
       process.exit(1);
     });
 }

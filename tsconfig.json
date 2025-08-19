@@ -48,7 +48,10 @@
       "path": "./packages/message-bus"
     },
     {
-      "path": "./packages/react-graphql-generator"
+      "path": "./packages/react-graphql-mui-generator"
+    },
+    {
+      "path": "./packages/react-graphql-shadcn-generator"
     }
   ]
 }
