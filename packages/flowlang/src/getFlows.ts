@@ -9,6 +9,11 @@ import { Flow, Message } from './index';
 import { messageRegistry } from './message-registry';
 import { Integration } from './types';
 import { globalIntegrationRegistry, integrationRegistry } from './integration-registry';
+import createDebug from 'debug';
+
+const debug = createDebug('flowlang:getFlows');
+const debugImport = createDebug('flowlang:getFlows:import');
+const debugIntegrations = createDebug('flowlang:getFlows:integrations');
 
 // Helper function to extract Zod schema type information
 const extractZodType = (schema: z.ZodTypeAny): string => {
@@ -75,15 +80,21 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
   const messages: Message[] = [];
 
   for (const integration of integrations) {
-    console.log(`[extractMessagesFromIntegrations] Processing integration: ${integration.name}`);
+    debugIntegrations('Processing integration for message extraction: %s', integration.name);
 
     // Extract command schemas
     if (integration.Commands?.schema) {
-      console.log(`[extractMessagesFromIntegrations] Found Commands.schema:`, Object.keys(integration.Commands.schema));
+      debugIntegrations(
+        `[extractMessagesFromIntegrations] Found Commands.schema:`,
+        Object.keys(integration.Commands.schema),
+      );
       for (const [name, schema] of Object.entries(integration.Commands.schema)) {
         if (schema) {
           const fields = zodSchemaToFields(schema);
-          console.log(`[extractMessagesFromIntegrations] Creating command message '${name}' with fields:`, fields);
+          debugIntegrations(
+            `[extractMessagesFromIntegrations] Creating command message '${name}' with fields:`,
+            fields,
+          );
           messages.push({
             type: 'command',
             name,
@@ -93,16 +104,19 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
         }
       }
     } else {
-      console.log(`[extractMessagesFromIntegrations] No Commands.schema found for ${integration.name}`);
+      debugIntegrations(`[extractMessagesFromIntegrations] No Commands.schema found for ${integration.name}`);
     }
 
     // Extract query schemas (these become state messages)
     if (integration.Queries?.schema) {
-      console.log(`[extractMessagesFromIntegrations] Found Queries.schema:`, Object.keys(integration.Queries.schema));
+      debugIntegrations(
+        `[extractMessagesFromIntegrations] Found Queries.schema:`,
+        Object.keys(integration.Queries.schema),
+      );
       for (const [name, schema] of Object.entries(integration.Queries.schema)) {
         if (schema) {
           const fields = zodSchemaToFields(schema);
-          console.log(`[extractMessagesFromIntegrations] Creating state message '${name}' with fields:`, fields);
+          debugIntegrations(`[extractMessagesFromIntegrations] Creating state message '${name}' with fields:`, fields);
           messages.push({
             type: 'state',
             name,
@@ -112,19 +126,19 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
         }
       }
     } else {
-      console.log(`[extractMessagesFromIntegrations] No Queries.schema found for ${integration.name}`);
+      debugIntegrations(`[extractMessagesFromIntegrations] No Queries.schema found for ${integration.name}`);
     }
 
     // Extract reaction schemas (these become event messages)
     if (integration.Reactions?.schema) {
-      console.log(
+      debugIntegrations(
         `[extractMessagesFromIntegrations] Found Reactions.schema:`,
         Object.keys(integration.Reactions.schema),
       );
       for (const [name, schema] of Object.entries(integration.Reactions.schema)) {
         if (schema) {
           const fields = zodSchemaToFields(schema);
-          console.log(`[extractMessagesFromIntegrations] Creating event message '${name}' with fields:`, fields);
+          debugIntegrations(`[extractMessagesFromIntegrations] Creating event message '${name}' with fields:`, fields);
           messages.push({
             type: 'event',
             name,
@@ -135,7 +149,7 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
         }
       }
     } else {
-      console.log(`[extractMessagesFromIntegrations] No Reactions.schema found for ${integration.name}`);
+      debugIntegrations(`[extractMessagesFromIntegrations] No Reactions.schema found for ${integration.name}`);
     }
   }
 
@@ -161,16 +175,16 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
 
   // SECOND: Add messages from integration schemas
   const registeredIntegrations = globalIntegrationRegistry.getAll();
-  console.log(
+  debugIntegrations(
     `[flowsToSchema] Found ${registeredIntegrations.length} registered integrations:`,
     registeredIntegrations.map((i) => i.name),
   );
   const integrationMessages = extractMessagesFromIntegrations(registeredIntegrations);
-  console.log(`[flowsToSchema] Extracted ${integrationMessages.length} messages from integrations`);
+  debugIntegrations(`[flowsToSchema] Extracted ${integrationMessages.length} messages from integrations`);
   for (const msg of integrationMessages) {
     if (!messages.has(msg.name)) {
       messages.set(msg.name, msg);
-      console.log(`[flowsToSchema] Added integration message: ${msg.name} (${msg.type})`);
+      debugIntegrations(`[flowsToSchema] Added integration message: ${msg.name} (${msg.type})`);
     }
   }
 
@@ -437,6 +451,9 @@ const inferObjectType = (value: Record<string, unknown>): string => {
 };
 
 export const getFlows = async (cwd: string = process.cwd()) => {
+  debug('Starting getFlows with cwd: %s', cwd);
+
+  debug('Clearing registries');
   registry.clearAll();
   messageRegistry.messages.clear();
   integrationRegistry.clear();
@@ -447,36 +464,50 @@ export const getFlows = async (cwd: string = process.cwd()) => {
     ignore: ['**/node_modules/**', '**/dist/**', '**/.turbo/**'],
   });
 
-  console.log('[getFlows] searching in:', cwd);
-  console.log('[getFlows] matched files:', files);
+  debug('Found %d files matching pattern', files.length);
+  debug('Files: %o', files);
 
   // Import all files and collect any integrations
   const importPromises = files.map(async (file) => {
+    debugImport('Importing file: %s', file);
     // Add timestamp to force fresh import and avoid caching issues
     const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
-    const module = (await import(url)) as Record<string, unknown>;
+    debugImport('Import URL: %s', url);
 
-    // Look for exported integrations in the module
-    for (const [exportName, exportValue] of Object.entries(module)) {
-      if (
-        Boolean(exportValue) &&
-        typeof exportValue === 'object' &&
-        exportValue !== null &&
-        '__brand' in exportValue &&
-        (exportValue as { __brand?: string }).__brand === 'Integration'
-      ) {
-        console.log(`[getFlows] Found integration ${exportName} in ${file}`);
-        integrationRegistry.register(exportValue as Integration);
+    try {
+      const module = (await import(url)) as Record<string, unknown>;
+      debugImport('Successfully imported %s', file);
+      debugImport('Module exports: %o', Object.keys(module));
+
+      // Look for exported integrations in the module
+      for (const [exportName, exportValue] of Object.entries(module)) {
+        if (
+          Boolean(exportValue) &&
+          typeof exportValue === 'object' &&
+          exportValue !== null &&
+          '__brand' in exportValue &&
+          (exportValue as { __brand?: string }).__brand === 'Integration'
+        ) {
+          debugIntegrations('Found integration %s in %s', exportName, file);
+          integrationRegistry.register(exportValue as Integration);
+        }
       }
-    }
 
-    return module;
+      return module;
+    } catch (error) {
+      debugImport('Failed to import %s: %o', file, error);
+      throw error;
+    }
   });
 
   await Promise.all(importPromises);
 
   const flows = registry.getAllFlows();
-  console.log(`[getFlows] Found ${flows.length} flows and ${integrationRegistry.getAll().length} integrations`);
+  debug('After imports - flows: %d, integrations: %d', flows.length, integrationRegistry.getAll().length);
+
+  if (flows.length === 0) {
+    debug('WARNING: No flows found after importing all files');
+  }
 
   return {
     flows,
@@ -496,7 +527,7 @@ export const getFlow = async (filePath: string) => {
 
   const flows = registry.getAllFlows();
   const integrations = globalIntegrationRegistry.getAll();
-  console.log(`[getFlow] Found ${flows.length} flows and ${integrations.length} integrations`);
+  debugIntegrations(`[getFlow] Found ${flows.length} flows and ${integrations.length} integrations`);
 
   return {
     flows,

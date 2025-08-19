@@ -12,12 +12,19 @@ import {
   setSliceData,
 } from './flow-context';
 import type { DataSinkItem, DataSourceItem, DataItem } from './types';
+import createDebug from 'debug';
+
+const debug = createDebug('flowlang:flow');
 
 export const flow = (name: string, fn: () => void) => {
+  debug('Starting flow definition: %s', name);
   const flowObj = startFlow(name);
+  debug('Executing flow function for: %s', name);
   fn();
+  debug('Flow function executed, registering flow: %s with %d slices', name, flowObj.slices.length);
   registry.register(flowObj);
   clearCurrentFlow();
+  debug('Flow registered and context cleared: %s', name);
 };
 
 export const client = (fn: () => void) => {

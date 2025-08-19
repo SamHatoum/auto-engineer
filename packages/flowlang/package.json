@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/flowlang",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "main": "./dist/src/index.js",
   "type": "module",
   "types": "./dist/src/index.d.ts",
@@ -22,6 +22,7 @@
   "dependencies": {
     "@auto-engineer/message-bus": "^0.0.3",
     "@event-driven-io/emmett": "^0.38.3",
+    "debug": "^4.4.1",
     "fast-glob": "^3.3.3",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",

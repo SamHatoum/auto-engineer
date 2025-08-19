@@ -1,25 +1,40 @@
 // integration-helper.ts - Add this to your flowlang package
 import { Integration } from './types';
+import createDebug from 'debug';
+
+const debug = createDebug('flowlang:integrations');
 
 // Global registry for integrations
 class GlobalIntegrationRegistry {
   private integrations = new Map<string, Integration>();
 
   register(integration: Integration) {
-    console.log(`[GlobalIntegrationRegistry] Registering integration: ${integration.name}`);
+    debug('Registering integration: %s', integration.name);
     this.integrations.set(integration.name, integration);
+    debug('Integration registered successfully: %s, total: %d', integration.name, this.integrations.size);
   }
 
   getAll(): Integration[] {
-    return Array.from(this.integrations.values());
+    const integrations = Array.from(this.integrations.values());
+    debug('Getting all integrations, count: %d', integrations.length);
+    if (integrations.length > 0) {
+      debug(
+        'Integrations: %o',
+        integrations.map((i) => i.name),
+      );
+    }
+    return integrations;
   }
 
   clear() {
+    debug('Clearing integrations, current count: %d', this.integrations.size);
     this.integrations.clear();
   }
 
   get(name: string): Integration | undefined {
-    return this.integrations.get(name);
+    const integration = this.integrations.get(name);
+    debug('Getting integration %s: %s', name, integration ? 'found' : 'not found');
+    return integration;
   }
 }
 
