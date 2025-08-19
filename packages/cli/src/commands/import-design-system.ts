@@ -23,7 +23,8 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
       'Import strategy: WITH_COMPONENTS | WITH_COMPONENT_SETS | WITH_ALL_FIGMA_INSTANCES',
       'WITH_COMPONENT_SETS',
     )
-    .action(async (inputDir: string, outputDir: string, strategy?: StrategyFlag) => {
+    .argument('[filterPath]', 'Path to a .ts file exporting a named function "filter"')
+    .action(async (inputDir: string, outputDir: string, strategy?: StrategyFlag, filterPath?: string) => {
       try {
         await analytics.track({ command: 'import:design-system:start', success: true });
 
@@ -41,6 +42,12 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
         }
         output.info(`Using strategy: ${chosenStrategy}`);
 
+        let resolvedFilterPath: string | undefined;
+        if (typeof filterPath === 'string' && filterPath.trim().length > 0) {
+          resolvedFilterPath = path.resolve(filterPath);
+          output.info(`Using custom filter from: ${resolvedFilterPath}`);
+        }
+
         // Import the handler
         const { handleImportDesignSystemCommand } = await import('@auto-engineer/design-system-importer');
 
@@ -50,6 +57,7 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
             inputDir: resolvedInputDir,
             outputDir: resolvedOutputDir,
             strategy: chosenStrategy,
+            filterPath: resolvedFilterPath,
           },
           timestamp: new Date(),
           requestId: `import-design-system-${Date.now()}`,

@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import * as Figma from 'figma-api';
-import { FigmaComponentsBuilder } from './FigmaComponentsBuilder';
+import { FigmaComponentsBuilder, type FilterFunctionType } from './FigmaComponentsBuilder';
 // import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
 
 dotenv.config();
@@ -54,6 +54,7 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
 }
 
 export * from './commands/import-design-system';
+export type { FilterFunctionType } from './FigmaComponentsBuilder';
 
 async function copyFile(inputDir: string, outputDir: string, file: string): Promise<void> {
   const srcPath = path.join(inputDir, file);
@@ -146,6 +147,7 @@ export enum ImportStrategy {
 export async function importDesignSystemComponentsFromFigma(
   outputDir: string,
   strategy: ImportStrategy = ImportStrategy.WITH_COMPONENT_SETS,
+  filterFn?: FilterFunctionType,
 ): Promise<void> {
   const figmaComponentsBuilder = new FigmaComponentsBuilder();
 
@@ -158,7 +160,12 @@ export async function importDesignSystemComponentsFromFigma(
   }
 
   // figmaComponentsBuilder.withFilteredNamesForMui();
-  figmaComponentsBuilder.withFilteredNamesForShadcn();
+  // figmaComponentsBuilder.withFilteredNamesForShadcn();
+
+  if (filterFn) {
+    figmaComponentsBuilder.withFilter(filterFn);
+  }
+
   const figmaComponents = figmaComponentsBuilder.build();
 
   console.log(figmaComponents.length);

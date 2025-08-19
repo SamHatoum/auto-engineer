@@ -13,6 +13,8 @@ export interface FigmaComponent {
   thumbnail: string;
 }
 
+export type FilterFunctionType = (components: FigmaComponent[]) => FigmaComponent[];
+
 interface FigmaNode {
   type: string;
   name: string;
@@ -57,8 +59,8 @@ export class FigmaComponentsBuilder {
         this.components = response.meta.component_sets.map(
           (component: { name: string; description: string; thumbnail_url: string }) => ({
             name: component.name,
-            description: component.description,
-            thumbnail: component.thumbnail_url,
+            description: component.description ?? 'N/A',
+            thumbnail: component.thumbnail_url ?? 'N/A',
           }),
         );
       }
@@ -68,15 +70,15 @@ export class FigmaComponentsBuilder {
     return this;
   }
 
-  extractBracketedComponents(item: FigmaComponent): FigmaComponent | null {
-    const match = item.name.match(/<([^>]+)>/);
-    return match ? { ...item, name: match[1].trim() } : null;
-  }
-
-  withFilteredNamesForMui() {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    this.components = this.components.map(this.extractBracketedComponents).filter(Boolean) as FigmaComponent[];
-  }
+  // extractBracketedComponents(item: FigmaComponent): FigmaComponent | null {
+  //   const match = item.name.match(/<([^>]+)>/);
+  //   return match ? { ...item, name: match[1].trim() } : null;
+  // }
+  //
+  // withFilteredNamesForMui() {
+  //   // eslint-disable-next-line @typescript-eslint/unbound-method
+  //   this.components = this.components.map(this.extractBracketedComponents).filter(Boolean) as FigmaComponent[];
+  // }
 
   withFilteredNamesForShadcn(): void {
     this.components = this.components
@@ -105,6 +107,14 @@ export class FigmaComponentsBuilder {
       .filter((c: FigmaComponent | null): c is FigmaComponent => Boolean(c));
   }
 
+  withFilter(filter: FilterFunctionType): void {
+    try {
+      this.components = filter(this.components);
+    } catch (e) {
+      console.error('Error applying custom filter:', e);
+    }
+  }
+
   async withAllFigmaInstanceNames() {
     try {
       /// ----
@@ -127,7 +137,8 @@ export class FigmaComponentsBuilder {
           }
         }
 
-        if (node.children.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (node.children) {
           for (const child of node.children) {
             walkTree(child);
           }
