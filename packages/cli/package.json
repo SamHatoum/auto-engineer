@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -37,8 +37,8 @@
   },
   "dependencies": {
     "@auto-engineer/design-system-importer": "^0.1.2",
-    "@auto-engineer/emmett-generator": "^0.2.2",
-    "@auto-engineer/flowlang": "^0.1.3",
+    "@auto-engineer/emmett-generator": "^0.3.0",
+    "@auto-engineer/flowlang": "^0.2.0",
     "@auto-engineer/frontend-implementation": "^0.1.2",
     "@auto-engineer/information-architect": "^0.1.2",
     "@auto-engineer/message-bus": "^0.0.3",
