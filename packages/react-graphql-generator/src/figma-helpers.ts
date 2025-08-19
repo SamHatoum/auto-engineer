@@ -35,7 +35,7 @@ function isRgba(value: unknown): value is RGBA {
 
 // RGBA → HSLA
 function rgbaToHsl(rgba: RGBA): string {
-  const { r, g, b, a } = rgba;
+  const { r, g, b } = rgba;
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   let h = 0;

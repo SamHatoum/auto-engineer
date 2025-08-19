@@ -13,6 +13,14 @@ export interface FigmaComponent {
   thumbnail: string;
 }
 
+interface FigmaNode {
+  type: string;
+  name: string;
+  children: FigmaNode[];
+  description: string;
+  thumbnail_url: string;
+}
+
 export class FigmaComponentsBuilder {
   components: FigmaComponent[] = [];
 
@@ -108,26 +116,18 @@ export class FigmaComponentsBuilder {
         depth: 1,
       });
 
-      function walkTree(node: any) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      function walkTree(node: FigmaNode) {
         if (node.type === 'INSTANCE' && Boolean(node.name)) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (!usedComponentMap.has(node.name)) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             usedComponentMap.set(node.name, {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
               name: node.name,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
               description: node.description ?? '',
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-              thumbnail: node.thumbnail ?? '',
+              thumbnail: node.thumbnail_url ?? '',
             });
           }
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (node.children.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           for (const child of node.children) {
             walkTree(child);
           }

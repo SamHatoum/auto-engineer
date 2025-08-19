@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import ejs from 'ejs';
-import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway/dist';
+import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
 import { flattenFigmaVariables } from './figma-helpers';
 
 export class FrontendScaffoldBuilder {

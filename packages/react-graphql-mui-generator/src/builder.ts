@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import ejs from 'ejs';
-import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway/dist';
+import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
 import { flattenFigmaVariables } from './figma-helpers';
 
 export class FrontendScaffoldBuilder {

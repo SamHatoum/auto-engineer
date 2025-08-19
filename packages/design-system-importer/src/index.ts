@@ -3,7 +3,8 @@ import * as fs from 'fs/promises';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import * as Figma from 'figma-api';
-import { FigmaComponent, FigmaComponentsBuilder } from './FigmaComponentsBuilder';
+import { FigmaComponentsBuilder } from './FigmaComponentsBuilder';
+// import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
 
 dotenv.config();
 
@@ -98,6 +99,7 @@ export async function copyDesignSystemDocsAndUserPreferences(inputDir: string, o
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getFigmaComponents(): Promise<{ name: string; description: string; thumbnail: string }[]> {
   let components: { name: string; description: string; thumbnail: string }[] = [];
   try {
@@ -147,7 +149,8 @@ export async function importDesignSystemComponentsFromFigma(outputDir: string): 
   console.log(figmaComponents.length);
 
   const generatedComponentsMDFile = generateMarkdownFromComponents(figmaComponents);
-  // const mdWithImageAnalysis = await generateTextWithAI(`
+  // const mdWithImageAnalysis = await generateTextWithAI(
+  //   `
   // Given this markdown file content:
   // ${generatedComponentsMDFile}
   //
@@ -156,9 +159,11 @@ export async function importDesignSystemComponentsFromFigma(outputDir: string): 
   // For every component Image: Analyze the given image and add to the given component.
   // - add more content to the "Description:" part of the component.
   // - add "Hierarchy:" part under the component, returning the parts a component is build of. like [Button, Input]
-  // `, AIProvider.OpenAI, { temperature: 0.2, maxTokens: 8000 })
-  // console.log(JSON.stringify(mdWithImageAnalysis, null, 2));
-  await fs.mkdir(outputDir, { recursive: true });
+  // `,
+  //   AIProvider.OpenAI,
+  //   { temperature: 0.2, maxTokens: 8000 },
+  // );
+  // await fs.mkdir(outputDir, { recursive: true });
   const outPath = path.join(outputDir, 'design-system.md');
   await fs.writeFile(outPath, generatedComponentsMDFile);
   // await copyFile("../../../examples/design-system/design-system-principles.md", outputDir, 'design-system-principles.md');

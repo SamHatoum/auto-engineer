@@ -1,30 +1,23 @@
 {
-  "name": "@auto-engineer/react-graphql-mui-generator",
-  "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "start": "tsx src/index.ts",
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.js",
-    "type-check": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.js",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*",
-    "ejs": "^3.1.10",
-    "graphql": "^16.11.0",
-    "openai": "^4.104.0"
-  },
-  "devDependencies": {
-    "@types/ejs": "^3.1.5"
-  }
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    {
+      "path": "../ai-gateway"
+    },
+    {
+      "path": "../message-bus"
+    }
+  ]
 }

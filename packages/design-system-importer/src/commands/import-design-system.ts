@@ -1,6 +1,6 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
-import { copyDesignSystemDocsAndUserPreferences } from '../index';
+import { importDesignSystemComponentsFromFigma } from '../index';
 
 export type ImportDesignSystemCommand = Command<
   'ImportDesignSystem',
@@ -55,7 +55,7 @@ export async function handleImportDesignSystemCommand(
       };
     }
 
-    await copyDesignSystemDocsAndUserPreferences(inputDir, outputDir);
+    await importDesignSystemComponentsFromFigma(outputDir);
     console.log(`Design system files processed from ${inputDir} to ${outputDir}`);
 
     return {
