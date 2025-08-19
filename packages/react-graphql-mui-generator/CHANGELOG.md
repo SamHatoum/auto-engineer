@@ -1,6 +1,6 @@
-# @auto-engineer/design-system-importer
+# @auto-engineer/react-graphql-mui-generator
 
-## 0.2.0
+## 0.1.0
 
 ### Minor Changes
 
@@ -9,22 +9,5 @@
 ### Patch Changes
 
 - Updated dependencies [[`e39acf3`](https://github.com/SamHatoum/auto-engineer/commit/e39acf31e9051652084d0de99cf8c89b40e6531c)]:
+  - @auto-engineer/ai-gateway@0.2.0
   - @auto-engineer/message-bus@0.1.0
-
-## 0.1.2
-
-### Patch Changes
-
-- Fix workspace:\* dependencies to use actual version numbers for npm publishing
-
-- Updated dependencies []:
-  - @auto-engineer/message-bus@0.0.3
-
-## 0.1.1
-
-### Patch Changes
-
-- Bump versions to fix npm publish conflicts
-
-- Updated dependencies []:
-  - @auto-engineer/message-bus@0.0.2
