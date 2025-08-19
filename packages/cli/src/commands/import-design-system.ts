@@ -5,6 +5,10 @@ import { handleError } from '../utils/errors';
 import { Analytics } from '../utils/analytics';
 import * as path from 'path';
 
+const allowedStrategies = ['WITH_COMPONENTS', 'WITH_COMPONENT_SETS', 'WITH_ALL_FIGMA_INSTANCES'] as const;
+
+type StrategyFlag = (typeof allowedStrategies)[number];
+
 export const createImportDesignSystemCommand = (config: Config, analytics: Analytics): Command => {
   const output = createOutput(config);
 
@@ -14,7 +18,12 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
     .description('Import design system documentation and preferences')
     .argument('<inputDir>', 'Input directory containing design system files')
     .argument('<outputDir>', 'Output directory to copy design system files to')
-    .action(async (inputDir: string, outputDir: string) => {
+    .argument(
+      '[strategy]',
+      'Import strategy: WITH_COMPONENTS | WITH_COMPONENT_SETS | WITH_ALL_FIGMA_INSTANCES',
+      'WITH_COMPONENT_SETS',
+    )
+    .action(async (inputDir: string, outputDir: string, strategy?: StrategyFlag) => {
       try {
         await analytics.track({ command: 'import:design-system:start', success: true });
 
@@ -25,6 +34,13 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
         output.info(`Importing design system from: ${resolvedInputDir}`);
         output.info(`Output directory: ${resolvedOutputDir}`);
 
+        const chosenStrategy = strategy ?? 'WITH_COMPONENT_SETS';
+        if (!allowedStrategies.includes(chosenStrategy)) {
+          output.error(`Invalid strategy: ${String(strategy)}. Valid values are: ${allowedStrategies.join(', ')}`);
+          process.exit(1);
+        }
+        output.info(`Using strategy: ${chosenStrategy}`);
+
         // Import the handler
         const { handleImportDesignSystemCommand } = await import('@auto-engineer/design-system-importer');
 
@@ -33,6 +49,7 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
           data: {
             inputDir: resolvedInputDir,
             outputDir: resolvedOutputDir,
+            strategy: chosenStrategy,
           },
           timestamp: new Date(),
           requestId: `import-design-system-${Date.now()}`,

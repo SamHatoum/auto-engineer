@@ -1,12 +1,13 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
-import { importDesignSystemComponentsFromFigma } from '../index';
+import { importDesignSystemComponentsFromFigma, ImportStrategy } from '../index';
 
 export type ImportDesignSystemCommand = Command<
   'ImportDesignSystem',
   {
     inputDir: string;
     outputDir: string;
+    strategy?: keyof typeof ImportStrategy;
   }
 >;
 
@@ -31,7 +32,7 @@ export type DesignSystemImportFailedEvent = Event<
 export async function handleImportDesignSystemCommand(
   command: ImportDesignSystemCommand,
 ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> {
-  const { inputDir, outputDir } = command.data;
+  const { inputDir, outputDir, strategy } = command.data;
 
   try {
     // Check if input directory exists
@@ -55,7 +56,9 @@ export async function handleImportDesignSystemCommand(
       };
     }
 
-    await importDesignSystemComponentsFromFigma(outputDir);
+    const resolvedStrategy = strategy ? ImportStrategy[strategy] : ImportStrategy.WITH_COMPONENT_SETS;
+
+    await importDesignSystemComponentsFromFigma(outputDir, resolvedStrategy);
     console.log(`Design system files processed from ${inputDir} to ${outputDir}`);
 
     return {

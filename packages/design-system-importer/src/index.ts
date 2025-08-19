@@ -137,11 +137,26 @@ export function generateMarkdownFromComponents(
   return md;
 }
 
-export async function importDesignSystemComponentsFromFigma(outputDir: string): Promise<void> {
+export enum ImportStrategy {
+  WITH_COMPONENTS = 'WITH_COMPONENTS',
+  WITH_COMPONENT_SETS = 'WITH_COMPONENT_SETS',
+  WITH_ALL_FIGMA_INSTANCES = 'WITH_ALL_FIGMA_INSTANCES',
+}
+
+export async function importDesignSystemComponentsFromFigma(
+  outputDir: string,
+  strategy: ImportStrategy = ImportStrategy.WITH_COMPONENT_SETS,
+): Promise<void> {
   const figmaComponentsBuilder = new FigmaComponentsBuilder();
-  // await figmaComponentsBuilder.withFigmaComponents();
-  await figmaComponentsBuilder.withFigmaComponentSets();
-  // await figmaComponentsBuilder.withAllFigmaInstanceNames();
+
+  if (strategy === ImportStrategy.WITH_COMPONENTS) {
+    await figmaComponentsBuilder.withFigmaComponents();
+  } else if (strategy === ImportStrategy.WITH_COMPONENT_SETS) {
+    await figmaComponentsBuilder.withFigmaComponentSets();
+  } else if (strategy === ImportStrategy.WITH_ALL_FIGMA_INSTANCES) {
+    await figmaComponentsBuilder.withAllFigmaInstanceNames();
+  }
+
   // figmaComponentsBuilder.withFilteredNamesForMui();
   figmaComponentsBuilder.withFilteredNamesForShadcn();
   const figmaComponents = figmaComponentsBuilder.build();
