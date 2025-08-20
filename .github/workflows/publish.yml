@@ -40,7 +40,7 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
-      
+
       - name: Update lockfile if needed
         run: |
           if ! git diff --exit-code pnpm-lock.yaml; then
