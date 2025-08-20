@@ -683,8 +683,8 @@ export async function runAIAgent(
   userPreferencesPath: string,
   designSystemPath: string,
 ) {
-  const userPreferences = await fs.readFile(path.join(projectDir, 'design-system-principles.md'), 'utf-8');
-  const designSystem = await fs.readFile(path.join(__dirname, designSystemPath), 'utf-8');
+  const userPreferences = await fs.readFile(userPreferencesPath, 'utf-8');
+  const designSystem = await fs.readFile(designSystemPath, 'utf-8');
   const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
