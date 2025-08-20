@@ -26,7 +26,8 @@
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "link:dev": "pnpm build && pnpm link --global",
-    "unlink:dev": "pnpm unlink --global"
+    "unlink:dev": "pnpm unlink --global",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "message-bus",
@@ -37,8 +38,8 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "tsx": "^4.20.3",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0",
-    "tsx": "^4.20.3"
+    "vitest": "^1.0.0"
   }
 }

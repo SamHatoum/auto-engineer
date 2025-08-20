@@ -3,6 +3,9 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import gradient from 'gradient-string';
 import figlet from 'figlet';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 
 import { loadConfig, validateConfig } from './utils/config';
 import { handleError } from './utils/errors';
@@ -131,11 +134,41 @@ For more information, visit: https://github.com/SamHatoum/auto-engineer
   return program;
 };
 
+const loadEnvFile = () => {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+};
+
+const initializeEnvironment = () => {
+  checkNodeVersion();
+  loadEnvFile();
+  clearConsole();
+  setupSignalHandlers();
+};
+
+const handleProgramError = (error: unknown) => {
+  if (
+    error instanceof Error &&
+    (error.message.includes('commander') ||
+      error.message.includes('helpDisplayed') ||
+      error.message.includes('version'))
+  ) {
+    process.exit(0);
+  }
+
+  if (error instanceof Error) {
+    handleError(error);
+  } else {
+    console.error(chalk.red('Unknown error:'), error);
+    process.exit(1);
+  }
+};
+
 const main = async () => {
   try {
-    checkNodeVersion();
-    clearConsole();
-    setupSignalHandlers();
+    initializeEnvironment();
 
     const program = createCLI();
     program.parse(process.argv, { from: 'user' });
@@ -156,21 +189,7 @@ const main = async () => {
     const fullProgram = setupProgram(config);
     await fullProgram.parseAsync(process.argv);
   } catch (error: unknown) {
-    if (
-      error instanceof Error &&
-      (error.message.includes('commander') ||
-        error.message.includes('helpDisplayed') ||
-        error.message.includes('version'))
-    ) {
-      process.exit(0);
-    }
-
-    if (error instanceof Error) {
-      handleError(error);
-    } else {
-      console.error(chalk.red('Unknown error:'), error);
-      process.exit(1);
-    }
+    handleProgramError(error);
   }
 };
 
