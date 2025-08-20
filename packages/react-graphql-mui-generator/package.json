@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/react-graphql-mui-generator",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,8 +28,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.1.2",
-    "@auto-engineer/message-bus": "^0.0.3",
+    "@auto-engineer/ai-gateway": "^0.2.0",
+    "@auto-engineer/message-bus": "^0.1.0",
     "ejs": "^3.1.10",
     "graphql": "^16.11.0",
     "openai": "^4.104.0"
