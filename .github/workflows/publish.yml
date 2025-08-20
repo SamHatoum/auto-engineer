@@ -39,7 +39,19 @@ jobs:
           version: 8.15.4
 
       - name: Install Dependencies
-        run: pnpm install
+        run: |
+          pnpm install --no-frozen-lockfile
+          # If lockfile was updated, commit it
+          if git diff --exit-code pnpm-lock.yaml; then
+            echo "Lockfile unchanged"
+          else
+            echo "Lockfile was updated, committing changes"
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "github-actions@github.com"
+            git add pnpm-lock.yaml
+            git commit -m "chore: update pnpm-lock.yaml [skip ci]"
+            git push
+          fi
 
       - name: Create Release Pull Request or Publish
         id: changesets
