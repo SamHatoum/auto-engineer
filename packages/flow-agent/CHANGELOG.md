@@ -1,5 +1,18 @@
 # @auto-engineer/flowlang-agent
 
+## 0.3.0
+
+### Minor Changes
+
+- [`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Fix multiple dependency issues
+
+### Patch Changes
+
+- Updated dependencies [[`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684)]:
+  - @auto-engineer/ai-gateway@0.3.0
+  - @auto-engineer/flowlang@0.4.0
+  - @auto-engineer/message-bus@0.2.0
+
 ## 0.2.0
 
 ### Minor Changes
