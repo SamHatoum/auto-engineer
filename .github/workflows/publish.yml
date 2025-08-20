@@ -49,7 +49,7 @@ jobs:
             git config --global user.name "GitHub Actions"
             git config --global user.email "github-actions@github.com"
             git add pnpm-lock.yaml
-            git commit -m "chore: update pnpm-lock.yaml [skip ci]"
+            git commit -m "chore(root): update pnpm-lock.yaml [skip ci]"
             git push
           fi
 
