@@ -42,7 +42,6 @@ export const createGenerateClientCommand = (config: Config, analytics: Analytics
           output.info(`IA schema: ${resolvedIASchemaPath}`);
           output.info(`GraphQL schema: ${resolvedGQLSchemaPath}`);
 
-          // Import the handler
           const { handleGenerateClientCommand } = await import('@auto-engineer/react-graphql-shadcn-generator');
 
           const generateCommand = {
