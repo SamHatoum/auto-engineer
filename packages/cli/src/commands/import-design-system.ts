@@ -16,7 +16,6 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
 
   command
     .description('Import design system documentation and preferences')
-    .argument('<inputDir>', 'Input directory containing design system files')
     .argument('<outputDir>', 'Output directory to copy design system files to')
     .argument(
       '[strategy]',
@@ -24,15 +23,13 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
       'WITH_COMPONENT_SETS',
     )
     .argument('[filterPath]', 'Path to a .ts file exporting a named function "filter"')
-    .action(async (inputDir: string, outputDir: string, strategy?: StrategyFlag, filterPath?: string) => {
+    .action(async (outputDir: string, strategy?: StrategyFlag, filterPath?: string) => {
       try {
         await analytics.track({ command: 'import:design-system:start', success: true });
 
         // Resolve paths
-        const resolvedInputDir = path.resolve(inputDir);
         const resolvedOutputDir = path.resolve(outputDir);
 
-        output.info(`Importing design system from: ${resolvedInputDir}`);
         output.info(`Output directory: ${resolvedOutputDir}`);
 
         const chosenStrategy = strategy ?? 'WITH_COMPONENT_SETS';
@@ -54,7 +51,6 @@ export const createImportDesignSystemCommand = (config: Config, analytics: Analy
         const importCommand = {
           type: 'ImportDesignSystem' as const,
           data: {
-            inputDir: resolvedInputDir,
             outputDir: resolvedOutputDir,
             strategy: chosenStrategy,
             filterPath: resolvedFilterPath,

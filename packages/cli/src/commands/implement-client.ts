@@ -14,22 +14,19 @@ export const createImplementClientCommand = (config: Config, analytics: Analytic
     .description('Use AI to implement the client application based on IA schema')
     .argument('<projectDir>', 'Client project directory to implement')
     .argument('<iaSchemeDir>', 'Directory containing the IA schema')
-    .argument('<userPreferencesPath>', 'Path to user preferences markdown file')
     .argument('<designSystemPath>', 'Path to design system markdown file')
-    .action(async (projectDir: string, iaSchemeDir: string, userPreferencesPath: string, designSystemPath: string) => {
+    .action(async (projectDir: string, iaSchemeDir: string, designSystemPath: string) => {
       try {
         await analytics.track({ command: 'implement:client:start', success: true });
 
         // Resolve paths
         const resolvedProjectDir = path.resolve(projectDir);
         const resolvedIASchemeDir = path.resolve(iaSchemeDir);
-        const resolvedUserPreferencesPath = path.resolve(userPreferencesPath);
         const resolvedDesignSystemPath = path.resolve(designSystemPath);
 
         output.info(`Implementing client application`);
         output.info(`Project directory: ${resolvedProjectDir}`);
         output.info(`IA schema directory: ${resolvedIASchemeDir}`);
-        output.info(`User preferences: ${resolvedUserPreferencesPath}`);
         output.info(`Design system: ${resolvedDesignSystemPath}`);
 
         // Import the handler
@@ -40,7 +37,6 @@ export const createImplementClientCommand = (config: Config, analytics: Analytic
           data: {
             projectDir: resolvedProjectDir,
             iaSchemeDir: resolvedIASchemeDir,
-            userPreferencesPath: resolvedUserPreferencesPath,
             designSystemPath: resolvedDesignSystemPath,
           },
           timestamp: new Date(),

@@ -11,10 +11,10 @@ export type GenerateClientCommand = Command<
   'GenerateClient',
   {
     starterDir: string;
-    designSystemDir: string;
     targetDir: string;
     iaSchemaPath: string;
     gqlSchemaPath: string;
+    figmaVariablesPath: string;
   }
 >;
 
@@ -36,14 +36,13 @@ export type ClientGenerationFailedEvent = Event<
 export async function handleGenerateClientCommand(
   command: GenerateClientCommand,
 ): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> {
-  const { starterDir, designSystemDir, targetDir, iaSchemaPath, gqlSchemaPath } = command.data;
+  const { starterDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath } = command.data;
 
   try {
-    console.log('designSystemDir', designSystemDir);
-
     // Build frontend scaffold
     const builder = new FrontendScaffoldBuilder();
-    await builder.cloneStarter(starterDir, designSystemDir);
+    await builder.cloneStarter(starterDir);
+    await builder.configureStarter(figmaVariablesPath);
     await builder.build(targetDir);
 
     // Read and parse IA schema

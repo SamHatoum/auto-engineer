@@ -677,18 +677,15 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   }
 }
 
-export async function runAIAgent(
-  projectDir: string,
-  iaSchemeDir: string,
-  userPreferencesPath: string,
-  designSystemPath: string,
-) {
-  const userPreferences = await fs.readFile(userPreferencesPath, 'utf-8');
+export async function runAIAgent(projectDir: string, iaSchemeDir: string, designSystemPath: string) {
+  const userPreferencesFile = path.join(projectDir, 'design-system-principles.md');
+  const userPreferences = await fs.readFile(userPreferencesFile, 'utf-8');
   const designSystem = await fs.readFile(designSystemPath, 'utf-8');
   const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);
   await reportVisualErrors(ctx);
+  await closeBrowser();
   console.log('AI project implementation complete!');
 }

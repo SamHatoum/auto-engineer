@@ -7,6 +7,7 @@ export default tseslint.config(
       '**/eslint.config.ts',
       '**/eslint.config.js',
       'scripts/clean.ts',
+      'scripts/clean-global-auto.js',
       'scripts/fix-esm-imports.ts',
       '**/bin/**/*',
       '**/dist/**/*',

@@ -188,14 +188,13 @@ export async function importDesignSystemComponentsFromFigma(
   // await fs.mkdir(outputDir, { recursive: true });
   const outPath = path.join(outputDir, 'design-system.md');
   await fs.writeFile(outPath, generatedComponentsMDFile);
-  // await copyFile("../../../examples/design-system/design-system-principles.md", outputDir, 'design-system-principles.md');
 }
 
 // Check if this file is being run directly
 if (process.argv[1] === __filename) {
-  const [, , inputDir, outputDir] = process.argv;
-  if (!inputDir || !outputDir) {
-    console.error('Usage: tsx src/index.ts <inputDir> <outputDir>');
+  const [, , outputDir] = process.argv;
+  if (!outputDir) {
+    console.error('Usage: tsx src/index.ts <outputDir>');
     process.exit(1);
   }
   // generateDesignSystemMarkdown(inputDir, outputDir)

@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import { readFileSync } from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,33 +12,10 @@ import { flattenFigmaVariables } from './figma-helpers';
 export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
 
-  async cloneStarter(_starterDir: string, customDesignSystemDir: string): Promise<this> {
+  async cloneStarter(_starterDir: string): Promise<this> {
     // If the path is already absolute, use it as is, otherwise resolve relative to __dirname
     const starterDir = path.isAbsolute(_starterDir) ? _starterDir : path.resolve(__dirname, _starterDir);
     await this.collectFiles(starterDir, '');
-
-    if (customDesignSystemDir != null && customDesignSystemDir !== '') {
-      try {
-        const stat = await fs.stat(customDesignSystemDir);
-        if (stat.isDirectory()) {
-          const atomsTarget = 'src/components/atoms';
-          const files = (await fs.readdir(customDesignSystemDir)).filter((f) => f.endsWith('.tsx'));
-          if (files.length > 0) {
-            for (const key of Array.from(this.starterFiles.keys())) {
-              if (key.startsWith(atomsTarget + '/')) {
-                this.starterFiles.delete(key);
-              }
-            }
-            for (const file of files) {
-              const content = await fs.readFile(path.join(customDesignSystemDir, file));
-              this.starterFiles.set(path.join(atomsTarget, file), content);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error importing custom design system:', err);
-      }
-    }
     return this;
   }
 
@@ -146,8 +124,7 @@ export class FrontendScaffoldBuilder {
           },
         };
 
-        const filePath = path.resolve(__dirname, variablesDir);
-        const figmaVariables = await fs.readFile(filePath, 'utf-8');
+        const figmaVariables = readFileSync(variablesDir, 'utf-8');
         const extractedVariables = flattenFigmaVariables(JSON.parse(figmaVariables));
 
         console.log(JSON.stringify(extractedVariables, null, 2));
