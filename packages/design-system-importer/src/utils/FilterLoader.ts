@@ -1,13 +1,9 @@
 import { extname, resolve as resolvePath } from 'path';
-import { pathToFileURL, fileURLToPath } from 'url';
+import { pathToFileURL } from 'url';
 import { existsSync } from 'fs';
-import { createRequire } from 'module';
 import type { FilterFunctionType } from '../FigmaComponentsBuilder';
 
 export class FilterLoader {
-  private tsxRegistered = false;
-  private tsxUnregister: (() => void) | null = null;
-
   async loadFilter(filePath: string): Promise<FilterFunctionType> {
     if (typeof filePath !== 'string' || filePath.trim().length === 0) {
       throw new Error('Filter file path is required');
@@ -21,13 +17,43 @@ export class FilterLoader {
 
     const ext = extname(absolutePath).toLowerCase();
 
-    // Enable tsx loader for TS files at runtime
+    // For TypeScript files, tell the user to install tsx locally
     if (ext === '.ts' || ext === '.tsx') {
-      await this.ensureTsxSupport();
+      console.warn(
+        `TypeScript filter file detected: ${filePath}\n` +
+        `For TypeScript support, please ensure tsx is installed in your project:\n` +
+        `  npm install -D tsx\n` +
+        `Then the filter will be automatically loaded.\n` +
+        `Attempting to load anyway...`
+      );
+      
+      // Try to load it anyway - it might work if tsx is available globally or via other means
+      try {
+        const fileUrl = pathToFileURL(absolutePath).href;
+        const loadedModule = await import(fileUrl);
+        const filter = loadedModule.filter || loadedModule.default;
+        
+        if (typeof filter === 'function') {
+          console.log('TypeScript filter loaded successfully');
+          return filter as FilterFunctionType;
+        }
+      } catch (tsError) {
+        // Check if it's a module not found error suggesting tsx isn't available
+        const errorMessage = tsError instanceof Error ? tsError.message : String(tsError);
+        if (errorMessage.includes('Unknown file extension ".ts"') || errorMessage.includes('Cannot find module')) {
+          throw new Error(
+            `TypeScript filter cannot be loaded without tsx.\n` +
+            `Please install tsx in your project:\n` +
+            `  npm install -D tsx\n` +
+            `Or provide a compiled JavaScript version of your filter.`
+          );
+        }
+        throw tsError;
+      }
     }
 
+    // For JavaScript files, load directly
     const fileUrl = pathToFileURL(absolutePath).href;
-
     const loadedUnknown: unknown = await import(fileUrl);
     const loadedModule = loadedUnknown as { filter?: unknown; default?: unknown };
 
@@ -43,64 +69,7 @@ export class FilterLoader {
     throw new Error('No filter function found. Export a function named "filter" or as a default export from the file.');
   }
 
-  private async ensureTsxSupport(): Promise<void> {
-    if (this.tsxRegistered) return;
-
-    try {
-      // Create a require function from this module's location to resolve tsx from our own dependencies
-      const currentModulePath = fileURLToPath(import.meta.url);
-      const require = createRequire(currentModulePath);
-      
-      // Try to resolve tsx/esm/api first (tsx 4.x), fallback to tsx/esm (tsx 3.x)
-      let tsxPath: string;
-      let tsxApi: { register: () => () => void } | null = null;
-      
-      try {
-        tsxPath = require.resolve('tsx/esm/api');
-        const tsxUnknown: unknown = await import(tsxPath);
-        tsxApi = tsxUnknown as { register: () => () => void };
-      } catch {
-        // Fallback for tsx 3.x
-        try {
-          tsxPath = require.resolve('tsx/esm');
-          const tsxModule: any = await import(tsxPath);
-          // In tsx 3.x, the register function might be on the module directly
-          if (tsxModule.register && typeof tsxModule.register === 'function') {
-            tsxApi = { register: tsxModule.register };
-          }
-        } catch {
-          // Last fallback - try the main tsx module
-          tsxPath = require.resolve('tsx');
-          const tsxModule: any = await import(tsxPath);
-          if (tsxModule.register && typeof tsxModule.register === 'function') {
-            tsxApi = { register: tsxModule.register };
-          }
-        }
-      }
-
-      if (tsxApi && typeof tsxApi.register === 'function') {
-        this.tsxUnregister = tsxApi.register();
-        this.tsxRegistered = true;
-      } else {
-        throw new Error('tsx register function not found');
-      }
-    } catch (error) {
-      throw new Error(
-        'TypeScript filter detected but tsx is not available.\n' +
-          'Install tsx (npm i -D tsx) or provide a JavaScript file (.js/.mjs).\n' +
-          `Error: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
   cleanup(): void {
-    if (this.tsxUnregister) {
-      try {
-        this.tsxUnregister();
-      } finally {
-        this.tsxUnregister = null;
-        this.tsxRegistered = false;
-      }
-    }
+    // No cleanup needed
   }
 }
