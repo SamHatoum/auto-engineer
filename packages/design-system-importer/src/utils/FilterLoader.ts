@@ -50,11 +50,35 @@ export class FilterLoader {
       // Create a require function from this module's location to resolve tsx from our own dependencies
       const currentModulePath = fileURLToPath(import.meta.url);
       const require = createRequire(currentModulePath);
-      const tsxPath = require.resolve('tsx/esm/api');
-      const tsxUnknown: unknown = await import(tsxPath);
-      const tsxApi = tsxUnknown as { register: () => () => void };
+      
+      // Try to resolve tsx/esm/api first (tsx 4.x), fallback to tsx/esm (tsx 3.x)
+      let tsxPath: string;
+      let tsxApi: { register: () => () => void } | null = null;
+      
+      try {
+        tsxPath = require.resolve('tsx/esm/api');
+        const tsxUnknown: unknown = await import(tsxPath);
+        tsxApi = tsxUnknown as { register: () => () => void };
+      } catch {
+        // Fallback for tsx 3.x
+        try {
+          tsxPath = require.resolve('tsx/esm');
+          const tsxModule: any = await import(tsxPath);
+          // In tsx 3.x, the register function might be on the module directly
+          if (tsxModule.register && typeof tsxModule.register === 'function') {
+            tsxApi = { register: tsxModule.register };
+          }
+        } catch {
+          // Last fallback - try the main tsx module
+          tsxPath = require.resolve('tsx');
+          const tsxModule: any = await import(tsxPath);
+          if (tsxModule.register && typeof tsxModule.register === 'function') {
+            tsxApi = { register: tsxModule.register };
+          }
+        }
+      }
 
-      if (typeof tsxApi.register === 'function') {
+      if (tsxApi && typeof tsxApi.register === 'function') {
         this.tsxUnregister = tsxApi.register();
         this.tsxRegistered = true;
       } else {

@@ -1,5 +1,13 @@
 # @auto-engineer/cli
 
+## 0.5.2
+
+### Patch Changes
+
+- 2570a10: Version bump
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.2
+
 ## 0.5.0
 
 ### Minor Changes

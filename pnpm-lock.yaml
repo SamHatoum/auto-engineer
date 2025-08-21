@@ -634,7 +634,7 @@ importers:
   packages/cli:
     dependencies:
       '@auto-engineer/design-system-importer':
-        specifier: ^0.4.1
+        specifier: ^0.4.2
         version: link:../design-system-importer
       '@auto-engineer/emmett-generator':
         specifier: ^0.6.0

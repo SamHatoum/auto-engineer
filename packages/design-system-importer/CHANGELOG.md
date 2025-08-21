@@ -1,5 +1,11 @@
 # @auto-engineer/design-system-importer
 
+## 0.4.2
+
+### Patch Changes
+
+- Fix tsx compatibility for both v3 and v4 versions
+
 ## 0.4.1
 
 ### Patch Changes
