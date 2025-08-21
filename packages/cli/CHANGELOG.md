@@ -1,5 +1,13 @@
 # @auto-engineer/cli
 
+## 0.5.4
+
+### Patch Changes
+
+- 25fbdc8: version bump
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.4
+
 ## 0.5.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @auto-engineer/design-system-importer
 
+## 0.4.4
+
+### Patch Changes
+
+- Fix TypeScript filter loading to properly use local tsx installation
+
 ## 0.4.3
 
 ### Patch Changes
