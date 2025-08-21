@@ -1,5 +1,11 @@
 # @auto-engineer/design-system-importer
 
+## 0.4.1
+
+### Patch Changes
+
+- b5576ee: Fix tsx resolution
+
 ## 0.4.0
 
 ### Minor Changes
