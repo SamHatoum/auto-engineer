@@ -22,6 +22,7 @@
     "release": "changeset publish",
     "prepare": "husky",
     "install": "turbo run install build",
+    "clean:auto": "node scripts/clean-global-auto.js",
     "## ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
     "start:product-api": "cd examples/product-catalogue-api && pnpm start",
@@ -56,7 +57,9 @@
   },
   "packageManager": "pnpm@10.13.1",
   "resolutions": {
-    "punycode": "^2.3.1"
+    "punycode": "^2.3.1",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7"
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "link:packages/ai-gateway",
