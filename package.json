@@ -24,7 +24,6 @@
     "install": "turbo run install build",
     "## ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
-    "start:design-system": "cd examples/design-system && pnpm start",
     "start:product-api": "cd examples/product-catalogue-api && pnpm start",
     "start:cart-api": "cd examples/cart-api && pnpm start",
     "start:examples": "pnpm --parallel --filter @examples/* start 2>&1 | grep -E '(localhost|Local)' || true"

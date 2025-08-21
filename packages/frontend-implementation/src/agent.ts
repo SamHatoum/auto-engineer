@@ -1,8 +1,6 @@
 import { AIProvider, generateTextWithAI, generateTextWithImageAI } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import {
   closeBrowser,
   getBuildErrors,
@@ -13,8 +11,8 @@ import {
 import * as ts from 'typescript';
 
 // ESM equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
 // Utility to extract props from interface
 function extractPropsFromInterface(
@@ -683,18 +681,15 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
   }
 }
 
-export async function runAIAgent(
-  projectDir: string,
-  iaSchemeDir: string,
-  userPreferencesPath: string,
-  designSystemPath: string,
-) {
-  const userPreferences = await fs.readFile(userPreferencesPath, 'utf-8');
+export async function runAIAgent(projectDir: string, iaSchemeDir: string, designSystemPath: string) {
+  const userPreferencesFile = path.join(projectDir, 'design-system-principles.md');
+  const userPreferences = await fs.readFile(userPreferencesFile, 'utf-8');
   const designSystem = await fs.readFile(designSystemPath, 'utf-8');
   const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);
   const plan = await planProject(ctx);
   await applyPlan(plan, ctx, projectDir);
   await fixErrorsLoop(ctx, projectDir);
   await reportVisualErrors(ctx);
+  await closeBrowser();
   console.log('AI project implementation complete!');
 }
