@@ -11,7 +11,7 @@
 ### Patch Changes
 
 - Updated dependencies [[`d4dcacd`](https://github.com/SamHatoum/auto-engineer/commit/d4dcacd18cf2217d3ac9f4354f79ab7ff2ba39a0), [`e39acf3`](https://github.com/SamHatoum/auto-engineer/commit/e39acf31e9051652084d0de99cf8c89b40e6531c)]:
-  - @auto-engineer/react-graphql-shadcn-generator@0.2.0
+  - @auto-engineer/react-graphql-generator@0.2.0
   - @auto-engineer/react-graphql-mui-generator@0.1.0
   - @auto-engineer/frontend-implementation@0.2.0
   - @auto-engineer/design-system-importer@0.2.0

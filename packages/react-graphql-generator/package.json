@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/react-graphql-shadcn-generator",
+  "name": "@auto-engineer/react-graphql-generator",
   "version": "0.2.0",
   "type": "module",
   "main": "./dist/index.js",

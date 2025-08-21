@@ -51,7 +51,7 @@
       "path": "./packages/react-graphql-mui-generator"
     },
     {
-      "path": "./packages/react-graphql-shadcn-generator"
+      "path": "./packages/react-graphql-generator"
     }
   ]
 }

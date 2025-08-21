@@ -1,4 +1,4 @@
-# @auto-engineer/react-graphql-shadcn-generator
+# @auto-engineer/react-graphql-generator
 
 ## 0.2.0
 

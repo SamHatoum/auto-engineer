@@ -14,7 +14,7 @@
     { "path": "../frontend-implementation" },
     { "path": "../information-architect" },
     { "path": "../message-bus" },
-    { "path": "../react-graphql-shadcn-generator" },
+    { "path": "../react-graphql-generator" },
     { "path": "../react-graphql-mui-generator" }
   ]
 }
