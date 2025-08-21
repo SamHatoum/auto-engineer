@@ -1,5 +1,23 @@
 # @auto-engineer/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- [`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Fix multiple dependency issues
+
+### Patch Changes
+
+- Updated dependencies [[`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684)]:
+  - @auto-engineer/design-system-importer@0.3.0
+  - @auto-engineer/emmett-generator@0.5.0
+  - @auto-engineer/flowlang@0.4.0
+  - @auto-engineer/frontend-implementation@0.3.0
+  - @auto-engineer/information-architect@0.3.0
+  - @auto-engineer/message-bus@0.2.0
+  - @auto-engineer/react-graphql-mui-generator@0.2.0
+  - @auto-engineer/react-graphql-shadcn-generator@0.3.0
+
 ## 0.3.0
 
 ### Minor Changes
