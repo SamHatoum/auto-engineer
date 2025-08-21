@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import { readFileSync } from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -123,8 +124,7 @@ export class FrontendScaffoldBuilder {
           },
         };
 
-        const filePath = path.resolve(__dirname, variablesDir);
-        const figmaVariables = await fs.readFile(filePath, 'utf-8');
+        const figmaVariables = readFileSync(variablesDir, 'utf-8');
         const extractedVariables = flattenFigmaVariables(JSON.parse(figmaVariables));
 
         console.log(JSON.stringify(extractedVariables, null, 2));
