@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/server-implementer",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,13 +15,14 @@
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "link:dev": "pnpm build && pnpm link --global",
-    "unlink:dev": "pnpm unlink --global"
+    "unlink:dev": "pnpm unlink --global",
+    "prepublishOnly": "npm run build"
   },
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.1.2",
+    "@auto-engineer/ai-gateway": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.3.0",
     "fast-glob": "^3.3.3",
     "vite": "^5.4.1"

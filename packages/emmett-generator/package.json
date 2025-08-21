@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/emmett-generator",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,22 +25,26 @@
     "lint:fix": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.tmp/**' --fix --config ../../eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "link:dev": "pnpm build && pnpm link --global",
-    "unlink:dev": "pnpm unlink --global"
+    "unlink:dev": "pnpm unlink --global",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "^0.2.0",
-    "@auto-engineer/message-bus": "^0.0.3",
+    "@auto-engineer/flowlang": "^0.3.0",
+    "@auto-engineer/message-bus": "^0.1.0",
     "@event-driven-io/emmett": "^0.38.2",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",
     "change-case": "^5.4.4",
     "ejs": "^3.1.10",
+    "execa": "^9.6.0",
     "express": "^4.21.2",
     "fast-glob": "^3.3.3",
     "fs-extra": "^11.3.0",
     "graphql": "^16.11.0",
     "graphql-scalars": "^1.24.2",
+    "prettier": "^3.6.1",
     "reflect-metadata": "^0.2.2",
+    "type-fest": "^4.41.0",
     "type-graphql": "^2.0.0-rc.2",
     "uuid": "^10.0.0",
     "web-streams-polyfill": "^4.1.0"
@@ -50,9 +54,6 @@
   },
   "devDependencies": {
     "@types/ejs": "^3.1.5",
-    "@types/fs-extra": "^11.0.4",
-    "execa": "^9.6.0",
-    "prettier": "^3.6.1",
-    "type-fest": "^4.41.0"
+    "@types/fs-extra": "^11.0.4"
   }
 }

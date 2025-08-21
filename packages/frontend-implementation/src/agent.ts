@@ -10,10 +10,6 @@ import {
 } from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 
-// ESM equivalent of __dirname
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = dirname(__filename);
-
 // Utility to extract props from interface
 function extractPropsFromInterface(
   node: ts.InterfaceDeclaration,
