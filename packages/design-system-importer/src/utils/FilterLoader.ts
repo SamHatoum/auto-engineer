@@ -1,6 +1,7 @@
 import { extname, resolve as resolvePath } from 'path';
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import { createRequire } from 'module';
 import type { FilterFunctionType } from '../FigmaComponentsBuilder';
 
 export class FilterLoader {
@@ -46,19 +47,24 @@ export class FilterLoader {
     if (this.tsxRegistered) return;
 
     try {
-      const tsxUnknown: unknown = await import('tsx/esm/api');
+      // Create a require function from this module's location to resolve tsx from our own dependencies
+      const currentModulePath = fileURLToPath(import.meta.url);
+      const require = createRequire(currentModulePath);
+      const tsxPath = require.resolve('tsx/esm/api');
+      const tsxUnknown: unknown = await import(tsxPath);
       const tsxApi = tsxUnknown as { register: () => () => void };
+
       if (typeof tsxApi.register === 'function') {
         this.tsxUnregister = tsxApi.register();
         this.tsxRegistered = true;
       } else {
-        throw new Error('tsx/esm/api.register is not a function');
+        throw new Error('tsx register function not found');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new Error(
         'TypeScript filter detected but tsx is not available.\n' +
-          'Install tsx (npm i -D tsx) or provide a JavaScript file (.js/.mjs).',
+          'Install tsx (npm i -D tsx) or provide a JavaScript file (.js/.mjs).\n' +
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
