@@ -20,10 +20,10 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
+    "lint": "eslint 'src/**/*.ts' --ignore-pattern 'src/generated/**/*' --max-warnings 0 --config ./eslint.config.ts",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "lint:fix": "eslint 'src/**/*.ts' --fix --config ./eslint.config.ts",
+    "lint:fix": "eslint 'src/**/*.ts' --ignore-pattern 'src/generated/**/*' --fix --config ./eslint.config.ts",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
   },
   "publishConfig": {
