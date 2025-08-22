@@ -79,7 +79,7 @@ At least one AI provider key is required:
 
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `GEMINI_API_KEY`
 - `XAI_API_KEY`
 
 ## Code Generation

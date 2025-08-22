@@ -12,7 +12,7 @@ const AI_PROVIDER = availableProviders[0];
 
 if (availableProviders.length === 0) {
   console.error(
-    '❌ No AI providers configured. Please set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or XAI_API_KEY',
+    '❌ No AI providers configured. Please set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or XAI_API_KEY',
   );
   process.exit(1);
 }
