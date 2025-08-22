@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.4.1
+
+### Patch Changes
+
+- Version bump to trigger builds
+
 ## 0.4.0
 
 ### Minor Changes

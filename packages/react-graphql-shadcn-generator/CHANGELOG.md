@@ -1,5 +1,14 @@
 # @auto-engineer/react-graphql-shadcn-generator
 
+## 0.4.1
+
+### Patch Changes
+
+- Version bump to trigger builds
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.4.1
+  - @auto-engineer/message-bus@0.3.1
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.3.1
+
+### Patch Changes
+
+- Version bump to trigger builds
+
 ## 0.3.0
 
 ### Minor Changes

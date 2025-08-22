@@ -1,5 +1,11 @@
 # @auto-engineer/frontend-checks
 
+## 0.4.1
+
+### Patch Changes
+
+- Version bump to trigger builds
+
 ## 0.4.0
 
 ### Minor Changes
