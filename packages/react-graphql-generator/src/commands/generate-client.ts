@@ -6,6 +6,7 @@ import { writeGqlOperationsToFolder } from '../scaffold-gql-operations';
 import { generateSchemaFile } from '../write-graphql-schema';
 import { runCodegen } from '../run-codegen';
 import { IAScheme } from '../types';
+import { configureStarter } from '../configure-starter';
 
 export type GenerateClientCommand = Command<
   'GenerateClient',
@@ -42,7 +43,7 @@ export async function handleGenerateClientCommand(
     // Build frontend scaffold
     const builder = new FrontendScaffoldBuilder();
     await builder.cloneStarter(starterDir);
-    await builder.configureStarter(figmaVariablesPath);
+    // await builder.configureStarter(figmaVariablesPath);
     await builder.build(targetDir);
 
     // Read and parse IA schema
@@ -60,6 +61,9 @@ export async function handleGenerateClientCommand(
 
     // Run codegen
     runCodegen(targetDir);
+
+    // Configure starter
+    configureStarter(figmaVariablesPath, targetDir);
 
     return {
       type: 'ClientGenerated',

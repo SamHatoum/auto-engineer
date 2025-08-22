@@ -37,6 +37,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "vite.config.ts", "codegen.ts", "eslint.config.ts"],
+  "include": ["src/**/*", "vite.config.ts", "codegen.ts", "eslint.config.ts", "auto-configure.ts"],
   "exclude": ["node_modules/**", "dist"]
 }
