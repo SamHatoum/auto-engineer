@@ -1,5 +1,13 @@
 # @auto-engineer/server-implementer
 
+## 0.4.2
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes

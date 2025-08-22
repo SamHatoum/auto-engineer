@@ -1,5 +1,15 @@
 # @auto-engineer/flowlang-agent
 
+## 0.4.2
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.4.2
+  - @auto-engineer/flowlang@0.5.2
+  - @auto-engineer/message-bus@0.3.2
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @auto-engineer/flowlang
 
+## 0.5.2
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/message-bus@0.3.2
+
 ## 0.5.1
 
 ### Patch Changes

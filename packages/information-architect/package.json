@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/information-architect",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,7 +32,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.4.1",
-    "@auto-engineer/message-bus": "^0.3.1"
+    "@auto-engineer/ai-gateway": "^0.4.2",
+    "@auto-engineer/message-bus": "^0.3.2"
   }
 }
