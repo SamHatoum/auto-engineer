@@ -308,7 +308,7 @@ importers:
         specifier: ^0.3.3
         version: link:../message-bus
       '@auto-engineer/react-graphql-generator':
-        specifier: ^0.2.1
+        specifier: ^0.2.3
         version: link:../react-graphql-generator
       chalk:
         specifier: ^5.3.0

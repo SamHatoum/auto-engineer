@@ -1,5 +1,17 @@
 # @auto-engineer/react-graphql-generator
 
+## 0.2.3
+
+### Patch Changes
+
+- TEST
+
+## 0.2.2
+
+### Patch Changes
+
+- TEST
+
 ## 0.2.1
 
 ### Patch Changes

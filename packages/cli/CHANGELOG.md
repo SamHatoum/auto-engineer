@@ -1,5 +1,13 @@
 # @auto-engineer/cli
 
+## 0.5.9
+
+### Patch Changes
+
+- TEST
+- Updated dependencies
+  - @auto-engineer/react-graphql-generator@0.2.3
+
 ## 0.5.8
 
 ### Patch Changes

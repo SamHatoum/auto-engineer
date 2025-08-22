@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/react-graphql-generator",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,6 +10,11 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/generator/templates dist/generator/",
