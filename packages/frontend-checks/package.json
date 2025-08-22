@@ -1,15 +1,19 @@
 {
   "name": "@auto-engineer/frontend-checks",
-  "version": "0.4.3",
+  "version": "0.4.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
-    "postinstall": "npx playwright install chromium",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",

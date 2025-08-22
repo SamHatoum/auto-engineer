@@ -1,5 +1,11 @@
 # @auto-engineer/frontend-implementation
 
+## 0.4.6
+
+### Patch Changes
+
+- Update frontend-checks dependency to 0.4.5 to get automatic Playwright browser installation
+
 ## 0.4.3
 
 ### Patch Changes

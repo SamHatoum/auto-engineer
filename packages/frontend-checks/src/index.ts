@@ -1,9 +1,10 @@
 import { chromium, Browser } from 'playwright';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 
 class BrowserManager {
   private static instance: BrowserManager | null = null;
   private browser: Browser | null = null;
+  private browserInstalled = false;
 
   private constructor() {}
 
@@ -14,8 +15,38 @@ class BrowserManager {
     return BrowserManager.instance;
   }
 
+  private async ensureBrowserInstalled(): Promise<void> {
+    if (this.browserInstalled) {
+      return;
+    }
+
+    try {
+      // Try to launch to see if browser is already installed
+      const testBrowser = await chromium.launch();
+      await testBrowser.close();
+      this.browserInstalled = true;
+    } catch (error) {
+      // Browser not installed, install it
+      console.log('Playwright Chromium not found. Installing...');
+      try {
+        // Try to install using npx (works in most environments)
+        execSync('npx playwright install chromium', {
+          stdio: 'inherit',
+          env: { ...process.env, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0' },
+        });
+        this.browserInstalled = true;
+        console.log('Playwright Chromium installed successfully.');
+      } catch (installError) {
+        console.error('Failed to install Playwright Chromium automatically.');
+        console.error('Please run: npx playwright install chromium');
+        throw new Error('Playwright Chromium browser is not installed. Please run: npx playwright install chromium');
+      }
+    }
+  }
+
   public async getBrowser(): Promise<Browser> {
     if (!this.browser) {
+      await this.ensureBrowserInstalled();
       this.browser = await chromium.launch();
     }
     return this.browser;

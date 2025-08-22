@@ -1,5 +1,11 @@
 # @auto-engineer/frontend-checks
 
+## 0.4.5
+
+### Patch Changes
+
+- Fix Playwright browser auto-installation to make the package self-contained. The package now automatically installs Chromium browser when needed using npx, eliminating the need for manual browser installation.
+
 ## 0.4.3
 
 ### Patch Changes

@@ -513,7 +513,7 @@ importers:
         specifier: ^0.4.3
         version: link:../ai-gateway
       '@auto-engineer/frontend-checks':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../frontend-checks
       '@auto-engineer/message-bus':
         specifier: ^0.3.3
