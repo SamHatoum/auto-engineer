@@ -1,5 +1,11 @@
 # @auto-engineer/cli
 
+## 0.5.5
+
+### Patch Changes
+
+- Update design-system-importer dependency to 0.4.5 for improved TypeScript filter support
+
 ## 0.5.4
 
 ### Patch Changes

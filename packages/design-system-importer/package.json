@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/design-system-importer",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/utils/templates dist/utils/",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

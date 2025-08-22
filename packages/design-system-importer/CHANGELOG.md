@@ -1,5 +1,11 @@
 # @auto-engineer/design-system-importer
 
+## 0.4.5
+
+### Patch Changes
+
+- Refactor TypeScript filter loading to use template files instead of inline strings for better maintainability
+
 ## 0.4.4
 
 ### Patch Changes

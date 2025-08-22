@@ -1,13 +1,19 @@
-import { extname, resolve as resolvePath } from 'path';
-import { pathToFileURL } from 'url';
-import { existsSync } from 'fs';
+import { extname, resolve as resolvePath, dirname, join } from 'path';
+import { pathToFileURL, fileURLToPath } from 'url';
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from 'fs';
 import { spawnSync } from 'child_process';
-import { writeFileSync, mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
 import type { FilterFunctionType } from '../FigmaComponentsBuilder';
 
 export class FilterLoader {
+  private templatesDir: string;
+
+  constructor() {
+    // Get the directory where template files are stored
+    const currentFile = fileURLToPath(import.meta.url);
+    this.templatesDir = join(dirname(currentFile), 'templates');
+  }
+
   async loadFilter(filePath: string): Promise<FilterFunctionType> {
     if (typeof filePath !== 'string' || filePath.trim().length === 0) {
       throw new Error('Filter file path is required');
@@ -44,171 +50,23 @@ export class FilterLoader {
   }
 
   private async loadTypeScriptFilter(filePath: string): Promise<FilterFunctionType> {
-    // Create a temporary directory for our loader script
+    // Create a temporary directory for our scripts
     const tempDir = mkdtempSync(join(tmpdir(), 'tsx-filter-'));
-    const tempFile = join(tempDir, 'loader.mjs');
 
     try {
-      // Create a loader script that uses tsx to load and execute the TypeScript filter
-      const loaderScript = `
-import { register } from 'node:module';
-import { pathToFileURL } from 'node:url';
-import { createRequire } from 'node:module';
+      const filterUrl = pathToFileURL(filePath).href;
 
-// Try to find and register tsx
-try {
-  // First try to find tsx in the project's node_modules
-  const require = createRequire(import.meta.url);
-  let tsxPath;
-  
-  try {
-    // Try to resolve tsx from the current working directory
-    tsxPath = require.resolve('tsx/esm/api', { paths: ['${process.cwd()}'] });
-  } catch {
-    try {
-      // Try alternative path for tsx v3
-      tsxPath = require.resolve('tsx/esm', { paths: ['${process.cwd()}'] });
-    } catch {
-      // Try to find tsx anywhere
-      tsxPath = require.resolve('tsx');
-    }
-  }
-  
-  // Import tsx and register it
-  const tsx = await import(tsxPath);
-  if (tsx.register) {
-    tsx.register();
-  }
-} catch (e) {
-  // If we can't find tsx's register, try using node's experimental loader
-  try {
-    register('tsx', pathToFileURL('./'));
-  } catch {
-    console.error('Could not register tsx loader:', e);
-  }
-}
-
-// Now import the TypeScript filter file
-const filterModule = await import('${pathToFileURL(filePath).href}');
-const filter = filterModule.filter || filterModule.default;
-
-if (typeof filter !== 'function') {
-  throw new Error('No filter function found in TypeScript file');
-}
-
-// Export it so we can use it
-export { filter };
-`;
-
-      writeFileSync(tempFile, loaderScript);
-
-      // First attempt: Try to run the loader script with Node.js directly
-      // This will work if tsx is installed locally and can be found
-      const result = spawnSync('node', [tempFile], {
-        cwd: process.cwd(),
-        encoding: 'utf-8',
-        env: {
-          ...process.env,
-          NODE_OPTIONS: '--experimental-loader tsx',
-        },
-      });
-
-      if (result.status === 0) {
-        // Success! Now import the loader module to get the filter
-        const loaderModule = await import(pathToFileURL(tempFile).href);
-        return loaderModule.filter as FilterFunctionType;
-      }
-
-      // Second attempt: Use npx tsx to run a script that exports the filter
-      const exportScript = `
-import * as filterModule from '${pathToFileURL(filePath).href}';
-const filter = filterModule.filter || filterModule.default;
-if (typeof filter === 'function') {
-  // Output the filter as a module we can import
-  console.log(JSON.stringify({
-    success: true,
-    filterCode: filter.toString()
-  }));
-} else {
-  console.log(JSON.stringify({
-    success: false,
-    error: 'No filter function found'
-  }));
-}
-`;
-
-      const exportFile = join(tempDir, 'export.mjs');
-      writeFileSync(exportFile, exportScript);
-
-      const npxResult = spawnSync('npx', ['tsx', exportFile], {
-        cwd: process.cwd(),
-        encoding: 'utf-8',
-        shell: true,
-      });
-
-      if (npxResult.status === 0 && npxResult.stdout) {
-        try {
-          const output = JSON.parse(npxResult.stdout);
-          if (output.success && output.filterCode) {
-            // Create a function from the filter code
-            // eslint-disable-next-line no-new-func
-            const filter = new Function('return ' + output.filterCode)();
-            return filter as FilterFunctionType;
-          }
-        } catch {
-          // JSON parse failed, try another approach
-        }
-      }
-
-      // Third attempt: Create a wrapper that uses dynamic import with tsx
-      const wrapperScript = `
-#!/usr/bin/env node
-import('${pathToFileURL(filePath).href}').then(module => {
-  const filter = module.filter || module.default;
-  if (typeof filter === 'function') {
-    // Test it works
-    filter({ name: 'test', type: 'COMPONENT', children: [] });
-    process.exit(0);
-  } else {
-    process.exit(1);
-  }
-}).catch(err => {
-  console.error(err);
-  process.exit(1);
-});
-`;
-
-      const wrapperFile = join(tempDir, 'wrapper.mjs');
-      writeFileSync(wrapperFile, wrapperScript);
-
-      // Try with various Node.js loader configurations
-      const loaderOptions = [
-        ['--loader', 'tsx'],
-        ['--experimental-loader', 'tsx'],
-        ['--require', 'tsx'],
-        ['--import', 'tsx'],
+      // Try different loading strategies in order
+      const strategies = [
+        () => this.tryNodeDirectLoad(tempDir, filterUrl),
+        () => this.tryNpxTsxExport(tempDir, filterUrl),
+        () => this.tryNodeLoaderOptions(tempDir, filterUrl),
       ];
 
-      for (const options of loaderOptions) {
-        const testResult = spawnSync('node', [...options, wrapperFile], {
-          cwd: process.cwd(),
-          encoding: 'utf-8',
-          env: { ...process.env },
-        });
-
-        if (testResult.status === 0) {
-          // This configuration works! Use it to load the actual filter
-          const finalLoaderScript = `
-import { register } from 'node:module';
-register('tsx', import.meta.url);
-const filterModule = await import('${pathToFileURL(filePath).href}');
-export const filter = filterModule.filter || filterModule.default;
-`;
-          const finalFile = join(tempDir, 'final.mjs');
-          writeFileSync(finalFile, finalLoaderScript);
-
-          const finalModule = await import(pathToFileURL(finalFile).href);
-          return finalModule.filter as FilterFunctionType;
+      for (const strategy of strategies) {
+        const result = await strategy();
+        if (result) {
+          return result;
         }
       }
 
@@ -232,6 +90,112 @@ export const filter = filterModule.filter || filterModule.default;
         // Ignore cleanup errors
       }
     }
+  }
+
+  private async tryNodeDirectLoad(tempDir: string, filterUrl: string): Promise<FilterFunctionType | null> {
+    // First attempt: Try to run the loader script with Node.js directly
+    const loaderFile = this.prepareTemplate(tempDir, 'tsx-loader.mjs', filterUrl);
+
+    const result = spawnSync('node', [loaderFile], {
+      cwd: process.cwd(),
+      encoding: 'utf-8',
+      env: {
+        ...process.env,
+        NODE_OPTIONS: '--experimental-loader tsx',
+      },
+    });
+
+    if (result.status === 0) {
+      // Success! Now import the loader module to get the filter
+      const loaderModule = (await import(pathToFileURL(loaderFile).href)) as { filter: FilterFunctionType };
+      return loaderModule.filter;
+    }
+
+    return null;
+  }
+
+  private async tryNpxTsxExport(tempDir: string, filterUrl: string): Promise<FilterFunctionType | null> {
+    // Second attempt: Use npx tsx to run a script that exports the filter
+    const exportFile = this.prepareTemplate(tempDir, 'tsx-export.mjs', filterUrl);
+
+    const npxResult = spawnSync('npx', ['tsx', exportFile], {
+      cwd: process.cwd(),
+      encoding: 'utf-8',
+      shell: true,
+    });
+
+    if (npxResult.status === 0 && npxResult.stdout) {
+      try {
+        const output = JSON.parse(npxResult.stdout) as { success: boolean; filterCode?: string };
+        if (output.success === true && typeof output.filterCode === 'string' && output.filterCode.length > 0) {
+          // Create a function from the filter code
+          // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
+          const filter = new Function('return ' + output.filterCode)() as FilterFunctionType;
+          return filter;
+        }
+      } catch {
+        // JSON parse failed, try another approach
+      }
+    }
+
+    return null;
+  }
+
+  private async tryNodeLoaderOptions(tempDir: string, filterUrl: string): Promise<FilterFunctionType | null> {
+    // Third attempt: Create a wrapper that uses dynamic import with tsx
+    const wrapperFile = this.prepareTemplate(tempDir, 'tsx-wrapper.mjs', filterUrl);
+
+    // Try with various Node.js loader configurations
+    const loaderOptions = [
+      ['--loader', 'tsx'],
+      ['--experimental-loader', 'tsx'],
+      ['--require', 'tsx'],
+      ['--import', 'tsx'],
+    ];
+
+    for (const options of loaderOptions) {
+      const testResult = spawnSync('node', [...options, wrapperFile], {
+        cwd: process.cwd(),
+        encoding: 'utf-8',
+        env: { ...process.env },
+      });
+
+      if (testResult.status === 0) {
+        // This configuration works! Use it to load the actual filter
+        const finalFile = this.prepareTemplate(tempDir, 'tsx-final-loader.mjs', filterUrl);
+        const finalModule = (await import(pathToFileURL(finalFile).href)) as { filter: FilterFunctionType };
+        return finalModule.filter;
+      }
+    }
+
+    return null;
+  }
+
+  private prepareTemplate(tempDir: string, templateName: string, filterPath: string): string {
+    const templatePath = join(this.templatesDir, templateName);
+    const outputPath = join(tempDir, templateName);
+
+    // Read the template
+    let content: string;
+    if (existsSync(templatePath)) {
+      content = readFileSync(templatePath, 'utf-8');
+    } else {
+      // Fallback to dist directory if running from compiled code
+      const distTemplatePath = templatePath.replace('/src/', '/dist/');
+      if (existsSync(distTemplatePath)) {
+        content = readFileSync(distTemplatePath, 'utf-8');
+      } else {
+        throw new Error(`Template not found: ${templateName}`);
+      }
+    }
+
+    // Replace the placeholder with the actual filter path
+    content = content.replace(/__FILTER_PATH__/g, filterPath);
+
+    // Write the prepared script
+    writeFileSync(outputPath, content);
+
+    return outputPath;
   }
 
   cleanup(): void {
