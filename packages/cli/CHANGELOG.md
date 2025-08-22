@@ -1,5 +1,95 @@
 # @auto-engineer/cli
 
+## 0.5.7
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.7
+  - @auto-engineer/emmett-generator@0.6.2
+  - @auto-engineer/flowlang@0.5.2
+  - @auto-engineer/frontend-implementation@0.4.2
+  - @auto-engineer/information-architect@0.4.2
+  - @auto-engineer/message-bus@0.3.2
+  - @auto-engineer/react-graphql-mui-generator@0.3.2
+  - @auto-engineer/react-graphql-shadcn-generator@0.4.2
+
+## 0.5.6
+
+### Patch Changes
+
+- Version bump to trigger builds
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.6
+  - @auto-engineer/emmett-generator@0.6.1
+  - @auto-engineer/flowlang@0.5.1
+  - @auto-engineer/frontend-implementation@0.4.1
+  - @auto-engineer/information-architect@0.4.1
+  - @auto-engineer/message-bus@0.3.1
+  - @auto-engineer/react-graphql-mui-generator@0.3.1
+  - @auto-engineer/react-graphql-shadcn-generator@0.4.1
+
+## 0.5.5
+
+### Patch Changes
+
+- Update design-system-importer dependency to 0.4.5 for improved TypeScript filter support
+
+## 0.5.4
+
+### Patch Changes
+
+- 25fbdc8: version bump
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.4
+
+## 0.5.2
+
+### Patch Changes
+
+- 2570a10: Version bump
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.2
+
+## 0.5.0
+
+### Minor Changes
+
+- [#22](https://github.com/SamHatoum/auto-engineer/pull/22) [`927b39a`](https://github.com/SamHatoum/auto-engineer/commit/927b39a2c08c0baa1942b2955a8e8015e09364d9) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Some major refactorings of the directory structure
+
+### Patch Changes
+
+- [`f3e97e5`](https://github.com/SamHatoum/auto-engineer/commit/f3e97e563b79ca8328e802dd502e65285ec58ce9) Thanks [@SamHatoum](https://github.com/SamHatoum)! - global version bump to test release process
+
+- Updated dependencies [[`f3e97e5`](https://github.com/SamHatoum/auto-engineer/commit/f3e97e563b79ca8328e802dd502e65285ec58ce9), [`927b39a`](https://github.com/SamHatoum/auto-engineer/commit/927b39a2c08c0baa1942b2955a8e8015e09364d9)]:
+  - @auto-engineer/react-graphql-shadcn-generator@0.4.0
+  - @auto-engineer/frontend-implementation@0.4.0
+  - @auto-engineer/design-system-importer@0.4.0
+  - @auto-engineer/emmett-generator@0.6.0
+  - @auto-engineer/flowlang@0.5.0
+  - @auto-engineer/information-architect@0.4.0
+  - @auto-engineer/message-bus@0.3.0
+  - @auto-engineer/react-graphql-mui-generator@0.3.0
+
+## 0.4.0
+
+### Minor Changes
+
+- [`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Fix multiple dependency issues
+
+### Patch Changes
+
+- Updated dependencies [[`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684)]:
+  - @auto-engineer/design-system-importer@0.3.0
+  - @auto-engineer/emmett-generator@0.5.0
+  - @auto-engineer/flowlang@0.4.0
+  - @auto-engineer/frontend-implementation@0.3.0
+  - @auto-engineer/information-architect@0.3.0
+  - @auto-engineer/message-bus@0.2.0
+  - @auto-engineer/react-graphql-mui-generator@0.2.0
+  - @auto-engineer/react-graphql-shadcn-generator@0.3.0
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/product-catalogue-integration",
-  "version": "0.2.0",
+  "version": "0.4.2",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",
@@ -12,8 +12,8 @@
     }
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "^0.3.0",
-    "@auto-engineer/ai-gateway": "^0.2.0",
+    "@auto-engineer/flowlang": "^0.5.2",
+    "@auto-engineer/ai-gateway": "^0.4.2",
     "axios": "^1.6.0"
   },
   "scripts": {

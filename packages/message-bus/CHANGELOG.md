@@ -1,5 +1,33 @@
 # @auto-engineer/message-bus
 
+## 0.3.2
+
+### Patch Changes
+
+- Bump versions
+
+## 0.3.1
+
+### Patch Changes
+
+- Version bump to trigger builds
+
+## 0.3.0
+
+### Minor Changes
+
+- [#22](https://github.com/SamHatoum/auto-engineer/pull/22) [`927b39a`](https://github.com/SamHatoum/auto-engineer/commit/927b39a2c08c0baa1942b2955a8e8015e09364d9) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Some major refactorings of the directory structure
+
+### Patch Changes
+
+- [`f3e97e5`](https://github.com/SamHatoum/auto-engineer/commit/f3e97e563b79ca8328e802dd502e65285ec58ce9) Thanks [@SamHatoum](https://github.com/SamHatoum)! - global version bump to test release process
+
+## 0.2.0
+
+### Minor Changes
+
+- [`330afa5`](https://github.com/SamHatoum/auto-engineer/commit/330afa565079e3b528d0f448d64919a8dc78d684) Thanks [@SamHatoum](https://github.com/SamHatoum)! - Fix multiple dependency issues
+
 ## 0.1.0
 
 ### Minor Changes

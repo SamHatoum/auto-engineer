@@ -22,7 +22,7 @@
     "release": "changeset publish",
     "prepare": "husky",
     "install": "turbo run install build",
-    "clean:auto": "node scripts/clean-global-auto.js",
+    "clean:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g)",
     "## ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
     "start:product-api": "cd examples/product-catalogue-api && pnpm start",
@@ -62,8 +62,8 @@
     "@types/react-dom": "^18.3.7"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "link:packages/ai-gateway",
-    "@auto-engineer/flowlang": "link:packages/flowlang",
+    "@auto-engineer/ai-gateway": "^0.4.0",
+    "@auto-engineer/flowlang": "^0.5.0",
     "axios": "^1.10.0",
     "debug": "^4.4.1",
     "dotenv": "^16.4.5"

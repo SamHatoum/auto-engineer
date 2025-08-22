@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/design-system-importer",
-  "version": "0.2.0",
+  "version": "0.4.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "tsx src/index.ts",
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/utils/templates dist/utils/",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -32,7 +32,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.1.0",
+    "@auto-engineer/message-bus": "^0.3.2",
     "figma-api": "2.0.2-beta",
     "tsx": "^3.12.7"
   }
