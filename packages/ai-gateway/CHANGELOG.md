@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.4.3
+
+### Patch Changes
+
+- version testing
+
 ## 0.4.2
 
 ### Patch Changes

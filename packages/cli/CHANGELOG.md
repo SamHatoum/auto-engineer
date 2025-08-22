@@ -1,5 +1,19 @@
 # @auto-engineer/cli
 
+## 0.5.8
+
+### Patch Changes
+
+- version testing
+- Updated dependencies
+  - @auto-engineer/design-system-importer@0.4.8
+  - @auto-engineer/emmett-generator@0.6.3
+  - @auto-engineer/flowlang@0.5.3
+  - @auto-engineer/frontend-implementation@0.4.3
+  - @auto-engineer/information-architect@0.4.3
+  - @auto-engineer/message-bus@0.3.3
+  - @auto-engineer/react-graphql-generator@0.2.1
+
 ## 0.5.7
 
 ### Patch Changes

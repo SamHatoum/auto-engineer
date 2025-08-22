@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.3.3
+
+### Patch Changes
+
+- version testing
+
 ## 0.3.2
 
 ### Patch Changes
