@@ -200,10 +200,10 @@ importers:
   integrations/ai-chat-completion:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../../packages/ai-gateway
       '@auto-engineer/flowlang':
-        specifier: ^0.5.3
+        specifier: ^0.5.4
         version: link:../../packages/flowlang
     devDependencies:
       '@eslint/js':
@@ -219,10 +219,10 @@ importers:
   integrations/cart:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../../packages/ai-gateway
       '@auto-engineer/flowlang':
-        specifier: ^0.5.3
+        specifier: ^0.5.4
         version: link:../../packages/flowlang
       axios:
         specifier: ^1.6.0
@@ -241,10 +241,10 @@ importers:
   integrations/product-catalogue:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../../packages/ai-gateway
       '@auto-engineer/flowlang':
-        specifier: ^0.5.3
+        specifier: ^0.5.4
         version: link:../../packages/flowlang
       axios:
         specifier: ^1.6.0
@@ -280,6 +280,9 @@ importers:
       ai:
         specifier: ^4.3.16
         version: 4.3.19(react@19.1.0)(zod@3.25.76)
+      debug:
+        specifier: ^4.4.0
+        version: 4.4.1(supports-color@5.5.0)
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -290,25 +293,25 @@ importers:
   packages/cli:
     dependencies:
       '@auto-engineer/design-system-importer':
-        specifier: ^0.4.8
+        specifier: ^0.4.9
         version: link:../design-system-importer
       '@auto-engineer/emmett-generator':
-        specifier: ^0.6.3
+        specifier: ^0.6.4
         version: link:../emmett-generator
       '@auto-engineer/flowlang':
-        specifier: ^0.5.3
+        specifier: ^0.5.4
         version: link:../flowlang
       '@auto-engineer/frontend-implementation':
-        specifier: ^0.4.3
+        specifier: ^0.4.8
         version: link:../frontend-implementation
       '@auto-engineer/information-architect':
-        specifier: ^0.4.3
+        specifier: ^0.4.4
         version: link:../information-architect
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
       '@auto-engineer/react-graphql-generator':
-        specifier: ^0.2.3
+        specifier: ^0.2.5
         version: link:../react-graphql-generator
       chalk:
         specifier: ^5.3.0
@@ -316,6 +319,9 @@ importers:
       commander:
         specifier: ^12.0.0
         version: 12.1.0
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1(supports-color@5.5.0)
       dotenv:
         specifier: ^16.4.7
         version: 16.6.1
@@ -366,7 +372,7 @@ importers:
   packages/design-system-importer:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
       figma-api:
         specifier: 2.0.2-beta
@@ -378,10 +384,10 @@ importers:
   packages/emmett-generator:
     dependencies:
       '@auto-engineer/flowlang':
-        specifier: ^0.5.3
+        specifier: ^0.5.4
         version: link:../flowlang
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.2
@@ -442,35 +448,10 @@ importers:
         specifier: ^11.0.4
         version: 11.0.4
 
-  packages/flow-agent:
-    dependencies:
-      '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
-        version: link:../ai-gateway
-      '@auto-engineer/flowlang':
-        specifier: ^0.5.3
-        version: link:../flowlang
-      '@auto-engineer/message-bus':
-        specifier: ^0.3.3
-        version: link:../message-bus
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(jsdom@26.1.0)(lightningcss@1.30.1)(msw@2.10.4(@types/node@24.3.0)(typescript@5.8.3))
-      zod:
-        specifier: ^3.25.67
-        version: 3.25.76
-      zod-to-json-schema:
-        specifier: ^3.24.6
-        version: 3.24.6(zod@3.25.76)
-    devDependencies:
-      tsx:
-        specifier: ^4.19.2
-        version: 4.20.3
-
   packages/flowlang:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
@@ -500,6 +481,9 @@ importers:
 
   packages/frontend-checks:
     dependencies:
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1(supports-color@5.5.0)
       playwright:
         specifier: ^1.54.1
         version: 1.54.1
@@ -510,17 +494,20 @@ importers:
   packages/frontend-implementation:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../ai-gateway
       '@auto-engineer/frontend-checks':
-        specifier: ^0.4.5
+        specifier: ^0.4.6
         version: link:../frontend-checks
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0
         version: 1.15.1
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1(supports-color@5.5.0)
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
@@ -541,10 +528,10 @@ importers:
   packages/information-architect:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
 
   packages/message-bus:
@@ -565,11 +552,14 @@ importers:
   packages/react-graphql-generator:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.3.3
+        specifier: ^0.3.4
         version: link:../message-bus
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1(supports-color@5.5.0)
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
@@ -587,7 +577,7 @@ importers:
   packages/server-implementer:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.4.3
+        specifier: ^0.4.5
         version: link:../ai-gateway
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0

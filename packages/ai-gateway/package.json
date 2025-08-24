@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/ai-gateway",
-  "version": "0.4.3",
+  "version": "0.4.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,6 +30,7 @@
     "@ai-sdk/xai": "^1.2.16",
     "@modelcontextprotocol/sdk": "^1.3.0",
     "ai": "^4.3.16",
+    "debug": "^4.4.0",
     "dotenv": "^16.4.5",
     "zod": "^3.25.67"
   },

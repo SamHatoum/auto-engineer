@@ -7,6 +7,116 @@ import { configureAIProvider } from './config';
 import { z } from 'zod';
 import { getRegisteredToolsForAI } from './mcp-server';
 import { startServer } from './mcp-server';
+import createDebug from 'debug';
+
+// const debug = createDebug('ai-gateway'); // TODO: Use for general debugging
+const debugConfig = createDebug('ai-gateway:config');
+const debugAPI = createDebug('ai-gateway:api');
+const debugError = createDebug('ai-gateway:error');
+const debugTools = createDebug('ai-gateway:tools');
+const debugStream = createDebug('ai-gateway:stream');
+const debugValidation = createDebug('ai-gateway:validation');
+
+// Error type definitions
+const ERROR_PATTERNS = [
+  {
+    patterns: ['rate limit', '429'],
+    statusCode: 429,
+    icon: '⚠️',
+    message: 'RATE LIMIT ERROR detected for %s',
+    checkRetryAfter: true,
+  },
+  {
+    patterns: ['401', 'unauthorized'],
+    statusCode: 401,
+    icon: '🔐',
+    message: 'AUTHENTICATION ERROR - Check your %s API key',
+  },
+  {
+    patterns: ['quota', 'credits', 'insufficient'],
+    icon: '💳',
+    message: 'QUOTA/CREDITS ERROR - Insufficient credits for %s',
+  },
+  {
+    patterns: ['model', 'not found'],
+    icon: '🤖',
+    message: 'MODEL ERROR - Model might not be available for %s',
+  },
+  {
+    patterns: ['timeout', 'timed out'],
+    icon: '⏱️',
+    message: 'TIMEOUT ERROR - Request timed out for %s',
+  },
+  {
+    patterns: ['ECONNREFUSED', 'ENOTFOUND', 'network'],
+    icon: '🌐',
+    message: 'NETWORK ERROR - Connection failed to %s',
+  },
+];
+
+// Helper to check and log specific error types
+function checkErrorType(message: string, errorAny: Record<string, unknown>, provider: AIProvider): void {
+  for (const errorType of ERROR_PATTERNS) {
+    const hasPattern = errorType.patterns.some((pattern) => message.includes(pattern));
+    const hasStatusCode = errorType.statusCode !== undefined && errorAny.status === errorType.statusCode;
+
+    if (hasPattern || hasStatusCode) {
+      debugError(`${errorType.icon} ${errorType.message}`, provider);
+
+      if (errorType.checkRetryAfter === true && errorAny.retryAfter !== undefined) {
+        debugError('Retry after: %s seconds', String(errorAny.retryAfter));
+      }
+      return;
+    }
+  }
+}
+
+// Helper to extract additional error details
+function extractErrorDetails(errorAny: Record<string, unknown>): void {
+  if (errorAny.response !== undefined && typeof errorAny.response === 'object' && errorAny.response !== null) {
+    const response = errorAny.response as Record<string, unknown>;
+    debugError('Response status: %s', String(response.status ?? 'unknown'));
+    debugError('Response status text: %s', String(response.statusText ?? 'unknown'));
+    if (response.data !== undefined) {
+      debugError('Response data: %o', response.data);
+    }
+  }
+
+  if (errorAny.code !== undefined) {
+    debugError('Error code: %s', String(errorAny.code));
+  }
+
+  if (errorAny.type !== undefined) {
+    debugError('Error type: %s', String(errorAny.type));
+  }
+}
+
+/**
+ * Extract and log meaningful error information from Vercel AI SDK errors
+ */
+function extractAndLogError(error: unknown, provider: AIProvider, operation: string): void {
+  debugError('%s failed for provider %s', operation, provider);
+
+  if (error instanceof Error) {
+    debugError('Error message: %s', error.message);
+    debugError('Error name: %s', error.name);
+    debugError('Error stack: %s', error.stack);
+
+    // Check for specific error types from Vercel AI SDK
+    const errorAny = error as unknown as Record<string, unknown>;
+
+    // Check various error types
+    checkErrorType(error.message, errorAny, provider);
+
+    // Extract additional error details if available
+    extractErrorDetails(errorAny);
+
+    // Log raw error object for debugging
+    debugError('Full error object: %O', error);
+  } else {
+    debugError('Unknown error type: %O', error);
+  }
+}
 
 interface AIToolValidationError extends Error {
   cause?: {
@@ -58,23 +168,28 @@ const defaultOptions: AIOptions = {
 };
 
 function getDefaultModel(provider: AIProvider): string {
-  switch (provider) {
-    case AIProvider.OpenAI:
-      return 'gpt-4o-mini'; // maybe 5
-    case AIProvider.Anthropic:
-      return 'claude-sonnet-4-20250514'; // 4
-    case AIProvider.Google:
-      return 'gemini-2.5-pro';
-    case AIProvider.XAI:
-      return 'grok-4';
-    default:
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(`Unknown provider: ${provider}`);
-  }
+  const model = (() => {
+    switch (provider) {
+      case AIProvider.OpenAI:
+        return 'gpt-4o-mini'; // maybe 5
+      case AIProvider.Anthropic:
+        return 'claude-sonnet-4-20250514'; // 4
+      case AIProvider.Google:
+        return 'gemini-2.5-pro';
+      case AIProvider.XAI:
+        return 'grok-4';
+      default:
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(`Unknown provider: ${provider}`);
+    }
+  })();
+  debugConfig('Selected default model %s for provider %s', model, provider);
+  return model;
 }
 
 function getModel(provider: AIProvider, model?: string) {
   const modelName = model ?? getDefaultModel(provider);
+  debugConfig('Creating model instance for provider %s with model %s', provider, modelName);
 
   switch (provider) {
     case AIProvider.OpenAI:
@@ -95,25 +210,35 @@ export async function generateTextWithAI(
   provider: AIProvider,
   options: AIOptions = {},
 ): Promise<string> {
+  debugAPI('generateTextWithAI called - provider: %s, promptLength: %d', provider, prompt.length);
   const finalOptions = { ...defaultOptions, ...options };
   const model = finalOptions.model ?? getDefaultModel(provider);
   const modelInstance = getModel(provider, model);
 
   if (finalOptions.includeTools === true) {
+    debugTools('Tools requested, starting MCP server');
     await startServer();
     const result = await generateTextWithToolsAI(prompt, provider, options);
-
     return result.text;
   }
 
-  const result = await generateText({
-    model: modelInstance,
-    prompt,
-    temperature: finalOptions.temperature,
-    maxTokens: finalOptions.maxTokens,
-  });
+  try {
+    debugAPI('Making API call to %s with model %s', provider, model);
+    debugAPI('Request params - temperature: %d, maxTokens: %d', finalOptions.temperature, finalOptions.maxTokens);
 
-  return result.text;
+    const result = await generateText({
+      model: modelInstance,
+      prompt,
+      temperature: finalOptions.temperature,
+      maxTokens: finalOptions.maxTokens,
+    });
+
+    debugAPI('API call successful - response length: %d, usage: %o', result.text.length, result.usage);
+    return result.text;
+  } catch (error) {
+    extractAndLogError(error, provider, 'generateTextWithAI');
+    throw error;
+  }
 }
 
 export async function* streamTextWithAI(
@@ -121,18 +246,31 @@ export async function* streamTextWithAI(
   provider: AIProvider,
   options: AIOptions = {},
 ): AsyncGenerator<string> {
+  debugStream('streamTextWithAI called - provider: %s, promptLength: %d', provider, prompt.length);
   const finalOptions = { ...defaultOptions, ...options };
   const model = getModel(provider, finalOptions.model);
 
-  const stream = await streamText({
-    model,
-    prompt,
-    temperature: finalOptions.temperature,
-    maxTokens: finalOptions.maxTokens,
-  });
+  try {
+    debugStream('Starting stream from %s', provider);
+    const stream = await streamText({
+      model,
+      prompt,
+      temperature: finalOptions.temperature,
+      maxTokens: finalOptions.maxTokens,
+    });
 
-  for await (const chunk of stream.textStream) {
-    yield chunk;
+    let totalChunks = 0;
+    let totalLength = 0;
+    for await (const chunk of stream.textStream) {
+      totalChunks++;
+      totalLength += chunk.length;
+      debugStream('Chunk %d received - size: %d bytes', totalChunks, chunk.length);
+      yield chunk;
+    }
+    debugStream('Stream completed - total chunks: %d, total length: %d', totalChunks, totalLength);
+  } catch (error) {
+    extractAndLogError(error, provider, 'streamTextWithAI');
+    throw error;
   }
 }
 
@@ -146,12 +284,15 @@ export async function generateTextStreamingWithAI(
   provider: AIProvider,
   options: AIOptions = {},
 ): Promise<string> {
+  debugStream('generateTextStreamingWithAI called - provider: %s', provider);
   const finalOptions = { ...defaultOptions, ...options };
   let collectedResult = '';
 
   const stream = streamTextWithAI(prompt, provider, finalOptions);
 
+  let tokenCount = 0;
   for await (const token of stream) {
+    tokenCount++;
     // Collect all tokens for the final result
     collectedResult += token;
 
@@ -161,26 +302,25 @@ export async function generateTextStreamingWithAI(
     }
   }
 
+  debugStream('Streaming complete - total tokens: %d, result length: %d', tokenCount, collectedResult.length);
   return collectedResult;
 }
 
-export async function generateTextWithToolsAI(
-  prompt: string,
+// Helper function to handle tool conversation loop
+type RegisteredToolForAI = {
+  parameters: z.ZodSchema;
+  description: string;
+  execute?: (args: Record<string, unknown>) => Promise<string>;
+};
+
+async function executeToolConversation(
+  modelInstance: ReturnType<typeof getModel>,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  registeredTools: Record<string, RegisteredToolForAI>,
+  hasTools: boolean,
+  finalOptions: AIOptions & { temperature?: number; maxTokens?: number },
   provider: AIProvider,
-  options: AIOptions = {},
-): Promise<{ text: string; toolCalls?: unknown[] }> {
-  const finalOptions = { ...defaultOptions, ...options };
-  const model = finalOptions.model ?? getDefaultModel(provider);
-  const modelInstance = getModel(provider, model);
-
-  const registeredTools = finalOptions.includeTools === true ? getRegisteredToolsForAI() : {};
-  console.log('registeredTools', registeredTools);
-  const hasTools = Object.keys(registeredTools).length > 0;
-  console.log('hasTools', hasTools);
-
-  // Build conversation messages
-  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [{ role: 'user', content: prompt }];
-
+): Promise<{ finalResult: string; allToolCalls: unknown[] }> {
   let finalResult = '';
   const allToolCalls: unknown[] = [];
   let attempts = 0;
@@ -188,6 +328,7 @@ export async function generateTextWithToolsAI(
 
   while (attempts < maxAttempts) {
     attempts++;
+    debugTools('Tool execution attempt %d/%d', attempts, maxAttempts);
 
     const opts = {
       model: modelInstance,
@@ -199,36 +340,76 @@ export async function generateTextWithToolsAI(
         toolChoice: 'auto' as const,
       }),
     };
-    console.log('opts', opts);
-    const result = await generateText(opts);
-    console.log('result', JSON.stringify(result, null, 2));
+    debugTools('Request options: %o', { ...opts, tools: hasTools ? '[tools included]' : undefined });
 
-    // Add assistant message to conversation
-    if (result.text) {
-      messages.push({ role: 'assistant', content: result.text });
-      finalResult = result.text;
+    try {
+      const result = await generateText(opts);
+      debugTools('Result received - has text: %s, tool calls: %d', !!result.text, result.toolCalls?.length ?? 0);
+
+      // Add assistant message to conversation
+      if (result.text) {
+        messages.push({ role: 'assistant', content: result.text });
+        finalResult = result.text;
+        debugTools('Assistant message added to conversation');
+      }
+
+      // If there are tool calls, execute them and continue conversation
+      if (result.toolCalls !== undefined && result.toolCalls.length > 0) {
+        allToolCalls.push(...result.toolCalls);
+        debugTools('Executing %d tool calls', result.toolCalls.length);
+
+        // Execute tools and create a simple follow-up prompt
+        const toolResults = await executeToolCalls(result.toolCalls, registeredTools);
+        debugTools('Tool execution completed, results length: %d', toolResults.length);
+
+        // Add the tool results as a user message and request a final response
+        messages.push({
+          role: 'user',
+          content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`,
+        });
+
+        // Continue the conversation to get AI's response to tool results
+        continue;
+      }
+
+      // If no tool calls, we're done
+      debugTools('No tool calls, conversation complete');
+      break;
+    } catch (error) {
+      extractAndLogError(error, provider, 'generateTextWithToolsAI');
+      throw error;
     }
-
-    // If there are tool calls, execute them and continue conversation
-    if (result.toolCalls !== undefined && result.toolCalls.length > 0) {
-      allToolCalls.push(...result.toolCalls);
-
-      // Execute tools and create a simple follow-up prompt
-      const toolResults = await executeToolCalls(result.toolCalls, registeredTools);
-
-      // Add the tool results as a user message and request a final response
-      messages.push({
-        role: 'user',
-        content: `${toolResults}Based on this product catalog data, please provide specific product recommendations for a soccer-loving daughter. Include product names, prices, and reasons why each item would be suitable.`,
-      });
-
-      // Continue the conversation to get AI's response to tool results
-      continue;
-    }
-
-    // If no tool calls, we're done
-    break;
   }
+
+  return { finalResult, allToolCalls };
+}
+
+export async function generateTextWithToolsAI(
+  prompt: string,
+  provider: AIProvider,
+  options: AIOptions = {},
+): Promise<{ text: string; toolCalls?: unknown[] }> {
+  debugTools('generateTextWithToolsAI called - provider: %s', provider);
+  const finalOptions = { ...defaultOptions, ...options };
+  const model = finalOptions.model ?? getDefaultModel(provider);
+  const modelInstance = getModel(provider, model);
+
+  const registeredTools = finalOptions.includeTools === true ? getRegisteredToolsForAI() : {};
+  debugTools('Registered tools: %o', Object.keys(registeredTools));
+  const hasTools = Object.keys(registeredTools).length > 0;
+  debugTools('Has tools available: %s', hasTools);
+
+  // Build conversation messages
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [{ role: 'user', content: prompt }];
+
+  const { finalResult, allToolCalls } = await executeToolConversation(
+    modelInstance,
+    messages,
+    registeredTools,
+    hasTools,
+    finalOptions,
+    provider,
+  );
 
   return {
     text: finalResult,
@@ -238,26 +419,27 @@ export async function generateTextWithToolsAI(
 
 async function executeToolCalls(
   toolCalls: unknown[],
-  registeredTools: Record<
-    string,
-    { execute?: (args: Record<string, unknown>) => Promise<string>; description?: string }
-  >,
+  registeredTools: Record<string, RegisteredToolForAI>,
 ): Promise<string> {
+  debugTools('Executing %d tool calls', toolCalls.length);
   let toolResults = '';
 
   for (const toolCall of toolCalls) {
     try {
       const toolCallObj = toolCall as { toolName: string; args: Record<string, unknown> };
+      debugTools('Executing tool: %s with args: %o', toolCallObj.toolName, toolCallObj.args);
       const tool = registeredTools[toolCallObj.toolName];
       if (tool?.execute) {
         const toolResult = await tool.execute(toolCallObj.args);
         toolResults += `Tool ${toolCallObj.toolName} returned: ${String(toolResult)}\n\n`;
+        debugTools('Tool %s executed successfully', toolCallObj.toolName);
       } else {
         toolResults += `Error: Tool ${toolCallObj.toolName} not found or missing execute function\n\n`;
+        debugTools('Tool %s not found or missing execute function', toolCallObj.toolName);
       }
     } catch (error) {
       const toolCallObj = toolCall as { toolName: string };
-      console.error(`Tool execution error for ${toolCallObj.toolName}:`, error);
+      debugError('Tool execution error for %s: %O', toolCallObj.toolName, error);
       toolResults += `Error executing tool ${toolCallObj.toolName}: ${String(error)}\n\n`;
     }
   }
@@ -271,30 +453,44 @@ export async function generateTextWithImageAI(
   provider: AIProvider,
   options: AIOptions = {},
 ): Promise<string> {
+  debugAPI(
+    'generateTextWithImageAI called - provider: %s, textLength: %d, imageSize: %d',
+    provider,
+    text.length,
+    imageBase64.length,
+  );
   const finalOptions = { ...defaultOptions, ...options };
   const model = finalOptions.model ?? getDefaultModel(provider);
   const modelInstance = getModel(provider, model);
 
   if (provider !== AIProvider.OpenAI && provider !== AIProvider.XAI) {
+    debugError('Provider %s does not support image inputs', provider);
     throw new Error(`Provider ${provider} does not support image inputs`);
   }
 
-  const result = await generateText({
-    model: modelInstance,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text },
-          { type: 'image', image: imageBase64 },
-        ],
-      },
-    ],
-    temperature: finalOptions.temperature,
-    maxTokens: finalOptions.maxTokens,
-  });
+  try {
+    debugAPI('Sending image+text to %s', provider);
+    const result = await generateText({
+      model: modelInstance,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text },
+            { type: 'image', image: imageBase64 },
+          ],
+        },
+      ],
+      temperature: finalOptions.temperature,
+      maxTokens: finalOptions.maxTokens,
+    });
 
-  return result.text;
+    debugAPI('Image API call successful - response length: %d', result.text.length);
+    return result.text;
+  } catch (error) {
+    extractAndLogError(error, provider, 'generateTextWithImageAI');
+    throw error;
+  }
 }
 
 export function getAvailableProviders(): AIProvider[] {
@@ -304,6 +500,7 @@ export function getAvailableProviders(): AIProvider[] {
   if (config.anthropic != null) providers.push(AIProvider.Anthropic);
   if (config.google != null) providers.push(AIProvider.Google);
   if (config.xai != null) providers.push(AIProvider.XAI);
+  debugConfig('Available providers: %o', providers);
   return providers;
 }
 
@@ -314,6 +511,7 @@ function getEnhancedPrompt(prompt: string, lastError: AIToolValidationError): st
       ? JSON.stringify(lastError.validationDetails.cause.issues, null, 2)
       : lastError.message;
 
+  debugValidation('Enhancing prompt with validation error details: %o', errorDetails);
   return `${prompt}\\n\\n⚠️ IMPORTANT: Your previous response failed validation with the following errors:\\n${errorDetails}\\n\\nPlease fix these errors and ensure your response EXACTLY matches the required schema structure.`;
 }
 
@@ -355,35 +553,42 @@ function handleFailedRequest(
   attempt: number,
 ): { shouldRetry: boolean; enhancedError?: AIToolValidationError } {
   if (!lastError || !isSchemaError(lastError) || attempt >= maxRetries - 1) {
+    debugValidation(
+      'Not retrying - isLastError: %s, isSchemaError: %s, attempt: %d/%d',
+      !!lastError,
+      lastError ? isSchemaError(lastError) : false,
+      attempt + 1,
+      maxRetries,
+    );
     return { shouldRetry: false, enhancedError: lastError };
   }
 
-  console.log(`Schema validation failed on attempt ${attempt + 1}/${maxRetries}, retrying...`);
+  debugValidation('Schema validation failed on attempt %d/%d, will retry', attempt + 1, maxRetries);
   const enhancedError = enhanceValidationError(lastError);
 
   return { shouldRetry: true, enhancedError };
 }
 
-export async function generateStructuredDataWithAI<T>(
+// Helper function to attempt structured data generation with retry logic
+async function attemptStructuredGeneration<T>(
   prompt: string,
   provider: AIProvider,
   options: StructuredAIOptions<T>,
+  registeredTools: Record<string, RegisteredToolForAI>,
+  hasTools: boolean,
 ): Promise<T> {
   const maxSchemaRetries = 3;
   let lastError: AIToolValidationError | undefined;
 
-  if (options.includeTools === true) await startServer();
-  const registeredTools = options.includeTools === true ? getRegisteredToolsForAI() : {};
-  console.log('registeredTools', registeredTools);
-  const hasTools = Object.keys(registeredTools).length > 0;
-  console.log('hasTools', hasTools);
-
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
+      debugValidation('Structured data generation attempt %d/%d', attempt + 1, maxSchemaRetries);
       const model = getModel(provider, options.model);
 
       const enhancedPrompt = attempt > 0 && lastError ? getEnhancedPrompt(prompt, lastError) : prompt;
-      console.log('enhancedPrompt', enhancedPrompt);
+      if (attempt > 0) {
+        debugValidation('Using enhanced prompt for retry attempt %d', attempt + 1);
+      }
 
       const opts = {
         model,
@@ -398,9 +603,9 @@ export async function generateStructuredDataWithAI<T>(
           toolChoice: 'auto' as const,
         }),
       };
-      console.log('opts', opts);
+      debugAPI('Generating structured object with schema: %s', options.schemaName ?? 'unnamed');
       const result = await generateObject(opts);
-      console.log('result', JSON.stringify(result, null, 2));
+      debugAPI('Structured object generated successfully');
       return result.object;
     } catch (error: unknown) {
       lastError =
@@ -421,16 +626,40 @@ export async function generateStructuredDataWithAI<T>(
   throw lastError;
 }
 
+export async function generateStructuredDataWithAI<T>(
+  prompt: string,
+  provider: AIProvider,
+  options: StructuredAIOptions<T>,
+): Promise<T> {
+  debugAPI('generateStructuredDataWithAI called - provider: %s, schema: %s', provider, options.schemaName ?? 'unnamed');
+
+  if (options.includeTools === true) {
+    debugTools('Tools requested, starting MCP server');
+    await startServer();
+  }
+  const registeredTools = options.includeTools === true ? getRegisteredToolsForAI() : {};
+  debugTools('Registered tools for structured data: %o', Object.keys(registeredTools));
+  const hasTools = Object.keys(registeredTools).length > 0;
+
+  return attemptStructuredGeneration(prompt, provider, options, registeredTools, hasTools);
+}
+
 export async function streamStructuredDataWithAI<T>(
   prompt: string,
   provider: AIProvider,
   options: StreamStructuredAIOptions<T>,
 ): Promise<T> {
+  debugStream(
+    'streamStructuredDataWithAI called - provider: %s, schema: %s',
+    provider,
+    options.schemaName ?? 'unnamed',
+  );
   const maxSchemaRetries = 3;
   let lastError: AIToolValidationError | undefined;
 
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
+      debugValidation('Stream structured data attempt %d/%d', attempt + 1, maxSchemaRetries);
       const model = getModel(provider, options.model);
 
       const enhancedPrompt = attempt > 0 && lastError ? getEnhancedPrompt(prompt, lastError) : prompt;
@@ -447,19 +676,26 @@ export async function streamStructuredDataWithAI<T>(
 
       // Stream partial objects if callback provided
       if (options.onPartialObject) {
+        debugStream('Starting partial object stream');
         void (async () => {
           try {
+            let partialCount = 0;
             for await (const partialObject of result.partialObjectStream) {
+              partialCount++;
+              debugStream('Partial object %d received', partialCount);
               options.onPartialObject?.(partialObject);
             }
+            debugStream('Partial object stream complete - total partials: %d', partialCount);
           } catch (streamError) {
-            console.error('Error in partial object stream:', streamError);
+            debugError('Error in partial object stream: %O', streamError);
           }
         })();
       }
 
       // Return the final complete object
-      return await result.object;
+      const finalObject = await result.object;
+      debugStream('Final structured object received');
+      return finalObject;
     } catch (error: unknown) {
       lastError =
         error instanceof Error

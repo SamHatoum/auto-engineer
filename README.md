@@ -395,6 +395,101 @@ git commit -m "fix(apps/cli): correct CLI argument parsing"
 git commit -m "chore(global): update repository settings"
 ```
 
+## 🔍 Debug Logging
+
+Auto Engineer uses the [debug](https://www.npmjs.com/package/debug) library for conditional logging across all packages. This provides detailed insights into the internal operations without cluttering normal output.
+
+### Quick Start
+
+Set the `DEBUG` environment variable to enable logging:
+
+```bash
+# Enable all debug output
+DEBUG=* pnpm dev
+
+# Enable specific package
+DEBUG=flowlang:* pnpm dev
+
+# Enable multiple packages
+DEBUG=flowlang:*,message-bus:*,ia:* pnpm dev
+
+# Save debug output to file
+DEBUG=* pnpm dev 2> debug.log
+```
+
+### Available Debug Namespaces
+
+Each package has its own set of debug namespaces. Here's an overview with links to detailed documentation:
+
+| Package                     | Main Namespaces                                             | Documentation                                             |
+| --------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
+| **message-bus**             | `message-bus:*`, `message-bus:command`, `message-bus:event` | [📖 Details](./packages/message-bus/DEBUG.md)             |
+| **flowlang**                | `flowlang:*`, `flowlang:flow`, `flowlang:fluent-builder:*`  | [📖 Details](./packages/flowlang/DEBUG.md)                |
+| **information-architect**   | `ia:*`, `ia:generate-command:*`                             | [📖 Details](./packages/information-architect/DEBUG.md)   |
+| **emmett-generator**        | `emmett:*`, `emmett:scaffolding:*`, `emmett:extract:*`      | [📖 Details](./packages/emmett-generator/DEBUG.md)        |
+| **server-implementer**      | `server-impl:*`, `server-impl:flows:*`                      | [📖 Details](./packages/server-implementer/DEBUG.md)      |
+| **frontend-implementation** | `frontend-impl:*`, `frontend-impl:agent:*`                  | [📖 Details](./packages/frontend-implementation/DEBUG.md) |
+| **design-system-importer**  | `design-importer:*`, `design-importer:builder:*`            | [📖 Details](./packages/design-system-importer/DEBUG.md)  |
+| **ai-gateway**              | `ai-gateway:*`, `ai-gateway:call`, `ai-gateway:error`       | [📖 Details](./packages/ai-gateway/DEBUG.md)              |
+| **react-graphql-generator** | `react-gql:*`, `react-gql:schema`, `react-gql:components`   | [📖 Details](./packages/react-graphql-generator/DEBUG.md) |
+
+### Common Debug Scenarios
+
+#### Debug Full Pipeline
+
+```bash
+# Debug complete generation pipeline
+DEBUG=* pnpm generate:all
+```
+
+#### Debug Flow Processing
+
+```bash
+# Debug flow creation and processing
+DEBUG=flowlang:*,emmett:scaffolding:* pnpm generate:server
+```
+
+#### Debug AI Operations
+
+```bash
+# Debug AI calls and error handling
+DEBUG=ai-gateway:*,frontend-impl:agent:ai,ia:* pnpm implement:client
+```
+
+#### Debug Server Implementation
+
+```bash
+# Debug server generation and implementation
+DEBUG=server-impl:*,emmett:* pnpm implement:server
+```
+
+#### Debug Frontend Generation
+
+```bash
+# Debug frontend and GraphQL generation
+DEBUG=frontend-impl:*,react-gql:* pnpm generate:client
+```
+
+### Tips and Tricks
+
+1. **Start Broad, Then Narrow**: Begin with `DEBUG=*` to see everything, then focus on specific namespaces
+2. **Use Wildcards**: `DEBUG=*:command` shows all command-related logs across packages
+3. **Combine Namespaces**: Use commas to combine multiple patterns: `DEBUG=flowlang:*,message-bus:*`
+4. **Exclude Patterns**: Use `-` to exclude verbose output: `DEBUG=*,-express:*`
+5. **Save to File**: Redirect stderr to a file: `DEBUG=* pnpm dev 2> debug.log`
+6. **Filter Output**: Pipe through grep: `DEBUG=* pnpm dev 2>&1 | grep ERROR`
+7. **Add Timestamps**: Use the `ts` utility: `DEBUG=* pnpm dev 2>&1 | ts`
+8. **Disable Colors**: Set `DEBUG_COLORS=false` for plain text output
+
+### Environment Variables
+
+Additional debug-related environment variables:
+
+- `DEBUG` - Enables debug output for specified namespaces
+- `DEBUG_COLORS` - Set to `false` to disable colored output
+- `DEBUG_DEPTH` - Set maximum depth for object inspection
+- `DEBUG_SHOW_HIDDEN` - Show hidden properties in object output
+
 ## 📦 Versioning & Releases
 
 This project uses [Changesets](https://github.com/changesets/changesets) for versioning and publishing packages.

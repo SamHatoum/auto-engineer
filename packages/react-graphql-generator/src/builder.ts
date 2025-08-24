@@ -1,6 +1,11 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import createDebug from 'debug';
+
+const debug = createDebug('react-graphql-generator:builder');
+const debugFiles = createDebug('react-graphql-generator:builder:files');
+const debugBuild = createDebug('react-graphql-generator:builder:build');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,22 +14,30 @@ export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
 
   async cloneStarter(_starterDir: string): Promise<this> {
+    debug('Cloning starter from: %s', _starterDir);
     // If the path is already absolute, use it as is, otherwise resolve relative to __dirname
     const starterDir = path.isAbsolute(_starterDir) ? _starterDir : path.resolve(__dirname, _starterDir);
+    debug('Resolved starter directory: %s', starterDir);
     await this.collectFiles(starterDir, '');
+    debug('Starter files collected: %d files', this.starterFiles.size);
     return this;
   }
 
   private async collectFiles(dir: string, relative: string) {
+    debugFiles('Collecting files from: %s (relative: %s)', dir, relative || '/');
     const entries = await fs.readdir(dir, { withFileTypes: true });
+    debugFiles('Found %d entries in directory', entries.length);
+
     for (const entry of entries) {
       const absPath = path.join(dir, entry.name);
       const relPath = path.join(relative, entry.name);
       if (entry.isDirectory()) {
+        debugFiles('Entering directory: %s', relPath);
         await this.collectFiles(absPath, relPath);
       } else if (entry.isFile()) {
         const content = await fs.readFile(absPath);
         this.starterFiles.set(relPath, content);
+        debugFiles('Added file: %s (%d bytes)', relPath, content.length);
       }
     }
   }
@@ -161,15 +174,26 @@ export class FrontendScaffoldBuilder {
   // }
 
   async build(outputDir: string): Promise<void> {
+    debugBuild('Building to output directory: %s', outputDir);
     if (!this.starterFiles.size) {
+      debugBuild('ERROR: No starter files loaded');
       throw new Error('Starter files not loaded. Call cloneStarter() first.');
     }
+
+    debugBuild('Creating output directory: %s', outputDir);
     await fs.mkdir(outputDir, { recursive: true });
+
+    debugBuild('Writing %d files to output', this.starterFiles.size);
+    let filesWritten = 0;
     for (const [relPath, content] of this.starterFiles.entries()) {
       const outPath = path.join(outputDir, relPath);
       await fs.mkdir(path.dirname(outPath), { recursive: true });
       await fs.writeFile(outPath, content);
+      filesWritten++;
+      debugBuild('Written file %d/%d: %s', filesWritten, this.starterFiles.size, relPath);
     }
+
+    debugBuild('Build complete - %d files written', filesWritten);
     console.log(`Build complete. Output at: ${outputDir}`);
   }
 }

@@ -12,7 +12,6 @@ import { handleError } from './utils/errors';
 import { createOutput, supportsColor } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 
-import { createDemoCommand } from './commands/demo';
 import { createCreateExampleCommand } from './commands/create-example';
 import { createExportSchemaCommand } from './commands/export-schema';
 import { createGenerateServerCommand } from './commands/generate-server';
@@ -94,7 +93,6 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   const program = createCLI();
   const analytics = new Analytics(config);
 
-  program.addCommand(createDemoCommand(config, analytics));
   program.addCommand(createCreateExampleCommand(config, analytics));
   program.addCommand(createExportSchemaCommand(config, analytics));
   program.addCommand(createGenerateServerCommand(config, analytics));

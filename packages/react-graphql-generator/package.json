@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/react-graphql-generator",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -34,8 +34,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.4.3",
-    "@auto-engineer/message-bus": "^0.3.3",
+    "@auto-engineer/ai-gateway": "^0.4.5",
+    "@auto-engineer/message-bus": "^0.3.4",
+    "debug": "^4.4.1",
     "ejs": "^3.1.10",
     "graphql": "^16.11.0",
     "openai": "^4.104.0"

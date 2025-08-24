@@ -1,5 +1,13 @@
 # @auto-engineer/frontend-implementation
 
+## 0.4.7
+
+### Patch Changes
+
+- Add debug logging throughout packages for better debugging and issue tracking. Fix MCP server hanging issue in frontend-implementation by ensuring it only starts when run directly, not when imported as a module. The debug logs can be enabled by setting DEBUG environment variable (e.g., DEBUG=frontend-checks:_,frontend-impl:_)
+- Updated dependencies
+  - @auto-engineer/frontend-checks@0.4.6
+
 ## 0.4.6
 
 ### Patch Changes

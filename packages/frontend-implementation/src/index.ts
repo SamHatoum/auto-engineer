@@ -3,6 +3,12 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import createDebug from 'debug';
+
+const debug = createDebug('frontend-impl:mcp');
+const debugTools = createDebug('frontend-impl:mcp:tools');
+const debugServer = createDebug('frontend-impl:mcp:server');
+const debugLifecycle = createDebug('frontend-impl:mcp:lifecycle');
 
 interface Component {
   type: string;
@@ -61,12 +67,15 @@ function buildEntities(scheme: Scheme) {
   return entities;
 }
 
+debugServer('Initializing MCP server with name: frontend-implementation, version: 0.1.0');
 const server = new McpServer({
   name: 'frontend-implementation',
   version: '0.1.0',
 });
+debugServer('MCP server instance created');
 
 // Tool: List all files in the project
+debugTools('Registering tool: listFiles');
 server.registerTool(
   'listFiles',
   {
@@ -77,8 +86,10 @@ server.registerTool(
     },
   },
   async ({ directory }: { directory: string }) => {
+    debugTools('listFiles called with directory: %s', directory);
     try {
       const files = await listFiles(directory);
+      debugTools('Found %d files in directory', files.length);
       return {
         content: [
           {
@@ -88,6 +99,7 @@ server.registerTool(
         ],
       };
     } catch (error) {
+      debugTools('Error listing files: %O', error);
       return {
         isError: true,
         content: [
@@ -102,6 +114,7 @@ server.registerTool(
 );
 
 // Tool: Read a file
+debugTools('Registering tool: readFile');
 server.registerTool(
   'readFile',
   {
@@ -113,9 +126,12 @@ server.registerTool(
     },
   },
   async ({ directory, relativePath }: { directory: string; relativePath: string }) => {
+    debugTools('readFile called - directory: %s, relativePath: %s', directory, relativePath);
     try {
       const filePath = path.join(directory, relativePath);
+      debugTools('Reading file from: %s', filePath);
       const content = await fs.readFile(filePath, 'utf-8');
+      debugTools('File read successfully, size: %d bytes', content.length);
       return {
         content: [
           {
@@ -125,6 +141,7 @@ server.registerTool(
         ],
       };
     } catch (error) {
+      debugTools('Error reading file: %O', error);
       return {
         isError: true,
         content: [
@@ -139,6 +156,7 @@ server.registerTool(
 );
 
 // Tool: Create or update a file
+debugTools('Registering tool: createOrUpdateFile');
 server.registerTool(
   'createOrUpdateFile',
   {
@@ -151,10 +169,18 @@ server.registerTool(
     },
   },
   async ({ directory, relativePath, content }: { directory: string; relativePath: string; content: string }) => {
+    debugTools(
+      'createOrUpdateFile called - directory: %s, relativePath: %s, content size: %d',
+      directory,
+      relativePath,
+      content.length,
+    );
     try {
       const filePath = path.join(directory, relativePath);
+      debugTools('Writing file to: %s', filePath);
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, content, 'utf-8');
+      debugTools('File written successfully');
       return {
         content: [
           {
@@ -164,6 +190,7 @@ server.registerTool(
         ],
       };
     } catch (error) {
+      debugTools('Error creating/updating file: %O', error);
       return {
         isError: true,
         content: [
@@ -178,6 +205,7 @@ server.registerTool(
 );
 
 // Tool: Read auto-ia-scheme.json
+debugTools('Registering tool: readAutoIAScheme');
 server.registerTool(
   'readAutoIAScheme',
   {
@@ -188,8 +216,10 @@ server.registerTool(
     },
   },
   async ({ directory }: { directory: string }) => {
+    debugTools('readAutoIAScheme called with directory: %s', directory);
     try {
       const scheme = await readAutoIAScheme(directory);
+      debugTools('IA scheme loaded successfully');
       return {
         content: [
           {
@@ -199,6 +229,7 @@ server.registerTool(
         ],
       };
     } catch (error) {
+      debugTools('Error reading auto-ia-scheme.json: %O', error);
       return {
         isError: true,
         content: [
@@ -213,6 +244,7 @@ server.registerTool(
 );
 
 // Tool: List entities from auto-ia-scheme.json
+debugTools('Registering tool: listAutoIASchemeEntities');
 server.registerTool(
   'listAutoIASchemeEntities',
   {
@@ -251,8 +283,10 @@ server.registerTool(
 const transport = new StdioServerTransport();
 
 async function cleanup() {
+  debug('Cleanup initiated');
   console.log('Cleaning up...');
   await transport.close();
+  debug('Transport closed, exiting process');
   process.exit(0);
 }
 
@@ -264,10 +298,23 @@ process.on('SIGINT', () => {
 });
 
 async function startServer() {
+  debugLifecycle('Starting MCP server');
+  debugServer('Connecting server to transport');
   await server.connect(transport);
   console.error('Frontend Implementation MCP Server running on stdio');
+  debugLifecycle('MCP server connected and running');
+  debugServer('Server ready to handle requests');
 }
 
-startServer().catch(console.error);
+// Only start the server if this file is run directly
+if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+  debugLifecycle('Running as main module, starting server');
+  startServer().catch((error) => {
+    debugLifecycle('Fatal error starting server: %O', error);
+    console.error(error);
+  });
+} else {
+  debugLifecycle('Module imported, not starting MCP server');
+}
 
 export * from './commands/implement-client';

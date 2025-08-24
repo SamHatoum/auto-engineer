@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/flowlang",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "main": "./dist/src/index.js",
   "type": "module",
   "types": "./dist/src/index.d.ts",
@@ -20,7 +20,7 @@
     }
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.3.3",
+    "@auto-engineer/message-bus": "^0.3.4",
     "@event-driven-io/emmett": "^0.38.3",
     "debug": "^4.4.1",
     "fast-glob": "^3.3.3",

@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/frontend-checks",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,6 +23,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "debug": "^4.4.1",
     "playwright": "^1.54.1",
     "typescript": "^5.4.5"
   },

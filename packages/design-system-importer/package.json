@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/design-system-importer",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,7 +32,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.3.3",
+    "@auto-engineer/message-bus": "^0.3.4",
     "figma-api": "2.0.2-beta",
     "tsx": "^3.12.7"
   }

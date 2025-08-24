@@ -4,6 +4,13 @@ import { Message, MessageDefinition } from '../types';
 import { extractEventsFromGiven, extractEventsFromThen, extractEventsFromWhen } from './events';
 import { extractProjectionIdField } from './projection';
 import { extractStatesFromData, extractStatesFromTarget } from './states';
+import createDebug from 'debug';
+
+const debug = createDebug('emmett:extract:messages');
+const debugCommand = createDebug('emmett:extract:messages:command');
+const debugQuery = createDebug('emmett:extract:messages:query');
+const debugReact = createDebug('emmett:extract:messages:react');
+const debugDedupe = createDebug('emmett:extract:messages:dedupe');
 
 export interface ExtractedMessages {
   commands: Message[];
@@ -37,85 +44,153 @@ const EMPTY_EXTRACTED_MESSAGES: ExtractedMessages = {
 };
 
 function deduplicateMessages<T extends Message>(messages: T[]): T[] {
+  debugDedupe('Deduplicating %d messages', messages.length);
   const uniqueMap = new Map<string, T>();
   for (const message of messages) {
     if (!uniqueMap.has(message.type)) {
       uniqueMap.set(message.type, message);
+      debugDedupe('  Added unique message: %s', message.type);
+    } else {
+      debugDedupe('  Skipped duplicate message: %s', message.type);
     }
   }
-  return Array.from(uniqueMap.values());
+  const result = Array.from(uniqueMap.values());
+  debugDedupe('Result: %d unique messages from %d total', result.length, messages.length);
+  return result;
 }
 
 function extractMessagesForCommand(slice: Slice, allMessages: MessageDefinition[]): ExtractedMessages {
+  debugCommand('Extracting messages for command slice: %s', slice.name);
+
   if (slice.type !== 'command') {
+    debugCommand('  Slice type is not command, returning empty');
     return EMPTY_EXTRACTED_MESSAGES;
   }
 
   const gwtSpecs = slice.server?.gwt ?? [];
+  debugCommand('  Found %d GWT specs', gwtSpecs.length);
+
   const { commands, commandSchemasByName } = extractCommandsFromGwt(gwtSpecs, allMessages);
+  debugCommand('  Extracted %d commands', commands.length);
+  debugCommand('  Command schemas: %o', Object.keys(commandSchemasByName));
 
   const events: Message[] = gwtSpecs.flatMap((gwt): Message[] => {
     const givenEvents = extractEventsFromGiven(gwt.given, allMessages);
     const thenEvents = extractEventsFromThen(gwt.then, allMessages);
+    debugCommand('    GWT: given=%d events, then=%d events', givenEvents.length, thenEvents.length);
     return [...givenEvents, ...thenEvents];
   });
+  debugCommand('  Total events extracted: %d', events.length);
 
-  return {
+  const result = {
     commands,
     events: deduplicateMessages(events),
     states: [],
     commandSchemasByName,
   };
+
+  debugCommand('  Final result: %d commands, %d events', result.commands.length, result.events.length);
+  return result;
 }
 
 function extractMessagesForQuery(slice: Slice, allMessages: MessageDefinition[]): ExtractedMessages {
+  debugQuery('Extracting messages for query slice: %s', slice.name);
+
   if (slice.type !== 'query') {
+    debugQuery('  Slice type is not query, returning empty');
     return EMPTY_EXTRACTED_MESSAGES;
   }
 
   const gwtSpecs = slice.server?.gwt ?? [];
+  debugQuery('  Found %d GWT specs', gwtSpecs.length);
+
   const projectionIdField = extractProjectionIdField(slice);
+  debugQuery('  Projection ID field: %s', projectionIdField ?? 'none');
 
   const events: Message[] = gwtSpecs.flatMap((gwt) => extractEventsFromGiven(gwt.given, allMessages));
+  debugQuery('  Extracted %d events from given', events.length);
 
   const states: Message[] = extractStatesFromTarget(slice, allMessages);
+  debugQuery('  Extracted %d states from target', states.length);
 
-  return {
+  const result = {
     commands: [],
     events: deduplicateMessages(events),
     states,
     commandSchemasByName: {},
     projectionIdField,
   };
+
+  debugQuery('  Final result: %d events, %d states', result.events.length, result.states.length);
+  return result;
 }
 
 function extractMessagesForReact(slice: Slice, allMessages: MessageDefinition[]): ExtractedMessages {
+  debugReact('Extracting messages for react slice: %s', slice.name);
+
   if (slice.type !== 'react') {
+    debugReact('  Slice type is not react, returning empty');
     return EMPTY_EXTRACTED_MESSAGES;
   }
 
   const gwtSpecs = slice.server?.gwt ?? [];
-  const events = extractEventsFromWhen(gwtSpecs, allMessages);
-  const { commands, commandSchemasByName } = extractCommandsFromThen(gwtSpecs, allMessages);
-  const states = extractStatesFromData(slice, allMessages);
+  debugReact('  Found %d GWT specs', gwtSpecs.length);
 
-  return {
+  const events = extractEventsFromWhen(gwtSpecs, allMessages);
+  debugReact('  Extracted %d events from when', events.length);
+
+  const { commands, commandSchemasByName } = extractCommandsFromThen(gwtSpecs, allMessages);
+  debugReact('  Extracted %d commands from then', commands.length);
+  debugReact('  Command schemas: %o', Object.keys(commandSchemasByName));
+
+  const states = extractStatesFromData(slice, allMessages);
+  debugReact('  Extracted %d states from data', states.length);
+
+  const result = {
     commands,
     events: deduplicateMessages(events),
     states,
     commandSchemasByName,
   };
+
+  debugReact(
+    '  Final result: %d commands, %d events, %d states',
+    result.commands.length,
+    result.events.length,
+    result.states.length,
+  );
+  return result;
 }
 
 export function extractMessagesFromSpecs(slice: Slice, allMessages: MessageDefinition[]): ExtractedMessages {
+  debug('Extracting messages from slice: %s (type: %s)', slice.name, slice.type);
+  debug('  Total message definitions available: %d', allMessages.length);
+
+  let result: ExtractedMessages;
+
   switch (slice.type) {
     case 'command':
-      return extractMessagesForCommand(slice, allMessages);
+      result = extractMessagesForCommand(slice, allMessages);
+      break;
     case 'query':
-      return extractMessagesForQuery(slice, allMessages);
+      result = extractMessagesForQuery(slice, allMessages);
+      break;
     case 'react':
-      return extractMessagesForReact(slice, allMessages);
-    default:
-      return EMPTY_EXTRACTED_MESSAGES;
+      result = extractMessagesForReact(slice, allMessages);
+      break;
+    default: {
+      const unknownSlice = slice as Slice;
+      debug('  Unknown slice type: %s, returning empty', unknownSlice.type);
+      result = EMPTY_EXTRACTED_MESSAGES;
+    }
   }
+
+  debug(
+    '  Extraction complete: %d commands, %d events, %d states',
+    result.commands.length,
+    result.events.length,
+    result.states.length,
+  );
+
+  return result;
 }
