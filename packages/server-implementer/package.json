@@ -1,11 +1,15 @@
 {
   "name": "@auto-engineer/server-implementer",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "implement-server": "./dist/cli/implement-server.js"
+  },
   "scripts": {
     "implement": "tsx src/cli/index.ts",
+    "implement:server": "tsx src/cli/implement-server.ts",
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
@@ -23,7 +27,9 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "^0.4.5",
+    "@auto-engineer/message-bus": "^0.4.5",
     "@modelcontextprotocol/sdk": "^1.3.0",
+    "debug": "^4.3.4",
     "fast-glob": "^3.3.3",
     "vite": "^5.4.1"
   },

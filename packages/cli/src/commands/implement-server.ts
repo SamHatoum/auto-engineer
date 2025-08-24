@@ -23,7 +23,7 @@ const handleServerImplementation = async (
   output.info(`🚀 Implementing server flows in: ${resolvedDirectory}`);
 
   // Dynamic import to avoid circular dependency issues
-  const { handleImplementServerCommand } = await import('@auto-engineer/emmett-generator');
+  const { handleImplementServerCommand } = await import('@auto-engineer/server-implementer');
 
   const implementCommand = {
     type: 'ImplementServer' as const,
