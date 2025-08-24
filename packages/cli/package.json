@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.5.13",
+  "version": "0.5.14",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -43,7 +43,7 @@
     "@auto-engineer/information-architect": "^0.4.4",
     "@auto-engineer/message-bus": "^0.3.4",
     "@auto-engineer/react-graphql-generator": "^0.2.5",
-    "@auto-engineer/server-implementer": "^0.4.6",
+    "@auto-engineer/server-implementer": "^0.4.7",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "debug": "^4.4.1",

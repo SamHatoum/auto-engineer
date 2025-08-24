@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/server-implementer",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,7 +10,7 @@
   "scripts": {
     "implement": "tsx src/cli/index.ts",
     "implement:server": "tsx src/cli/implement-server.ts",
-    "build": "tsc",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/cli/implement-server.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
