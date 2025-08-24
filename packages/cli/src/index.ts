@@ -21,6 +21,7 @@ import { createImportDesignSystemCommand } from './commands/import-design-system
 import { createGenerateIACommand } from './commands/generate-ia';
 import { createGenerateClientCommand } from './commands/generate-client';
 import { createImplementClientCommand } from './commands/implement-client';
+import { createCheckClientCommand } from './commands/check-client';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -102,6 +103,7 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   program.addCommand(createGenerateIACommand(config, analytics));
   program.addCommand(createGenerateClientCommand(config, analytics));
   program.addCommand(createImplementClientCommand(config, analytics));
+  program.addCommand(createCheckClientCommand(config, analytics));
 
   program.addHelpText(
     'after',

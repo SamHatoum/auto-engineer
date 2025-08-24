@@ -301,8 +301,11 @@ importers:
       '@auto-engineer/flowlang':
         specifier: ^0.5.4
         version: link:../flowlang
+      '@auto-engineer/frontend-checks':
+        specifier: ^0.4.7
+        version: link:../frontend-checks
       '@auto-engineer/frontend-implementation':
-        specifier: ^0.4.8
+        specifier: ^0.4.9
         version: link:../frontend-implementation
       '@auto-engineer/information-architect':
         specifier: ^0.4.4
@@ -311,7 +314,7 @@ importers:
         specifier: ^0.3.4
         version: link:../message-bus
       '@auto-engineer/react-graphql-generator':
-        specifier: ^0.2.5
+        specifier: ^0.2.6
         version: link:../react-graphql-generator
       '@auto-engineer/server-implementer':
         specifier: ^0.4.7
@@ -484,9 +487,15 @@ importers:
 
   packages/frontend-checks:
     dependencies:
+      '@auto-engineer/message-bus':
+        specifier: ^0.3.4
+        version: link:../message-bus
       debug:
         specifier: ^4.4.1
         version: 4.4.1(supports-color@5.5.0)
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
       playwright:
         specifier: ^1.54.1
         version: 1.54.1

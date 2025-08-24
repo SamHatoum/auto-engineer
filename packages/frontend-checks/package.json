@@ -1,16 +1,20 @@
 {
   "name": "@auto-engineer/frontend-checks",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "check-client": "./dist/cli/check-client.js"
+  },
   "files": [
     "dist",
     "README.md",
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "check:client": "tsx src/cli/check-client.ts",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/cli/check-client.js",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
@@ -23,7 +27,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@auto-engineer/message-bus": "^0.3.4",
     "debug": "^4.4.1",
+    "dotenv": "^16.6.1",
     "playwright": "^1.54.1",
     "typescript": "^5.4.5"
   },

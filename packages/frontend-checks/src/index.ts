@@ -170,3 +170,12 @@ export async function getPageScreenshot(url: string): Promise<string> {
 
   return buffer.toString('base64');
 }
+
+// Export command handler
+export {
+  checkClientCommandHandler,
+  handleCheckClientCommand,
+  type CheckClientCommand,
+  type ClientCheckedEvent,
+  type ClientCheckFailedEvent,
+} from './commands/check-client';
