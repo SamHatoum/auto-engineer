@@ -1,5 +1,14 @@
 # @auto-engineer/cli
 
+## 0.5.17
+
+### Patch Changes
+
+- Version bump
+- Updated dependencies
+  - @auto-engineer/frontend-checks@0.4.8
+  - @auto-engineer/frontend-implementation@0.4.10
+
 ## 0.5.10
 
 ### Patch Changes

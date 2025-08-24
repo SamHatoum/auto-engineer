@@ -20,35 +20,13 @@ async function fixImports(dir: string): Promise<void> {
     } else if (file.name.endsWith('.js')) {
       let content = await readFile(fullPath, 'utf-8');
 
-      // First, temporarily replace template literals and strings containing imports
-      // to protect them from modification
-      const stringProtections: { placeholder: string; original: string }[] = [];
-      let protectionIndex = 0;
-
-      // Protect template literals (including multiline)
-      content = content.replace(/`[^`]*`/g, (match) => {
-        // Only protect if it contains import/export/from keywords
-        if (match.includes('import') || match.includes('export') || match.includes('from')) {
-          const placeholder = `__PROTECTED_TEMPLATE_${protectionIndex++}__`;
-          stringProtections.push({ placeholder, original: match });
-          return placeholder;
-        }
-        return match;
-      });
-
-      // Protect regular strings that look like they contain import statements
-      content = content.replace(/(['"])([^'"]*)\1/g, (match, quote, str) => {
-        // Only protect if it contains import/export/from keywords
-        if (str.includes('import') || str.includes('export') || str.includes('from')) {
-          const placeholder = `__PROTECTED_STRING_${protectionIndex++}__`;
-          stringProtections.push({ placeholder, original: match });
-          return placeholder;
-        }
-        return match;
-      });
-
-      // Fix relative imports (only those not in strings/templates)
+      // Fix relative imports
       content = content.replace(/from ['"](\.[^'"]+)['"];/g, (match, importPath) => {
+        // Skip adding .js to gql imports (GraphQL codegen files)
+        if (importPath.includes('/gql') || importPath === './gql') {
+          return match;
+        }
+
         if (!importPath.endsWith('.js')) {
           // Check if this might be a directory import
           const possibleDirPath = join(dir, importPath);
@@ -66,6 +44,11 @@ async function fixImports(dir: string): Promise<void> {
       });
 
       content = content.replace(/export \* from ['"](\.[^'"]+)['"];/g, (match, importPath) => {
+        // Skip adding .js to gql imports (GraphQL codegen files)
+        if (importPath.includes('/gql') || importPath === './gql') {
+          return match;
+        }
+
         if (!importPath.endsWith('.js')) {
           // Check if this might be a directory import
           const possibleDirPath = join(dir, importPath);
@@ -82,19 +65,10 @@ async function fixImports(dir: string): Promise<void> {
         return match;
       });
 
-      // Restore protected strings and templates
-      for (const protection of stringProtections) {
-        content = content.replace(protection.placeholder, protection.original);
-      }
-
       await writeFile(fullPath, content);
     }
   }
 }
 
-if (existsSync(distDir)) {
-  await fixImports(distDir);
-  console.log('Fixed ESM imports in dist/');
-} else {
-  console.log('No dist directory found to fix imports in');
-}
+await fixImports(distDir);
+console.log('Fixed ESM imports in dist/');

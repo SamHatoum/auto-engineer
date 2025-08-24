@@ -1,5 +1,11 @@
 # @auto-engineer/frontend-checks
 
+## 0.4.8
+
+### Patch Changes
+
+- Version bump
+
 ## 0.4.6
 
 ### Patch Changes

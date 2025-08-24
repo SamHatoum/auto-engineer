@@ -22,7 +22,7 @@
     "release": "changeset publish",
     "prepare": "husky",
     "install": "turbo run install build",
-    "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm install @auto-engineer/cli latest -g && pnpm update @auto-engineer/cli latest -g",
+    "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm install @auto-engineer/cli latest -g --force && pnpm update @auto-engineer/cli latest -g",
     "## ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
     "start:product-api": "cd examples/product-catalogue-api && pnpm start",

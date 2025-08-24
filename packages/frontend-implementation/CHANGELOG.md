@@ -1,5 +1,11 @@
 # @auto-engineer/frontend-implementation
 
+## 0.4.10
+
+### Patch Changes
+
+- Version bump
+
 ## 0.4.7
 
 ### Patch Changes
