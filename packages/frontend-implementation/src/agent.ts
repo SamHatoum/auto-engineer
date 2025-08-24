@@ -1,21 +1,14 @@
-import { AIProvider, generateTextWithAI, generateTextWithImageAI } from '@auto-engineer/ai-gateway';
+import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import {
-  closeBrowser,
-  getBuildErrors,
-  getConsoleErrors,
-  getPageScreenshot,
-  getTsErrors,
-} from '@auto-engineer/frontend-checks';
 import * as ts from 'typescript';
 import createDebug from 'debug';
 
 const debug = createDebug('frontend-impl:agent');
 const debugPlan = createDebug('frontend-impl:agent:plan');
-const debugErrors = createDebug('frontend-impl:agent:errors');
-const debugScreenshots = createDebug('frontend-impl:agent:screenshots');
-const debugFixes = createDebug('frontend-impl:agent:fixes');
+// const debugErrors = createDebug('frontend-impl:agent:errors');
+// const debugScreenshots = createDebug('frontend-impl:agent:screenshots');
+// const debugFixes = createDebug('frontend-impl:agent:fixes');
 const debugContext = createDebug('frontend-impl:agent:context');
 const debugAI = createDebug('frontend-impl:agent:ai');
 const debugFiles = createDebug('frontend-impl:agent:files');
@@ -482,13 +475,15 @@ async function applyPlan(plan: Change[], ctx: ProjectContext, projectDir: string
   debugPlan('Plan application complete');
 }
 
-interface Fix {
-  action: 'update';
-  file: string;
-  description: string;
-  content: string;
-}
+// interface Fix {
+//   action: 'update';
+//   file: string;
+//   description: string;
+//   content: string;
+// }
 
+// Removed fixTsErrors function - checks now handled by check:client command
+/*
 async function fixTsErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
   debugErrors('Checking for TypeScript errors in: %s', projectDir);
   const tsErrors = await getTsErrors(projectDir);
@@ -554,7 +549,10 @@ Do not include explanations, markdown, or code blocks.
   debugFixes('TypeScript error fixing complete');
   return true;
 }
+*/
 
+// Removed fixBuildErrors function - checks now handled by check:client command
+/*
 async function fixBuildErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
   debugErrors('Checking for build errors in: %s', projectDir);
   const buildErrors = await getBuildErrors(projectDir);
@@ -620,8 +618,11 @@ Do not include explanations, markdown, or code blocks.
   debugFixes('Build error fixing complete');
   return true;
 }
+*/
 
-// Helper to extract all page routes from the IA scheme
+// Helper to extract all page routes from the IA scheme - kept for potential future use
+// Currently not used as error checking has been removed
+/*
 function extractPageRoutesFromScheme(scheme: Scheme | undefined): string[] {
   debugContext('Extracting page routes from scheme');
   if (scheme?.pages?.items && typeof scheme.pages.items === 'object') {
@@ -636,116 +637,34 @@ function extractPageRoutesFromScheme(scheme: Scheme | undefined): string[] {
   debugContext('No page routes found in scheme');
   return [];
 }
+*/
 
+// Removed checkRouteErrors function - checks now handled by check:client command
+/*
 async function checkRouteErrors(baseUrl: string, routes: string[]): Promise<string[]> {
-  debugErrors('Checking console errors for %d routes', routes.length);
   const allConsoleErrors: string[] = [];
-
-  for (const [index, route] of routes.entries()) {
-    const url = baseUrl + (route.startsWith('/') ? route : '/' + route);
-    debugErrors('Checking route %d/%d: %s', index + 1, routes.length, url);
-    console.log(`Checking console errors for ${url}`);
-
-    const errors = await getConsoleErrors(url);
-    if (Array.isArray(errors) && errors.length > 0) {
-      debugErrors('Found %d console errors on route %s', errors.length, route);
-      allConsoleErrors.push(...errors.map((e: string) => `[${route}] ${e}`));
-    } else {
-      debugErrors('No console errors on route %s', route);
-    }
-  }
-
-  debugErrors('Total console errors found: %d', allConsoleErrors.length);
+  // Function removed - checks handled by check:client command
   return allConsoleErrors;
 }
+*/
 
-async function applyFixes(fixupPlan: Fix[], projectDir: string): Promise<void> {
-  debugFixes('Applying %d fixes', fixupPlan.length);
-
-  for (const [index, fix] of fixupPlan.entries()) {
-    if (fix.action !== 'update' || !fix.file || !fix.content) {
-      debugFixes('Skipping invalid fix %d', index + 1);
-      continue;
-    }
-
-    debugFixes('Applying fix %d/%d to %s', index + 1, fixupPlan.length, fix.file);
-    const outPath = path.join(projectDir, fix.file);
-    await fs.mkdir(path.dirname(outPath), { recursive: true });
-    await fs.writeFile(outPath, fix.content, 'utf-8');
-    debugFixes('Successfully applied fix to %s', fix.file);
-    console.log(`Fixed errors in ${fix.file}`);
-  }
-
-  debugFixes('All fixes applied');
+// Removed applyFixes function - checks now handled by check:client command
+/*
+async function applyFixes(fixupPlan: any[], projectDir: string): Promise<void> {
+  // Function removed - checks handled by check:client command
 }
+*/
 
+// Removed fixConsoleErrors function - checks now handled by check:client command
+/*
 async function fixConsoleErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
-  debugErrors('Starting console error check');
-  const baseUrl = 'http://localhost:8080';
-
-  let routes = extractPageRoutesFromScheme(ctx.scheme);
-  if (routes.length === 0) {
-    debugErrors('No routes found, defaulting to root');
-    routes = ['/'];
-  }
-  debugErrors('Checking %d routes for console errors', routes.length);
-
-  const allConsoleErrors = await checkRouteErrors(baseUrl, routes);
-  console.log('Found', allConsoleErrors.length, 'console errors');
-
-  if (allConsoleErrors.length === 0) {
-    debugErrors('No console errors found');
-    await closeBrowser();
-    return false;
-  }
-
-  debugErrors('Console errors to fix:');
-  allConsoleErrors.forEach((error, idx) => {
-    debugErrors('  Error %d: %s', idx + 1, error);
-  });
-
-  const errorFeedback = allConsoleErrors.join('\n');
-  const fixupPrompt = `${makeBasePrompt(ctx)}\n
-After your previous changes, the application produced the following console errors when running on the following routes:\n\n${errorFeedback}\n
-You must now fix **every** error listed above. This is a critical pass: if any error remains after your fix, your output is rejected.
-
-Before generating code, analyze and validate your solution against every error. Use existing types, props, and logic from the project. Do not invent new structures unless absolutely necessary.
-
-Strict rules:
-- Ignore connection or network errors
-- Never use \`any\`, unsafe type assertions, or silence errors
-- Do not silence errors — resolve them fully and correctly
-- Fix all errors in each file in one go
-- Reuse existing logic or types instead of re-creating similar ones
-- Do not submit partial updates; provide the full updated content of the file
-
-Output must be a **JSON array** only. Each item must include:
-- \`action\`: "update"
-- \`file\`: relative path to the updated file
-- \`description\`: "Fix console errors"
-- \`content\`: full new content of the file, as a string
-
-Do not include explanations, markdown, or code blocks.
-`;
-  let fixupPlan: Fix[] = [];
-  try {
-    const response = await callAI(fixupPrompt);
-    fixupPlan = JSON.parse(extractJsonArray(response)) as Fix[];
-    debugFixes('Parsed console error fixup plan with %d fixes', fixupPlan.length);
-  } catch (e) {
-    debugFixes('Failed to parse console error fixup plan: %O', e);
-    console.error('Could not parse console fixup plan from LLM:', e instanceof Error ? e.message : String(e));
-  }
-
-  console.log('Fixup plan has', fixupPlan.length, 'items');
-  await applyFixes(fixupPlan, projectDir);
-
-  debugErrors('Closing browser after console error fixes');
-  await closeBrowser();
-  debugErrors('Console error fixing complete');
-  return true;
+  // Function removed - checks handled by check:client command
+  return false;
 }
+*/
 
+// Visual error reporting removed - can be handled separately if needed
+/*
 async function checkVisualErrors(baseUrl: string, routes: string[], theme: string): Promise<string> {
   debugScreenshots('Checking visual errors for %d routes', routes.length);
   const screenshots = await getPageScreenshots(baseUrl, routes);
@@ -816,7 +735,10 @@ async function getPageScreenshots(baseUrl: string, routes: string[]): Promise<{ 
   debugScreenshots('Captured %d screenshots', pageScreenshots.length);
   return pageScreenshots;
 }
+*/
 
+// Visual error reporting removed - can be handled separately if needed
+/*
 async function reportVisualErrors(ctx: ProjectContext): Promise<void> {
   debugScreenshots('Starting visual error report');
   const baseUrl = 'http://localhost:8080';
@@ -838,6 +760,7 @@ async function reportVisualErrors(ctx: ProjectContext): Promise<void> {
 
   console.log(allVisualErrors);
 }
+*/
 
 // async function fixVisualErrors(ctx: ProjectContext, projectDir: string): Promise<boolean> {
 //   const baseUrl = 'http://localhost:8080';
@@ -888,34 +811,12 @@ async function reportVisualErrors(ctx: ProjectContext): Promise<void> {
 //   return true;
 // }
 
+// Removed fixErrorsLoop function - checks now handled by check:client command
+/*
 async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
-  const maxIterations = 5;
-  debugErrors('Starting error fix loop, max iterations: %d', maxIterations);
-
-  for (let i = 0; i < maxIterations; ++i) {
-    debugErrors('Error fix iteration %d/%d', i + 1, maxIterations);
-
-    if (await fixTsErrors(ctx, projectDir)) {
-      debugErrors('Fixed TypeScript errors, continuing to next iteration');
-      continue;
-    }
-
-    if (await fixBuildErrors(ctx, projectDir)) {
-      debugErrors('Fixed build errors, continuing to next iteration');
-      continue;
-    }
-
-    if (await fixConsoleErrors(ctx, projectDir)) {
-      debugErrors('Fixed console errors, continuing to next iteration');
-      continue;
-    }
-
-    debugErrors('No errors found, exiting fix loop at iteration %d', i + 1);
-    break;
-  }
-
-  debugErrors('Error fix loop complete');
+  // Function removed - checks handled by check:client command
 }
+*/
 
 export async function runAIAgent(projectDir: string, iaSchemeDir: string, designSystemPath: string) {
   debug('='.repeat(80));
@@ -946,17 +847,14 @@ export async function runAIAgent(projectDir: string, iaSchemeDir: string, design
   await applyPlan(plan, ctx, projectDir);
   debug('Plan applied successfully');
 
-  debug('Starting error correction phase...');
-  await fixErrorsLoop(ctx, projectDir);
-  debug('Error fixing loop completed');
+  // Error checking removed - now handled by separate check:client command
+  debug('Skipping error correction phase - use check:client command for validation');
 
-  debug('Generating visual error report...');
-  await reportVisualErrors(ctx);
-  debug('Visual errors reported');
+  // Visual error reporting removed - can be handled separately if needed
+  debug('Skipping visual error report - use separate visual testing tools if needed');
 
-  debug('Cleaning up resources...');
-  await closeBrowser();
-  debug('Browser closed');
+  // Browser cleanup no longer needed as we don't run checks
+  debug('Implementation complete - no browser cleanup needed');
 
   debug('='.repeat(80));
   console.log('AI project implementation complete!');

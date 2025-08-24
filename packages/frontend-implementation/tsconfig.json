@@ -7,5 +7,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../ai-gateway" }, { "path": "../frontend-checks" }, { "path": "../message-bus" }]
+  "references": [{ "path": "../ai-gateway" }, { "path": "../message-bus" }]
 }
