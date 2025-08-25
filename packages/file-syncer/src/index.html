@@ -1,82 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="https://unpkg.com/@isomorphic-git/lightning-fs"></script>
-</head>
-<body>
-<h1>Two-Way File Sync</h1>
-<div id="status"></div>
-<br>
-<input type="file" id="upload" multiple>
-<button onclick="deleteFile()">Delete File</button>
-<input type="text" id="deletePath" placeholder="path/to/file.js">
+  <head>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://unpkg.com/@isomorphic-git/lightning-fs"></script>
+  </head>
+  <body>
+    <h1>Two-Way File Sync</h1>
+    <div id="status"></div>
+    <br />
+    <input type="file" id="upload" multiple />
+    <button onclick="deleteFile()">Delete File</button>
+    <input type="text" id="deletePath" placeholder="path/to/file.js" />
 
-<script>
-  const fs = new LightningFS('fs');
-  const socket = io('http://localhost:3000');
+    <script>
+      const fs = new LightningFS('fs');
+      const socket = io('http://localhost:3000');
 
-  // Server -> Client: Receive changes from server
-  socket.on('file-change', async (data) => {
-    const fullPath = '/' + data.path;
+      socket.on('file-change', async (data) => {
+        const fullPath = '/' + data.path;
 
-    if (data.event === 'delete') {
-      await fs.promises.unlink(fullPath).catch(() => {});
-      document.getElementById('status').innerHTML += `<div>Deleted: ${data.path}</div>`;
-    } else {
-      const dir = fullPath.substring(0, fullPath.lastIndexOf('/'));
-      if (dir) {
-        await fs.promises.mkdir(dir, { recursive: true }).catch(() => {});
+        if (data.event === 'delete') {
+          await fs.promises.unlink(fullPath).catch(() => {});
+          document.getElementById('status').innerHTML += `<div>Deleted: ${data.path}</div>`;
+        } else {
+          const dir = fullPath.substring(0, fullPath.lastIndexOf('/'));
+          if (dir) {
+            await fs.promises.mkdir(dir, { recursive: true }).catch(() => {});
+          }
+
+          const content = Uint8Array.from(atob(data.content), (c) => c.charCodeAt(0));
+          await fs.promises.writeFile(fullPath, content);
+          document.getElementById('status').innerHTML += `<div>${data.event}: ${data.path}</div>`;
+        }
+      });
+
+      async function sendFile(path, content) {
+        const base64 = btoa(String.fromCharCode(...content));
+        socket.emit('client-file-change', {
+          event: 'write',
+          path: path.startsWith('/') ? path.slice(1) : path,
+          content: base64,
+        });
       }
 
-      const content = Uint8Array.from(atob(data.content), c => c.charCodeAt(0));
-      await fs.promises.writeFile(fullPath, content);
-      document.getElementById('status').innerHTML += `<div>${data.event}: ${data.path}</div>`;
-    }
-  });
+      async function deleteFile() {
+        const path = document.getElementById('deletePath').value;
+        if (!path) return;
 
-  // Client -> Server: Send local changes to server
-  async function sendFile(path, content) {
-    const base64 = btoa(String.fromCharCode(...content));
-    socket.emit('client-file-change', {
-      event: 'write',
-      path: path.startsWith('/') ? path.slice(1) : path,
-      content: base64
-    });
-  }
+        const fullPath = '/' + path;
+        await fs.promises.unlink(fullPath).catch(() => {});
+        socket.emit('client-file-change', {
+          event: 'delete',
+          path: path,
+        });
+        document.getElementById('status').innerHTML += `<div>Client deleted: ${path}</div>`;
+      }
 
-  async function deleteFile() {
-    const path = document.getElementById('deletePath').value;
-    if (!path) return;
+      document.getElementById('upload').addEventListener('change', async (e) => {
+        for (const file of e.target.files) {
+          const content = new Uint8Array(await file.arrayBuffer());
+          const path = file.name;
 
-    const fullPath = '/' + path;
-    await fs.promises.unlink(fullPath).catch(() => {});
-    socket.emit('client-file-change', {
-      event: 'delete',
-      path: path
-    });
-    document.getElementById('status').innerHTML += `<div>Client deleted: ${path}</div>`;
-  }
+          await fs.promises.writeFile('/' + path, content);
 
-  // Handle file uploads (for testing client -> server)
-  document.getElementById('upload').addEventListener('change', async (e) => {
-    for (const file of e.target.files) {
-      const content = new Uint8Array(await file.arrayBuffer());
-      const path = file.name;
+          sendFile(path, content);
+          document.getElementById('status').innerHTML += `<div>Client uploaded: ${path}</div>`;
+        }
+      });
 
-      // Save to LightningFS
-      await fs.promises.writeFile('/' + path, content);
-
-      // Send to server
-      sendFile(path, content);
-      document.getElementById('status').innerHTML += `<div>Client uploaded: ${path}</div>`;
-    }
-  });
-
-  // Optional: Watch for programmatic changes to LightningFS
-  // (You could poll or add a wrapper around fs operations to track changes)
-  window.fs = fs;  // Expose for console access
-  window.sendFile = sendFile;  // Expose for programmatic use
-</script>
-</body>
+      window.fs = fs;
+      window.sendFile = sendFile;
+    </script>
+  </body>
 </html>
