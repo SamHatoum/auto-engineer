@@ -75,4 +75,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export * from './commands/generate-client';
+export * from './commands/copy-example';
 export * from './figma-helpers';
