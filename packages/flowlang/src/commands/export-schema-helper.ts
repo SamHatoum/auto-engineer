@@ -19,20 +19,21 @@ const main = async () => {
       'flowlang',
       'dist',
       'src',
+      'loader',
       'getFlows.js',
     );
     debug('Importing getFlows from: %s', projectFlowlangPath);
 
     const flowlangModule = (await import(pathToFileURL(projectFlowlangPath).href)) as {
-      getFlows: typeof import('../getFlows').getFlows;
+      getFlows: typeof import('../loader/getFlows').getFlows;
     };
     const { getFlows } = flowlangModule;
 
     const flowsPath = resolve(directory, 'flows');
     debug('Resolved flows path: %s', flowsPath);
 
-    const { toSchema } = await getFlows(flowsPath);
-    const schema = toSchema();
+    const result = await getFlows({ root: flowsPath });
+    const schema = result.toSchema();
     debug(
       'Schema generated with %d flows, %d messages, %d integrations',
       schema.flows.length,

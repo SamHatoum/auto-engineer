@@ -1,12 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { getFlows } from './getFlows';
+import { describe, expect, it } from 'vitest';
+import { getFlows } from './loader/getFlows';
 import { SpecsSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { NodeVfs } from './vfs/NodeVfs';
 
 describe('getFlows', () => {
   // eslint-disable-next-line complexity
   it('should load multiple flows and generate correct schemas', async () => {
-    const flows = await getFlows();
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const vfs = new NodeVfs();
+    const flows = await getFlows({ vfs, root: __dirname, mode: 'native' });
     const schemas = flows.toSchema();
 
     const parseResult = SpecsSchema.safeParse(schemas);
@@ -169,8 +175,7 @@ describe('getFlows', () => {
 
   it('should handle flows with integrations', async () => {
     const flows = await getFlows();
-    const schemas = flows.toSchema();
-    const specsSchema = schemas;
+    const specsSchema = flows.toSchema();
 
     const flowsWithIntegrations = specsSchema.flows.filter((f) =>
       f.slices.some((s) => {
@@ -194,8 +199,7 @@ describe('getFlows', () => {
 
   it('should handle react slices correctly', async () => {
     const flows = await getFlows();
-    const schemas = flows.toSchema();
-    const specsSchema = schemas;
+    const specsSchema = flows.toSchema();
 
     const reactSlices = specsSchema.flows.flatMap((f) => f.slices.filter((s) => s.type === 'react'));
 
