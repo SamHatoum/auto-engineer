@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { SpecsSchema } from '../schema';
-import type { VfsLike } from '../vfs';
 import { getFlow, GetFlowOptions } from './getFlow';
+import { FileStore } from '../fs';
 
 export interface ConvertFlowToJsonOptions extends Omit<GetFlowOptions, 'filePath'> {
-  vfs: VfsLike;
+  vfs: FileStore;
   filePath: string;
   outputPath?: string;
 }
@@ -20,7 +20,8 @@ export const convertFlowToJson = async (opts: ConvertFlowToJsonOptions): Promise
   }
   const json = JSON.stringify(schema, null, 2);
   if (outputPath != null) {
-    await vfs.writeFile(outputPath, json, 'utf8');
+    const te = new TextEncoder();
+    await vfs.write(outputPath, te.encode(json));
   }
 
   return json;

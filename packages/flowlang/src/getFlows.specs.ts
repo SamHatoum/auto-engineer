@@ -4,20 +4,21 @@ import { SpecsSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { NodeVfs } from './vfs/NodeVfs';
+import { NodeFileStore } from './fs';
 
-describe('getFlows', () => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', (mode) => {
   // eslint-disable-next-line complexity
-  it('should load multiple flows and generate correct schemas', async () => {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const vfs = new NodeVfs();
-    const flows = await getFlows({ vfs, root: __dirname, mode: 'native' });
+  it('loads multiple flows and generates correct schemas', async () => {
+    const vfs = new NodeFileStore();
+    const flows = await getFlows({ vfs, root: path.resolve(__dirname), mode });
     const schemas = flows.toSchema();
 
     const parseResult = SpecsSchema.safeParse(schemas);
     if (!parseResult.success) {
-      console.error('Schema validation errors:', parseResult.error.format());
+      console.error(`[${mode}] Schema validation errors:`, parseResult.error.format());
     }
     expect(parseResult.success).toBe(true);
 
@@ -26,9 +27,7 @@ describe('getFlows', () => {
     expect(schemas).toHaveProperty('messages');
     expect(schemas).toHaveProperty('integrations');
 
-    const specsSchema = schemas;
-    const flowsArray = specsSchema.flows;
-
+    const flowsArray = schemas.flows;
     expect(Array.isArray(flowsArray)).toBe(true);
     expect(flowsArray.length).toBeGreaterThanOrEqual(2);
 
@@ -40,6 +39,7 @@ describe('getFlows', () => {
     const placeOrder = flowsArray.find((f) => f.name === 'Place order');
     expect(items).toBeDefined();
     expect(placeOrder).toBeDefined();
+
     if (items) {
       expect(items.slices).toHaveLength(2);
       const createItemSlice = items.slices[0];
@@ -65,6 +65,7 @@ describe('getFlows', () => {
           },
         });
       }
+
       const viewItemSlice = items.slices[1] as QuerySlice;
       expect(viewItemSlice.type).toBe('query');
       expect(viewItemSlice.name).toBe('view items');
@@ -72,46 +73,32 @@ describe('getFlows', () => {
       expect(viewItemSlice.request).toMatch(
         /query items\(\$itemId: String!\) {\s+items\(itemId: \$itemId\) {\s+id\s+description\s+}/,
       );
+
       const data = viewItemSlice?.server?.data as DataSource[] | undefined;
-      if (!data || !Array.isArray(data)) {
-        throw new Error('No data found in view items slice');
-      }
+      if (!data || !Array.isArray(data)) throw new Error('No data found in view items slice');
+
       expect(data).toHaveLength(1);
-      expect(data[0].target).toMatchObject({
-        type: 'State',
-        name: 'items',
-      });
-      expect(data[0].origin).toMatchObject({
-        name: 'ItemsProjection',
-        type: 'projection',
-      });
+      expect(data[0].target).toMatchObject({ type: 'State', name: 'items' });
+      expect(data[0].origin).toMatchObject({ name: 'ItemsProjection', type: 'projection' });
+
       const gwt = viewItemSlice?.server?.gwt;
-      if (!Array.isArray(gwt)) {
-        throw new Error('No GWT found in view items slice');
-      }
+      if (!Array.isArray(gwt)) throw new Error('No GWT found in view items slice');
       expect(gwt).toHaveLength(1);
     }
 
     if (placeOrder) {
       expect(placeOrder.slices).toHaveLength(1);
       const submitOrderSlice = placeOrder.slices[0];
-
       expect(submitOrderSlice.type).toBe('command');
       expect(submitOrderSlice.name).toBe('Submit order');
       expect(submitOrderSlice.stream).toBe('order-${orderId}');
 
       if (submitOrderSlice.type === 'command') {
         expect(submitOrderSlice.client.specs).toContain('Order submission form');
-
         expect(submitOrderSlice.server.gwt).toHaveLength(1);
         const gwt = submitOrderSlice.server.gwt[0];
-
         expect(gwt.when.commandRef).toBe('PlaceOrder');
-        expect(gwt.when.exampleData).toMatchObject({
-          productId: 'product_789',
-          quantity: 3,
-        });
-
+        expect(gwt.when.exampleData).toMatchObject({ productId: 'product_789', quantity: 3 });
         expect(gwt.then).toHaveLength(1);
         expect(gwt.then[0]).toMatchObject({
           eventRef: 'OrderPlaced',
@@ -125,7 +112,7 @@ describe('getFlows', () => {
       }
     }
 
-    const messages = specsSchema.messages;
+    const messages = schemas.messages;
     expect(messages.length).toBeGreaterThan(0);
 
     const commandMessages = messages.filter((m) => m.type === 'command');
@@ -136,7 +123,6 @@ describe('getFlows', () => {
     expect(eventMessages.some((m) => m.name === 'ItemCreated')).toBe(true);
     expect(eventMessages.some((m) => m.name === 'OrderPlaced')).toBe(true);
 
-    // Check message fields
     const createItemCommand = commandMessages.find((m) => m.name === 'CreateItem');
     if (createItemCommand) {
       expect(createItemCommand.fields).toContainEqual(
@@ -161,20 +147,18 @@ describe('getFlows', () => {
     }
   });
 
-  it('should validate the complete schema with Zod', async () => {
-    const flows = await getFlows();
+  it('validates the complete schema with Zod', async () => {
+    const flows = await getFlows({ mode });
     const schemas = flows.toSchema();
-
     const parsed = SpecsSchema.parse(schemas);
-
     expect(parsed.variant).toBe('specs');
     expect(Array.isArray(parsed.flows)).toBe(true);
     expect(Array.isArray(parsed.messages)).toBe(true);
     expect(Array.isArray(parsed.integrations)).toBe(true);
   });
 
-  it('should handle flows with integrations', async () => {
-    const flows = await getFlows();
+  it('handles flows with integrations', async () => {
+    const flows = await getFlows({ mode });
     const specsSchema = flows.toSchema();
 
     const flowsWithIntegrations = specsSchema.flows.filter((f) =>
@@ -197,18 +181,16 @@ describe('getFlows', () => {
     }
   });
 
-  it('should handle react slices correctly', async () => {
-    const flows = await getFlows();
+  it('handles react slices correctly', async () => {
+    const flows = await getFlows({ mode });
     const specsSchema = flows.toSchema();
 
     const reactSlices = specsSchema.flows.flatMap((f) => f.slices.filter((s) => s.type === 'react'));
-
     reactSlices.forEach((slice) => {
       if (slice.type === 'react') {
         expect(slice.server).toBeDefined();
         expect(slice.server.gwt).toBeDefined();
         expect(Array.isArray(slice.server.gwt)).toBe(true);
-
         slice.server.gwt.forEach((gwt) => {
           expect(gwt.when).toBeDefined();
           expect(Array.isArray(gwt.when)).toBe(true);
@@ -219,31 +201,28 @@ describe('getFlows', () => {
     });
   });
 
-  it('should parse and validate a complete flow with all slice types', async () => {
-    const flows = await getFlows();
+  it('parses and validates a complete flow with all slice types', async () => {
+    const flows = await getFlows({ mode });
     const schemas = flows.toSchema();
 
     const validationResult = SpecsSchema.safeParse(schemas);
-
     if (!validationResult.success) {
-      console.error('Validation errors:', JSON.stringify(validationResult.error.format(), null, 2));
+      console.error(`[${mode}] Validation errors:`, JSON.stringify(validationResult.error.format(), null, 2));
     }
-
     expect(validationResult.success).toBe(true);
 
     const validatedData = validationResult.data!;
-
     expect(
-      validatedData.flows.every((flow) => {
-        return flow.slices.every((slice) => {
+      validatedData.flows.every((flow) =>
+        flow.slices.every((slice) => {
           if (slice.type === 'command' || slice.type === 'query') {
             return slice.client !== undefined && slice.server !== undefined;
           } else if (slice.type === 'react') {
             return slice.server !== undefined;
           }
           return false;
-        });
-      }),
+        }),
+      ),
     ).toBe(true);
   });
 });

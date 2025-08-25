@@ -1,163 +1,224 @@
-// src/orchestration/shared-build.ts
-import type { VfsLike } from '../vfs';
+import type { FileStore } from '../fs';
 
 const isBrowser = typeof window !== 'undefined' || typeof self !== 'undefined';
+const GLOBAL_MAP_NAME = '__flowlangImportMap__';
 
-// Minimal esbuild type definitions
 interface EsbuildOnResolveArgs {
   path: string;
+  importer: string;
   resolveDir?: string;
-  namespace?: string;
+  namespace: string;
 }
-
 interface EsbuildOnResolveResult {
   path: string;
   namespace?: string;
 }
-
 interface EsbuildOnLoadArgs {
   path: string;
-  namespace?: string;
+  namespace: string;
 }
-
+type EsbuildLoader = 'ts' | 'tsx' | 'js' | 'jsx';
 interface EsbuildOnLoadResult {
   contents: string;
-  loader?: 'ts' | 'tsx' | 'js' | 'jsx';
+  loader?: EsbuildLoader;
   resolveDir?: string;
 }
-
 interface EsbuildPlugin {
   name: string;
   setup(build: {
     onResolve(
       opts: { filter: RegExp; namespace?: string },
-      callback: (args: EsbuildOnResolveArgs) => EsbuildOnResolveResult | undefined,
+      cb: (
+        args: EsbuildOnResolveArgs,
+      ) => EsbuildOnResolveResult | undefined | Promise<EsbuildOnResolveResult | undefined>,
     ): void;
     onLoad(
       opts: { filter: RegExp; namespace?: string },
-      callback: (args: EsbuildOnLoadArgs) => Promise<EsbuildOnLoadResult> | EsbuildOnLoadResult,
+      cb: (args: EsbuildOnLoadArgs) => EsbuildOnLoadResult | Promise<EsbuildOnLoadResult>,
     ): void;
   }): void;
 }
-
 interface EsbuildBuildOptions {
   entryPoints?: string[];
-  stdin?: {
-    contents: string;
-    resolveDir: string;
-    sourcefile: string;
-    loader: string;
-  };
+  stdin?: { contents: string; resolveDir: string; sourcefile: string; loader: string };
   bundle: boolean;
   write: boolean;
-  format: string;
-  platform: string;
-  sourcemap: string;
+  format: 'esm';
+  platform: 'browser' | 'node';
+  sourcemap: 'inline' | 'external' | 'none';
   plugins?: EsbuildPlugin[];
 }
-
 interface EsbuildBuildResult {
   outputFiles: Array<{ text: string }>;
 }
-
 interface EsbuildWasmModule {
   initialize(opts: { wasmURL: string; worker?: boolean }): Promise<void>;
   build(options: EsbuildBuildOptions): Promise<EsbuildBuildResult>;
 }
-
 interface EsbuildNodeModule {
   build(options: EsbuildBuildOptions): Promise<EsbuildBuildResult>;
 }
+export type EsbuildModule = EsbuildWasmModule | EsbuildNodeModule;
 
-export type EsbuildModule = EsbuildNodeModule | EsbuildWasmModule;
+// ---- helpers ----
+const toPosix = (p: string) => p.replace(/\\/g, '/');
 
+const normalizePosix = (p: string): string => {
+  const abs = p.startsWith('/') ? p : '/' + p;
+  const out: string[] = [];
+  for (const seg of abs.split('/')) {
+    if (!seg || seg === '.') continue;
+    if (seg === '..') out.pop();
+    else out.push(seg);
+  }
+  return '/' + out.join('/');
+};
+
+const resolveAbs = (baseDir: string, spec: string): string => {
+  const base = baseDir && baseDir !== '/' ? baseDir : '/';
+  return normalizePosix(spec.startsWith('/') ? spec : base.endsWith('/') ? base + spec : base + '/' + spec);
+};
+
+const EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
+const INDEX_CANDIDATES = EXTENSIONS.map((e) => '/index' + e);
+
+const toLoader = (ext: string): EsbuildLoader => {
+  switch (ext) {
+    case '.ts':
+      return 'ts';
+    case '.tsx':
+      return 'tsx';
+    case '.jsx':
+      return 'jsx';
+    case '.js':
+    case '.mjs':
+    case '.cjs':
+    default:
+      return 'js';
+  }
+};
+
+async function resolveVfsModulePath(
+  vfs: FileStore,
+  p: string,
+): Promise<{ path: string; loader: EsbuildLoader } | null> {
+  const hasExt = /\.[a-zA-Z0-9]+$/.test(p);
+
+  if (hasExt) {
+    const file = await vfs.read(p);
+    if (file) return { path: p, loader: toLoader(p.slice(p.lastIndexOf('.')).toLowerCase()) };
+  } else {
+    for (const ext of EXTENSIONS) {
+      const cand = p + ext;
+      const file = await vfs.read(cand);
+      if (file) return { path: cand, loader: toLoader(ext) };
+    }
+  }
+
+  for (const idx of INDEX_CANDIDATES) {
+    const cand = (p.endsWith('/') ? p.slice(0, -1) : p) + idx;
+    const file = await vfs.read(cand);
+    if (file) return { path: cand, loader: toLoader(cand.slice(cand.lastIndexOf('.')).toLowerCase()) };
+  }
+
+  return null;
+}
+
+// ---- esbuild loader ----
 export async function loadEsbuild(wasmURL?: string): Promise<EsbuildModule> {
   if (isBrowser) {
     const esbuild = (await import('esbuild-wasm')) as unknown as EsbuildWasmModule;
-    if ('initialize' in esbuild && typeof esbuild.initialize === 'function') {
+    if ('initialize' in esbuild) {
       try {
         await esbuild.initialize({ wasmURL: wasmURL ?? '/esbuild.wasm', worker: true });
       } catch {
-        // ignore "already initialized"
+        /* already initialized */
       }
     }
     return esbuild;
   }
-  const esbuild = (await import('esbuild')) as unknown as EsbuildNodeModule;
-  return esbuild;
+  return (await import('esbuild')) as unknown as EsbuildNodeModule;
 }
 
-export function vfsPlugin(vfs: VfsLike): EsbuildPlugin {
+/**
+ * VFS resolver/loader + import map.
+ * Import-mapped modules are emitted as tiny “re-export” shims that read from
+ * `globalThis[GLOBAL_MAP_NAME][spec]`, which we populate at runtime.
+ */
+export function vfsPlugin(vfs: FileStore, importMap: Record<string, unknown> = {}): EsbuildPlugin {
+  const NS = 'vfs';
+  const hasMap = (p: string) => Object.prototype.hasOwnProperty.call(importMap, p);
+
   return {
     name: 'vfs',
     setup(build) {
-      build.onResolve({ filter: /.*/ }, (args: EsbuildOnResolveArgs) => {
-        if (!args.path.startsWith('.') && !args.path.startsWith('/')) return undefined;
+      build.onResolve({ filter: /.*/ }, async (args) => {
+        // bare specifiers → let esbuild handle (node_modules etc.)
+        if (!args.path.startsWith('.') && !args.path.startsWith('/')) return;
+
         const base = args.resolveDir ?? '/';
-        const join = (a: string, b: string) => (a.endsWith('/') ? a.slice(0, -1) : a) + '/' + b.replace(/^\/+/, '');
-        const normalized = args.path.startsWith('/') ? args.path : join(base, args.path);
-        return { path: normalized.replace(/\\/g, '/'), namespace: 'vfs' };
+        const normalized = resolveAbs(base, toPosix(args.path));
+
+        if (hasMap(normalized)) return { path: normalized, namespace: NS };
+
+        const cand = await resolveVfsModulePath(vfs, normalized);
+        if (cand) return { path: cand.path, namespace: NS };
+
+        return;
       });
 
-      build.onLoad({ filter: /.*/, namespace: 'vfs' }, async (args: EsbuildOnLoadArgs) => {
-        const contents = await vfs.readFile(args.path, 'utf8');
-        const match = args.path.replace(/\/[^/]*$/, '');
-        const resolveDir = match.length > 0 ? match : '/';
-        const pathParts = args.path.split('.');
-        const ext = (pathParts.length > 1 ? pathParts.pop() : 'ts') as 'ts' | 'tsx' | 'js' | 'jsx';
-        return { contents, loader: ext, resolveDir };
-      });
-    },
-  };
-}
+      build.onLoad({ filter: /.*/, namespace: NS }, async (args) => {
+        if (hasMap(args.path)) {
+          // Live re-exports from the global map (no JSON serialization!)
+          const moduleData = importMap[args.path] as Record<string, unknown> | undefined;
+          const keys = Object.keys(moduleData ?? {});
+          const reexports = keys.map((k) => `export const ${k} = __m["${k}"];`).join('\n');
+          const contents =
+            `const __g = globalThis;\n` +
+            `if (!(__g as any)["${GLOBAL_MAP_NAME}"]) (__g as any)["${GLOBAL_MAP_NAME}"] = Object.create(null);\n` +
+            `const __m = (__g as any)["${GLOBAL_MAP_NAME}"]["${args.path}"];\n` +
+            `${reexports}\n` +
+            `export default __m;`;
+          return { contents, loader: 'ts', resolveDir: args.path.replace(/\/[^/]*$/, '') || '/' };
+        }
 
-export function importMapPlugin(importMap: Record<string, unknown>): EsbuildPlugin {
-  return {
-    name: 'import-map',
-    setup(build) {
-      const NS = 'importmap';
-      build.onResolve({ filter: /.*/ }, (args: EsbuildOnResolveArgs) => {
-        if (args.path in importMap) return { path: args.path, namespace: NS };
-        return undefined;
-      });
-      build.onLoad({ filter: /.*/, namespace: NS }, (args: EsbuildOnLoadArgs) => {
-        const mod = importMap[args.path];
-        const keys = Object.keys(mod ?? {});
-        const lines = keys.map((k) => `export const ${k} = __m["${k}"];`);
-        const contents = `const __m = (${JSON.stringify(mod)});\n${lines.join('\n')}\nexport default __m;`;
-        return { contents, loader: 'js' };
+        const buf = await vfs.read(args.path);
+        if (!buf) throw new Error(`File not found: ${args.path}`);
+        const contents = new TextDecoder().decode(buf);
+        const ext = args.path.slice(args.path.lastIndexOf('.')).toLowerCase();
+        return { contents, loader: toLoader(ext), resolveDir: args.path.replace(/\/[^/]*$/, '') || '/' };
       });
     },
   };
 }
 
 /**
- * Build the provided "index module" source and import it.
- * Returns the namespace object so callers can scan for Integration exports.
+ * Build and execute `indexSource`. We allow passing `liveImportMap` so the
+ * synthetic modules can read live objects (functions, singletons) via globalThis.
  */
 export async function execIndexModule(
   esbuild: EsbuildModule,
-  _vfs: VfsLike,
+  _vfs: FileStore,
   indexSource: string,
   virtualFilename: string,
   plugins: EsbuildPlugin[],
+  liveImportMap?: Record<string, unknown>, // ← NEW
 ): Promise<unknown> {
   const result = await esbuild.build({
-    stdin: {
-      contents: indexSource,
-      resolveDir: '/',
-      sourcefile: virtualFilename,
-      loader: 'ts',
-    },
+    stdin: { contents: indexSource, resolveDir: '/', sourcefile: virtualFilename, loader: 'ts' },
     bundle: true,
     write: false,
     format: 'esm',
-    platform: 'browser',
+    platform: isBrowser ? 'browser' : 'node',
     sourcemap: 'inline',
     plugins,
   });
 
   const js: string = result.outputFiles[0].text;
+
+  // Install live map for the re-export shims
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  (globalThis as any)[GLOBAL_MAP_NAME] = liveImportMap ?? (globalThis as any)[GLOBAL_MAP_NAME] ?? Object.create(null);
 
   if (isBrowser) {
     const blob = new Blob([js], { type: 'application/javascript' });

@@ -4,16 +4,16 @@ import { SpecsSchema } from '../schema';
 import { registry } from '../flow-registry';
 import { messageRegistry } from '../message-registry';
 import { globalIntegrationRegistry } from '../integration-registry';
-import type { VfsLike } from '../vfs';
 import type { Flow } from '../index';
 import type { Integration } from '../types';
 import { flowsToSchema } from './flow-to-schema';
-import { loadEsbuild, vfsPlugin, importMapPlugin, execIndexModule } from './shared-build';
+import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
+import { FileStore } from '../fs';
 
 const debugIntegrations = createDebug('flowlang:getFlow:integrations');
 
 export interface GetFlowOptions {
-  vfs: VfsLike;
+  vfs: FileStore;
   filePath: string; // absolute (POSIX) path within the VFS
   importMap?: Record<string, unknown>;
   esbuildWasmURL?: string;
@@ -27,10 +27,10 @@ export const getFlow = async (opts: GetFlowOptions) => {
   globalIntegrationRegistry.clear();
 
   const esbuild = await loadEsbuild(esbuildWasmURL);
-  const plugins = [vfsPlugin(vfs), importMapPlugin(importMap)];
+  const plugins = [vfsPlugin(vfs, importMap)];
 
   const indexSource = `export * from "${filePath.replace(/"/g, '\\"')}";`;
-  const ns = await execIndexModule(esbuild, vfs, indexSource, '/virtual-single-index.ts', plugins);
+  const ns = await execIndexModule(esbuild, vfs, indexSource, '/virtual-single-index.ts', plugins, importMap);
 
   if (ns !== null && typeof ns === 'object') {
     const nsObj = ns as Record<string, unknown>;

@@ -7,136 +7,180 @@ import { integrationRegistry } from '../integration-registry';
 import type { Flow } from '../index';
 import type { Integration } from '../types';
 
-import type { VfsLike } from '../vfs';
-import { walk, filterByRegex } from '../vfs';
-
 import { flowsToSchema } from './flow-to-schema';
-import { loadEsbuild, vfsPlugin, importMapPlugin, execIndexModule } from './shared-build';
+import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
 import { pathToFileURL } from 'url';
+import type { FileStore } from '../fs';
 
 const debug = createDebug('flowlang:getFlows');
 const debugImport = createDebug('flowlang:getFlows:import');
-const debugIntegrations = createDebug('flowlang:getFlows:integrations');
 
 const isBrowser = typeof window !== 'undefined' || typeof self !== 'undefined';
-const isVitest =
-  Boolean((globalThis as Record<string, unknown>).__vitest_worker__) ||
-  Boolean((globalThis as Record<string, unknown>).__vite_ssr_import__);
-
-const DEFAULT_PATTERN = /\.(flow|integration)\.(ts|js|mjs)$/;
+const DEFAULT_PATTERN = /\.(flow|integration)\.(ts|tsx|js|jsx|mjs|cjs)$/;
 const DEFAULT_IGNORE_DIRS = /(\/|^)(node_modules|dist|\.turbo|\.git)(\/|$)/;
 
-function buildIndexSource(files: string[]): string {
-  return files.map((f) => `export * from "${f.replace(/"/g, '\\"')}";`).join('\n');
-}
-
 export interface GetFlowsOptions {
-  /** VFS to use for discovery and (in bundle mode) module resolution. If omitted in Node, NodeVfs is created automatically. */
-  vfs?: VfsLike;
-  /** Root directory (POSIX-like). In Node defaults to process.cwd(); in browser defaults to '/'. */
+  vfs?: FileStore;
   root?: string;
-  /** Regex to pick flow/integration files. */
   pattern?: RegExp;
-  /** Import map for bundling (browser or bundle mode). */
   importMap?: Record<string, unknown>;
-  /** Optional URL for esbuild-wasm in browser bundle mode. */
   esbuildWasmURL?: string;
-  /** 'native' (Node dynamic import) or 'bundle' (esbuild/esbuild-wasm). Defaults to native in Node/Vitest; bundle in browser. */
   mode?: 'native' | 'bundle';
 }
 
-// eslint-disable-next-line complexity
+const getDefaultRoot = () => (isBrowser ? '/' : typeof process !== 'undefined' ? process.cwd() : '/');
+const getDefaultMode = (): 'native' | 'bundle' => (isBrowser ? 'bundle' : 'native');
+
+function isIntegrationObject(x: unknown): x is Integration {
+  return (
+    Boolean(x) &&
+    typeof x === 'object' &&
+    x !== null &&
+    '__brand' in x &&
+    (x as { __brand?: string }).__brand === 'Integration'
+  );
+}
+
+async function discoverFiles(vfs: FileStore, root: string, pattern: RegExp): Promise<string[]> {
+  const entries = await vfs.listTree(root);
+  const files = entries
+    .filter((e) => e.type === 'file')
+    .map((e) => e.path)
+    .filter((p) => !DEFAULT_IGNORE_DIRS.test(p))
+    .filter((p) => pattern.test(p));
+
+  debug('discover: root=%s pattern=%s matched=%d', root, String(pattern), files.length);
+  if (files.length <= 20) debug('discover: files=%o', files);
+  return files;
+}
+
+async function executeNative(files: string[]) {
+  debugImport('native: importing %d files', files.length);
+  for (const file of files) {
+    const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
+    const mod = (await import(url)) as Record<string, unknown>;
+    for (const [, val] of Object.entries(mod)) if (isIntegrationObject(val)) integrationRegistry.register(val);
+  }
+}
+
+async function createVfsIfNeeded(providedVfs?: FileStore): Promise<FileStore> {
+  if (providedVfs) return providedVfs;
+  if (!isBrowser) {
+    return new (await import('../fs/NodeFileStore')).NodeFileStore();
+  }
+  throw new Error('getFlows: vfs is required in browser');
+}
+
+async function executeBundleMode(
+  files: string[],
+  vfs: FileStore,
+  importMap: Record<string, unknown>,
+  esbuildWasmURL?: string,
+): Promise<void> {
+  // Derive src prefix safely and consistently (no trailing slash)
+  const firstDir = files.length ? files[0].replace(/\/[^/]*$/, '') : '';
+  const srcDir = firstDir.includes('/src/') ? firstDir.slice(0, firstDir.indexOf('/src/') + 4) : '';
+  const srcPrefix = srcDir.replace(/\/+$/, ''); // remove trailing slash
+
+  // Import the live modules
+  const flowMod = await import('../flow');
+  const fluentMod = await import('../fluent-builder');
+  const buildersMod = await import('../builders');
+  const testingMod = await import('../testing');
+  const dataFlowMod = await import('../data-flow-builders');
+  const flowReg = await import('../flow-registry');
+  const msgReg = await import('../message-registry');
+  const intReg = await import('../integration-registry');
+
+  // Build the map with normalized keys
+  const mapKey = (rel: string) => `${srcPrefix}/${rel}`.replace(/\/{2,}/g, '/');
+
+  const extendedMap: Record<string, unknown> = {
+    ...importMap,
+    [mapKey('flow')]: flowMod,
+    [mapKey('fluent-builder')]: fluentMod,
+    [mapKey('builders')]: buildersMod,
+    [mapKey('testing')]: testingMod,
+    [mapKey('data-flow-builders')]: dataFlowMod,
+    [mapKey('flow-registry')]: flowReg,
+    [mapKey('message-registry')]: msgReg,
+    [mapKey('integration-registry')]: intReg,
+  };
+
+  debugImport('[bundle] map keys: %o', Object.keys(extendedMap));
+
+  const esbuild = await loadEsbuild(esbuildWasmURL);
+  const plugins = [vfsPlugin(vfs, extendedMap)];
+
+  const indexSource = files.map((f) => `import "${f.replace(/"/g, '\\"')}";`).join('\n');
+
+  try {
+    const before = registry.getAllFlows().length;
+    await execIndexModule(esbuild, vfs, indexSource, '/virtual-index.ts', plugins, extendedMap);
+    const after = registry.getAllFlows().length;
+    debugImport('bundle executed: flows before=%d after=%d', before, after);
+
+    if (after === 0) {
+      debugImport('bundle registered 0 flows; per-file fallback begins');
+      for (const file of files) {
+        try {
+          const single = `import "${file.replace(/"/g, '\\"')}";`;
+          await execIndexModule(esbuild, vfs, single, '/virtual-single.ts', plugins, extendedMap);
+        } catch (err) {
+          console.error(`[bundle:fallback] error in ${file}:`, err);
+        }
+      }
+      debugImport('fallback done: flows=%d', registry.getAllFlows().length);
+    }
+  } catch (err) {
+    console.error('[bundle] execIndexModule failed:', err);
+    for (const file of files) {
+      try {
+        const single = `import "${file.replace(/"/g, '\\"')}";`;
+        await execIndexModule(esbuild, vfs, single, '/virtual-single.ts', plugins, extendedMap);
+      } catch (fileErr) {
+        console.error(`[bundle:fallback-after-failure] error in ${file}:`, fileErr);
+      }
+    }
+    debugImport('after failure fallback: flows=%d', registry.getAllFlows().length);
+  }
+}
+
 export const getFlows = async (opts: GetFlowsOptions = {}) => {
   const {
-    root = isBrowser ? '/' : typeof process !== 'undefined' ? process.cwd() : '/',
+    root = getDefaultRoot(),
     pattern = DEFAULT_PATTERN,
     importMap = {},
     esbuildWasmURL,
-    mode = isBrowser ? 'bundle' : isVitest ? 'native' : 'native',
+    mode = getDefaultMode(),
   } = opts;
 
-  // Always ensure we have a VFS — in Node we can synthesize one if not passed.
-  let vfs: VfsLike | undefined = opts.vfs;
-  if (!vfs && !isBrowser) {
-    const { NodeVfs } = await import('../vfs/NodeVfs'); // lazy to avoid bundling in browser
-    vfs = new NodeVfs();
-  }
-  if (!vfs) {
-    throw new Error('getFlows: a VFS is required (browser) or could not be created (node).');
-  }
+  const vfs = await createVfsIfNeeded(opts.vfs);
 
-  debug('Starting getFlows with root: %s, mode: %s', root, mode);
+  debug('start getFlows root=%s mode=%s', root, mode);
 
-  // Reset registries
   registry.clearAll();
   messageRegistry.messages.clear();
   integrationRegistry.clear();
 
-  // ------------------------------------------------------------------
-  // Unified discovery via VFS in all environments
-  // ------------------------------------------------------------------
-  const all = await walk(vfs, root);
-  const visible = all.filter((p) => !DEFAULT_IGNORE_DIRS.test(p));
-  const files = filterByRegex(visible, pattern);
+  const files = await discoverFiles(vfs, root, pattern);
+  if (files.length === 0) {
+    throw new Error(`getFlows: no candidate files found. root=${root} pattern=${String(pattern)}`);
+  }
 
-  debug('Discovered %d candidate files via VFS', files.length);
-  debug('Files: %o', files);
-
-  // ------------------------------------------------------------------
-  // Execution strategy
-  // ------------------------------------------------------------------
   if (mode === 'native' && !isBrowser) {
-    // Node: import each discovered file natively.
-    // Note: NodeVfs resolves the incoming POSIX paths to real absolute paths.
-    for (const file of files) {
-      const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
-      debugImport('Importing (native) %s', url);
-
-      const mod = (await import(url)) as Record<string, unknown>;
-
-      // Scan exports and register Integration branded objects
-      for (const [exportName, exportValue] of Object.entries(mod)) {
-        if (
-          exportValue !== null &&
-          typeof exportValue === 'object' &&
-          '__brand' in (exportValue as Record<string, unknown>) &&
-          (exportValue as { __brand?: string }).__brand === 'Integration'
-        ) {
-          debugIntegrations('Found integration %s in %s', exportName, file);
-          integrationRegistry.register(exportValue as unknown as Integration);
-        }
-      }
-    }
+    await executeNative(files);
   } else {
-    // Browser (or forced bundle mode in Node): bundle a virtual index that re-exports all files.
-    const indexSource = buildIndexSource(files);
-    const esbuild = await loadEsbuild(esbuildWasmURL);
-    const plugins = [vfsPlugin(vfs), importMapPlugin(importMap)];
-
-    const ns = await execIndexModule(esbuild, vfs, indexSource, '/virtual-index.ts', plugins);
-    debugImport('Index executed; exported keys: %o', Object.keys(ns ?? {}));
-
-    if (ns !== null && typeof ns === 'object') {
-      for (const [exportName, exportValue] of Object.entries(ns)) {
-        if (
-          exportValue !== null &&
-          typeof exportValue === 'object' &&
-          '__brand' in (exportValue as Record<string, unknown>) &&
-          (exportValue as { __brand?: string }).__brand === 'Integration'
-        ) {
-          debugIntegrations('Found integration %s in bundled export', exportName);
-          integrationRegistry.register(exportValue as unknown as Integration);
-        }
-      }
-    }
+    await executeBundleMode(files, vfs, importMap, esbuildWasmURL);
   }
 
   const flows: Flow[] = registry.getAllFlows();
-  debug('After load - flows: %d, integrations: %d', flows.length, integrationRegistry.getAll().length);
-
-  if (flows.length === 0) {
-    debug('WARNING: No flows found after execution');
-  }
+  debug('flows after load = %d', flows.length);
+  if (flows.length <= 20)
+    debug(
+      'flow names: %o',
+      flows.map((f) => f.name),
+    );
 
   return {
     flows,
