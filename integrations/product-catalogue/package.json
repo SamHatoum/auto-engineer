@@ -14,7 +14,8 @@
   "dependencies": {
     "@auto-engineer/flowlang": "^0.5.4",
     "@auto-engineer/ai-gateway": "^0.4.5",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "zod": "^3.22.4"
   },
   "scripts": {
     "build": "tsc",

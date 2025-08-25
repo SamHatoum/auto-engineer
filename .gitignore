@@ -56,3 +56,5 @@ coverage
 *.pem 
 .claude
 .cursor
+/examples/design-system/.next/
+/examples/design-system/.source/

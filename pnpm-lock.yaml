@@ -227,6 +227,9 @@ importers:
       axios:
         specifier: ^1.6.0
         version: 1.10.0(debug@4.4.1)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
     devDependencies:
       '@eslint/js':
         specifier: ^8.57.0
@@ -249,6 +252,9 @@ importers:
       axios:
         specifier: ^1.6.0
         version: 1.10.0(debug@4.4.1)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
     devDependencies:
       '@eslint/js':
         specifier: ^8.57.0
