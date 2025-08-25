@@ -13,6 +13,7 @@ import { createOutput, supportsColor } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 
 import { createCreateExampleCommand } from './commands/create-example';
+import { createCopyExampleCommand } from './commands/copy-example';
 import { createExportSchemaCommand } from './commands/export-schema';
 import { createGenerateServerCommand } from './commands/generate-server';
 import { createGenerateGQLSchemaCommand } from './commands/generate-gql-schema';
@@ -95,6 +96,7 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   const analytics = new Analytics(config);
 
   program.addCommand(createCreateExampleCommand(config, analytics));
+  program.addCommand(createCopyExampleCommand(config, analytics));
   program.addCommand(createExportSchemaCommand(config, analytics));
   program.addCommand(createGenerateServerCommand(config, analytics));
   program.addCommand(createGenerateGQLSchemaCommand(config, analytics));
@@ -111,6 +113,8 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
 Examples:
 
   $ auto-engineer create:example shopping-assistant
+  $ auto-engineer copy:example shadcn-starter
+  $ auto-engineer copy:example mui-starter
   $ auto-engineer export:schema --directory .context/flows
   $ auto-engineer generate:server .context/schema.json --destination .
   $ auto-engineer generate:gql-schema ./server
