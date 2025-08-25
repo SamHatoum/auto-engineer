@@ -507,10 +507,16 @@ importers:
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
-        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+        version: 0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)
+      '@isomorphic-git/lightning-fs':
+        specifier: ^4.6.0
+        version: 4.6.2
       debug:
         specifier: ^4.4.1
         version: 4.4.1(supports-color@5.5.0)
+      esbuild-wasm:
+        specifier: ^0.21.0
+        version: 0.21.5
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -527,6 +533,15 @@ importers:
         specifier: ^3.22.3
         version: 3.24.6(zod@3.25.76)
     devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.8
+      esbuild:
+        specifier: ^0.21.0
+        version: 0.21.5
+      fake-indexeddb:
+        specifier: ^6.0.0
+        version: 6.1.0
       tsx:
         specifier: ^4.20.3
         version: 4.20.3
@@ -1611,6 +1626,13 @@ packages:
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
+
+  '@isomorphic-git/idb-keyval@3.3.2':
+    resolution: {integrity: sha512-r8/AdpiS0/WJCNR/t/gsgL+M8NMVj/ek7s60uz3LmpCaTF2mEVlZJlB01ZzalgYzRLXwSPC92o+pdzjM7PN/pA==}
+
+  '@isomorphic-git/lightning-fs@4.6.2':
+    resolution: {integrity: sha512-RS/oa1UBnoUFe56bsjOEgoUUReYKQzYUlQnbERRRNv9s9KmjyWuuylPV+YgsWirR2oONKaipWYMebVQ8SAe55Q==}
+    hasBin: true
 
   '@istanbuljs/schema@0.1.3':
     resolution: {integrity: sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==}
@@ -2961,6 +2983,11 @@ packages:
     resolution: {integrity: sha512-w+5mJ3GuFL+NjVtJlvydShqE1eN3h3PbI7/5LAsYJP/2qtuMXjfL2LpHSRqo4b4eSF5K/DH1JXKUAHSB2UW50g==}
     engines: {node: '>= 0.4'}
 
+  esbuild-wasm@0.21.5:
+    resolution: {integrity: sha512-L/FlOPMMFtw+6qPAbuPvJXdrOYOp9yx/PEwSrIZW0qghY4vgV003evdYDwqQ/9ENMQI0B6RMod9xT4FHtto6OQ==}
+    engines: {node: '>=12'}
+    hasBin: true
+
   esbuild@0.18.20:
     resolution: {integrity: sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA==}
     engines: {node: '>=12'}
@@ -3094,6 +3121,10 @@ packages:
     resolution: {integrity: sha512-hMQ4CX1p1izmuLYyZqLMO/qGNw10wSv9QDCPfzXfyFrOaCSSoRfqE1Kf1s5an66J5JZC62NewG+mK49jOCtQew==}
     engines: {node: '>=4'}
 
+  fake-indexeddb@6.1.0:
+    resolution: {integrity: sha512-gOzajWIhEug/CQHUIxigKT9Zilh5/I6WvUBez6/UdUtT/YVEHM9r572Os8wfvhp7TkmgBtRNdqSM7YoCXWMzZg==}
+    engines: {node: '>=18'}
+
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -3109,6 +3140,9 @@ packages:
 
   fast-safe-stringify@2.1.1:
     resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
+
+  fast-text-encoding@1.0.6:
+    resolution: {integrity: sha512-VhXlQgj9ioXCqGstD37E/HBeqEGV/qOD/kmbVG8h5xKBYvM1L3lR1Zn4555cQ8GkYbJa8aJSipLPndE1k6zK2w==}
 
   fast-uri@3.0.6:
     resolution: {integrity: sha512-Atfo14OibSv5wAp4VWNsFYE1AchQRTv9cBGWET4pZWHzYshFSS9NQI6I57rdKn9croWVMbYFbLhJ+yJvmZIIHw==}
@@ -3697,6 +3731,9 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  isomorphic-textencoder@1.0.1:
+    resolution: {integrity: sha512-676hESgHullDdHDsj469hr+7t3i/neBKU9J7q1T4RHaWwLAsaQnywC0D1dIUId0YZ+JtVrShzuBk1soo0+GVcQ==}
+
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
     engines: {node: '>=8'}
@@ -3788,6 +3825,12 @@ packages:
   jsonparse@1.3.1:
     resolution: {integrity: sha512-POQXvpdL69+CluYsillJ7SUhKvytYjW9vG/GKpnf+xP8UWgYEM/RaMzHHofbALDiKbbP1W8UEYmgGl39WkPZsg==}
     engines: {'0': node >= 0.2.0}
+
+  just-debounce-it@1.1.0:
+    resolution: {integrity: sha512-87Nnc0qZKgBZuhFZjYVjSraic0x7zwjhaTMrCKlj0QYKH6lh0KbFzVnfu6LHan03NO7J8ygjeBeD0epejn5Zcg==}
+
+  just-once@1.1.0:
+    resolution: {integrity: sha512-+rZVpl+6VyTilK7vB/svlMPil4pxqIJZkbnN7DKZTOzyXfun6ZiFeq2Pk4EtCEHZ0VU4EkdFzG8ZK5F3PErcDw==}
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -6353,6 +6396,16 @@ snapshots:
       '@eslint/core': 0.15.1
       levn: 0.4.1
 
+  '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.8)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)':
+    dependencies:
+      '@types/async-retry': 1.4.9
+      '@types/uuid': 10.0.0
+      async-retry: 1.3.3
+      commander: 12.1.0
+      ts-node: 10.9.2(@types/node@20.19.8)(typescript@5.8.3)
+      uuid: 11.1.0
+      web-streams-polyfill: 4.1.0
+
   '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.1.0)':
     dependencies:
       '@types/async-retry': 1.4.9
@@ -6361,16 +6414,6 @@ snapshots:
       commander: 12.1.0
       ts-node: 10.9.2(@types/node@24.3.0)(typescript@5.8.3)
       uuid: 10.0.0
-      web-streams-polyfill: 4.1.0
-
-  '@event-driven-io/emmett@0.38.3(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.8.3))(uuid@11.1.0)(web-streams-polyfill@4.1.0)':
-    dependencies:
-      '@types/async-retry': 1.4.9
-      '@types/uuid': 10.0.0
-      async-retry: 1.3.3
-      commander: 12.1.0
-      ts-node: 10.9.2(@types/node@24.3.0)(typescript@5.8.3)
-      uuid: 11.1.0
       web-streams-polyfill: 4.1.0
 
   '@graphql-tools/merge@8.3.1(graphql@16.11.0)':
@@ -6519,6 +6562,15 @@ snapshots:
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
+
+  '@isomorphic-git/idb-keyval@3.3.2': {}
+
+  '@isomorphic-git/lightning-fs@4.6.2':
+    dependencies:
+      '@isomorphic-git/idb-keyval': 3.3.2
+      isomorphic-textencoder: 1.0.1
+      just-debounce-it: 1.1.0
+      just-once: 1.1.0
 
   '@istanbuljs/schema@0.1.3': {}
 
@@ -8142,6 +8194,8 @@ snapshots:
       is-date-object: 1.1.0
       is-symbol: 1.1.1
 
+  esbuild-wasm@0.21.5: {}
+
   esbuild@0.18.20:
     optionalDependencies:
       '@esbuild/android-arm': 0.18.20
@@ -8478,6 +8532,8 @@ snapshots:
       iconv-lite: 0.4.24
       tmp: 0.0.33
 
+  fake-indexeddb@6.1.0: {}
+
   fast-deep-equal@3.1.3: {}
 
   fast-glob@3.3.3:
@@ -8493,6 +8549,8 @@ snapshots:
   fast-levenshtein@2.0.6: {}
 
   fast-safe-stringify@2.1.1: {}
+
+  fast-text-encoding@1.0.6: {}
 
   fast-uri@3.0.6: {}
 
@@ -9085,6 +9143,10 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  isomorphic-textencoder@1.0.1:
+    dependencies:
+      fast-text-encoding: 1.0.6
+
   istanbul-lib-coverage@3.2.2: {}
 
   istanbul-lib-report@3.0.1:
@@ -9197,6 +9259,10 @@ snapshots:
       graceful-fs: 4.2.11
 
   jsonparse@1.3.1: {}
+
+  just-debounce-it@1.1.0: {}
+
+  just-once@1.1.0: {}
 
   keyv@4.5.4:
     dependencies:
