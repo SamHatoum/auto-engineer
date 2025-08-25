@@ -35,7 +35,8 @@ export function configureStarter(figmaVariablesPath: string, projectPath: string
   console.log('FIGMA PATH', absoluteFigmaPath);
 
   console.log('▶ Running starter configuration in', resolvedPath);
-  const output = runCommand(`tsx "${configureScript}" --figma "${absoluteFigmaPath}"`, resolvedPath);
+  // const output = runCommand('npx pnpm codegen', resolvedPath);
+  const output = runCommand(`npx pnpm auto-configure`, resolvedPath);
   console.log(output);
   console.log('✅ Starter configuration completed.');
 }
