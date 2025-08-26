@@ -1,5 +1,5 @@
-[![Discord Online](https://img.shields.io/discord/1336421551255457846?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/fUn2AZsBpW)
-[![Discord Users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FfUn2AZsBpW%3Fwith_counts%3Dtrue&query=%24.profile.member_count&label=Total&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/fUn2AZsBpW)
+[![Discord Online](https://img.shields.io/discord/1336421551255457846?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/B8BKcKMRm8)
+[![Discord Users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FfUn2AZsBpW%3Fwith_counts%3Dtrue&query=%24.profile.member_count&label=Total&style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/B8BKcKMRm8)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?style=for-the-badge)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=for-the-badge)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E=8.15.4-orange?style=for-the-badge)](https://pnpm.io/)
@@ -423,7 +423,7 @@ auto-engineer/
 
 ## 🤝 Contributing
 
-Join our [Discord community](https://discord.gg/rXR4ngqW) to connect with other developers, get help, and share your ideas!
+Join our [Discord community](https://discord.gg/B8BKcKMRm8) to connect with other developers, get help, and share your ideas!
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
