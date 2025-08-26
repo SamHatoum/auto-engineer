@@ -1,7 +1,7 @@
 <%_
 const idField = projectionIdField ?? 'id';
 const projectionType = states[0]?.type ?? 'UnknownState';
-const projectionCollection = toKebabCase(projectionName ?? 'unknown-collection');
+const projectionCollection = projectionName ?? 'unknown-collection';
 const testCases = queryGwtMapping ?? [];
 const eventTypes = Array.from(new Set(events.map(e => e.type)));
 _%>

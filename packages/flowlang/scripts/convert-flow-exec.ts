@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { getFlows } from '../src/getFlows';
+import { getFlows } from '../src/loader/getFlows';
 
 const main = async () => {
   try {

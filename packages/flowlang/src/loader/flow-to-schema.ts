@@ -1,18 +1,11 @@
-import fg from 'fast-glob';
-import { pathToFileURL } from 'url';
-import { resolve } from 'path';
-import { writeFileSync } from 'fs';
-import { registry } from './flow-registry';
-import { SpecsSchema } from './schema';
+import { SpecsSchema } from '../schema';
 import { z } from 'zod';
-import { Flow, Message } from './index';
-import { messageRegistry } from './message-registry';
-import { Integration } from './types';
-import { globalIntegrationRegistry, integrationRegistry } from './integration-registry';
+import { Flow, Message } from '../index';
+import { messageRegistry } from '../message-registry';
+import { Integration } from '../types';
+import { globalIntegrationRegistry } from '../integration-registry';
 import createDebug from 'debug';
 
-const debug = createDebug('flowlang:getFlows');
-const debugImport = createDebug('flowlang:getFlows:import');
 const debugIntegrations = createDebug('flowlang:getFlows:integrations');
 
 // Helper function to extract Zod schema type information
@@ -156,7 +149,87 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
   return messages;
 };
 
-const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
+const createMessage = (
+  name: string,
+  data: Record<string, unknown>,
+  messageType: 'command' | 'event' | 'state',
+): Message => {
+  // Infer fields from example data
+  const fields = Object.entries(data).map(([fieldName, value]) => ({
+    name: fieldName,
+    type: inferType(value),
+    required: true,
+    description: undefined,
+    defaultValue: undefined,
+  }));
+
+  const metadata = { version: 1 };
+
+  if (messageType === 'event') {
+    return {
+      type: 'event',
+      name,
+      fields,
+      source: 'internal',
+      metadata,
+    };
+  }
+
+  if (messageType === 'command') {
+    return {
+      type: 'command',
+      name,
+      fields,
+      metadata,
+    };
+  }
+
+  return {
+    type: 'state',
+    name,
+    fields,
+    metadata,
+  };
+};
+
+const inferType = (value: unknown): string => {
+  if (value === null || value === undefined) return 'unknown';
+
+  if (value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value))) {
+    return 'Date';
+  }
+
+  if (Array.isArray(value)) {
+    return inferArrayType(value);
+  }
+
+  if (typeof value === 'object') {
+    return inferObjectType(value as Record<string, unknown>);
+  }
+
+  return typeof value;
+};
+
+const inferArrayType = (value: unknown[]): string => {
+  if (value.length === 0) return 'Array<unknown>';
+  const itemType = inferType(value[0]);
+  if (typeof value[0] === 'object' && !Array.isArray(value[0])) {
+    const objType = Object.entries(value[0] as Record<string, unknown>)
+      .map(([k, v]) => `${k}: ${inferType(v)}`)
+      .join(', ');
+    return `Array<{${objType}}>`;
+  }
+  return `Array<${itemType}>`;
+};
+
+const inferObjectType = (value: Record<string, unknown>): string => {
+  const objType = Object.entries(value)
+    .map(([k, v]) => `${k}: ${inferType(v)}`)
+    .join(', ');
+  return `{${objType}}`;
+};
+
+export const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
   // Extract messages and integrations from flows
   const messages = new Map<string, Message>();
   const integrations = new Map<
@@ -368,192 +441,4 @@ const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
     messages: Array.from(messages.values()),
     integrations: Array.from(integrations.values()),
   };
-};
-
-const createMessage = (
-  name: string,
-  data: Record<string, unknown>,
-  messageType: 'command' | 'event' | 'state',
-): Message => {
-  // Infer fields from example data
-  const fields = Object.entries(data).map(([fieldName, value]) => ({
-    name: fieldName,
-    type: inferType(value),
-    required: true,
-    description: undefined,
-    defaultValue: undefined,
-  }));
-
-  const metadata = { version: 1 };
-
-  if (messageType === 'event') {
-    return {
-      type: 'event',
-      name,
-      fields,
-      source: 'internal',
-      metadata,
-    };
-  }
-
-  if (messageType === 'command') {
-    return {
-      type: 'command',
-      name,
-      fields,
-      metadata,
-    };
-  }
-
-  return {
-    type: 'state',
-    name,
-    fields,
-    metadata,
-  };
-};
-
-const inferType = (value: unknown): string => {
-  if (value === null || value === undefined) return 'unknown';
-
-  if (value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value))) {
-    return 'Date';
-  }
-
-  if (Array.isArray(value)) {
-    return inferArrayType(value);
-  }
-
-  if (typeof value === 'object') {
-    return inferObjectType(value as Record<string, unknown>);
-  }
-
-  return typeof value;
-};
-
-const inferArrayType = (value: unknown[]): string => {
-  if (value.length === 0) return 'Array<unknown>';
-  const itemType = inferType(value[0]);
-  if (typeof value[0] === 'object' && !Array.isArray(value[0])) {
-    const objType = Object.entries(value[0] as Record<string, unknown>)
-      .map(([k, v]) => `${k}: ${inferType(v)}`)
-      .join(', ');
-    return `Array<{${objType}}>`;
-  }
-  return `Array<${itemType}>`;
-};
-
-const inferObjectType = (value: Record<string, unknown>): string => {
-  const objType = Object.entries(value)
-    .map(([k, v]) => `${k}: ${inferType(v)}`)
-    .join(', ');
-  return `{${objType}}`;
-};
-
-export const getFlows = async (cwd: string = process.cwd()) => {
-  debug('Starting getFlows with cwd: %s', cwd);
-
-  debug('Clearing registries');
-  registry.clearAll();
-  messageRegistry.messages.clear();
-  integrationRegistry.clear();
-
-  const files = await fg('**/*.{flow,integration}.{ts,js,mjs}', {
-    cwd,
-    absolute: true,
-    ignore: ['**/node_modules/**', '**/dist/**', '**/.turbo/**'],
-  });
-
-  debug('Found %d files matching pattern', files.length);
-  debug('Files: %o', files);
-
-  // Import all files and collect any integrations
-  const importPromises = files.map(async (file) => {
-    debugImport('Importing file: %s', file);
-    // Add timestamp to force fresh import and avoid caching issues
-    const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
-    debugImport('Import URL: %s', url);
-
-    try {
-      const module = (await import(url)) as Record<string, unknown>;
-      debugImport('Successfully imported %s', file);
-      debugImport('Module exports: %o', Object.keys(module));
-
-      // Look for exported integrations in the module
-      for (const [exportName, exportValue] of Object.entries(module)) {
-        if (
-          Boolean(exportValue) &&
-          typeof exportValue === 'object' &&
-          exportValue !== null &&
-          '__brand' in exportValue &&
-          (exportValue as { __brand?: string }).__brand === 'Integration'
-        ) {
-          debugIntegrations('Found integration %s in %s', exportName, file);
-          integrationRegistry.register(exportValue as Integration);
-        }
-      }
-
-      return module;
-    } catch (error) {
-      debugImport('Failed to import %s: %o', file, error);
-      throw error;
-    }
-  });
-
-  await Promise.all(importPromises);
-
-  const flows = registry.getAllFlows();
-  debug('After imports - flows: %d, integrations: %d', flows.length, integrationRegistry.getAll().length);
-
-  if (flows.length === 0) {
-    debug('WARNING: No flows found after importing all files');
-  }
-
-  return {
-    flows,
-    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows),
-  };
-};
-
-export const getFlow = async (filePath: string) => {
-  registry.clearAll();
-  messageRegistry.messages.clear();
-  globalIntegrationRegistry.clear();
-
-  const absolutePath = resolve(filePath);
-
-  // Import the main flow file - this should register integrations
-  await import(`${pathToFileURL(absolutePath).href}?t=${Date.now()}`);
-
-  const flows = registry.getAllFlows();
-  const integrations = globalIntegrationRegistry.getAll();
-  debugIntegrations(`[getFlow] Found ${flows.length} flows and ${integrations.length} integrations`);
-
-  return {
-    flows,
-    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows),
-  };
-};
-
-export const convertFlowToJson = async (filePath: string, outputPath?: string): Promise<string> => {
-  const result = await getFlow(filePath);
-  const schema = result.toSchema();
-
-  // Validate against SpecSchema
-  try {
-    SpecsSchema.parse(schema);
-    // Validation passed - no console output needed
-  } catch (error) {
-    // Only log to stderr so it doesn't pollute stdout
-    console.error('⚠ Schema validation failed:', error instanceof z.ZodError ? error.format() : error);
-  }
-
-  const json = JSON.stringify(schema, null, 2);
-
-  if (outputPath !== undefined && outputPath !== null && outputPath.length > 0) {
-    writeFileSync(outputPath, json);
-    // Don't log here - this will be handled by the calling script
-  }
-
-  return json;
 };
