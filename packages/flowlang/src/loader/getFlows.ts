@@ -10,7 +10,7 @@ import type { Integration } from '../types';
 import { flowsToSchema } from './flow-to-schema';
 import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
 import { pathToFileURL } from 'url';
-import type { FileStore } from '@auto-engineer/file-store';
+import type { IFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:getFlows');
 const debugImport = createDebug('flowlang:getFlows:import');
@@ -20,7 +20,7 @@ const DEFAULT_PATTERN = /\.(flow|integration)\.(ts|tsx|js|jsx|mjs|cjs)$/;
 const DEFAULT_IGNORE_DIRS = /(\/|^)(node_modules|dist|\.turbo|\.git)(\/|$)/;
 
 export interface GetFlowsOptions {
-  vfs?: FileStore;
+  vfs?: IFileStore;
   root?: string;
   pattern?: RegExp;
   importMap?: Record<string, unknown>;
@@ -41,7 +41,7 @@ function isIntegrationObject(x: unknown): x is Integration {
   );
 }
 
-async function discoverFiles(vfs: FileStore, root: string, pattern: RegExp): Promise<string[]> {
+async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Promise<string[]> {
   const entries = await vfs.listTree(root);
   const files = entries
     .filter((e) => e.type === 'file')
@@ -63,7 +63,7 @@ async function executeNative(files: string[]) {
   }
 }
 
-async function createVfsIfNeeded(providedVfs?: FileStore): Promise<FileStore> {
+async function createVfsIfNeeded(providedVfs?: IFileStore): Promise<IFileStore> {
   if (providedVfs) return providedVfs;
   if (!isBrowser) {
     return new (await import('@auto-engineer/file-store')).NodeFileStore();
@@ -73,7 +73,7 @@ async function createVfsIfNeeded(providedVfs?: FileStore): Promise<FileStore> {
 
 async function executeBundleMode(
   files: string[],
-  vfs: FileStore,
+  vfs: IFileStore,
   importMap: Record<string, unknown>,
   esbuildWasmURL?: string,
 ): Promise<void> {

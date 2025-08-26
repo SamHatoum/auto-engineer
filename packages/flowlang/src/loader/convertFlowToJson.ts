@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { SpecsSchema } from '../schema';
 import { getFlow, GetFlowOptions } from './getFlow';
-import { FileStore } from '@auto-engineer/file-store';
+import { IFileStore } from '@auto-engineer/file-store';
 
 export interface ConvertFlowToJsonOptions extends Omit<GetFlowOptions, 'filePath'> {
-  vfs: FileStore;
+  vfs: IFileStore;
   filePath: string;
   outputPath?: string;
 }

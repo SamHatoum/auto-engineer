@@ -1,4 +1,4 @@
-import type { FileStore } from '@auto-engineer/file-store';
+import type { IFileStore } from '@auto-engineer/file-store';
 
 const isBrowser = typeof window !== 'undefined' || typeof self !== 'undefined';
 const GLOBAL_MAP_NAME = '__flowlangImportMap__';
@@ -99,7 +99,7 @@ const toLoader = (ext: string): EsbuildLoader => {
 };
 
 async function resolveVfsModulePath(
-  vfs: FileStore,
+  vfs: IFileStore,
   p: string,
 ): Promise<{ path: string; loader: EsbuildLoader } | null> {
   const hasExt = /\.[a-zA-Z0-9]+$/.test(p);
@@ -145,7 +145,7 @@ export async function loadEsbuild(wasmURL?: string): Promise<EsbuildModule> {
  * Import-mapped modules are emitted as tiny “re-export” shims that read from
  * `globalThis[GLOBAL_MAP_NAME][spec]`, which we populate at runtime.
  */
-export function vfsPlugin(vfs: FileStore, importMap: Record<string, unknown> = {}): EsbuildPlugin {
+export function vfsPlugin(vfs: IFileStore, importMap: Record<string, unknown> = {}): EsbuildPlugin {
   const NS = 'vfs';
   const hasMap = (p: string) => Object.prototype.hasOwnProperty.call(importMap, p);
 
@@ -198,7 +198,7 @@ export function vfsPlugin(vfs: FileStore, importMap: Record<string, unknown> = {
  */
 export async function execIndexModule(
   esbuild: EsbuildModule,
-  _vfs: FileStore,
+  _vfs: IFileStore,
   indexSource: string,
   virtualFilename: string,
   plugins: EsbuildPlugin[],
