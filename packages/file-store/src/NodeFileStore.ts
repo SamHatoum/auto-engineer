@@ -28,6 +28,10 @@ export class NodeFileStore implements IFileStore {
     }
   }
 
+  async remove(p: string): Promise<void> {
+    await fsp.rm(toAbs(p), { force: true });
+  }
+
   async exists(p: string): Promise<boolean> {
     const abs = toAbs(p);
     try {
