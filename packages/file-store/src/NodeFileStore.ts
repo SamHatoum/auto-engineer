@@ -1,4 +1,4 @@
-import type { FileStore } from './types';
+import type { IFileStore } from './types';
 import { toPosix } from './path';
 import * as fsp from 'fs/promises';
 import type { Dirent } from 'fs';
@@ -11,7 +11,7 @@ const toAbs = (p: string) => {
   return path.isAbsolute(p) ? p : path.resolve(p);
 };
 
-export class NodeFileStore implements FileStore {
+export class NodeFileStore implements IFileStore {
   async write(p: string, data: Uint8Array): Promise<void> {
     const abs = toAbs(p);
     await fsp.mkdir(path.dirname(abs), { recursive: true });

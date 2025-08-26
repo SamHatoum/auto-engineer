@@ -4,7 +4,7 @@ import { SpecsSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { NodeFileStore } from './fs';
+import { NodeFileStore } from '@auto-engineer/file-store';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

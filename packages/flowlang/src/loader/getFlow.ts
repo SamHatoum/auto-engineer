@@ -8,12 +8,12 @@ import type { Flow } from '../index';
 import type { Integration } from '../types';
 import { flowsToSchema } from './flow-to-schema';
 import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
-import { FileStore } from '../fs';
+import { IFileStore } from '@auto-engineer/file-store';
 
 const debugIntegrations = createDebug('flowlang:getFlow:integrations');
 
 export interface GetFlowOptions {
-  vfs: FileStore;
+  vfs: IFileStore;
   filePath: string; // absolute (POSIX) path within the VFS
   importMap?: Record<string, unknown>;
   esbuildWasmURL?: string;
