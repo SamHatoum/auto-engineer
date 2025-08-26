@@ -19,63 +19,73 @@
 
 Stay up to date by watching 👀☝️ and giving us a star ⭐☝️ - join the Discord for conversations.
 
-## Try it now
+## 🚀 Quick Start
 
-Prerequisites:
+### Prerequisites
 
-- An Anthorpic API key ([Get one here](https://console.anthropic.com/settings/keys))
+- Node.js >= 20.0.0
+- pnpm >= 8.15.4
+- At least one AI provider API key:
+  - [Anthropic Claude](https://console.anthropic.com/settings/keys) (Recommended)
+  - [OpenAI](https://platform.openai.com/api-keys)
+  - [Google Gemini](https://aistudio.google.com/app/apikey)
+  - [X.AI Grok](https://x.ai)
+
+### Installation
 
 ```bash
-# Install and build all the dependencies
+# Install the CLI globally
+pnpm install -g @auto-engineer/cli@latest
+
+# Or use locally from the monorepo
+git clone https://github.com/SamHatoum/auto-engineer
+cd auto-engineer
 pnpm install
+pnpm build
 
-# Run this in a separate terminal to get familiar with the mock existing services and sites
-pnpm start:examples
-
-# Make sure your have a .env file and that the *ANTHROPIC_API_KEY* is set in there
+# Copy and configure your API keys
 cp .env.example .env
-
-# Run this in a terminal window to the side and keep reading below
-pnpm generate:all
+# Edit .env and add your API key(s)
 ```
 
-## What's Happening?
-
-There is an example in `examples/shopping-assistant` that is copied to a level above the `auto-engineer` directory where you ran the above commands.
-
-The `shopping-assistant` is the project and `auto-engineer` works on that with you. In the near future, you'll access `auto-engineer through a CLI.
-
-Under this new `shopping-assistant` directory, you'll see `flows/shopping-assistant.flow.ts`. This is where you all the system design and specifications happen. The idea is that flow files are all you need to build out entire apps.
-
-When the `generate:all` task above has completed, you can run the generated code like this:
+### Create Your First App
 
 ```bash
-cd ../shopping-assistant
+# Create a new directory for your project
+mkdir my-shopping-app && cd my-shopping-app
+
+# Generate the example shopping assistant app
+auto create:example shopping-assistant
+
+# Navigate to the created project
+cd shopping-assistant
+pnpm install
+
+# Export the flow schemas
+auto export:schema ./.context ./flows
+
+# Generate and implement the backend
+auto generate:server .context/schema.json .
+auto implement:server ./server
+
+# Run backend validation
+auto check:types ./server
+auto check:tests ./server
+auto check:lint ./server --fix
+
+# Import design system and generate frontend
+auto import:design-system ./.context WITH_COMPONENT_SETS ./shadcn-filter.ts
+auto generate:ia ./.context ./flows/*.flow.ts
+auto generate:client ./shadcn-starter ./client ./auto-ia.json ./schema.graphql ./figma-vars.json
+auto implement:client ./client ./.context ./design-principles.md ./design-system.md
+
+# Start the application
 pnpm start
 ```
 
-You will see the URLs for a server and client. Feel free to explore the code.
-
-Next, try to modify the flow under `flows/shopping-assistant.flow.ts` by adding/changing some specs to the client section, then run this:
-
-```bash
-# run this command from the auto-engineer folder
-pnpm rebuild:client
-```
-
-Pay special attention to the integrations, where you see data `sources` and `sinks` being defined. This approach allows deep integration into external systems. See the `server/src/integrations` folder for more details.
-
-Note: The developer experience will improve dramatically as we work with customers and users. The end goal is to have you type:
-
-```shell
-npx auto start
-```
-
-This would start a Meteor-like experience where you modify the flows and other source files, and auto-engineer knows which tasks to rerun efficiently and rebuid the app.
-
 ## 🎯 How It Works
 
-<img width="100%" height="100%" alt="Screenshot 2025-07-23 at 9 20 03 PM" src="https://github.com/user-attachments/assets/50041682-2ec1-4148-a6d1-d51fe0680385" />
+<img width="100%" height="100%" alt="Screenshot 2025-07-23 at 9 20 03 PM" src="https://github.com/user-attachments/assets/50041682-2ec1-4148-a6d1-d51fe0680385" />
 
 Auto automates the SDLC through a configurable pipeline of agentic and procedural modules. The process turns high-level models into production-ready code through these key stages:
 
@@ -86,6 +96,33 @@ Auto automates the SDLC through a configurable pipeline of agentic and procedura
 5.  **AI Coding & Testing Loop**: An AI agent implements the code based on the prompts and context from previous steps. As code is written, tests are run. If they fail, the AI gets the error feedback and self-corrects, usually within 1-3 attempts.
 6.  **Comprehensive Quality Checks**: After passing the tests, the code goes through further checks, including linting, runtime validation, and AI-powered visual testing to ensure design system compliance.
 
+## 📋 CLI Commands
+
+The Auto Engineer CLI provides a complete workflow for building applications:
+
+### 🎯 Flow Development
+
+- `create:example <name>` - Create example project (currently: shopping-assistant)
+- `export:schema <context> <flows>` - Export flow schemas to context directory
+
+### ⚙️ Backend Generation
+
+- `generate:server <schema> <dest>` - Generate server from schema.json
+- `implement:server <server-dir>` - AI implements server TODOs and tests
+- `check:types <directory>` - Run TypeScript type checking
+- `check:tests <directory>` - Run Vitest test suites
+- `check:lint <directory> [--fix]` - Run ESLint with optional auto-fix
+
+### 🎨 Design System & Frontend
+
+- `import:design-system <src> <mode> [filter]` - Import Figma design system
+- `generate:ia <context> <flows...>` - Generate Information Architecture
+- `generate:client <starter> <client> <ia> <gql> [vars]` - Generate React client app
+- `implement:client <client> <context> <principles> <design>` - AI implements client
+- `check:client <client-dir>` - Run full frontend validation suite
+
+Run `auto --help` for complete command documentation and examples.
+
 ## ✨ Features
 
 - 🤖 AI-powered code generation with enterprise-grade architecture & security
@@ -94,6 +131,8 @@ Auto automates the SDLC through a configurable pipeline of agentic and procedura
 - 🎮 Fully MCP-driven (IDE, chat, custom AI control)
 - 📚 Self-documenting
 - 🔄 Continue far beyond day 0
+- 🧪 Self-healing implementation with automatic error correction
+- 🎨 Design system aware with Figma integration
 
 ## What Makes It Different
 
@@ -337,16 +376,15 @@ This approach enables:
 - **AI Understanding**: Structured format that AI systems can parse and implement
 - **Living Documentation**: Flows serve as both specification and documentation
 
-## 🚀 Quick Start
+## 🏗️ Development
 
-### Prerequisites
-
-- Node.js >= 20.0.0
-- pnpm >= 8.15.4
-
-### Installation
+### Building from Source
 
 ```bash
+# Clone the repository
+git clone https://github.com/SamHatoum/auto-engineer
+cd auto-engineer
+
 # Install dependencies
 pnpm install
 
@@ -356,8 +394,31 @@ pnpm build
 # Run tests
 pnpm test
 
-# Run all checks
+# Run all checks (lint, type-check, test)
 pnpm check
+
+# Link CLI for local development
+cd packages/cli
+pnpm link:dev
+```
+
+### Project Structure
+
+```
+auto-engineer/
+├── packages/                     # Core packages
+│   ├── cli/                      # CLI interface
+│   ├── flowlang/                 # Flow modeling DSL
+│   ├── message-bus/              # Event-driven messaging
+│   ├── emmett-generator/         # Code generation
+│   ├── ai-gateway/               # AI provider abstraction
+│   ├── server-implementer/       # Backend implementation
+│   ├── frontend-implementation/  # Frontend implementation
+│   ├── backend-checks/           # Backend validation
+│   └── ...
+├── integrations/                 # External system integrations
+├── examples/                     # Example projects
+└── docs/                         # Documentation
 ```
 
 ## 🤝 Contributing
@@ -405,7 +466,7 @@ Set the `DEBUG` environment variable to enable logging:
 
 ```bash
 # Enable all debug output
-DEBUG=* pnpm dev
+DEBUG=* auto create:example shopping-assistant
 
 # Enable specific package
 DEBUG=flowlang:* pnpm dev
@@ -421,17 +482,18 @@ DEBUG=* pnpm dev 2> debug.log
 
 Each package has its own set of debug namespaces. Here's an overview with links to detailed documentation:
 
-| Package                     | Main Namespaces                                             | Documentation                                             |
-| --------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
-| **message-bus**             | `message-bus:*`, `message-bus:command`, `message-bus:event` | [📖 Details](./packages/message-bus/DEBUG.md)             |
-| **flowlang**                | `flowlang:*`, `flowlang:flow`, `flowlang:fluent-builder:*`  | [📖 Details](./packages/flowlang/DEBUG.md)                |
-| **information-architect**   | `ia:*`, `ia:generate-command:*`                             | [📖 Details](./packages/information-architect/DEBUG.md)   |
-| **emmett-generator**        | `emmett:*`, `emmett:scaffolding:*`, `emmett:extract:*`      | [📖 Details](./packages/emmett-generator/DEBUG.md)        |
-| **server-implementer**      | `server-impl:*`, `server-impl:flows:*`                      | [📖 Details](./packages/server-implementer/DEBUG.md)      |
-| **frontend-implementation** | `frontend-impl:*`, `frontend-impl:agent:*`                  | [📖 Details](./packages/frontend-implementation/DEBUG.md) |
-| **design-system-importer**  | `design-importer:*`, `design-importer:builder:*`            | [📖 Details](./packages/design-system-importer/DEBUG.md)  |
-| **ai-gateway**              | `ai-gateway:*`, `ai-gateway:call`, `ai-gateway:error`       | [📖 Details](./packages/ai-gateway/DEBUG.md)              |
-| **react-graphql-generator** | `react-gql:*`, `react-gql:schema`, `react-gql:components`   | [📖 Details](./packages/react-graphql-generator/DEBUG.md) |
+| Package                     | Main Namespaces                                                    | Documentation                                             |
+| --------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| **message-bus**             | `message-bus:*`, `message-bus:command`, `message-bus:event`        | [📖 Details](./packages/message-bus/DEBUG.md)             |
+| **flowlang**                | `flowlang:*`, `flowlang:flow`, `flowlang:fluent-builder:*`         | [📖 Details](./packages/flowlang/DEBUG.md)                |
+| **information-architect**   | `ia:*`, `ia:generate-command:*`                                    | [📖 Details](./packages/information-architect/DEBUG.md)   |
+| **emmett-generator**        | `emmett:*`, `emmett:scaffolding:*`, `emmett:extract:*`             | [📖 Details](./packages/emmett-generator/DEBUG.md)        |
+| **server-implementer**      | `server-impl:*`, `server-impl:flows:*`                             | [📖 Details](./packages/server-implementer/DEBUG.md)      |
+| **frontend-implementation** | `frontend-impl:*`, `frontend-impl:agent:*`                         | [📖 Details](./packages/frontend-implementation/DEBUG.md) |
+| **design-system-importer**  | `design-importer:*`, `design-importer:builder:*`                   | [📖 Details](./packages/design-system-importer/DEBUG.md)  |
+| **ai-gateway**              | `ai-gateway:*`, `ai-gateway:call`, `ai-gateway:error`              | [📖 Details](./packages/ai-gateway/DEBUG.md)              |
+| **react-graphql-generator** | `react-gql:*`, `react-gql:schema`, `react-gql:components`          | [📖 Details](./packages/react-graphql-generator/DEBUG.md) |
+| **backend-checks**          | `backend-checks:*`, `backend-checks:types`, `backend-checks:tests` | Backend validation and checking                           |
 
 ### Common Debug Scenarios
 
@@ -439,35 +501,35 @@ Each package has its own set of debug namespaces. Here's an overview with links 
 
 ```bash
 # Debug complete generation pipeline
-DEBUG=* pnpm generate:all
+DEBUG=* auto create:example shopping-assistant
 ```
 
 #### Debug Flow Processing
 
 ```bash
 # Debug flow creation and processing
-DEBUG=flowlang:*,emmett:scaffolding:* pnpm generate:server
+DEBUG=flowlang:*,emmett:scaffolding:* auto generate:server .context/schema.json .
 ```
 
 #### Debug AI Operations
 
 ```bash
 # Debug AI calls and error handling
-DEBUG=ai-gateway:*,frontend-impl:agent:ai,ia:* pnpm implement:client
+DEBUG=ai-gateway:*,frontend-impl:agent:ai,ia:* auto implement:client ./client ./.context
 ```
 
 #### Debug Server Implementation
 
 ```bash
 # Debug server generation and implementation
-DEBUG=server-impl:*,emmett:* pnpm implement:server
+DEBUG=server-impl:*,emmett:* auto implement:server ./server
 ```
 
 #### Debug Frontend Generation
 
 ```bash
 # Debug frontend and GraphQL generation
-DEBUG=frontend-impl:*,react-gql:* pnpm generate:client
+DEBUG=frontend-impl:*,react-gql:* auto generate:client
 ```
 
 ### Tips and Tricks
@@ -476,9 +538,9 @@ DEBUG=frontend-impl:*,react-gql:* pnpm generate:client
 2. **Use Wildcards**: `DEBUG=*:command` shows all command-related logs across packages
 3. **Combine Namespaces**: Use commas to combine multiple patterns: `DEBUG=flowlang:*,message-bus:*`
 4. **Exclude Patterns**: Use `-` to exclude verbose output: `DEBUG=*,-express:*`
-5. **Save to File**: Redirect stderr to a file: `DEBUG=* pnpm dev 2> debug.log`
-6. **Filter Output**: Pipe through grep: `DEBUG=* pnpm dev 2>&1 | grep ERROR`
-7. **Add Timestamps**: Use the `ts` utility: `DEBUG=* pnpm dev 2>&1 | ts`
+5. **Save to File**: Redirect stderr to a file: `DEBUG=* auto implement:server 2> debug.log`
+6. **Filter Output**: Pipe through grep: `DEBUG=* auto implement:server 2>&1 | grep ERROR`
+7. **Add Timestamps**: Use the `ts` utility: `DEBUG=* auto implement:server 2>&1 | ts`
 8. **Disable Colors**: Set `DEBUG_COLORS=false` for plain text output
 
 ### Environment Variables

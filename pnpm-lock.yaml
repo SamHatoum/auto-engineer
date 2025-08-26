@@ -307,6 +307,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@auto-engineer/backend-checks':
+        specifier: ^0.0.1
+        version: link:../backend-checks
       '@auto-engineer/design-system-importer':
         specifier: ^0.4.9
         version: link:../design-system-importer
