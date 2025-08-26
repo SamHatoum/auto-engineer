@@ -13,6 +13,8 @@ interface LightningFSPromises {
   stat(path: string): Promise<LightningFSStats>;
   readdir(path: string): Promise<string[]>;
   mkdir(path: string): Promise<void>;
+  unlink(path: string): Promise<void>;
+  rmdir(path: string): Promise<void>;
 }
 
 interface LightningFSInstance {
@@ -77,6 +79,35 @@ export class LightningFileStore implements IFileStore {
     await walk(root);
     out.sort((a, b) => (a.type === b.type ? a.path.localeCompare(b.path) : a.type === 'dir' ? -1 : 1));
     return out;
+  }
+
+  async remove(path: string): Promise<void> {
+    if (!path) return;
+    try {
+      const st = await this.pfs.stat(path);
+      if (st.isDirectory()) {
+        await this.removeDirectory(path);
+      } else {
+        await this.pfs.unlink(path);
+      }
+    } catch (err: unknown) {
+      if (this.isFileNotFoundError(err)) return;
+      throw err;
+    }
+  }
+
+  private async removeDirectory(path: string): Promise<void> {
+    const entries = await this.pfs.readdir(path).catch(() => []);
+    for (const name of entries) {
+      const child = path === '/' ? `/${name}` : `${path}/${name}`;
+      await this.remove(child);
+    }
+    await this.pfs.rmdir(path);
+  }
+
+  private isFileNotFoundError(err: unknown): boolean {
+    if (err instanceof Error && 'code' in err && err.code === 'ENOENT') return true;
+    return err === null || err === undefined;
   }
 
   private async mkdirp(path: string): Promise<void> {
