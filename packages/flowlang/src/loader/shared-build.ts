@@ -1,4 +1,4 @@
-import type { FileStore } from '../fs';
+import type { FileStore } from '@auto-engineer/file-store';
 
 const isBrowser = typeof window !== 'undefined' || typeof self !== 'undefined';
 const GLOBAL_MAP_NAME = '__flowlangImportMap__';

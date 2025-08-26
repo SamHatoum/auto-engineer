@@ -10,7 +10,7 @@ import type { Integration } from '../types';
 import { flowsToSchema } from './flow-to-schema';
 import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
 import { pathToFileURL } from 'url';
-import type { FileStore } from '../fs';
+import type { FileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:getFlows');
 const debugImport = createDebug('flowlang:getFlows:import');
@@ -66,7 +66,7 @@ async function executeNative(files: string[]) {
 async function createVfsIfNeeded(providedVfs?: FileStore): Promise<FileStore> {
   if (providedVfs) return providedVfs;
   if (!isBrowser) {
-    return new (await import('../fs/NodeFileStore')).NodeFileStore();
+    return new (await import('@auto-engineer/file-store')).NodeFileStore();
   }
   throw new Error('getFlows: vfs is required in browser');
 }

@@ -1,4 +1,4 @@
-export interface FileStore {
+export interface IFileStore {
   write(path: string, data: Uint8Array): Promise<void>;
   read(path: string): Promise<Uint8Array | null>;
   exists(path: string): Promise<boolean>;

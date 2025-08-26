@@ -8,7 +8,7 @@ import type { Flow } from '../index';
 import type { Integration } from '../types';
 import { flowsToSchema } from './flow-to-schema';
 import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
-import { FileStore } from '../fs';
+import { FileStore } from '@auto-engineer/file-store';
 
 const debugIntegrations = createDebug('flowlang:getFlow:integrations');
 

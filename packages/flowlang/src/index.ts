@@ -18,7 +18,6 @@ export type {
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
 export { registerIntegrations } from './integration-registry';
-export * from './fs';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';

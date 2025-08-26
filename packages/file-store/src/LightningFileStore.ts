@@ -1,5 +1,5 @@
 import LightningFS from '@isomorphic-git/lightning-fs';
-import type { FileStore } from './types';
+import type { IFileStore } from './types';
 import { dirname } from './path';
 
 interface LightningFSStats {
@@ -19,7 +19,7 @@ interface LightningFSInstance {
   promises: LightningFSPromises;
 }
 
-export class LightningFsFileStore implements FileStore {
+export class LightningFileStore implements IFileStore {
   private fs: LightningFSInstance;
   private pfs: LightningFSPromises;
 

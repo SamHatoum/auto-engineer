@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { SpecsSchema } from '../schema';
 import { getFlow, GetFlowOptions } from './getFlow';
-import { FileStore } from '../fs';
+import { FileStore } from '@auto-engineer/file-store';
 
 export interface ConvertFlowToJsonOptions extends Omit<GetFlowOptions, 'filePath'> {
   vfs: FileStore;

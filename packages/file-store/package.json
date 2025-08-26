@@ -1,0 +1,46 @@
+{
+  "name": "@auto-engineer/file-store",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "link:dev": "pnpm build && pnpm link --global",
+    "unlink:dev": "pnpm unlink --global",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "fake-indexeddb": "^6.0.0"
+  },
+  "peerDependencies": {
+    "esbuild-wasm": "^0.21.0",
+    "@isomorphic-git/lightning-fs": "^4.6.0"
+  },
+  "peerDependenciesMeta": {
+    "esbuild-wasm": {
+      "optional": true
+    },
+    "@isomorphic-git/lightning-fs": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

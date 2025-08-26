@@ -1,3 +1,3 @@
 export * from './types';
-export { LightningFsFileStore } from './LightningFsFileStore';
+export { LightningFileStore } from './LightningFileStore';
 export { NodeFileStore } from './NodeFileStore';

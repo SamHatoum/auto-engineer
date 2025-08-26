@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
-import { LightningFsFileStore } from './LightningFsFileStore';
+import { LightningFileStore } from './LightningFileStore';
 
 const te = new TextEncoder();
 const td = new TextDecoder();
@@ -26,7 +26,7 @@ beforeEach(async () => {
 
 describe('LightningFS FileStore (basic ops)', () => {
   it('writes and reads a file', async () => {
-    const fs = new LightningFsFileStore('flowfs-test');
+    const fs = new LightningFileStore('flowfs-test');
 
     await fs.write('/test.txt', te.encode('hello world'));
     const buf = await fs.read('/test.txt');
@@ -36,7 +36,7 @@ describe('LightningFS FileStore (basic ops)', () => {
   });
 
   it('checks file existence', async () => {
-    const fs = new LightningFsFileStore('flowfs-test');
+    const fs = new LightningFileStore('flowfs-test');
 
     await fs.write('/exists.txt', te.encode('ok'));
 
@@ -45,7 +45,7 @@ describe('LightningFS FileStore (basic ops)', () => {
   });
 
   it('supports nested directories (mkdir -p style) for write/read', async () => {
-    const fs = new LightningFsFileStore('flowfs-test');
+    const fs = new LightningFileStore('flowfs-test');
 
     await fs.write('/nested/deep/file.txt', te.encode('nested content'));
     const buf = await fs.read('/nested/deep/file.txt');
@@ -55,7 +55,7 @@ describe('LightningFS FileStore (basic ops)', () => {
   });
 
   it('lists directory contents via listTree()', async () => {
-    const fs = new LightningFsFileStore('flowfs-test');
+    const fs = new LightningFileStore('flowfs-test');
 
     await fs.write('/a.txt', te.encode('a'));
     await fs.write('/dir/b.txt', te.encode('b'));
@@ -80,7 +80,7 @@ describe('LightningFS FileStore (basic ops)', () => {
 
 describe('LightningFS FileStore (complex structure)', () => {
   it('creates and verifies a multi-level project layout', async () => {
-    const fs = new LightningFsFileStore('flowfs-complex-test');
+    const fs = new LightningFileStore('flowfs-complex-test');
 
     await fs.write('/src/flows/items.flow.ts', te.encode('items flow'));
     await fs.write('/src/flows/orders.flow.ts', te.encode('orders flow'));
