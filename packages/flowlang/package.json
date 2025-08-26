@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@auto-engineer/message-bus": "^0.3.4",
-    "@auto-engineer/file-store": "^0.1.0",
+    "@auto-engineer/file-store": "workspace:*",
     "@event-driven-io/emmett": "^0.38.3",
     "debug": "^4.4.1",
     "fast-glob": "^3.3.3",

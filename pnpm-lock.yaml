@@ -519,7 +519,7 @@ importers:
   packages/flowlang:
     dependencies:
       '@auto-engineer/file-store':
-        specifier: ^0.1.0
+        specifier: workspace:*
         version: link:../file-store
       '@auto-engineer/message-bus':
         specifier: ^0.3.4

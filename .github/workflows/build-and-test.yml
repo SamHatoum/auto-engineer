@@ -29,9 +29,8 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
           scope: '@auto-engineer'
-          # ToDo: add token
-          #   env:
-          #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Pre-fetch deps
         run: pnpm fetch --network-concurrency=8
