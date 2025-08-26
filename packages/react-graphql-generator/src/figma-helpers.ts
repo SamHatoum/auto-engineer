@@ -14,7 +14,7 @@ interface Variable {
   valuesByMode: Record<string, VariableValue>;
 }
 
-interface VariableCollection {
+export interface VariableCollection {
   name: string;
   modes: { modeId: string; name: string }[];
   variables: Variable[];

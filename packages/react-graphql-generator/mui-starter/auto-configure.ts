@@ -1,5 +1,3 @@
-#!/usr/bin/env tsx
-import * as path from 'path';
 import { createFile, templatePropsAIMapper } from '@auto-engineer/react-graphql-generator';
 
 const MUIObject = {
@@ -87,29 +85,30 @@ const MUIObject = {
   },
 };
 
-export async function generateTheme() {
-  // Ensure process.cwd() is the starter root before calling
-  void path.resolve('.');
-
-  await createFile(
-    'theme.ts.ejs',
-    'theme.ts',
-    templatePropsAIMapper('./.context/figma-variables.json', {
-      prompt: `
-Map them into a valid MUI v7+ createTheme options object. IMPORTANT this is the format I want as output ${JSON.stringify(MUIObject)}
-
-INSTRUCTIONS:
-- ONLY respond with the properties requested given to you, try your best to find a figma variable for each one of them, but don't add more than those.
-- make sure not to use any methods, only concrete values for example (DONT: "spacing": (factor) => factor * 8}px --- DO: "spacing": 4)
-
-DOCS LINKS:
-- https://mui.com/material-ui/customization/palette/
-- https://mui.com/material-ui/customization/typography/
-- https://mui.com/material-ui/customization/spacing/
-- https://mui.com/material-ui/customization/breakpoints/
-- https://mui.com/material-ui/customization/z-index/
-- https://mui.com/material-ui/customization/transitions/
-`,
-    }),
-  );
-}
+await createFile(
+  'theme.ts.ejs',
+  'theme.ts',
+  templatePropsAIMapper('../.context/figma-variables.json', {
+    prompt: `
+      - Goal: Map Figma variables into a valid MUI v7+ createTheme options object like this: ${JSON.stringify(MUIObject)}
+      - The expected output format is:
+        {
+          "themeOptions": { ... }
+        }
+      - Use only the properties explicitly requested in the given MUI object template.
+      - If an exact match does not exist, try to find the closest variable, but leave it empty if there’s no good fit.
+      - Do NOT include any functions or computed values in the theme, for example:
+          - WRONG: "spacing": (factor) => factor * 8
+          - CORRECT: "spacing": 4
+      - Follow official MUI structure and guidelines for palette, typography, spacing, breakpoints, z-index, and transitions.
+    
+    DOCS LINKS:
+    - https://mui.com/material-ui/customization/palette/
+    - https://mui.com/material-ui/customization/typography/
+    - https://mui.com/material-ui/customization/spacing/
+    - https://mui.com/material-ui/customization/breakpoints/
+    - https://mui.com/material-ui/customization/z-index/
+    - https://mui.com/material-ui/customization/transitions/
+    `,
+  }),
+);
