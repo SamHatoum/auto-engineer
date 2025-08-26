@@ -23,6 +23,9 @@ import { createGenerateIACommand } from './commands/generate-ia';
 import { createGenerateClientCommand } from './commands/generate-client';
 import { createImplementClientCommand } from './commands/implement-client';
 import { createCheckClientCommand } from './commands/check-client';
+import { createCheckTypesCommand } from './commands/check-types';
+import { createCheckTestsCommand } from './commands/check-tests';
+import { createCheckLintCommand } from './commands/check-lint';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -106,32 +109,80 @@ const setupProgram = (config: ReturnType<typeof loadConfig>) => {
   program.addCommand(createGenerateClientCommand(config, analytics));
   program.addCommand(createImplementClientCommand(config, analytics));
   program.addCommand(createCheckClientCommand(config, analytics));
+  program.addCommand(createCheckTypesCommand(config, analytics));
+  program.addCommand(createCheckTestsCommand(config, analytics));
+  program.addCommand(createCheckLintCommand(config, analytics));
 
   program.addHelpText(
     'after',
     `
+Commands:
+
+  ${chalk.cyan('🎯 Flow Development')}
+  create:example <name>                                      Current options: ['shopping-assistant']
+  export:schema <context> <flows>                            Export flow schemas to context directory
+
+  ${chalk.cyan('⚙️ Backend Generation')}
+  generate:server <schema> <dest>                            Generate server from schema.json
+  implement:server <server-dir>                              AI implements server TODOs and tests
+
+  ${chalk.cyan('🎨 Design System & Frontend')}
+  import:design-system <src> <mode> [filter]                 Import Figma design system
+  generate:ia <context> <flows...>                           Generate Information Architecture  
+  generate:client <starter> <client> <ia> <gql> [vars]       Generate React client app
+  implement:client <client> <context> <principles> <design>  AI implements client
+
+  ${chalk.cyan('✅ Validation & Testing')}
+  check:types <directory>                                    TypeScript type checking
+  check:tests <directory>                                    Run Vitest test suites
+  check:lint <directory> [--fix]                             ESLint with optional auto-fix
+  check:client <client-dir>                                  Full frontend validation suite
+
 Examples:
 
-  $ auto-engineer create:example shopping-assistant
-  $ auto-engineer copy:example shadcn-starter
-  $ auto-engineer copy:example mui-starter
-  $ auto-engineer export:schema --directory .context/flows
-  $ auto-engineer generate:server .context/schema.json --destination .
-  $ auto-engineer generate:gql-schema ./server
-  $ auto-engineer implement:server ./server
-  $ auto-engineer import:design-system ./design-system ./.context
-  $ auto-engineer generate:ia ./.context ./flows/*.flow.ts
-  $ auto-engineer generate:client ./starter ./design-system ./client ./ia-schema.json ./schema.graphql
-  $ auto-engineer implement:client ./client ./.context ./preferences.md ./design-system.md
+  ${chalk.gray('# Complete flow from scratch')}
+  $ mkdir shopping-assistant && cd shopping-assistant
+  $ auto create:example shopping-assistant
+  $ cd shopping-assistant && pnpm install
+  $ auto export:schema ./.context ./flows
+
+  ${chalk.gray('# Generate and implement backend')}
+  $ auto generate:server .context/schema.json .
+  $ auto implement:server ./server
+  $ auto check:types ./server
+  $ auto check:tests ./server
+
+  ${chalk.gray('# Import design system and generate frontend (Shadcn)')}
+  $ auto import:design-system ./.context WITH_COMPONENT_SETS ./shadcn-filter.ts
+  $ auto generate:ia ./.context ./flows/*.flow.ts
+  $ auto generate:client ./shadcn-starter ./client ./auto-ia.json ./schema.graphql ./figma-vars.json
+  $ auto implement:client ./client ./.context ./design-principles.md ./design-system.md
+  
+  ${chalk.gray('# Run validation checks')}
+  $ auto check:types ./server --scope project
+  $ auto check:tests ./server
+  $ auto check:lint ./server --fix
+  $ auto check:client ./client
 
 Environment Variables:
-  DEBUG=auto-engineer                     Enable debug mode
-  NO_COLOR=1                              Disable colored output
-  OUTPUT_FORMAT=json                      Set output format
-  AUTO_ENGINEER_API_TOKEN=<token>         Set API token
-  AUTO_ENGINEER_ANALYTICS=false           Disable analytics (enabled by default)
+  ${chalk.gray('AI Providers (need at least one):')}
+  ANTHROPIC_API_KEY                      Anthropic Claude API key
+  OPENAI_API_KEY                         OpenAI API key
+  GEMINI_API_KEY                         Google Gemini API key
+  XAI_API_KEY                            X.AI Grok API key
 
-For more information, visit: https://github.com/SamHatoum/auto-engineer
+  ${chalk.gray('Debugging & Configuration:')}
+  DEBUG=*                                Enable all debug output
+  DEBUG=auto-engineer:*                  Enable auto-engineer debug only
+  NO_COLOR=1                             Disable colored output
+  AUTO_ENGINEER_ANALYTICS=false          Disable usage analytics
+
+Tips:
+  • Use DEBUG=* to troubleshoot command issues, then narrow the debug scope down to specific command(s)
+  • Run 'pnpm install' after create:example
+  • Ensure servers are running before check:client
+
+For docs & support: https://github.com/SamHatoum/auto-engineer
     `,
   );
 

@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.5.18",
+  "version": "0.5.19",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -36,6 +36,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@auto-engineer/backend-checks": "^0.0.1",
     "@auto-engineer/design-system-importer": "^0.4.9",
     "@auto-engineer/emmett-generator": "^0.6.5",
     "@auto-engineer/flowlang": "^0.5.4",
