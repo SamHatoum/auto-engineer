@@ -1,5 +1,12 @@
 # @auto-engineer/flowlang
 
+## 0.5.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.1.2
+
 ## 0.5.5
 
 ### Patch Changes

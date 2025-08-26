@@ -9,6 +9,7 @@ export class FileWatcher {
   private store: IFileStore;
   private bus = new EventEmitter<Events>();
   private index = new Map<string, string>();
+  private textDecoder = new TextDecoder();
 
   constructor(store: IFileStore) {
     this.store = store;
@@ -24,6 +25,11 @@ export class FileWatcher {
     return this.onChange((c) => {
       if (isMatch(c.path)) cb(c);
     });
+  }
+
+  async readFileText(path: string): Promise<string | null> {
+    const buf = await this.store.read(path);
+    return buf ? this.textDecoder.decode(buf) : null;
   }
 
   async writeFile(path: string, content: string | ArrayBuffer | Uint8Array, enc: FileEncoding = 'utf8') {
@@ -43,6 +49,10 @@ export class FileWatcher {
     await this.store.remove(path);
     this.index.delete(path);
     this.bus.emit('change', { path, kind: 'deleted' });
+  }
+
+  async listTree(root = '/') {
+    return this.store.listTree?.(root) ?? [];
   }
 
   async seed(root = '/') {
