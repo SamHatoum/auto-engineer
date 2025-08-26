@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/import-design-system": {
-      "types": "./dist/commands/import-design-system.d.ts",
-      "import": "./dist/commands/import-design-system.js"
     }
   },
   "scripts": {

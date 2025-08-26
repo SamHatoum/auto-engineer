@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { generateTextWithAI, getAvailableProviders } from '@auto-engineer/ai-gateway';
 import path from 'path';

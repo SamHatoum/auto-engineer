@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { spawn } from 'child_process';
 import { join, dirname } from 'path';

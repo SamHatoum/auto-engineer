@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/generate-server": {
-      "types": "./dist/commands/generate-server.d.ts",
-      "import": "./dist/commands/generate-server.js"
     }
   },
   "scripts": {

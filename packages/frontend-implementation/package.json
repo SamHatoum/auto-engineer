@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/implement-client": {
-      "types": "./dist/commands/implement-client.d.ts",
-      "import": "./dist/commands/implement-client.js"
     }
   },
   "scripts": {

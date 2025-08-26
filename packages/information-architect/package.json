@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/generate-ia": {
-      "types": "./dist/commands/generate-ia.d.ts",
-      "import": "./dist/commands/generate-ia.js"
     }
   },
   "scripts": {

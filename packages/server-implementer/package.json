@@ -4,13 +4,14 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "implement-server": "./dist/cli/implement-server.js"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "scripts": {
-    "implement": "tsx src/cli/index.ts",
-    "implement:server": "tsx src/cli/implement-server.ts",
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/cli/implement-server.js",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",

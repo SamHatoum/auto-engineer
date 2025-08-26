@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 import { pathToFileURL } from 'url';

@@ -22,7 +22,7 @@ export const createCreateExampleCommand = (config: Config, analytics: Analytics)
         output.info(`Creating example "${exampleName}" in ${targetDirectory}...`);
 
         // Import the handler
-        const { handleCreateExampleCommand } = await import('@auto-engineer/flowlang/commands/create-example');
+        const { handleCreateExampleCommand } = await import('@auto-engineer/flowlang');
 
         const createCommand = {
           type: 'CreateExample' as const,

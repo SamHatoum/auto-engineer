@@ -4,8 +4,11 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "check-client": "./dist/cli/check-client.js"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": [
     "dist",
@@ -13,8 +16,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "check:client": "tsx src/cli/check-client.ts",
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/cli/check-client.js",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
