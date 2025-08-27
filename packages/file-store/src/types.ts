@@ -7,12 +7,3 @@ export interface IFileStore {
 }
 
 export type ChangeKind = 'created' | 'updated' | 'deleted';
-
-export type FileEncoding = 'utf8' | 'base64';
-
-export type FileChange = {
-  path: string;
-  kind: ChangeKind;
-  hash?: string;
-  size?: number;
-};

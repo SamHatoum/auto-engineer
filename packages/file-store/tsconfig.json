@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "types": ["vitest/globals", "node", "md5", "picomatch"],
+    "types": ["vitest/globals", "node"],
     "lib": ["ES2022", "DOM"],
     "composite": true
   },
