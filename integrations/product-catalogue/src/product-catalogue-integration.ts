@@ -51,10 +51,10 @@ export const ProductCatalog: Integration<'product-catalog', ProductCatalogQuerie
           url: '/api/products',
         });
         if (res.error !== undefined) console.error('Failed to fetch products:', res.error);
-        return { type: 'Products', data: { products: res.data ?? [] } };
+        return { type: 'Products', data: { products: (res.data as Product[]) ?? [] } };
       } catch (err) {
         console.error('Failed to fetch products:', err);
-        return { type: 'Products', data: { products: [] } };
+        return { type: 'Products', data: { products: [] as Product[] } };
       }
     },
 
@@ -66,10 +66,10 @@ export const ProductCatalog: Integration<'product-catalog', ProductCatalogQuerie
           path: { category },
         });
         if (res.error !== undefined) console.error(`Category "${category}" error:`, res.error);
-        return { type: 'ProductsByCategory', data: { category, products: res.data ?? [] } };
+        return { type: 'ProductsByCategory', data: { category, products: (res.data as Product[]) ?? [] } };
       } catch (err) {
         console.error(`Failed to fetch products for category ${category}:`, err);
-        return { type: 'ProductsByCategory', data: { category, products: [] } };
+        return { type: 'ProductsByCategory', data: { category, products: [] as Product[] } };
       }
     },
 
@@ -81,10 +81,10 @@ export const ProductCatalog: Integration<'product-catalog', ProductCatalogQuerie
           query: { q: query },
         });
         if (res.error !== undefined) console.error(`Search "${query}" error:`, res.error);
-        return { type: 'ProductSearchResults', data: { query, products: res.data ?? [] } };
+        return { type: 'ProductSearchResults', data: { query, products: (res.data as Product[]) ?? [] } };
       } catch (err) {
         console.error(`Failed to search products with query "${query}":`, err);
-        return { type: 'ProductSearchResults', data: { query, products: [] } };
+        return { type: 'ProductSearchResults', data: { query, products: [] as Product[] } };
       }
     },
 
@@ -112,11 +112,6 @@ export const ProductCatalog: Integration<'product-catalog', ProductCatalogQuerie
 
 // ---------- MCP tools  ----------
 
-type ProductsQuery = () => Promise<Products>;
-type ProductsByCategoryQuery = (params: { category: string }) => Promise<ProductsByCategory>;
-type ProductSearchQuery = (params: { query: string }) => Promise<ProductSearchResults>;
-type ProductDetailsQuery = (params: { id: string }) => Promise<ProductDetails>;
-
 // All products
 registerTool<Record<string, unknown>>(
   'PRODUCT_CATALOGUE_PRODUCTS',
@@ -129,14 +124,14 @@ registerTool<Record<string, unknown>>(
     schemaDescription: 'Array of ProductCatalogItem',
   },
   async () => {
-    const queries = ProductCatalog.Queries;
+    const queries = ProductCatalog.Queries as ProductCatalogQueries;
     if (queries?.Products == null) {
       return {
         content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.Products is not available' }],
         isError: true,
       };
     }
-    const productsQuery = queries.Products as ProductsQuery;
+    const productsQuery = queries.Products;
     const result = await productsQuery();
     return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
   },
@@ -157,14 +152,14 @@ registerTool<ProductsByCategoryParams>(
     schemaDescription: 'Array of ProductCatalogItem',
   },
   async ({ category }) => {
-    const queries = ProductCatalog.Queries;
+    const queries = ProductCatalog.Queries as ProductCatalogQueries;
     if (queries?.ProductsByCategory == null) {
       return {
         content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductsByCategory is not available' }],
         isError: true,
       };
     }
-    const categoryQuery = queries.ProductsByCategory as ProductsByCategoryQuery;
+    const categoryQuery = queries.ProductsByCategory;
     const result = await categoryQuery({ category });
     return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
   },
@@ -185,14 +180,14 @@ registerTool<ProductSearchParams>(
     schemaDescription: 'Array of ProductCatalogItem',
   },
   async ({ query }) => {
-    const queries = ProductCatalog.Queries;
+    const queries = ProductCatalog.Queries as ProductCatalogQueries;
     if (queries?.ProductSearchResults == null) {
       return {
         content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductSearchResults is not available' }],
         isError: true,
       };
     }
-    const searchQuery = queries.ProductSearchResults as ProductSearchQuery;
+    const searchQuery = queries.ProductSearchResults;
     const result = await searchQuery({ query });
     return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
   },
@@ -213,14 +208,14 @@ registerTool<ProductDetailsParams>(
     schemaDescription: 'Single ProductCatalogItem',
   },
   async ({ id }) => {
-    const queries = ProductCatalog.Queries;
+    const queries = ProductCatalog.Queries as ProductCatalogQueries;
     if (queries?.ProductDetails == null) {
       return {
         content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductDetails is not available' }],
         isError: true,
       };
     }
-    const detailsQuery = queries.ProductDetails as ProductDetailsQuery;
+    const detailsQuery = queries.ProductDetails;
     const result = await detailsQuery({ id });
     if (result.data.product === null) {
       return { content: [{ type: 'text' as const, text: `Product with ID "${id}" not found` }], isError: true };
