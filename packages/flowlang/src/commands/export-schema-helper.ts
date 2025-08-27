@@ -1,5 +1,5 @@
 import createDebug from 'debug';
-import { NodeFileStore, type IExtendedFileStore } from '@auto-engineer/file-store';
+import { getFs } from './filestore.node';
 
 const debug = createDebug('flowlang:export-schema-helper');
 
@@ -9,7 +9,7 @@ const main = async () => {
 
   try {
     // Import getFlows from the project's node_modules to ensure we use the same module context
-    const fs: IExtendedFileStore = new NodeFileStore();
+    const fs = await getFs();
     const projectFlowlangPath = fs.join(
       directory,
       'node_modules',

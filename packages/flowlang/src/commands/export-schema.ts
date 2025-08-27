@@ -1,5 +1,5 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
-import { NodeFileStore, type IExtendedFileStore } from '@auto-engineer/file-store';
+import { getFs } from './filestore.node';
 
 export type ExportSchemaCommand = Command<
   'ExportSchema',
@@ -31,7 +31,7 @@ export async function handleExportSchemaCommand(
 
   try {
     // Run the helper script with tsx
-    const fs: IExtendedFileStore = new NodeFileStore();
+    const fs = await getFs();
     const __dirname = fs.dirname(new URL(import.meta.url).href);
     const helperScript = fs.join(__dirname, 'export-schema-helper.js');
     const { spawn } = await import('child_process');

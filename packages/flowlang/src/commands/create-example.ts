@@ -1,9 +1,5 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
-import { IExtendedFileStore, NodeFileStore } from '@auto-engineer/file-store';
-
-const fs = new NodeFileStore() as IExtendedFileStore;
-const __filename = new URL(import.meta.url).href;
-const __dirname = fs.dirname(__filename);
+import { getFs } from './filestore.node';
 
 export type CreateExampleCommand = Command<
   'CreateExample',
@@ -42,6 +38,8 @@ async function copyDirectoryRecursive(
 ): Promise<string[]> {
   const createdFiles: string[] = [];
 
+  const fs = await getFs();
+
   await fs.ensureDir(targetDir);
 
   const entries = await fs.readdir(sourceDir);
@@ -75,6 +73,10 @@ export async function handleCreateExampleCommand(
 ): Promise<ExampleCreatedEvent | ExampleCreationFailedEvent> {
   const { exampleName, targetDirectory } = command.data;
 
+  const fs = await getFs();
+  const fileName = new URL(import.meta.url).href;
+  const dirName = fs.dirname(fileName);
+
   try {
     const exampleFolder = EXAMPLE_FOLDERS[exampleName];
     if (exampleFolder === undefined) {
@@ -91,7 +93,7 @@ export async function handleCreateExampleCommand(
       };
     }
 
-    const templatesDir = fs.join(__dirname, '..', 'templates');
+    const templatesDir = fs.join(dirName, '..', 'templates');
     const sourceDir = fs.join(templatesDir, exampleFolder);
 
     // Check if source directory exists

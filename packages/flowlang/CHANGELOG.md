@@ -1,5 +1,11 @@
 # @auto-engineer/flowlang
 
+## 0.5.8
+
+### Patch Changes
+
+- isolate Node-only file store usage behind getFs helper
+
 ## 0.5.7
 
 ### Patch Changes
