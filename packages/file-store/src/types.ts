@@ -6,4 +6,12 @@ export interface IFileStore {
   remove(path: string): Promise<void>;
 }
 
-export type ChangeKind = 'created' | 'updated' | 'deleted';
+export interface IExtendedFileStore extends IFileStore {
+  ensureDir(path: string): Promise<void>;
+  readdir(path: string): Promise<Array<{ name: string; type: 'file' | 'dir' }>>;
+  readText(path: string): Promise<string | null>;
+  writeText(path: string, text: string): Promise<void>;
+  join(...parts: string[]): string;
+  dirname(p: string): string;
+  fromHere(relative: string, base?: string): string;
+}

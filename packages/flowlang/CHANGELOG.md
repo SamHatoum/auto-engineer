@@ -1,5 +1,11 @@
 # @auto-engineer/flowlang
 
+## 0.5.7
+
+### Patch Changes
+
+- use NodeFileStore for commands export to restore browser compatibility
+
 ## 0.5.6
 
 ### Patch Changes

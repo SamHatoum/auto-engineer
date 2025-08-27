@@ -1,7 +1,5 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
-import { spawn } from 'child_process';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { NodeFileStore, type IExtendedFileStore } from '@auto-engineer/file-store';
 
 export type ExportSchemaCommand = Command<
   'ExportSchema',
@@ -33,8 +31,10 @@ export async function handleExportSchemaCommand(
 
   try {
     // Run the helper script with tsx
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const helperScript = join(__dirname, 'export-schema-helper.js');
+    const fs: IExtendedFileStore = new NodeFileStore();
+    const __dirname = fs.dirname(new URL(import.meta.url).href);
+    const helperScript = fs.join(__dirname, 'export-schema-helper.js');
+    const { spawn } = await import('child_process');
 
     return new Promise((resolve) => {
       const child = spawn('npx', ['tsx', helperScript, directory], {
@@ -107,12 +107,13 @@ export async function handleExportSchemaCommand(
         }
       });
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
       type: 'SchemaExportFailed',
       data: {
         directory,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: message,
       },
       timestamp: new Date(),
       requestId: command.requestId,

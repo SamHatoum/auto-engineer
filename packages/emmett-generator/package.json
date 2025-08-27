@@ -25,7 +25,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/flowlang": "^0.5.4",
+    "@auto-engineer/flowlang": "^0.5.7",
     "@auto-engineer/message-bus": "^0.3.4",
     "@event-driven-io/emmett": "^0.38.2",
     "apollo-server": "^3.13.0",

@@ -1,10 +1,9 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { IExtendedFileStore, NodeFileStore } from '@auto-engineer/file-store';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = new NodeFileStore() as IExtendedFileStore;
+const __filename = new URL(import.meta.url).href;
+const __dirname = fs.dirname(__filename);
 
 export type CreateExampleCommand = Command<
   'CreateExample',
@@ -43,28 +42,28 @@ async function copyDirectoryRecursive(
 ): Promise<string[]> {
   const createdFiles: string[] = [];
 
-  await fs.mkdir(targetDir, { recursive: true });
+  await fs.ensureDir(targetDir);
 
-  const entries = await fs.readdir(sourceDir, { withFileTypes: true });
+  const entries = await fs.readdir(sourceDir);
 
   for (const entry of entries) {
-    const sourcePath = path.join(sourceDir, entry.name);
+    const sourcePath = fs.join(sourceDir, entry.name);
     let targetName = entry.name;
 
     // Remove .txt extension if present and requested
-    if (removeTxtExtension && entry.isFile() && targetName.endsWith('.txt')) {
+    if (removeTxtExtension && entry.type === 'file' && targetName.endsWith('.txt')) {
       targetName = targetName.slice(0, -4);
     }
 
-    const targetPath = path.join(targetDir, targetName);
+    const targetPath = fs.join(targetDir, targetName);
 
-    if (entry.isDirectory()) {
+    if (entry.type === 'dir') {
       const subFiles = await copyDirectoryRecursive(sourcePath, targetPath, removeTxtExtension);
       createdFiles.push(...subFiles);
     } else {
-      const content = await fs.readFile(sourcePath, 'utf-8');
-      await fs.writeFile(targetPath, content);
-      createdFiles.push(path.relative(targetDir, targetPath));
+      const content = await fs.readText(sourcePath);
+      await fs.writeText(targetPath, content ?? '');
+      createdFiles.push(targetName);
     }
   }
 
@@ -92,13 +91,11 @@ export async function handleCreateExampleCommand(
       };
     }
 
-    const templatesDir = path.resolve(__dirname, '..', 'templates');
-    const sourceDir = path.join(templatesDir, exampleFolder);
+    const templatesDir = fs.join(__dirname, '..', 'templates');
+    const sourceDir = fs.join(templatesDir, exampleFolder);
 
     // Check if source directory exists
-    try {
-      await fs.access(sourceDir);
-    } catch {
+    if (!(await fs.exists(sourceDir))) {
       return {
         type: 'ExampleCreationFailed',
         data: {

@@ -1,5 +1,13 @@
 # @auto-engineer/cli
 
+## 0.5.20
+
+### Patch Changes
+
+- split node-only commands into subpath export to restore browser compatibility
+- Updated dependencies
+  - @auto-engineer/flowlang@0.5.7
+
 ## 0.5.17
 
 ### Patch Changes

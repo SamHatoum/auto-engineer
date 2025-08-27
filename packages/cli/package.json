@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.5.19",
+  "version": "0.5.20",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -39,7 +39,7 @@
     "@auto-engineer/backend-checks": "^0.0.1",
     "@auto-engineer/design-system-importer": "^0.4.9",
     "@auto-engineer/emmett-generator": "^0.6.5",
-    "@auto-engineer/flowlang": "^0.5.4",
+    "@auto-engineer/flowlang": "^0.5.7",
     "@auto-engineer/frontend-checks": "^0.4.8",
     "@auto-engineer/frontend-implementation": "^0.4.10",
     "@auto-engineer/information-architect": "^0.4.4",
