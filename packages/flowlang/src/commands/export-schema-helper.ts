@@ -1,20 +1,17 @@
 import createDebug from 'debug';
 import { getFs } from './filestore.node';
+import type { IExtendedFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:export-schema-helper');
 
 const main = async () => {
-  // Now expecting: [contextDir, flowsDir]
-  const contextDir = process.argv[2] || './.context';
-  const flowsDir = process.argv[3] || './flows';
-
-  debug('Starting export-schema-helper');
-  debug('  Context dir: %s', contextDir);
-  debug('  Flows dir: %s', flowsDir);
+  const directory = process.argv[2] || process.cwd();
+  debug('Starting export-schema-helper with directory: %s', directory);
 
   try {
     // Import getFlows from the project's node_modules to ensure we use the same module context
-    const fs = await getFs();
+    const getFileStore = getFs as () => Promise<IExtendedFileStore>;
+    const fs: IExtendedFileStore = await getFileStore();
     const projectFlowlangPath = fs.join(
       directory,
       'node_modules',

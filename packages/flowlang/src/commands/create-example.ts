@@ -197,16 +197,22 @@ function createCommandFromCliArgs(args: CliArgs): CreateExampleCommand {
 
 // Export for CLI usage - this matches what plugin-loader expects
 const handler = async (commandOrArgs: CreateExampleCommand | CliArgs) => {
+  // Get the file system instance
+  const fs = await getFs();
+
   // Write to a debug file since console output seems to be suppressed
   const debugInfo = `Handler received: ${JSON.stringify(commandOrArgs, null, 2)}\n`;
-  await fs.writeFile('/tmp/create-example-debug.txt', debugInfo);
+  await fs.writeText('/tmp/create-example-debug.txt', debugInfo);
 
   // Handle both Command object from message bus and plain args
   const command = isCreateExampleCommand(commandOrArgs)
     ? createCommandFromMessageBus(commandOrArgs)
     : createCommandFromCliArgs(commandOrArgs);
 
-  await fs.appendFile('/tmp/create-example-debug.txt', `Command created: ${JSON.stringify(command, null, 2)}\n`);
+  await fs.writeText(
+    '/tmp/create-example-debug.txt',
+    `${debugInfo}Command created: ${JSON.stringify(command, null, 2)}\n`,
+  );
 
   console.log('Creating example with command:', JSON.stringify(command, null, 2));
 
