@@ -75,51 +75,23 @@ async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> 
 async function getUniqueSchemaPath(
   outputDir: string,
 ): Promise<{ filePath: string; existingSchema: object | undefined }> {
-  debugFiles('Finding unique schema path in: %s', outputDir);
-  let suffix = 0;
+  debugFiles('Finding schema path in: %s', outputDir);
   let existingSchema: object | undefined;
 
-  // First, check if there's an existing ia-scheme file
-  const existingFiles = await fs.readdir(outputDir).catch(() => []);
-  debugFiles('Found %d files in output directory', existingFiles.length);
+  // Always use the same filename - overwrite if it exists
+  const filePath = path.join(outputDir, 'auto-ia-scheme.json');
+  debugFiles('Schema will be written to: %s', filePath);
 
-  const iaSchemeFiles = existingFiles.filter((file) => file.match(/^auto-ia-scheme(-\d+)?\.json$/));
-  debugFiles('Found %d existing IA scheme files', iaSchemeFiles.length);
-
-  if (iaSchemeFiles.length > 0) {
-    // Find the highest numbered file
-    const numbers = iaSchemeFiles.map((file) => {
-      const match = file.match(/auto-ia-scheme(?:-(\d+))?\.json$/);
-      const num = match && match[1] ? parseInt(match[1], 10) : 0;
-      debugFiles('  File %s -> number %d', file, num);
-      return num;
-    });
-    const highestNumber = Math.max(...numbers);
-    debugFiles('Highest numbered file: %d', highestNumber);
-
-    // Read the highest numbered file as the existing schema
-    const existingFile = highestNumber === 0 ? 'auto-ia-scheme.json' : `auto-ia-scheme-${highestNumber}.json`;
-    const existingPath = path.join(outputDir, existingFile);
-    debugFiles('Reading existing schema from: %s', existingPath);
-
-    try {
-      const content = await fs.readFile(existingPath, 'utf-8');
-      existingSchema = JSON.parse(content) as object;
-      debugFiles('Existing schema loaded successfully');
-    } catch (error) {
-      debugFiles('Could not read/parse existing schema: %O', error);
-      // If we can't read/parse it, treat as no existing schema
-    }
-
-    // New file will be one number higher
-    suffix = highestNumber + 1;
-    debugFiles('New file will use suffix: %d', suffix);
+  // Try to read existing schema if it exists
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    existingSchema = JSON.parse(content) as object;
+    debugFiles('Existing schema loaded successfully from: %s', filePath);
+  } catch (error) {
+    debugFiles('No existing schema found at: %s', filePath);
+    // If we can't read/parse it, treat as no existing schema
   }
 
-  const filePath =
-    suffix === 0 ? path.join(outputDir, 'auto-ia-scheme.json') : path.join(outputDir, `auto-ia-scheme-${suffix}.json`);
-
-  debugFiles('New schema will be written to: %s', filePath);
   debugFiles('Existing schema found: %s', existingSchema ? 'yes' : 'no');
 
   return { filePath, existingSchema };
@@ -329,6 +301,9 @@ export default async (commandOrArgs: GenerateIACommand | CliArgs) => {
     } else {
       command = commandOrArgs;
     }
+  } else if ('outputDir' in commandOrArgs && 'flowFiles' in commandOrArgs) {
+    // Handle message bus format with outputDir and flowFiles
+    command = await parseFromMessageBus(commandOrArgs as { outputDir?: string; flowFiles?: string[] });
   } else {
     command = await parseCliArgs(commandOrArgs);
   }

@@ -148,17 +148,34 @@ function isImportDesignSystemCommand(obj: unknown): obj is ImportDesignSystemCom
 
 // Default export for CLI usage
 export default async (commandOrArgs: ImportDesignSystemCommand | CliArgs) => {
-  const command = isImportDesignSystemCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'ImportDesignSystem' as const,
-        data: {
-          outputDir: commandOrArgs._?.[0] ?? '.context/design-system.md',
-          strategy: commandOrArgs.strategy,
-          filterPath: commandOrArgs.filter,
-        },
-        timestamp: new Date(),
-      };
+  let command: ImportDesignSystemCommand;
+
+  if (isImportDesignSystemCommand(commandOrArgs)) {
+    command = commandOrArgs;
+  } else if ('outputDir' in commandOrArgs) {
+    // Handle message bus format
+    const args = commandOrArgs as { outputDir?: string; strategy?: string; filterPath?: string };
+    command = {
+      type: 'ImportDesignSystem' as const,
+      data: {
+        outputDir: args.outputDir ?? '.context',
+        strategy: args.strategy as keyof typeof ImportStrategy | undefined,
+        filterPath: args.filterPath,
+      },
+      timestamp: new Date(),
+    };
+  } else {
+    // Handle traditional CLI args format
+    command = {
+      type: 'ImportDesignSystem' as const,
+      data: {
+        outputDir: commandOrArgs._?.[0] ?? '.context',
+        strategy: commandOrArgs._?.[1] as keyof typeof ImportStrategy | undefined,
+        filterPath: commandOrArgs._?.[2],
+      },
+      timestamp: new Date(),
+    };
+  }
 
   const result = await handleImportDesignSystemCommandInternal(command);
   if (result.type === 'DesignSystemImported') {

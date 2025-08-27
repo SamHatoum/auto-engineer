@@ -73,7 +73,7 @@ const createCLI = () => {
 // Type-safe command data mappers
 type CommandData = Record<string, unknown>;
 
-const commandMappers: Record<string, (args: string[], options: Record<string, unknown>) => CommandData> = {
+const commandMappers: Record<string, (args: (string | string[])[], options: Record<string, unknown>) => CommandData> = {
   'create:example': (args) => ({ name: args[0] }),
   'export:schema': (args) => ({ contextDir: args[0], flowsDir: args[1] }),
   'generate:server': (args) => ({ schemaPath: args[0], destination: args[1] }),
@@ -113,12 +113,17 @@ const commandMappers: Record<string, (args: string[], options: Record<string, un
   }),
   'generate:ia': (args) => ({
     outputDir: args[0],
+    // Handle variadic arguments - args[1] might be an array if variadic
     flowFiles: Array.isArray(args[1]) ? args[1] : args.slice(1),
   }),
   'copy:example': (args) => ({ exampleName: args[0], destination: args[1] }),
 };
 
-const prepareCommandData = (alias: string, args: string[], options: Record<string, unknown>): CommandData => {
+const prepareCommandData = (
+  alias: string,
+  args: (string | string[])[],
+  options: Record<string, unknown>,
+): CommandData => {
   const mapper = commandMappers[alias];
   if (mapper !== undefined) {
     return mapper(args, options);
@@ -263,7 +268,10 @@ export default {
       // Add arguments from the command manifest
       if (command.args) {
         command.args.forEach((arg) => {
-          const argString = arg.required === true ? `<${arg.name}>` : `[${arg.name}]`;
+          // Handle variadic arguments (e.g., flows...)
+          const isVariadic = arg.name.endsWith('...');
+          const argName = isVariadic ? arg.name : arg.name;
+          const argString = arg.required === true ? `<${argName}>` : `[${argName}]`;
           cmd.argument(argString, arg.description ?? '');
         });
       }
@@ -280,12 +288,30 @@ export default {
           await analytics.track({ command: alias, success: true });
 
           // Extract arguments and options
+          // Commander passes: [...args, command, options]
+          // For variadic, all extra args are collected into an array
           const cmdArgs = args.slice(0, -2); // Last two are command and options
           const options = args[args.length - 1] as Record<string, unknown>;
-          const nonEmptyArgs = cmdArgs.filter((arg): arg is string => typeof arg === 'string' && arg !== '');
+
+          // Debug logging
+          if (process.env.DEBUG?.includes('cli:')) {
+            console.error('DEBUG cli: Raw args:', args);
+            console.error('DEBUG cli: Command args:', cmdArgs);
+          }
+
+          // Filter out empty strings but keep arrays (for variadic args)
+          const nonEmptyArgs = cmdArgs.filter((arg) => {
+            if (typeof arg === 'string') return arg !== '';
+            if (Array.isArray(arg)) return true;
+            return false;
+          });
 
           // Prepare command data based on the command type
-          const commandData = prepareCommandData(alias, nonEmptyArgs, options);
+          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options);
+
+          if (process.env.DEBUG?.includes('cli:')) {
+            console.error('DEBUG cli: Prepared command data:', commandData);
+          }
 
           // Execute through the plugin loader which will dispatch via message bus
           await pluginLoader.executeCommand(alias, commandData);

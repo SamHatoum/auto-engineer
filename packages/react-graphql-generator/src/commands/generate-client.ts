@@ -158,6 +158,23 @@ const CLI_DEFAULTS = {
 
 // Helper function to parse CLI arguments
 function parseCliArgs(cliArgs: CliArgs): GenerateClientCommand {
+  // Check if this is from message bus (has the properties directly)
+  if ('starterDir' in cliArgs && 'targetDir' in cliArgs) {
+    // Message bus format - properties are passed directly
+    return {
+      type: 'GenerateClient',
+      data: {
+        starterDir: (cliArgs.starterDir as string) ?? CLI_DEFAULTS.starterDir,
+        targetDir: (cliArgs.targetDir as string) ?? CLI_DEFAULTS.targetDir,
+        iaSchemaPath: (cliArgs.iaSchemaPath as string) ?? CLI_DEFAULTS.iaSchemaPath,
+        gqlSchemaPath: (cliArgs.gqlSchemaPath as string) ?? CLI_DEFAULTS.gqlSchemaPath,
+        figmaVariablesPath: (cliArgs.figmaVariablesPath as string) ?? CLI_DEFAULTS.figmaVariablesPath,
+      },
+      timestamp: new Date(),
+    };
+  }
+
+  // Traditional CLI format with _ array
   const args = cliArgs._ ?? [];
 
   return {
@@ -180,13 +197,27 @@ function isGenerateClientCommand(obj: unknown): obj is GenerateClientCommand {
     obj !== null &&
     'type' in obj &&
     'data' in obj &&
-    (obj as { type: unknown }).type === 'GenerateClient'
+    ((obj as { type: unknown }).type === 'GenerateClient' || (obj as { type: unknown }).type === 'generate:client')
   );
 }
 
 // Default export for CLI usage
 export default async (commandOrArgs: GenerateClientCommand | CliArgs) => {
-  const command = isGenerateClientCommand(commandOrArgs) ? commandOrArgs : parseCliArgs(commandOrArgs);
+  debug('Default export called with:', commandOrArgs);
+
+  let command: GenerateClientCommand;
+
+  if (isGenerateClientCommand(commandOrArgs)) {
+    // Normalize the type if it comes from message bus
+    command = {
+      ...commandOrArgs,
+      type: 'GenerateClient' as const,
+    };
+  } else {
+    command = parseCliArgs(commandOrArgs);
+  }
+
+  debug('Parsed command:', command);
 
   const result = await handleGenerateClientCommandInternal(command);
   if (result.type === 'ClientGenerated') {
