@@ -1,22 +1,18 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 import createDebug from 'debug';
 
 const debug = createDebug('react-graphql-generator:builder');
 const debugFiles = createDebug('react-graphql-generator:builder:files');
 const debugBuild = createDebug('react-graphql-generator:builder:build');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();
 
   async cloneStarter(_starterDir: string): Promise<this> {
     debug('Cloning starter from: %s', _starterDir);
-    // If the path is already absolute, use it as is, otherwise resolve relative to __dirname
-    const starterDir = path.isAbsolute(_starterDir) ? _starterDir : path.resolve(__dirname, _starterDir);
+    // If the path is already absolute, use it as is, otherwise resolve relative to current working directory
+    const starterDir = path.isAbsolute(_starterDir) ? _starterDir : path.resolve(process.cwd(), _starterDir);
     debug('Resolved starter directory: %s', starterDir);
     await this.collectFiles(starterDir, '');
     debug('Starter files collected: %d files', this.starterFiles.size);

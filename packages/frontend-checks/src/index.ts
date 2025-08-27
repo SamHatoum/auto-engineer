@@ -171,6 +171,9 @@ export async function getPageScreenshot(url: string): Promise<string> {
   return buffer.toString('base64');
 }
 
+// Export CLI manifest
+export { CLI_MANIFEST } from './cli-manifest';
+
 // Export command handler
 export {
   checkClientCommandHandler,

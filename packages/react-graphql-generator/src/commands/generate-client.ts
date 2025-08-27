@@ -39,7 +39,7 @@ export type ClientGenerationFailedEvent = Event<
   }
 >;
 
-export async function handleGenerateClientCommand(
+async function handleGenerateClientCommandInternal(
   command: GenerateClientCommand,
 ): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> {
   const { starterDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath } = command.data;
@@ -130,7 +130,7 @@ export const generateClientCommandHandler: CommandHandler<GenerateClientCommand>
   name: 'GenerateClient',
   handle: async (command: GenerateClientCommand): Promise<void> => {
     debug('Command handler invoked for GenerateClient');
-    const result = await handleGenerateClientCommand(command);
+    const result = await handleGenerateClientCommandInternal(command);
     if (result.type === 'ClientGenerated') {
       debug('Handler completed successfully');
       console.log('Client generated successfully');
@@ -139,4 +139,59 @@ export const generateClientCommandHandler: CommandHandler<GenerateClientCommand>
       console.error(`Failed: ${result.data.error}`);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Default values for CLI arguments
+const CLI_DEFAULTS = {
+  starterDir: './.auto/shadcn-starter',
+  targetDir: './client',
+  iaSchemaPath: './.context/auto-ia-scheme.json',
+  gqlSchemaPath: './.context/schema.graphql',
+  figmaVariablesPath: './.context/figma-variables.json',
+};
+
+// Helper function to parse CLI arguments
+function parseCliArgs(cliArgs: CliArgs): GenerateClientCommand {
+  const args = cliArgs._ ?? [];
+
+  return {
+    type: 'GenerateClient',
+    data: {
+      starterDir: args[0] ?? CLI_DEFAULTS.starterDir,
+      targetDir: args[1] ?? CLI_DEFAULTS.targetDir,
+      iaSchemaPath: args[2] ?? CLI_DEFAULTS.iaSchemaPath,
+      gqlSchemaPath: args[3] ?? CLI_DEFAULTS.gqlSchemaPath,
+      figmaVariablesPath: args[4] ?? CLI_DEFAULTS.figmaVariablesPath,
+    },
+    timestamp: new Date(),
+  };
+}
+
+// Type guard to check if it's a GenerateClientCommand
+function isGenerateClientCommand(obj: unknown): obj is GenerateClientCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'GenerateClient'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: GenerateClientCommand | CliArgs) => {
+  const command = isGenerateClientCommand(commandOrArgs) ? commandOrArgs : parseCliArgs(commandOrArgs);
+
+  const result = await handleGenerateClientCommandInternal(command);
+  if (result.type === 'ClientGenerated') {
+    console.log('Client generated successfully');
+  } else {
+    console.error(`Failed: ${result.data.error}`);
+  }
 };

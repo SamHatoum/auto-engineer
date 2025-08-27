@@ -29,6 +29,10 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "^0.4.5",
-    "@auto-engineer/message-bus": "^0.3.4"
+    "@auto-engineer/message-bus": "^0.3.4",
+    "fast-glob": "^3.3.2"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.5.19"
   }
 }

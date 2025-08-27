@@ -75,7 +75,7 @@ function extractFailedFiles(output: string, rootDir: string, targetDir?: string)
 }
 
 // eslint-disable-next-line complexity
-export async function handleCheckTypesCommand(
+async function handleCheckTypesCommandInternal(
   command: CheckTypesCommand,
 ): Promise<TypeCheckPassedEvent | TypeCheckFailedEvent> {
   const { targetDirectory, scope = 'slice' } = command.data;
@@ -214,7 +214,7 @@ export const checkTypesCommandHandler: CommandHandler<CheckTypesCommand> = {
   name: 'CheckTypes',
   handle: async (command: CheckTypesCommand): Promise<void> => {
     debug('CommandHandler executing for CheckTypes');
-    const result = await handleCheckTypesCommand(command);
+    const result = await handleCheckTypesCommandInternal(command);
 
     if (result.type === 'TypeCheckPassed') {
       debug('Command handler completed: success');
@@ -230,4 +230,49 @@ export const checkTypesCommandHandler: CommandHandler<CheckTypesCommand> = {
       process.exit(1);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  scope?: 'slice' | 'project';
+  [key: string]: unknown;
+}
+
+// Type guard
+function isCheckTypesCommand(obj: unknown): obj is CheckTypesCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'CheckTypes'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: CheckTypesCommand | CliArgs) => {
+  const command = isCheckTypesCommand(commandOrArgs)
+    ? commandOrArgs
+    : {
+        type: 'CheckTypes' as const,
+        data: {
+          targetDirectory: commandOrArgs._?.[0] ?? 'server',
+          scope: commandOrArgs.scope ?? 'slice',
+        },
+        timestamp: new Date(),
+      };
+
+  const result = await handleCheckTypesCommandInternal(command);
+  if (result.type === 'TypeCheckPassed') {
+    console.log(`✅ Type check passed`);
+    console.log(`   Checked ${result.data.checkedFiles} files`);
+  } else {
+    console.error(`❌ Type check failed`);
+    console.error(`   Failed files: ${result.data.failedFiles.join(', ')}`);
+    if (result.data.errors) {
+      console.error(`   Errors:\n${result.data.errors.substring(0, 500)}`);
+    }
+    process.exit(1);
+  }
 };

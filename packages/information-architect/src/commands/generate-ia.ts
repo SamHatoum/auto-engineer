@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { processFlowsWithAI } from '../index';
 import { type UXSchema } from '../types';
 import createDebug from 'debug';
+import fg from 'fast-glob';
 
 const debug = createDebug('ia:generate-command');
 const debugSchema = createDebug('ia:generate-command:schema');
@@ -124,7 +125,7 @@ async function getUniqueSchemaPath(
   return { filePath, existingSchema };
 }
 
-export async function handleGenerateIACommand(
+async function handleGenerateIACommandInternal(
   command: GenerateIACommand,
 ): Promise<IAGeneratedEvent | IAGenerationFailedEvent> {
   const { outputDir, flowFiles } = command.data;
@@ -224,11 +225,118 @@ export async function handleGenerateIACommand(
 export const generateIACommandHandler: CommandHandler<GenerateIACommand> = {
   name: 'GenerateIA',
   handle: async (command: GenerateIACommand): Promise<void> => {
-    const result = await handleGenerateIACommand(command);
+    const result = await handleGenerateIACommandInternal(command);
     if (result.type === 'IAGenerated') {
       console.log('IA schema generated successfully');
     } else {
       console.error(`Failed: ${result.data.error}`);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Helper function to expand glob patterns
+async function expandGlobPatterns(patterns: string[]): Promise<string[]> {
+  const expandedFiles: string[] = [];
+  for (const pattern of patterns) {
+    if (pattern.includes('*')) {
+      // This is a glob pattern, expand it
+      const matches = await fg(pattern);
+      expandedFiles.push(...matches);
+    } else {
+      expandedFiles.push(pattern);
+    }
+  }
+  return expandedFiles;
+}
+
+// Helper function to parse from message bus format
+async function parseFromMessageBus(data: { outputDir?: string; flowFiles?: string[] }): Promise<GenerateIACommand> {
+  const outputDir = data.outputDir ?? '.context';
+  const flowFiles = data.flowFiles ?? [];
+
+  // If no flow files provided, use default pattern
+  const resolvedFlowFiles = flowFiles.length > 0 ? flowFiles : ['flows/*.flow.ts'];
+
+  // Expand glob patterns if necessary
+  const expandedFlowFiles = await expandGlobPatterns(resolvedFlowFiles);
+
+  return {
+    type: 'GenerateIA',
+    data: {
+      outputDir,
+      flowFiles: expandedFlowFiles,
+    },
+    timestamp: new Date(),
+  };
+}
+
+// Helper function to parse CLI arguments
+async function parseCliArgs(cliArgs: CliArgs): Promise<GenerateIACommand> {
+  // Handle case where command comes from message bus with data already structured
+  if ('data' in cliArgs && typeof cliArgs.data === 'object' && cliArgs.data !== null) {
+    return parseFromMessageBus(cliArgs.data as { outputDir?: string; flowFiles?: string[] });
+  }
+
+  // Handle traditional CLI arguments with _ array
+  const outputDir = cliArgs._?.[0] ?? '.context';
+  // All remaining arguments are flow files
+  const flowFiles = cliArgs._ !== undefined ? cliArgs._.slice(1) : [];
+
+  // If no flow files provided, use default pattern
+  const resolvedFlowFiles = flowFiles.length > 0 ? flowFiles : ['flows/*.flow.ts'];
+
+  // Expand glob patterns if necessary
+  const expandedFlowFiles = await expandGlobPatterns(resolvedFlowFiles);
+
+  return {
+    type: 'GenerateIA',
+    data: {
+      outputDir,
+      flowFiles: expandedFlowFiles,
+    },
+    timestamp: new Date(),
+  };
+}
+
+// Type guard to check if it's a GenerateIACommand
+function isGenerateIACommand(obj: unknown): obj is GenerateIACommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    ((obj as { type: unknown }).type === 'GenerateIA' || (obj as { type: unknown }).type === 'generate:ia')
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: GenerateIACommand | CliArgs) => {
+  let command: GenerateIACommand;
+
+  if (isGenerateIACommand(commandOrArgs)) {
+    // Normalize the type if it comes from message bus
+    if ((commandOrArgs as { type: string }).type === 'generate:ia') {
+      command = {
+        ...commandOrArgs,
+        type: 'GenerateIA' as const,
+      };
+    } else {
+      command = commandOrArgs;
+    }
+  } else {
+    command = await parseCliArgs(commandOrArgs);
+  }
+
+  const result = await handleGenerateIACommandInternal(command);
+  if (result.type === 'IAGenerated') {
+    console.log('IA schema generated successfully');
+  } else {
+    console.error(`Failed: ${result.data.error}`);
+  }
 };

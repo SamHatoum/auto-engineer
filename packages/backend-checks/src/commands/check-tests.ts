@@ -88,7 +88,7 @@ function parseVitestOutput(output: string): {
 }
 
 // eslint-disable-next-line complexity
-export async function handleCheckTestsCommand(
+async function handleCheckTestsCommandInternal(
   command: CheckTestsCommand,
 ): Promise<TestsCheckPassedEvent | TestsCheckFailedEvent> {
   const { targetDirectory, scope = 'slice' } = command.data;
@@ -227,7 +227,7 @@ export const checkTestsCommandHandler: CommandHandler<CheckTestsCommand> = {
   name: 'CheckTests',
   handle: async (command: CheckTestsCommand): Promise<void> => {
     debug('CommandHandler executing for CheckTests');
-    const result = await handleCheckTestsCommand(command);
+    const result = await handleCheckTestsCommandInternal(command);
 
     if (result.type === 'TestsCheckPassed') {
       debug('Command handler completed: success');
@@ -248,4 +248,54 @@ export const checkTestsCommandHandler: CommandHandler<CheckTestsCommand> = {
       process.exit(1);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  scope?: 'slice' | 'project';
+  [key: string]: unknown;
+}
+
+// Type guard
+function isCheckTestsCommand(obj: unknown): obj is CheckTestsCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'CheckTests'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: CheckTestsCommand | CliArgs) => {
+  const command = isCheckTestsCommand(commandOrArgs)
+    ? commandOrArgs
+    : {
+        type: 'CheckTests' as const,
+        data: {
+          targetDirectory: commandOrArgs._?.[0] ?? 'server',
+          scope: commandOrArgs.scope ?? 'slice',
+        },
+        timestamp: new Date(),
+      };
+
+  const result = await handleCheckTestsCommandInternal(command);
+  if (result.type === 'TestsCheckPassed') {
+    console.log(`✅ All tests passed`);
+    console.log(`   Tests run: ${result.data.testsRun}`);
+    console.log(`   Tests passed: ${result.data.testsPassed}`);
+  } else {
+    console.error(`❌ Tests failed`);
+    console.error(`   Tests run: ${result.data.testsRun}`);
+    console.error(`   Tests failed: ${result.data.testsFailed}`);
+    if (result.data.failedTests.length > 0) {
+      console.error(`   Failed files: ${result.data.failedTests.join(', ')}`);
+    }
+    if (result.data.errors) {
+      console.error(`   Errors:\n${result.data.errors.substring(0, 500)}`);
+    }
+    process.exit(1);
+  }
 };

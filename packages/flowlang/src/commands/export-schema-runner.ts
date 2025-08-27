@@ -1,39 +1,30 @@
+#!/usr/bin/env node
+// This runner is executed in the target directory context to avoid module resolution issues
+import { resolve } from 'path';
+import { writeFileSync, mkdirSync } from 'fs';
 import createDebug from 'debug';
-import { getFs } from './filestore.node';
 
-const debug = createDebug('flowlang:export-schema-helper');
+const debug = createDebug('flowlang:export-schema-runner');
 
 const main = async () => {
-  // Now expecting: [contextDir, flowsDir]
   const contextDir = process.argv[2] || './.context';
   const flowsDir = process.argv[3] || './flows';
 
-  debug('Starting export-schema-helper');
+  debug('Starting export-schema-runner');
   debug('  Context dir: %s', contextDir);
   debug('  Flows dir: %s', flowsDir);
 
   try {
-    // Import getFlows from the project's node_modules to ensure we use the same module context
-    const fs = await getFs();
-    const projectFlowlangPath = fs.join(
-      directory,
-      'node_modules',
-      '@auto-engineer',
-      'flowlang',
-      'dist',
-      'src',
-      'loader',
-      'getFlows.js',
-    );
-    debug('Importing getFlows from: %s', projectFlowlangPath);
+    // Import from the installed package in the target directory
+    // This ensures we use the same module instance as the flow files
+    const flowlang = await import('@auto-engineer/flowlang');
+    const { getFlows } = flowlang;
 
-    const { pathToFileURL } = await import('url');
-    const flowlangModule = (await import(pathToFileURL(projectFlowlangPath).href)) as {
-      getFlows: typeof import('../loader/getFlows').getFlows;
-    };
-    const { getFlows } = flowlangModule;
+    if (typeof getFlows !== 'function') {
+      throw new Error('getFlows not found in @auto-engineer/flowlang exports');
+    }
 
-    const flowsPath = fs.join(directory, 'flows');
+    const flowsPath = resolve(process.cwd(), flowsDir);
     debug('Resolved flows path: %s', flowsPath);
 
     const result = await getFlows({ root: flowsPath });
@@ -46,11 +37,11 @@ const main = async () => {
     );
 
     const json = JSON.stringify(schema, null, 2);
-    const contextDir = fs.join(directory, '.context');
-    const outPath = fs.join(contextDir, 'schema.json');
+    const resolvedContextDir = resolve(process.cwd(), contextDir);
+    const outPath = resolve(resolvedContextDir, 'schema.json');
 
-    await fs.ensureDir(contextDir);
-    await fs.writeText(outPath, json);
+    mkdirSync(resolvedContextDir, { recursive: true });
+    writeFileSync(outPath, json);
     debug('Schema written to: %s', outPath);
 
     // Output success as JSON for parent process

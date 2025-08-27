@@ -1,15 +1,43 @@
 # @auto-engineer/backend-checks
 
-Backend validation commands for Auto Engineer projects. Provides discrete, single-responsibility commands for checking types, tests, and linting that can be orchestrated through event-driven workflows.
+Backend validation commands for Auto Engineer projects. Plugin for the Auto Engineer CLI that provides commands for checking types, tests, and linting that can be orchestrated through event-driven workflows.
+
+## Installation
+
+This is a plugin for the Auto Engineer CLI. Install both the CLI and this plugin:
+
+```bash
+npm install -g @auto-engineer/cli
+npm install @auto-engineer/backend-checks
+```
+
+## Configuration
+
+Add this plugin to your `auto.config.ts`:
+
+```typescript
+export default {
+  plugins: [
+    '@auto-engineer/backend-checks',
+    // ... other plugins
+  ],
+};
+```
 
 ## Commands
+
+This plugin provides the following commands:
+
+- `check:types` - Check TypeScript types in the backend code
+- `check:lint` - Run linter checks on the backend code
+- `check:tests` - Run tests on the backend code
 
 ### CheckTypes
 
 Runs TypeScript type checking on a target directory or project.
 
-**Command**: `CheckTypes`
-**Events**:
+Command: `CheckTypes`
+Events:
 
 - `TypeCheckPassed` - Emitted when all types are valid
 - `TypeCheckFailed` - Emitted when type errors are found
@@ -18,8 +46,8 @@ Runs TypeScript type checking on a target directory or project.
 
 Runs test suite using Vitest on a target directory or project.
 
-**Command**: `CheckTests`
-**Events**:
+Command: `CheckTests`
+Events:
 
 - `TestsCheckPassed` - Emitted when all tests pass
 - `TestsCheckFailed` - Emitted when tests fail
@@ -28,8 +56,8 @@ Runs test suite using Vitest on a target directory or project.
 
 Runs ESLint checks on TypeScript files in a target directory or project.
 
-**Command**: `CheckLint`  
-**Events**:
+Command: `CheckLint`  
+Events:
 
 - `LintCheckPassed` - Emitted when no lint issues found
 - `LintCheckFailed` - Emitted when lint issues are detected

@@ -57,10 +57,14 @@ async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Pr
 async function executeNative(files: string[]) {
   debugImport('native: importing %d files', files.length);
   for (const file of files) {
+    debugImport('native: importing file %s', file);
     const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
+    debugImport('native: import URL %s', url);
     const mod = (await import(url)) as Record<string, unknown>;
+    debugImport('native: imported module keys: %o', Object.keys(mod));
     for (const [, val] of Object.entries(mod)) if (isIntegrationObject(val)) integrationRegistry.register(val);
   }
+  debugImport('native: after import, flows count: %d', registry.getAllFlows().length);
 }
 
 async function createVfsIfNeeded(providedVfs?: IFileStore): Promise<IFileStore> {
@@ -143,6 +147,44 @@ async function executeBundleMode(
       }
     }
     debugImport('after failure fallback: flows=%d', registry.getAllFlows().length);
+
+    // If bundle mode completely failed to load any flows, throw to trigger native fallback
+    if (registry.getAllFlows().length === 0) {
+      throw new Error('Bundle mode failed to load any flows');
+    }
+  }
+}
+
+async function executeFiles(
+  files: string[],
+  vfs: IFileStore,
+  importMap: Record<string, unknown>,
+  esbuildWasmURL: string | undefined,
+  mode: 'native' | 'bundle',
+): Promise<void> {
+  if (mode === 'native' && !isBrowser) {
+    await executeNative(files);
+  } else {
+    try {
+      await executeBundleMode(files, vfs, importMap, esbuildWasmURL);
+    } catch (err) {
+      debugImport('bundle mode failed, falling back to native mode: %o', err);
+      if (!isBrowser) {
+        await executeNative(files);
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
+function logFlowResults(flows: Flow[]): void {
+  debug('flows after load = %d', flows.length);
+  if (flows.length <= 20) {
+    debug(
+      'flow names: %o',
+      flows.map((f) => f.name),
+    );
   }
 }
 
@@ -158,6 +200,7 @@ export const getFlows = async (opts: GetFlowsOptions = {}) => {
   const vfs = await createVfsIfNeeded(opts.vfs);
 
   debug('start getFlows root=%s mode=%s', root, mode);
+  debug('getFlows called, stack: %s', new Error().stack);
 
   registry.clearAll();
   messageRegistry.messages.clear();
@@ -168,19 +211,10 @@ export const getFlows = async (opts: GetFlowsOptions = {}) => {
     throw new Error(`getFlows: no candidate files found. root=${root} pattern=${String(pattern)}`);
   }
 
-  if (mode === 'native' && !isBrowser) {
-    await executeNative(files);
-  } else {
-    await executeBundleMode(files, vfs, importMap, esbuildWasmURL);
-  }
+  await executeFiles(files, vfs, importMap, esbuildWasmURL, mode);
 
   const flows: Flow[] = registry.getAllFlows();
-  debug('flows after load = %d', flows.length);
-  if (flows.length <= 20)
-    debug(
-      'flow names: %o',
-      flows.map((f) => f.name),
-    );
+  logFlowResults(flows);
 
   return {
     flows,

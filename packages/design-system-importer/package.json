@@ -31,5 +31,8 @@
     "@auto-engineer/message-bus": "^0.3.4",
     "figma-api": "2.0.2-beta",
     "tsx": "^3.12.7"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.5.19"
   }
 }

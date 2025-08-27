@@ -119,7 +119,7 @@ function parseEslintOutput(output: string): {
 }
 
 // eslint-disable-next-line complexity
-export async function handleCheckLintCommand(
+async function handleCheckLintCommandInternal(
   command: CheckLintCommand,
 ): Promise<LintCheckPassedEvent | LintCheckFailedEvent> {
   const { targetDirectory, scope = 'slice', fix = false } = command.data;
@@ -290,7 +290,7 @@ export const checkLintCommandHandler: CommandHandler<CheckLintCommand> = {
   name: 'CheckLint',
   handle: async (command: CheckLintCommand): Promise<void> => {
     debug('CommandHandler executing for CheckLint');
-    const result = await handleCheckLintCommand(command);
+    const result = await handleCheckLintCommandInternal(command);
 
     if (result.type === 'LintCheckPassed') {
       debug('Command handler completed: success');
@@ -313,4 +313,58 @@ export const checkLintCommandHandler: CommandHandler<CheckLintCommand> = {
       process.exit(1);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  scope?: 'slice' | 'project';
+  fix?: boolean;
+  [key: string]: unknown;
+}
+
+// Type guard
+function isCheckLintCommand(obj: unknown): obj is CheckLintCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'CheckLint'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: CheckLintCommand | CliArgs) => {
+  const command = isCheckLintCommand(commandOrArgs)
+    ? commandOrArgs
+    : {
+        type: 'CheckLint' as const,
+        data: {
+          targetDirectory: commandOrArgs._?.[0] ?? 'server',
+          scope: commandOrArgs.scope ?? 'slice',
+          fix: commandOrArgs.fix ?? false,
+        },
+        timestamp: new Date(),
+      };
+
+  const result = await handleCheckLintCommandInternal(command);
+  if (result.type === 'LintCheckPassed') {
+    console.log(`✅ Lint check passed`);
+    console.log(`   Files checked: ${result.data.filesChecked}`);
+    if (result.data.filesFixed !== undefined) {
+      console.log(`   Files fixed: ${result.data.filesFixed}`);
+    }
+  } else {
+    console.error(`❌ Lint check failed`);
+    console.error(`   Errors: ${result.data.errorCount}`);
+    console.error(`   Warnings: ${result.data.warningCount}`);
+    if (result.data.filesWithIssues.length > 0) {
+      console.error(`   Files with issues: ${result.data.filesWithIssues.join(', ')}`);
+    }
+    if (result.data.errors) {
+      console.error(`   Details:\n${result.data.errors.substring(0, 500)}`);
+    }
+    process.exit(1);
+  }
 };

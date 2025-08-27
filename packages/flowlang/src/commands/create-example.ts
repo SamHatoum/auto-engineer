@@ -68,7 +68,7 @@ async function copyDirectoryRecursive(
   return createdFiles;
 }
 
-export async function handleCreateExampleCommand(
+async function handleCreateExampleCommandInternal(
   command: CreateExampleCommand,
 ): Promise<ExampleCreatedEvent | ExampleCreationFailedEvent> {
   const { exampleName, targetDirectory } = command.data;
@@ -142,7 +142,101 @@ export async function handleCreateExampleCommand(
 export const createExampleCommandHandler: CommandHandler<CreateExampleCommand> = {
   name: 'CreateExample',
   handle: async (command: CreateExampleCommand): Promise<void> => {
-    const result = await handleCreateExampleCommand(command);
+    const result = await handleCreateExampleCommandInternal(command);
     console.log(result.type === 'ExampleCreated' ? 'Example created successfully' : `Failed: ${result.data.error}`);
   },
 };
+
+// CLI arguments interface
+interface CliArgs {
+  name?: string;
+  destination?: string;
+  exampleName?: string;
+  targetDirectory?: string;
+  arg2?: string;
+  timestamp?: Date;
+  requestId?: string;
+  [key: string]: unknown;
+}
+
+// Type guard to check if it's a CreateExampleCommand
+function isCreateExampleCommand(obj: unknown): obj is CreateExampleCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'CreateExample'
+  );
+}
+
+function createCommandFromMessageBus(commandOrArgs: CreateExampleCommand): CreateExampleCommand {
+  const data = commandOrArgs.data as CreateExampleCommand['data'] & CliArgs;
+  return {
+    type: 'CreateExample',
+    data: {
+      exampleName: data.name ?? data.exampleName ?? 'shopping-assistant',
+      targetDirectory: data.targetDirectory ?? data.destination ?? data.arg2 ?? process.cwd(),
+    },
+    timestamp: commandOrArgs.timestamp ?? new Date(),
+    requestId: commandOrArgs.requestId ?? `cli-${Date.now()}`,
+  };
+}
+
+function createCommandFromCliArgs(args: CliArgs): CreateExampleCommand {
+  return {
+    type: 'CreateExample',
+    data: {
+      exampleName: args.name ?? args.exampleName ?? 'shopping-assistant',
+      targetDirectory: args.destination ?? args.targetDirectory ?? process.cwd(),
+    },
+    timestamp: args.timestamp ?? new Date(),
+    requestId: args.requestId ?? `cli-${Date.now()}`,
+  };
+}
+
+// Export for CLI usage - this matches what plugin-loader expects
+const handler = async (commandOrArgs: CreateExampleCommand | CliArgs) => {
+  // Write to a debug file since console output seems to be suppressed
+  const debugInfo = `Handler received: ${JSON.stringify(commandOrArgs, null, 2)}\n`;
+  await fs.writeFile('/tmp/create-example-debug.txt', debugInfo);
+
+  // Handle both Command object from message bus and plain args
+  const command = isCreateExampleCommand(commandOrArgs)
+    ? createCommandFromMessageBus(commandOrArgs)
+    : createCommandFromCliArgs(commandOrArgs);
+
+  await fs.appendFile('/tmp/create-example-debug.txt', `Command created: ${JSON.stringify(command, null, 2)}\n`);
+
+  console.log('Creating example with command:', JSON.stringify(command, null, 2));
+
+  try {
+    const result = await handleCreateExampleCommandInternal(command);
+
+    console.log('Result:', JSON.stringify(result, null, 2));
+
+    if (result.type === 'ExampleCreated') {
+      const createdData = result.data as { exampleName: string; targetDirectory: string; filesCreated: string[] };
+      console.log(`✅ Example "${createdData.exampleName}" created successfully!`);
+      console.log(`📁 Created ${createdData.filesCreated.length} files in ${createdData.targetDirectory}`);
+
+      // List some of the created files
+      if (createdData.filesCreated.length > 0) {
+        console.log('Files created:');
+        createdData.filesCreated.slice(0, 10).forEach((file: string) => console.log(`  - ${file}`));
+        if (createdData.filesCreated.length > 10) {
+          console.log(`  ... and ${createdData.filesCreated.length - 10} more files`);
+        }
+      }
+    } else {
+      const errorData = result.data as { exampleName: string; targetDirectory: string; error: string };
+      console.error(`❌ Failed to create example: ${errorData.error}`);
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('Error in create-example handler:', error);
+    throw error;
+  }
+};
+
+export default handler;

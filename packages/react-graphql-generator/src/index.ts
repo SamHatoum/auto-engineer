@@ -74,6 +74,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   debug('Module imported');
 }
 
+export { CLI_MANIFEST } from './cli-manifest';
 export * from './commands/generate-client';
 export * from './commands/copy-example';
 export * from './figma-helpers';

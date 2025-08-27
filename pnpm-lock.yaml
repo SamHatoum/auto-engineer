@@ -310,39 +310,16 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
+    devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
 
   packages/cli:
     dependencies:
-      '@auto-engineer/backend-checks':
-        specifier: ^0.0.1
-        version: link:../backend-checks
-      '@auto-engineer/design-system-importer':
-        specifier: ^0.4.9
-        version: link:../design-system-importer
-      '@auto-engineer/emmett-generator':
-        specifier: ^0.6.5
-        version: link:../emmett-generator
-      '@auto-engineer/flowlang':
-        specifier: ^0.5.7
-        version: link:../flowlang
-      '@auto-engineer/frontend-checks':
-        specifier: ^0.4.8
-        version: link:../frontend-checks
-      '@auto-engineer/frontend-implementation':
-        specifier: ^0.4.10
-        version: link:../frontend-implementation
-      '@auto-engineer/information-architect':
-        specifier: ^0.4.4
-        version: link:../information-architect
       '@auto-engineer/message-bus':
         specifier: ^0.3.4
         version: link:../message-bus
-      '@auto-engineer/react-graphql-generator':
-        specifier: ^0.2.6
-        version: link:../react-graphql-generator
-      '@auto-engineer/server-implementer':
-        specifier: ^0.4.8
-        version: link:../server-implementer
       chalk:
         specifier: ^5.3.0
         version: 5.4.1
@@ -410,6 +387,10 @@ importers:
       tsx:
         specifier: ^3.12.7
         version: 3.14.0
+    devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
 
   packages/emmett-generator:
     dependencies:
@@ -471,6 +452,9 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
     devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
       '@types/ejs':
         specifier: ^3.1.5
         version: 3.1.5
@@ -538,6 +522,9 @@ importers:
         specifier: ^3.22.3
         version: 3.24.6(zod@3.25.76)
     devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.8
@@ -565,6 +552,10 @@ importers:
       typescript:
         specifier: ^5.4.5
         version: 5.5.4
+    devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
 
   packages/frontend-implementation:
     dependencies:
@@ -593,6 +584,9 @@ importers:
         specifier: ^3.25.67
         version: 3.25.76
     devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
       playwright:
         specifier: ^1.54.1
         version: 1.54.1
@@ -605,6 +599,13 @@ importers:
       '@auto-engineer/message-bus':
         specifier: ^0.3.4
         version: link:../message-bus
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.3
+    devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
 
   packages/message-bus:
     devDependencies:
@@ -642,6 +643,9 @@ importers:
         specifier: ^4.104.0
         version: 4.104.0(ws@8.18.3)(zod@3.25.76)
     devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
       '@types/ejs':
         specifier: ^3.1.5
         version: 3.1.5
@@ -667,6 +671,9 @@ importers:
         specifier: ^5.4.1
         version: 5.4.19(@types/node@24.3.0)(lightningcss@1.30.1)
     devDependencies:
+      '@auto-engineer/cli':
+        specifier: ^0.5.19
+        version: link:../cli
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4

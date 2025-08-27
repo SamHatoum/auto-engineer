@@ -93,6 +93,7 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
 
 export * from './commands/import-design-system';
 export type { FilterFunctionType } from './FigmaComponentsBuilder';
+export { CLI_MANIFEST } from './cli-manifest';
 
 async function copyFile(inputDir: string, outputDir: string, file: string): Promise<void> {
   const srcPath = path.join(inputDir, file);
