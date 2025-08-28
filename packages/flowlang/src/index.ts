@@ -128,9 +128,3 @@ export {
   type SchemaExportedEvent,
   type SchemaExportFailedEvent,
 } from './commands/export-schema';
-export {
-  createExampleCommandHandler,
-  type CreateExampleCommand,
-  type ExampleCreatedEvent,
-  type ExampleCreationFailedEvent,
-} from './commands/create-example';
