@@ -156,36 +156,38 @@ const CLI_DEFAULTS = {
   figmaVariablesPath: './.context/figma-variables.json',
 };
 
+// Helper to parse message bus format
+function parseMessageBusFormat(cliArgs: CliArgs): GenerateClientCommand['data'] {
+  return {
+    starterDir: (cliArgs.starterDir as string) ?? CLI_DEFAULTS.starterDir,
+    targetDir: (cliArgs.targetDir as string) ?? CLI_DEFAULTS.targetDir,
+    iaSchemaPath: (cliArgs.iaSchemaPath as string) ?? CLI_DEFAULTS.iaSchemaPath,
+    gqlSchemaPath: (cliArgs.gqlSchemaPath as string) ?? CLI_DEFAULTS.gqlSchemaPath,
+    figmaVariablesPath: (cliArgs.figmaVariablesPath as string) ?? CLI_DEFAULTS.figmaVariablesPath,
+  };
+}
+
+// Helper to parse traditional CLI format
+function parseTraditionalFormat(args: string[]): GenerateClientCommand['data'] {
+  return {
+    starterDir: args[0] ?? CLI_DEFAULTS.starterDir,
+    targetDir: args[1] ?? CLI_DEFAULTS.targetDir,
+    iaSchemaPath: args[2] ?? CLI_DEFAULTS.iaSchemaPath,
+    gqlSchemaPath: args[3] ?? CLI_DEFAULTS.gqlSchemaPath,
+    figmaVariablesPath: args[4] ?? CLI_DEFAULTS.figmaVariablesPath,
+  };
+}
+
 // Helper function to parse CLI arguments
 function parseCliArgs(cliArgs: CliArgs): GenerateClientCommand {
   // Check if this is from message bus (has the properties directly)
-  if ('starterDir' in cliArgs && 'targetDir' in cliArgs) {
-    // Message bus format - properties are passed directly
-    return {
-      type: 'GenerateClient',
-      data: {
-        starterDir: (cliArgs.starterDir as string) ?? CLI_DEFAULTS.starterDir,
-        targetDir: (cliArgs.targetDir as string) ?? CLI_DEFAULTS.targetDir,
-        iaSchemaPath: (cliArgs.iaSchemaPath as string) ?? CLI_DEFAULTS.iaSchemaPath,
-        gqlSchemaPath: (cliArgs.gqlSchemaPath as string) ?? CLI_DEFAULTS.gqlSchemaPath,
-        figmaVariablesPath: (cliArgs.figmaVariablesPath as string) ?? CLI_DEFAULTS.figmaVariablesPath,
-      },
-      timestamp: new Date(),
-    };
-  }
+  const isMessageBusFormat = 'starterDir' in cliArgs && 'targetDir' in cliArgs;
 
-  // Traditional CLI format with _ array
-  const args = cliArgs._ ?? [];
+  const data = isMessageBusFormat ? parseMessageBusFormat(cliArgs) : parseTraditionalFormat(cliArgs._ ?? []);
 
   return {
     type: 'GenerateClient',
-    data: {
-      starterDir: args[0] ?? CLI_DEFAULTS.starterDir,
-      targetDir: args[1] ?? CLI_DEFAULTS.targetDir,
-      iaSchemaPath: args[2] ?? CLI_DEFAULTS.iaSchemaPath,
-      gqlSchemaPath: args[3] ?? CLI_DEFAULTS.gqlSchemaPath,
-      figmaVariablesPath: args[4] ?? CLI_DEFAULTS.figmaVariablesPath,
-    },
+    data,
     timestamp: new Date(),
   };
 }
