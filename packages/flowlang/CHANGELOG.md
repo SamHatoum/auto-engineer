@@ -1,5 +1,17 @@
 # @auto-engineer/flowlang
 
+## 0.6.0
+
+### Minor Changes
+
+- • All cli commands now use commands and emit events on the bus
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.2.0
+  - @auto-engineer/message-bus@0.4.0
+
 ## 0.5.8
 
 ### Patch Changes
