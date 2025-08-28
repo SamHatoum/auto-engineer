@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { processFlowsWithAI } from '../index';
 import { type UXSchema } from '../types';
 import createDebug from 'debug';
+import fg from 'fast-glob';
 
 const debug = createDebug('ia:generate-command');
 const debugSchema = createDebug('ia:generate-command:schema');
@@ -74,57 +75,29 @@ async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> 
 async function getUniqueSchemaPath(
   outputDir: string,
 ): Promise<{ filePath: string; existingSchema: object | undefined }> {
-  debugFiles('Finding unique schema path in: %s', outputDir);
-  let suffix = 0;
+  debugFiles('Finding schema path in: %s', outputDir);
   let existingSchema: object | undefined;
 
-  // First, check if there's an existing ia-scheme file
-  const existingFiles = await fs.readdir(outputDir).catch(() => []);
-  debugFiles('Found %d files in output directory', existingFiles.length);
+  // Always use the same filename - overwrite if it exists
+  const filePath = path.join(outputDir, 'auto-ia-scheme.json');
+  debugFiles('Schema will be written to: %s', filePath);
 
-  const iaSchemeFiles = existingFiles.filter((file) => file.match(/^auto-ia-scheme(-\d+)?\.json$/));
-  debugFiles('Found %d existing IA scheme files', iaSchemeFiles.length);
-
-  if (iaSchemeFiles.length > 0) {
-    // Find the highest numbered file
-    const numbers = iaSchemeFiles.map((file) => {
-      const match = file.match(/auto-ia-scheme(?:-(\d+))?\.json$/);
-      const num = match && match[1] ? parseInt(match[1], 10) : 0;
-      debugFiles('  File %s -> number %d', file, num);
-      return num;
-    });
-    const highestNumber = Math.max(...numbers);
-    debugFiles('Highest numbered file: %d', highestNumber);
-
-    // Read the highest numbered file as the existing schema
-    const existingFile = highestNumber === 0 ? 'auto-ia-scheme.json' : `auto-ia-scheme-${highestNumber}.json`;
-    const existingPath = path.join(outputDir, existingFile);
-    debugFiles('Reading existing schema from: %s', existingPath);
-
-    try {
-      const content = await fs.readFile(existingPath, 'utf-8');
-      existingSchema = JSON.parse(content) as object;
-      debugFiles('Existing schema loaded successfully');
-    } catch (error) {
-      debugFiles('Could not read/parse existing schema: %O', error);
-      // If we can't read/parse it, treat as no existing schema
-    }
-
-    // New file will be one number higher
-    suffix = highestNumber + 1;
-    debugFiles('New file will use suffix: %d', suffix);
+  // Try to read existing schema if it exists
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    existingSchema = JSON.parse(content) as object;
+    debugFiles('Existing schema loaded successfully from: %s', filePath);
+  } catch {
+    debugFiles('No existing schema found at: %s', filePath);
+    // If we can't read/parse it, treat as no existing schema
   }
 
-  const filePath =
-    suffix === 0 ? path.join(outputDir, 'auto-ia-scheme.json') : path.join(outputDir, `auto-ia-scheme-${suffix}.json`);
-
-  debugFiles('New schema will be written to: %s', filePath);
   debugFiles('Existing schema found: %s', existingSchema ? 'yes' : 'no');
 
   return { filePath, existingSchema };
 }
 
-export async function handleGenerateIACommand(
+async function handleGenerateIACommandInternal(
   command: GenerateIACommand,
 ): Promise<IAGeneratedEvent | IAGenerationFailedEvent> {
   const { outputDir, flowFiles } = command.data;
@@ -224,11 +197,121 @@ export async function handleGenerateIACommand(
 export const generateIACommandHandler: CommandHandler<GenerateIACommand> = {
   name: 'GenerateIA',
   handle: async (command: GenerateIACommand): Promise<void> => {
-    const result = await handleGenerateIACommand(command);
+    const result = await handleGenerateIACommandInternal(command);
     if (result.type === 'IAGenerated') {
       console.log('IA schema generated successfully');
     } else {
       console.error(`Failed: ${result.data.error}`);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Helper function to expand glob patterns
+async function expandGlobPatterns(patterns: string[]): Promise<string[]> {
+  const expandedFiles: string[] = [];
+  for (const pattern of patterns) {
+    if (pattern.includes('*')) {
+      // This is a glob pattern, expand it
+      const matches = await fg(pattern);
+      expandedFiles.push(...matches);
+    } else {
+      expandedFiles.push(pattern);
+    }
+  }
+  return expandedFiles;
+}
+
+// Helper function to parse from message bus format
+async function parseFromMessageBus(data: { outputDir?: string; flowFiles?: string[] }): Promise<GenerateIACommand> {
+  const outputDir = data.outputDir ?? '.context';
+  const flowFiles = data.flowFiles ?? [];
+
+  // If no flow files provided, use default pattern
+  const resolvedFlowFiles = flowFiles.length > 0 ? flowFiles : ['flows/*.flow.ts'];
+
+  // Expand glob patterns if necessary
+  const expandedFlowFiles = await expandGlobPatterns(resolvedFlowFiles);
+
+  return {
+    type: 'GenerateIA',
+    data: {
+      outputDir,
+      flowFiles: expandedFlowFiles,
+    },
+    timestamp: new Date(),
+  };
+}
+
+// Helper function to parse CLI arguments
+async function parseCliArgs(cliArgs: CliArgs): Promise<GenerateIACommand> {
+  // Handle case where command comes from message bus with data already structured
+  if ('data' in cliArgs && typeof cliArgs.data === 'object' && cliArgs.data !== null) {
+    return parseFromMessageBus(cliArgs.data as { outputDir?: string; flowFiles?: string[] });
+  }
+
+  // Handle traditional CLI arguments with _ array
+  const outputDir = cliArgs._?.[0] ?? '.context';
+  // All remaining arguments are flow files
+  const flowFiles = cliArgs._ !== undefined ? cliArgs._.slice(1) : [];
+
+  // If no flow files provided, use default pattern
+  const resolvedFlowFiles = flowFiles.length > 0 ? flowFiles : ['flows/*.flow.ts'];
+
+  // Expand glob patterns if necessary
+  const expandedFlowFiles = await expandGlobPatterns(resolvedFlowFiles);
+
+  return {
+    type: 'GenerateIA',
+    data: {
+      outputDir,
+      flowFiles: expandedFlowFiles,
+    },
+    timestamp: new Date(),
+  };
+}
+
+// Type guard to check if it's a GenerateIACommand
+function isGenerateIACommand(obj: unknown): obj is GenerateIACommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    ((obj as { type: unknown }).type === 'GenerateIA' || (obj as { type: unknown }).type === 'generate:ia')
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: GenerateIACommand | CliArgs) => {
+  let command: GenerateIACommand;
+
+  if (isGenerateIACommand(commandOrArgs)) {
+    // Normalize the type if it comes from message bus
+    if ((commandOrArgs as { type: string }).type === 'generate:ia') {
+      command = {
+        ...commandOrArgs,
+        type: 'GenerateIA' as const,
+      };
+    } else {
+      command = commandOrArgs;
+    }
+  } else if ('outputDir' in commandOrArgs && 'flowFiles' in commandOrArgs) {
+    // Handle message bus format with outputDir and flowFiles
+    command = await parseFromMessageBus(commandOrArgs as { outputDir?: string; flowFiles?: string[] });
+  } else {
+    command = await parseCliArgs(commandOrArgs);
+  }
+
+  const result = await handleGenerateIACommandInternal(command);
+  if (result.type === 'IAGenerated') {
+    console.log('IA schema generated successfully');
+  } else {
+    console.error(`Failed: ${result.data.error}`);
+  }
 };

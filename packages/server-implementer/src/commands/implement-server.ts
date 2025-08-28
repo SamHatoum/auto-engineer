@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import path from 'path';
 import { existsSync } from 'fs';
@@ -33,7 +32,7 @@ export type ServerImplementationFailedEvent = Event<
   }
 >;
 
-export async function handleImplementServerCommand(
+async function handleImplementServerCommandInternal(
   command: ImplementServerCommand,
 ): Promise<ServerImplementedEvent | ServerImplementationFailedEvent> {
   const { serverDirectory } = command.data;
@@ -113,7 +112,7 @@ export const implementServerCommandHandler: CommandHandler<ImplementServerComman
   name: 'ImplementServer',
   handle: async (command: ImplementServerCommand): Promise<void> => {
     debug('CommandHandler executing for ImplementServer');
-    const result = await handleImplementServerCommand(command);
+    const result = await handleImplementServerCommandInternal(command);
 
     if (result.type === 'ServerImplemented') {
       debug('Command handler completed: success');
@@ -127,4 +126,45 @@ export const implementServerCommandHandler: CommandHandler<ImplementServerComman
       process.exit(1);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Type guard to check if it's an ImplementServerCommand
+function isImplementServerCommand(obj: unknown): obj is ImplementServerCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'ImplementServer'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: ImplementServerCommand | CliArgs) => {
+  const command = isImplementServerCommand(commandOrArgs)
+    ? commandOrArgs
+    : {
+        type: 'ImplementServer' as const,
+        data: {
+          serverDirectory: commandOrArgs._?.[0] ?? 'server',
+        },
+        timestamp: new Date(),
+      };
+
+  const result = await handleImplementServerCommandInternal(command);
+  if (result.type === 'ServerImplemented') {
+    console.log(`✅ Server implementation completed successfully`);
+    if (result.data.flowsImplemented > 0) {
+      console.log(`   ${result.data.flowsImplemented} flows implemented`);
+    }
+  } else {
+    console.error(`❌ Server implementation failed: ${result.data.error}`);
+    process.exit(1);
+  }
 };

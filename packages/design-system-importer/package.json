@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/design-system-importer",
-  "version": "0.4.9",
+  "version": "0.5.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/import-design-system": {
-      "types": "./dist/commands/import-design-system.d.ts",
-      "import": "./dist/commands/import-design-system.js"
     }
   },
   "scripts": {
@@ -32,8 +28,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.3.4",
+    "@auto-engineer/message-bus": "^0.4.0",
     "figma-api": "2.0.2-beta",
     "tsx": "^3.12.7"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.6.0"
   }
 }

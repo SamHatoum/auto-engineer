@@ -39,7 +39,7 @@ export type ClientGenerationFailedEvent = Event<
   }
 >;
 
-export async function handleGenerateClientCommand(
+async function handleGenerateClientCommandInternal(
   command: GenerateClientCommand,
 ): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> {
   const { starterDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath } = command.data;
@@ -130,7 +130,7 @@ export const generateClientCommandHandler: CommandHandler<GenerateClientCommand>
   name: 'GenerateClient',
   handle: async (command: GenerateClientCommand): Promise<void> => {
     debug('Command handler invoked for GenerateClient');
-    const result = await handleGenerateClientCommand(command);
+    const result = await handleGenerateClientCommandInternal(command);
     if (result.type === 'ClientGenerated') {
       debug('Handler completed successfully');
       console.log('Client generated successfully');
@@ -139,4 +139,92 @@ export const generateClientCommandHandler: CommandHandler<GenerateClientCommand>
       console.error(`Failed: ${result.data.error}`);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Default values for CLI arguments
+const CLI_DEFAULTS = {
+  starterDir: './.auto/shadcn-starter',
+  targetDir: './client',
+  iaSchemaPath: './.context/auto-ia-scheme.json',
+  gqlSchemaPath: './.context/schema.graphql',
+  figmaVariablesPath: './.context/figma-variables.json',
+};
+
+// Helper to parse message bus format
+function parseMessageBusFormat(cliArgs: CliArgs): GenerateClientCommand['data'] {
+  return {
+    starterDir: (cliArgs.starterDir as string) ?? CLI_DEFAULTS.starterDir,
+    targetDir: (cliArgs.targetDir as string) ?? CLI_DEFAULTS.targetDir,
+    iaSchemaPath: (cliArgs.iaSchemaPath as string) ?? CLI_DEFAULTS.iaSchemaPath,
+    gqlSchemaPath: (cliArgs.gqlSchemaPath as string) ?? CLI_DEFAULTS.gqlSchemaPath,
+    figmaVariablesPath: (cliArgs.figmaVariablesPath as string) ?? CLI_DEFAULTS.figmaVariablesPath,
+  };
+}
+
+// Helper to parse traditional CLI format
+function parseTraditionalFormat(args: string[]): GenerateClientCommand['data'] {
+  return {
+    starterDir: args[0] ?? CLI_DEFAULTS.starterDir,
+    targetDir: args[1] ?? CLI_DEFAULTS.targetDir,
+    iaSchemaPath: args[2] ?? CLI_DEFAULTS.iaSchemaPath,
+    gqlSchemaPath: args[3] ?? CLI_DEFAULTS.gqlSchemaPath,
+    figmaVariablesPath: args[4] ?? CLI_DEFAULTS.figmaVariablesPath,
+  };
+}
+
+// Helper function to parse CLI arguments
+function parseCliArgs(cliArgs: CliArgs): GenerateClientCommand {
+  // Check if this is from message bus (has the properties directly)
+  const isMessageBusFormat = 'starterDir' in cliArgs && 'targetDir' in cliArgs;
+
+  const data = isMessageBusFormat ? parseMessageBusFormat(cliArgs) : parseTraditionalFormat(cliArgs._ ?? []);
+
+  return {
+    type: 'GenerateClient',
+    data,
+    timestamp: new Date(),
+  };
+}
+
+// Type guard to check if it's a GenerateClientCommand
+function isGenerateClientCommand(obj: unknown): obj is GenerateClientCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    ((obj as { type: unknown }).type === 'GenerateClient' || (obj as { type: unknown }).type === 'generate:client')
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: GenerateClientCommand | CliArgs) => {
+  debug('Default export called with:', commandOrArgs);
+
+  let command: GenerateClientCommand;
+
+  if (isGenerateClientCommand(commandOrArgs)) {
+    // Normalize the type if it comes from message bus
+    command = {
+      ...commandOrArgs,
+      type: 'GenerateClient' as const,
+    };
+  } else {
+    command = parseCliArgs(commandOrArgs);
+  }
+
+  debug('Parsed command:', command);
+
+  const result = await handleGenerateClientCommandInternal(command);
+  if (result.type === 'ClientGenerated') {
+    console.log('Client generated successfully');
+  } else {
+    console.error(`Failed: ${result.data.error}`);
+  }
 };

@@ -152,3 +152,4 @@ export async function processFlowsWithAI(
 }
 
 export * from './commands/generate-ia';
+export { CLI_MANIFEST } from './cli-manifest';

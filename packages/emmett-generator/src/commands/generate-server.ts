@@ -70,7 +70,7 @@ export type ServerGenerationFailedEvent = Event<
 >;
 
 // eslint-disable-next-line complexity
-export async function handleGenerateServerCommand(
+async function handleGenerateServerCommandInternal(
   command: GenerateServerCommand,
 ): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
   const { schemaPath, destination } = command.data;
@@ -215,7 +215,7 @@ export async function handleGenerateServerCommand(
 export const generateServerCommandHandler: CommandHandler<GenerateServerCommand> = {
   name: 'GenerateServer',
   handle: async (command: GenerateServerCommand): Promise<void> => {
-    const result = await handleGenerateServerCommand(command);
+    const result = await handleGenerateServerCommandInternal(command);
     if (result.type === 'ServerGenerated') {
       console.log(`Server generated at ${result.data.serverDir}`);
     } else {
@@ -452,3 +452,41 @@ async function installDependenciesAndGenerateSchema(serverDir: string, workingDi
     console.warn('You can manually run: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
   }
 }
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Type guard to check if it's a GenerateServerCommand
+function isGenerateServerCommand(obj: unknown): obj is GenerateServerCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'GenerateServer'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: GenerateServerCommand | CliArgs) => {
+  const command = isGenerateServerCommand(commandOrArgs)
+    ? commandOrArgs
+    : {
+        type: 'GenerateServer' as const,
+        data: {
+          schemaPath: commandOrArgs._?.[0] ?? '.context/schema.json',
+          destination: commandOrArgs._?.[1] ?? '.',
+        },
+        timestamp: new Date(),
+      };
+
+  const result = await handleGenerateServerCommandInternal(command);
+  if (result.type === 'ServerGenerated') {
+    console.log(`✅ Server generated at ${result.data.serverDir}`);
+  } else {
+    console.error(`❌ Failed to generate server: ${result.data.error}`);
+  }
+};

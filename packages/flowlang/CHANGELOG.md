@@ -1,5 +1,44 @@
 # @auto-engineer/flowlang
 
+## 0.6.0
+
+### Minor Changes
+
+- • All cli commands now use commands and emit events on the bus
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.2.0
+  - @auto-engineer/message-bus@0.4.0
+
+## 0.5.8
+
+### Patch Changes
+
+- isolate Node-only file store usage behind getFs helper
+
+## 0.5.7
+
+### Patch Changes
+
+- use NodeFileStore for commands export to restore browser compatibility
+
+## 0.5.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.1.2
+
+## 0.5.5
+
+### Patch Changes
+
+- version bump
+- Updated dependencies
+  - @auto-engineer/file-store@0.1.1
+
 ## 0.5.3
 
 ### Patch Changes

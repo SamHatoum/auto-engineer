@@ -1,9 +1,19 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.5.19",
+  "version": "0.6.1",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./manifest-types": {
+      "types": "./dist/src/manifest-types.d.ts",
+      "import": "./dist/src/manifest-types.js"
+    }
+  },
   "bin": {
     "auto-engineer": "./dist/bin/auto.js",
     "auto": "./dist/bin/auto.js"
@@ -36,16 +46,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/backend-checks": "^0.0.1",
-    "@auto-engineer/design-system-importer": "^0.4.9",
-    "@auto-engineer/emmett-generator": "^0.6.5",
-    "@auto-engineer/flowlang": "^0.5.4",
-    "@auto-engineer/frontend-checks": "^0.4.8",
-    "@auto-engineer/frontend-implementation": "^0.4.10",
-    "@auto-engineer/information-architect": "^0.4.4",
-    "@auto-engineer/message-bus": "^0.3.4",
-    "@auto-engineer/react-graphql-generator": "^0.2.6",
-    "@auto-engineer/server-implementer": "^0.4.8",
+    "@auto-engineer/message-bus": "^0.4.0",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "debug": "^4.4.1",
@@ -54,6 +55,7 @@
     "figlet": "^1.7.0",
     "gradient-string": "^3.0.0",
     "inquirer": "^9.2.15",
+    "jiti": "^2.5.1",
     "kleur": "^4.1.5",
     "marked": "^15.0.12",
     "marked-terminal": "^7.3.0",

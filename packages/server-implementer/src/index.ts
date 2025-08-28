@@ -1,6 +1,7 @@
+export { CLI_MANIFEST } from './cli-manifest';
+
 export {
   implementServerCommandHandler,
-  handleImplementServerCommand,
   type ImplementServerCommand,
   type ServerImplementedEvent,
   type ServerImplementationFailedEvent,

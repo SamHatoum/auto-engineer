@@ -93,6 +93,7 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
 
 export * from './commands/import-design-system';
 export type { FilterFunctionType } from './FigmaComponentsBuilder';
+export { CLI_MANIFEST } from './cli-manifest';
 
 async function copyFile(inputDir: string, outputDir: string, file: string): Promise<void> {
   const srcPath = path.join(inputDir, file);
@@ -282,10 +283,15 @@ export async function importDesignSystemComponentsFromFigma(
   // );
   // await fs.mkdir(outputDir, { recursive: true });
 
-  debugFiles('Creating output directory: %s', outputDir);
-  await fs.mkdir(outputDir, { recursive: true });
+  // Parse the outputDir to determine if it's a file path or directory
+  const isFilePath = outputDir.endsWith('.md');
+  const actualOutputDir = isFilePath ? path.dirname(outputDir) : outputDir;
+  const fileName = isFilePath ? path.basename(outputDir) : 'design-system.md';
 
-  const outPath = path.join(outputDir, 'design-system.md');
+  debugFiles('Creating output directory: %s', actualOutputDir);
+  await fs.mkdir(actualOutputDir, { recursive: true });
+
+  const outPath = path.join(actualOutputDir, fileName);
   debugFiles('Writing markdown to: %s', outPath);
   await fs.writeFile(outPath, generatedComponentsMDFile);
   debugFiles('Design system markdown written successfully');

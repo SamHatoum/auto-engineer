@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/information-architect",
-  "version": "0.4.4",
+  "version": "0.5.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,10 +8,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./commands/generate-ia": {
-      "types": "./dist/commands/generate-ia.d.ts",
-      "import": "./dist/commands/generate-ia.js"
     }
   },
   "scripts": {
@@ -32,7 +28,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.4.5",
-    "@auto-engineer/message-bus": "^0.3.4"
+    "@auto-engineer/ai-gateway": "^0.5.1",
+    "@auto-engineer/message-bus": "^0.4.0",
+    "fast-glob": "^3.3.2"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.6.0"
   }
 }

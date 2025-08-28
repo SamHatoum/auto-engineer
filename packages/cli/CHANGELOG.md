@@ -1,5 +1,24 @@
 # @auto-engineer/cli
 
+## 0.6.0
+
+### Minor Changes
+
+- • All cli commands now use commands and emit events on the bus
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/message-bus@0.4.0
+
+## 0.5.20
+
+### Patch Changes
+
+- split node-only commands into subpath export to restore browser compatibility
+- Updated dependencies
+  - @auto-engineer/flowlang@0.5.7
+
 ## 0.5.17
 
 ### Patch Changes

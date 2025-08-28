@@ -34,7 +34,7 @@ export type DesignSystemImportFailedEvent = Event<
 
 // Handler
 // eslint-disable-next-line complexity
-export async function handleImportDesignSystemCommand(
+async function handleImportDesignSystemCommandInternal(
   command: ImportDesignSystemCommand,
 ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> {
   const { outputDir, strategy, filterPath } = command.data;
@@ -116,7 +116,7 @@ export const importDesignSystemCommandHandler: CommandHandler<ImportDesignSystem
   name: 'ImportDesignSystem',
   handle: async (command: ImportDesignSystemCommand): Promise<void> => {
     debug('CommandHandler executing for ImportDesignSystem');
-    const result = await handleImportDesignSystemCommand(command);
+    const result = await handleImportDesignSystemCommandInternal(command);
     if (result.type === 'DesignSystemImported') {
       debug('Command handler completed: success');
       console.log('Design system imported successfully');
@@ -125,4 +125,62 @@ export const importDesignSystemCommandHandler: CommandHandler<ImportDesignSystem
       console.error(`Failed: ${result.data.error}`);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  strategy?: 'WITH_COMPONENTS' | 'WITH_COMPONENT_SETS' | 'WITH_ALL_FIGMA_INSTANCES';
+  filter?: string;
+  [key: string]: unknown;
+}
+
+// Type guard to check if it's an ImportDesignSystemCommand
+function isImportDesignSystemCommand(obj: unknown): obj is ImportDesignSystemCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'ImportDesignSystem'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: ImportDesignSystemCommand | CliArgs) => {
+  let command: ImportDesignSystemCommand;
+
+  if (isImportDesignSystemCommand(commandOrArgs)) {
+    command = commandOrArgs;
+  } else if ('outputDir' in commandOrArgs) {
+    // Handle message bus format
+    const args = commandOrArgs as { outputDir?: string; strategy?: string; filterPath?: string };
+    command = {
+      type: 'ImportDesignSystem' as const,
+      data: {
+        outputDir: args.outputDir ?? '.context',
+        strategy: args.strategy as keyof typeof ImportStrategy | undefined,
+        filterPath: args.filterPath,
+      },
+      timestamp: new Date(),
+    };
+  } else {
+    // Handle traditional CLI args format
+    command = {
+      type: 'ImportDesignSystem' as const,
+      data: {
+        outputDir: commandOrArgs._?.[0] ?? '.context',
+        strategy: commandOrArgs._?.[1] as keyof typeof ImportStrategy | undefined,
+        filterPath: commandOrArgs._?.[2],
+      },
+      timestamp: new Date(),
+    };
+  }
+
+  const result = await handleImportDesignSystemCommandInternal(command);
+  if (result.type === 'DesignSystemImported') {
+    console.log('Design system imported successfully');
+  } else {
+    console.error(`Failed: ${result.data.error}`);
+  }
 };

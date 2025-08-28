@@ -1,11 +1,14 @@
 {
   "name": "@auto-engineer/frontend-checks",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "check-client": "./dist/cli/check-client.js"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": [
     "dist",
@@ -13,8 +16,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "check:client": "tsx src/cli/check-client.ts",
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/cli/check-client.js",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
@@ -27,7 +29,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.3.4",
+    "@auto-engineer/message-bus": "^0.4.0",
     "debug": "^4.4.1",
     "dotenv": "^16.6.1",
     "playwright": "^1.54.1",
@@ -35,5 +37,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.6.0"
   }
 }

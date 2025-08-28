@@ -318,3 +318,4 @@ if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export * from './commands/implement-client';
+export { CLI_MANIFEST } from './cli-manifest';

@@ -11,6 +11,17 @@ const debugTree = createDebug('design-system-importer:figma-builder:tree');
 dotenv.config();
 
 debug('Initializing FigmaComponentsBuilder module');
+
+// Add timeout wrapper for Figma API calls
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Figma API request timed out after ${timeoutMs}ms`)), timeoutMs),
+    ),
+  ]);
+};
+
 const figmaApi = new Figma.Api({
   personalAccessToken: process.env.FIGMA_PERSONAL_TOKEN as string,
 });
@@ -42,10 +53,22 @@ export class FigmaComponentsBuilder {
 
   async withFigmaComponents() {
     debugAPI('Fetching Figma components from file: %s', process.env.FIGMA_FILE_ID);
+
+    if (
+      process.env.FIGMA_PERSONAL_TOKEN?.trim() === '' ||
+      process.env.FIGMA_FILE_ID?.trim() === '' ||
+      process.env.FIGMA_PERSONAL_TOKEN === undefined ||
+      process.env.FIGMA_FILE_ID === undefined
+    ) {
+      debugAPI('Missing Figma credentials. FIGMA_PERSONAL_TOKEN or FIGMA_FILE_ID not set');
+      console.warn('Skipping Figma import: Missing FIGMA_PERSONAL_TOKEN or FIGMA_FILE_ID in environment');
+      return this;
+    }
+
     try {
       debugAPI('Making API call to getFileComponents...');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const response = await figmaApi.getFileComponents({ file_key: process.env.FIGMA_FILE_ID });
+      const response = await withTimeout(figmaApi.getFileComponents({ file_key: process.env.FIGMA_FILE_ID }), 10000);
       debugAPI('API response received');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (response.meta.components.length > 0) {
@@ -76,10 +99,22 @@ export class FigmaComponentsBuilder {
 
   async withFigmaComponentSets() {
     debugAPI('Fetching Figma component sets from file: %s', process.env.FIGMA_FILE_ID);
+
+    if (
+      process.env.FIGMA_PERSONAL_TOKEN?.trim() === '' ||
+      process.env.FIGMA_FILE_ID?.trim() === '' ||
+      process.env.FIGMA_PERSONAL_TOKEN === undefined ||
+      process.env.FIGMA_FILE_ID === undefined
+    ) {
+      debugAPI('Missing Figma credentials. FIGMA_PERSONAL_TOKEN or FIGMA_FILE_ID not set');
+      console.warn('Skipping Figma import: Missing FIGMA_PERSONAL_TOKEN or FIGMA_FILE_ID in environment');
+      return this;
+    }
+
     try {
       debugAPI('Making API call to getFileComponentSets...');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const response = await figmaApi.getFileComponentSets({ file_key: process.env.FIGMA_FILE_ID });
+      const response = await withTimeout(figmaApi.getFileComponentSets({ file_key: process.env.FIGMA_FILE_ID }), 10000);
       debugAPI('API response received');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (response.meta.component_sets.length > 0) {
@@ -175,6 +210,18 @@ export class FigmaComponentsBuilder {
 
   async withAllFigmaInstanceNames() {
     debugAPI('Fetching all Figma instance names from file: %s', process.env.FIGMA_FILE_ID);
+
+    if (
+      process.env.FIGMA_PERSONAL_TOKEN?.trim() === '' ||
+      process.env.FIGMA_FILE_ID?.trim() === '' ||
+      process.env.FIGMA_PERSONAL_TOKEN === undefined ||
+      process.env.FIGMA_FILE_ID === undefined
+    ) {
+      debugAPI('Missing Figma credentials. FIGMA_PERSONAL_TOKEN or FIGMA_FILE_ID not set');
+      console.warn('Skipping Figma import: Missing FIGMA_PERSONAL_TOKEN or FIGMA_FILE_ID in environment');
+      return this;
+    }
+
     try {
       /// ----
       const usedComponentMap = new Map<string, { name: string; description: string; thumbnail: string }>();
@@ -182,10 +229,13 @@ export class FigmaComponentsBuilder {
 
       debugAPI('Making API call to getFile with depth: 1...');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { document } = await figmaApi.getFile({
-        file_key: process.env.FIGMA_FILE_ID,
-        depth: 1,
-      });
+      const { document } = await withTimeout(
+        figmaApi.getFile({
+          file_key: process.env.FIGMA_FILE_ID,
+          depth: 1,
+        }),
+        10000,
+      );
       debugAPI('File document received, starting tree walk');
 
       // eslint-disable-next-line complexity

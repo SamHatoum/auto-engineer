@@ -1,106 +1,170 @@
-# Auto Engineer CLI
+# @auto-engineer/cli
 
-A powerful command-line interface for automating development workflows, following Node.js CLI best practices.
+CLI interface for Auto Engineer - a plugin-based command-line tool for building applications with AI assistance.
 
 ## Features
 
-- ✅ **POSIX-compliant** command line arguments
-- ✅ **Empathic CLI** with interactive prompts and helpful error messages
-- ✅ **Colorful output** with graceful degradation
-- ✅ **Rich interactions** with progress spinners and prompts
-- ✅ **STDIN support** for piping data
-- ✅ **Structured output** in JSON format
-- ✅ **Cross-platform** compatibility
-- ✅ **Configuration precedence** (CLI args > env vars > config files)
-- ✅ **Containerized** distribution via Docker
-- ✅ **Analytics** with strict opt-in
-- ✅ **Proper error handling** with error codes
-- ✅ **Debug mode** for troubleshooting
+- Plugin-based architecture - Install only the functionality you need
+- POSIX-compliant command line arguments
+- Interactive prompts and error messages
+- Colored output with graceful degradation
+- Progress spinners and prompts
+- Structured output in JSON format
+- Cross-platform compatibility
+- Configuration precedence (CLI args > env vars > config files)
+- Analytics with opt-in
+- Error handling with error codes
+- Debug mode for troubleshooting
 
 ## Installation
 
-### npm (Recommended)
+```bash
+# Install globally
+npm install -g @auto-engineer/cli
+
+# Or use with npx
+npx @auto-engineer/cli
+
+# Or with pnpm
+pnpm install -g @auto-engineer/cli
+```
+
+## Plugin System
+
+The CLI uses a plugin-based architecture. Install only the functionality you need:
+
+### Quick Start
+
+1. Install the CLI:
 
 ```bash
 npm install -g @auto-engineer/cli
 ```
 
-### Docker
+2. Install plugins for your use case:
 
 ```bash
-docker pull auto-engineer/cli
-docker run --rm auto-engineer/cli --help
+# For backend development
+npm install @auto-engineer/flowlang @auto-engineer/emmett-generator @auto-engineer/server-implementer
+
+# For frontend development
+npm install @auto-engineer/react-graphql-generator @auto-engineer/frontend-implementation
+
+# For validation and testing
+npm install @auto-engineer/backend-checks @auto-engineer/frontend-checks
 ```
 
-## Quick Start
+3. Create configuration (`auto.config.ts`):
 
-1. **Generate** code templates:
+```typescript
+export default {
+  plugins: ['@auto-engineer/flowlang', '@auto-engineer/emmett-generator', '@auto-engineer/server-implementer'],
 
-   ```bash
-   auto-engineer generate --type code
-   ```
+  // Optional: Handle command conflicts
+  aliases: {
+    // 'command:alias': '@auto-engineer/package-name'
+  },
+};
+```
 
-2. **Analyze** your code:
-   ```bash
-   auto-engineer analyze --format json
-   ```
+4. Run commands:
+
+```bash
+auto create:example shopping-assistant
+auto export:schema ./.context ./flows
+auto generate:server .context/schema.json .
+```
+
+## Available Plugins
+
+| Plugin                                   | Commands                                   | Description                         |
+| ---------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| `@auto-engineer/flowlang`                | `create:example`, `export:schema`          | Flow modeling and schema export     |
+| `@auto-engineer/emmett-generator`        | `generate:server`                          | Server code generation              |
+| `@auto-engineer/server-implementer`      | `implement:server`, `implement:slice`      | AI server implementation            |
+| `@auto-engineer/react-graphql-generator` | `generate:client`, `copy:example`          | React client scaffolding            |
+| `@auto-engineer/frontend-implementation` | `implement:client`                         | AI client implementation            |
+| `@auto-engineer/information-architect`   | `generate:ia`                              | Information architecture generation |
+| `@auto-engineer/design-system-importer`  | `import:design-system`                     | Figma design system import          |
+| `@auto-engineer/backend-checks`          | `check:types`, `check:lint`, `check:tests` | Backend validation                  |
+| `@auto-engineer/frontend-checks`         | `check:client`                             | Frontend validation                 |
+
+## Configuration
+
+### Plugin Configuration
+
+The CLI looks for an `auto.config.ts` file in your project root:
+
+```typescript
+// auto.config.ts
+export default {
+  // List of npm packages to load as plugins
+  plugins: [
+    '@auto-engineer/flowlang',
+    '@auto-engineer/emmett-generator',
+    // ... more plugins
+  ],
+
+  // Optional: Override command aliases when conflicts occur
+  aliases: {
+    'create:example': '@auto-engineer/flowlang',
+    // ... more overrides
+  },
+};
+```
+
+### Handling Conflicts
+
+When multiple plugins register the same command alias, you'll receive an error with instructions:
+
+```
+Command alias conflicts detected!
+
+Multiple packages are trying to register the same command aliases.
+Please add alias overrides to your auto.config.ts file:
+
+export default {
+  plugins: [
+    '@auto-engineer/package-a',
+    '@auto-engineer/package-b',
+  ],
+  aliases: {
+    // Map the conflicting command to the package that should handle it
+    'conflicting:command': '@auto-engineer/package-a',
+  }
+};
+```
+
+The alias resolution works per command, not per package. Each package can expose multiple commands, and you resolve conflicts for specific command aliases. For example, if both `backend-checks` and `another-package` provide a `check:types` command, you specify which package handles that specific command.
 
 ## Commands
 
-### `generate`
+Commands are provided by installed plugins. Run `auto --help` to see available commands based on your configuration.
 
-Generate code, documentation, or other artifacts.
+### Common Plugin Commands
 
-```bash
-auto-engineer generate [options]
-```
+Flow Development (requires `@auto-engineer/flowlang`)
 
-**Options:**
+- `create:example <name>` - Create an example project
+- `export:schema <context> <flows>` - Export flow schemas
 
-- `-t, --type <type>` - Type of generation (code, docs, tests)
-- `-o, --output <path>` - Output path for generated files
-- `-f, --force` - Overwrite existing files
-- `--stdin` - Read input from STDIN
+Backend Generation (requires respective plugins)
 
-**Examples:**
+- `generate:server <schema> <dest>` - Generate server from schema
+- `implement:server <server-dir>` - AI implements server
 
-```bash
-# Generate code templates
-auto-engineer generate --type code
+Frontend Generation (requires respective plugins)
 
-# Generate with custom output path
-auto-engineer generate --type docs --output ./docs
+- `generate:ia <context> <flows...>` - Generate Information Architecture
+- `generate:client <starter> <client> <ia> <gql> [vars]` - Generate React client
+- `implement:client <client> <context> <principles> <design>` - AI implements client
 
-# Generate from STDIN
-echo "component" | auto-engineer generate --stdin
-```
+Validation & Testing (requires check plugins)
 
-### `analyze`
-
-Analyze code quality and provide insights.
-
-```bash
-auto-engineer analyze [options]
-```
-
-**Options:**
-
-- `-p, --path <path>` - Path to analyze (default: current directory)
-- `-f, --format <format>` - Output format (text, json)
-- `--stdin` - Analyze content from STDIN
-
-**Examples:**
-
-```bash
-# Analyze current directory
-auto-engineer analyze
-
-# Analyze specific path in JSON format
-auto-engineer analyze --path ./src --format json
-
-# Analyze content from STDIN
-cat file.js | auto-engineer analyze --stdin
-```
+- `check:types <directory>` - TypeScript type checking
+- `check:tests <directory>` - Run test suites
+- `check:lint <directory> [--fix]` - Linting with optional auto-fix
+- `check:client <client-dir>` - Full frontend validation
 
 ## Global Options
 
@@ -113,35 +177,56 @@ cat file.js | auto-engineer analyze --stdin
 
 ## Environment Variables
 
-- `DEBUG=auto-engineer` - Enable debug mode
-- `NO_COLOR=1` - Disable colored output
-- `OUTPUT_FORMAT=json` - Set output format
-- `AUTO_ENGINEER_API_TOKEN=<token>` - Set API token
-- `AUTO_ENGINEER_ANALYTICS=false` - Disable analytics (enabled by default)
+Set these in your `.env` file or environment:
 
-## Configuration
+```bash
+# AI Provider Keys (need at least one)
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...
+XAI_API_KEY=...
 
-Auto-engineer follows configuration precedence:
+# Debugging
+DEBUG=cli:*              # Debug CLI operations
+DEBUG=cli:plugin-loader  # Debug plugin loading
 
-1. **Command line arguments** (highest priority)
-2. **Environment variables**
-3. **Project configuration** (`.auto-engineer.json`)
-4. **User configuration** (`~/.auto-engineer.json`)
-5. **System configuration** (defaults)
+# Configuration
+NO_COLOR=1               # Disable colored output
+AUTO_ENGINEER_ANALYTICS=false  # Disable usage analytics
+```
 
-### Project Configuration
+## Creating a Plugin
 
-Create `.auto-engineer.json` in your project root:
+Plugins are npm packages that export a `CLI_MANIFEST`:
 
-```json
-{
-  "projectType": "node-ts",
-  "packageManager": "npm",
-  "testFramework": "vitest",
-  "enableLinting": true,
-  "enableGitHooks": true
+```typescript
+// your-plugin/src/cli-manifest.ts
+export const CLI_MANIFEST = {
+  commands: {
+    'your:command': {
+      handler: () => import('./commands/your-command'),
+      description: 'Description of your command',
+    },
+  },
+};
+
+// your-plugin/src/index.ts
+export { CLI_MANIFEST } from './cli-manifest';
+export * from './commands/your-command';
+```
+
+The command handler should export a function that handles the command:
+
+```typescript
+// your-plugin/src/commands/your-command.ts
+export async function handleYourCommand(command: { type: string; data: any; timestamp: Date; requestId: string }) {
+  // Implementation
 }
 ```
+
+## Built-in Commands
+
+When no `auto.config.ts` is present, the CLI falls back to built-in commands that work with locally available packages.
 
 ## Error Codes
 
@@ -151,21 +236,16 @@ Auto-engineer uses standardized error codes for easy troubleshooting:
 - `E4002` - Configuration error
 - `E4003` - Invalid API token
 - `E4004` - Invalid project path
-- `E4005` - Missing generation type
-- `E4006` - Missing output path
-- `E4007` - Invalid path type
-- `E4008` - Path does not exist
 - `E5001` - Runtime error
 - `E9999` - Unknown error
 
 ## Analytics
 
-Auto-engineer collects anonymous usage analytics to improve the tool. Analytics are:
+Auto-engineer collects anonymous usage analytics to improve the tool:
 
-- **Enabled by default** - Analytics are collected to help improve the tool
-- **Anonymous** - No personal information is collected
-- **Transparent** - You can see what data is collected in debug mode
-- **Controllable** - You can disable anytime
+- Anonymous - No personal information is collected
+- Transparent - You can see what data is collected in debug mode
+- Controllable - You can disable anytime
 
 To disable analytics:
 
@@ -173,73 +253,27 @@ To disable analytics:
 export AUTO_ENGINEER_ANALYTICS=false
 ```
 
-Analytics data includes:
+## Debugging
 
-- Command usage (which commands are run)
-- Success/failure rates
-- Error codes (for debugging)
-- Platform information (Node.js version, OS)
-- Tool version
-
-This data helps us understand usage patterns and improve the tool's reliability and features.
-
-## Development
-
-### Prerequisites
-
-- Node.js 18.0.0 or higher
-- npm, yarn, or pnpm
-
-### Setup
+Enable debug output to troubleshoot issues:
 
 ```bash
-# Install dependencies
-npm install
+# Debug everything
+DEBUG=* auto create:example test
 
-# Build the project
-npm run build
+# Debug plugin loading
+DEBUG=cli:plugin-loader auto --help
 
-# Run in development mode
-npm run dev
-
-# Run tests
-npm test
-
-# Run with coverage
-npm run test:coverage
+# Debug specific plugins
+DEBUG=flowlang:* auto export:schema ./context ./flows
 ```
-
-### Project Structure
-
-```
-src/
-├── commands/          # Command implementations
-│   ├── generate.ts
-│   ├── analyze.ts
-│   └── demo.ts
-├── utils/             # Utility functions
-│   ├── config.ts      # Configuration management
-│   ├── errors.ts      # Error handling
-│   ├── terminal.ts    # Terminal utilities
-│   └── analytics.ts   # Analytics
-└── index.ts           # Main entry point
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Run the test suite
-6. Submit a pull request
 
 ## License
 
-MIT License - see LICENSE file for details.
+Part of the Auto Engineer monorepo. Licensed under [Elastic License 2.0](../../LICENSE.md).
 
 ## Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/your-repo/auto-engineer/wiki)
-- **Issues**: [GitHub Issues](https://github.com/your-repo/auto-engineer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/auto-engineer/discussions)
+- Discord: [Join our community](https://discord.gg/B8BKcKMRm8)
+- Documentation: [GitHub Wiki](https://github.com/SamHatoum/auto-engineer/wiki)
+- Issues: [GitHub Issues](https://github.com/SamHatoum/auto-engineer/issues)

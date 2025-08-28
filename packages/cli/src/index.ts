@@ -1,31 +1,15 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import chalk from 'chalk';
-import gradient from 'gradient-string';
-import figlet from 'figlet';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 
 import { loadConfig, validateConfig } from './utils/config';
 import { handleError } from './utils/errors';
-import { createOutput, supportsColor } from './utils/terminal';
+import { createOutput } from './utils/terminal';
 import { Analytics } from './utils/analytics';
-
-import { createCreateExampleCommand } from './commands/create-example';
-import { createCopyExampleCommand } from './commands/copy-example';
-import { createExportSchemaCommand } from './commands/export-schema';
-import { createGenerateServerCommand } from './commands/generate-server';
-import { createGenerateGQLSchemaCommand } from './commands/generate-gql-schema';
-import { createImplementServerCommand } from './commands/implement-server';
-import { createImportDesignSystemCommand } from './commands/import-design-system';
-import { createGenerateIACommand } from './commands/generate-ia';
-import { createGenerateClientCommand } from './commands/generate-client';
-import { createImplementClientCommand } from './commands/implement-client';
-import { createCheckClientCommand } from './commands/check-client';
-import { createCheckTypesCommand } from './commands/check-types';
-import { createCheckTestsCommand } from './commands/check-tests';
-import { createCheckLintCommand } from './commands/check-lint';
+import { PluginLoader } from './plugin-loader';
 
 const VERSION = process.env.npm_package_version ?? '0.1.2';
 
@@ -86,85 +70,309 @@ const createCLI = () => {
   return program;
 };
 
-const displayBanner = (config: ReturnType<typeof loadConfig>) => {
-  if (config.output === 'text' && supportsColor(config) && process.stdout.isTTY) {
-    const asciiText = figlet.textSync('AutoEngineer', { font: 'Slant' });
-    console.log(chalk.bgBlack(gradient(['#F44B4B', '#FF9C1A', '#F9F871', '#4CD964', '#4BC6F4'])(asciiText)));
-    console.log();
-  }
+// Type-safe command data mappers
+type CommandData = Record<string, unknown>;
+
+const commandMappers: Record<string, (args: (string | string[])[], options: Record<string, unknown>) => CommandData> = {
+  'create:example': (args) => ({ name: args[0], destination: args[1] }),
+  'export:schema': (args) => ({ contextDir: args[0], flowsDir: args[1] }),
+  'generate:server': (args) => ({ schemaPath: args[0], destination: args[1] }),
+  'implement:server': (args) => ({ serverDirectory: args[0] }),
+  'implement:slice': (args) => ({ serverDir: args[0], sliceName: args[1] }),
+  'generate:client': (args) => ({
+    starterDir: args[0],
+    targetDir: args[1],
+    iaSchemaPath: args[2],
+    gqlSchemaPath: args[3],
+    figmaVariablesPath: args[4],
+  }),
+  'implement:client': (args) => ({
+    projectDir: args[0],
+    iaSchemeDir: args[1],
+    designSystemPath: args[3] ?? args[2],
+  }),
+  'check:types': (args, options) => ({
+    targetDirectory: args[0],
+    fix: options.fix ?? false,
+    scope: options.scope,
+  }),
+  'check:tests': (args, options) => ({
+    targetDirectory: args[0],
+    scope: options.scope,
+  }),
+  'check:lint': (args, options) => ({
+    targetDirectory: args[0],
+    fix: options.fix ?? false,
+    scope: options.scope,
+  }),
+  'check:client': (args) => ({ clientDir: args[0] }),
+  'import:design-system': (args) => ({
+    outputDir: args[0],
+    strategy: args[1],
+    filterPath: args[2],
+  }),
+  'generate:ia': (args) => ({
+    outputDir: args[0],
+    // Handle variadic arguments - args[1] might be an array if variadic
+    flowFiles: Array.isArray(args[1]) ? args[1] : args.slice(1),
+  }),
+  'copy:example': (args) => ({ exampleName: args[0], destination: args[1] }),
 };
 
-const setupProgram = (config: ReturnType<typeof loadConfig>) => {
+const prepareCommandData = (
+  alias: string,
+  args: (string | string[])[],
+  options: Record<string, unknown>,
+): CommandData => {
+  const mapper = commandMappers[alias];
+  if (mapper !== undefined) {
+    return mapper(args, options);
+  }
+
+  // Default handling for unknown commands
+  const baseData: CommandData = {};
+  args.forEach((arg, index) => {
+    if (arg !== '') {
+      baseData[`arg${index + 1}`] = arg;
+    }
+  });
+
+  Object.keys(options).forEach((key) => {
+    if (options[key] !== undefined && key !== '_') {
+      baseData[key] = options[key];
+    }
+  });
+
+  return baseData;
+};
+
+interface LoadedCommand {
+  handler?: unknown;
+  description: string;
+  usage?: string;
+  examples?: string[];
+  args?: Array<{ name: string; description: string; required?: boolean }>;
+  options?: Array<{ name: string; description: string }>;
+  category?: string;
+}
+
+const setupProgram = async (config: ReturnType<typeof loadConfig>) => {
   const program = createCLI();
   const analytics = new Analytics(config);
+  const output = createOutput(config);
+  const loadedCommands = new Map<string, LoadedCommand>();
 
-  program.addCommand(createCreateExampleCommand(config, analytics));
-  program.addCommand(createCopyExampleCommand(config, analytics));
-  program.addCommand(createExportSchemaCommand(config, analytics));
-  program.addCommand(createGenerateServerCommand(config, analytics));
-  program.addCommand(createGenerateGQLSchemaCommand(config, analytics));
-  program.addCommand(createImplementServerCommand(config, analytics));
-  program.addCommand(createImportDesignSystemCommand(config, analytics));
-  program.addCommand(createGenerateIACommand(config, analytics));
-  program.addCommand(createGenerateClientCommand(config, analytics));
-  program.addCommand(createImplementClientCommand(config, analytics));
-  program.addCommand(createCheckClientCommand(config, analytics));
-  program.addCommand(createCheckTypesCommand(config, analytics));
-  program.addCommand(createCheckTestsCommand(config, analytics));
-  program.addCommand(createCheckLintCommand(config, analytics));
+  // Configure help to be minimal since we add our own
+  program.configureHelp({
+    sortSubcommands: true,
+    subcommandTerm: (cmd) => cmd.name(),
+    // Hide the Commands section
+    formatHelp: (cmd, helper) => {
+      const termWidth = helper.padWidth(cmd, helper);
+      const helpWidth = helper.helpWidth ?? 80;
+      const itemIndentWidth = 2;
+      const itemSeparatorWidth = 2;
 
-  program.addHelpText(
-    'after',
-    `
-Commands:
+      function formatItem(term: string, description: string) {
+        if (description !== '') {
+          const fullText = `${term.padEnd(termWidth + itemSeparatorWidth)}${description}`;
+          return helper.wrap(fullText, helpWidth - itemIndentWidth, termWidth + itemSeparatorWidth);
+        }
+        return term;
+      }
 
-  ${chalk.cyan('🎯 Flow Development')}
-  create:example <name>                                      Current options: ['shopping-assistant']
-  export:schema <context> <flows>                            Export flow schemas to context directory
+      function formatList(textArray: string[]) {
+        return textArray.join('\n').replace(/^/gm, ' '.repeat(itemIndentWidth));
+      }
 
-  ${chalk.cyan('⚙️ Backend Generation')}
-  generate:server <schema> <dest>                            Generate server from schema.json
-  implement:server <server-dir>                              AI implements server TODOs and tests
+      const output: string[] = [];
 
-  ${chalk.cyan('🎨 Design System & Frontend')}
-  import:design-system <src> <mode> [filter]                 Import Figma design system
-  generate:ia <context> <flows...>                           Generate Information Architecture  
-  generate:client <starter> <client> <ia> <gql> [vars]       Generate React client app
-  implement:client <client> <context> <principles> <design>  AI implements client
+      // Usage
+      const commandUsage = helper.commandUsage(cmd);
+      output.push('Usage: ' + commandUsage, '');
 
-  ${chalk.cyan('✅ Validation & Testing')}
-  check:types <directory>                                    TypeScript type checking
-  check:tests <directory>                                    Run Vitest test suites
-  check:lint <directory> [--fix]                             ESLint with optional auto-fix
-  check:client <client-dir>                                  Full frontend validation suite
+      // Description
+      const commandDescription = helper.commandDescription(cmd);
+      if (commandDescription !== '') {
+        output.push(commandDescription, '');
+      }
 
-Examples:
+      // Options
+      const optionList = helper.visibleOptions(cmd).map((option) => {
+        return formatItem(helper.optionTerm(option), helper.optionDescription(option));
+      });
+      if (optionList.length > 0) {
+        output.push('Options:', formatList(optionList), '');
+      }
 
-  ${chalk.gray('# Complete flow from scratch')}
-  $ mkdir shopping-assistant && cd shopping-assistant
-  $ auto create:example shopping-assistant
-  $ cd shopping-assistant && pnpm install
-  $ auto export:schema ./.context ./flows
+      // Skip the Commands section - we'll add our own
 
-  ${chalk.gray('# Generate and implement backend')}
-  $ auto generate:server .context/schema.json .
-  $ auto implement:server ./server
-  $ auto check:types ./server
-  $ auto check:tests ./server
+      return output.join('\n');
+    },
+  });
 
-  ${chalk.gray('# Import design system and generate frontend (Shadcn)')}
-  $ auto import:design-system ./.context WITH_COMPONENT_SETS ./shadcn-filter.ts
-  $ auto generate:ia ./.context ./flows/*.flow.ts
-  $ auto generate:client ./shadcn-starter ./client ./auto-ia.json ./schema.graphql ./figma-vars.json
-  $ auto implement:client ./client ./.context ./design-principles.md ./design-system.md
-  
-  ${chalk.gray('# Run validation checks')}
-  $ auto check:types ./server --scope project
-  $ auto check:tests ./server
-  $ auto check:lint ./server --fix
-  $ auto check:client ./client
+  // Check for auto.config.ts or auto.config.js file
+  let configPath = path.resolve(process.cwd(), 'auto.config.ts');
+  let hasPluginConfig = fs.existsSync(configPath);
 
-Environment Variables:
+  if (!hasPluginConfig) {
+    configPath = path.resolve(process.cwd(), 'auto.config.js');
+    hasPluginConfig = fs.existsSync(configPath);
+  }
+
+  if (!hasPluginConfig) {
+    output.error('No auto.config.ts or auto.config.js found. Please create one with your required plugins.');
+    output.info('Example auto.config.js:');
+    console.log(`
+export default {
+  plugins: [
+    '@auto-engineer/flowlang',
+    '@auto-engineer/emmett-generator',
+    '@auto-engineer/server-implementer',
+    // Add more plugins as needed
+  ]
+};`);
+    process.exit(1);
+  }
+
+  // Use plugin system
+  output.info('Loading plugins from auto.config.ts...');
+
+  try {
+    const pluginLoader = new PluginLoader();
+    const commands = await pluginLoader.loadPlugins(configPath);
+
+    // Store loaded commands for dynamic help generation
+    commands.forEach((command, alias) => {
+      loadedCommands.set(alias, command);
+    });
+
+    // Register CLI commands that will dispatch through the message bus
+    for (const [alias, command] of commands.entries()) {
+      // Parse the command alias to get parts for commander
+      const parts = alias.split(':');
+      const primaryCommand = parts[0];
+      const subCommand = parts.slice(1).join(':');
+
+      let cmd: Command;
+      if (subCommand) {
+        // Create as subcommand (e.g., "create:example" becomes "create example")
+        cmd = new Command(`${primaryCommand}:${subCommand}`);
+      } else {
+        // Single command
+        cmd = new Command(primaryCommand);
+      }
+
+      cmd.description(command.description);
+
+      // Add arguments from the command manifest
+      if (command.args) {
+        command.args.forEach((arg) => {
+          // Handle variadic arguments (e.g., flows...)
+          const isVariadic = arg.name.endsWith('...');
+          const argName = isVariadic ? arg.name : arg.name;
+          const argString = arg.required === true ? `<${argName}>` : `[${argName}]`;
+          cmd.argument(argString, arg.description ?? '');
+        });
+      }
+
+      // Add options from the command manifest
+      if (command.options) {
+        command.options.forEach((opt) => {
+          cmd.option(opt.name, opt.description ?? '');
+        });
+      }
+
+      cmd.action(async (...args: unknown[]) => {
+        try {
+          await analytics.track({ command: alias, success: true });
+
+          // Extract arguments and options
+          // Commander passes: [...args, command, options]
+          // For variadic, all extra args are collected into an array
+          const cmdArgs = args.slice(0, -2); // Last two are command and options
+          const options = args[args.length - 1] as Record<string, unknown>;
+
+          // Debug logging
+          if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
+            console.error('DEBUG cli: Raw args:', args);
+            console.error('DEBUG cli: Command args:', cmdArgs);
+          }
+
+          // Filter out empty strings but keep arrays (for variadic args)
+          const nonEmptyArgs = cmdArgs.filter((arg) => {
+            if (typeof arg === 'string') return arg !== '';
+            if (Array.isArray(arg)) return true;
+            return false;
+          });
+
+          // Prepare command data based on the command type
+          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options);
+
+          if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
+            console.error('DEBUG cli: Prepared command data:', commandData);
+          }
+
+          // Execute through the plugin loader which will dispatch via message bus
+          await pluginLoader.executeCommand(alias, commandData);
+
+          await analytics.track({ command: alias, success: true });
+        } catch (error) {
+          await analytics.track({ command: alias, success: false });
+          handleError(error as Error);
+        }
+      });
+      program.addCommand(cmd);
+    }
+
+    const pluginCount = pluginLoader.getLoadedPluginCount();
+    output.success(`Loaded ${commands.size} commands from ${pluginCount} plugins`);
+  } catch (error) {
+    output.error('Failed to load plugins');
+    console.error(error);
+    process.exit(1);
+  }
+
+  // Generate dynamic help text from loaded commands
+  const generateDynamicHelp = () => {
+    const categories = new Map<string, Array<{ alias: string; command: LoadedCommand }>>();
+
+    // Group commands by category
+    loadedCommands.forEach((command, alias) => {
+      const category = command.category ?? 'Other Commands';
+      if (!categories.has(category)) {
+        categories.set(category, []);
+      }
+      categories.get(category)!.push({ alias, command });
+    });
+
+    const helpText: string[] = [];
+    helpText.push('\nCommands:\n');
+
+    // Build help text for each category
+    categories.forEach((commands, category) => {
+      helpText.push(`\n  ${chalk.cyan(category)}\n`);
+
+      commands.forEach(({ alias, command }) => {
+        const usage = command.usage ?? alias;
+        const description = command.description ?? 'No description available';
+
+        // Calculate padding for alignment
+        const padding = ' '.repeat(Math.max(0, 60 - usage.length));
+        helpText.push(`    ${usage}${padding}${description}\n`);
+
+        // Add examples indented under the command
+        if (command.examples && command.examples.length > 0) {
+          command.examples.forEach((example) => {
+            helpText.push(`      ${chalk.gray(example)}\n`);
+          });
+        }
+      });
+    });
+
+    // Add environment variables section
+    helpText.push(`
+\nEnvironment Variables:
   ${chalk.gray('AI Providers (need at least one):')}
   ANTHROPIC_API_KEY                      Anthropic Claude API key
   OPENAI_API_KEY                         OpenAI API key
@@ -178,13 +386,16 @@ Environment Variables:
   AUTO_ENGINEER_ANALYTICS=false          Disable usage analytics
 
 Tips:
-  • Use DEBUG=* to troubleshoot command issues, then narrow the debug scope down to specific command(s)
+  • Use DEBUG=* to troubleshoot command issues
   • Run 'pnpm install' after create:example
-  • Ensure servers are running before check:client
+  • Commands available depend on plugins in auto.config.ts
 
-For docs & support: https://github.com/SamHatoum/auto-engineer
-    `,
-  );
+For docs & support: https://github.com/SamHatoum/auto-engineer\n`);
+
+    return helpText.join('');
+  };
+
+  program.addHelpText('after', generateDynamicHelp());
 
   return program;
 };
@@ -239,9 +450,8 @@ const main = async () => {
 
     validateConfig(config);
     createOutput(config);
-    displayBanner(config);
 
-    const fullProgram = setupProgram(config);
+    const fullProgram = await setupProgram(config);
     await fullProgram.parseAsync(process.argv);
   } catch (error: unknown) {
     handleProgramError(error);

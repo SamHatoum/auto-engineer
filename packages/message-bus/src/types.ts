@@ -33,3 +33,14 @@ export type CommandHandler<TCommand extends Command = Command> = {
   name: string;
   handle: (command: TCommand) => Promise<void>;
 };
+
+// Event handler for subscriptions
+export type EventHandler<TEvent extends Event = Event> = {
+  name: string;
+  handle: (event: TEvent) => Promise<void> | void;
+};
+
+// Event subscription
+export type EventSubscription = {
+  unsubscribe: () => void;
+};

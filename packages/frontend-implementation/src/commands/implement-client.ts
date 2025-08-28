@@ -25,7 +25,7 @@ export type ClientImplementationFailedEvent = Event<
   }
 >;
 
-export async function handleImplementClientCommand(
+async function handleImplementClientCommandInternal(
   command: ImplementClientCommand,
 ): Promise<ClientImplementedEvent | ClientImplementationFailedEvent> {
   const { projectDir, iaSchemeDir, designSystemPath } = command.data;
@@ -65,11 +65,51 @@ export async function handleImplementClientCommand(
 export const implementClientCommandHandler: CommandHandler<ImplementClientCommand> = {
   name: 'ImplementClient',
   handle: async (command: ImplementClientCommand): Promise<void> => {
-    const result = await handleImplementClientCommand(command);
+    const result = await handleImplementClientCommandInternal(command);
     if (result.type === 'ClientImplemented') {
       console.log('Client implemented successfully');
     } else {
       console.error(`Failed: ${result.data.error}`);
     }
   },
+};
+
+// CLI arguments interface
+interface CliArgs {
+  _: string[];
+  [key: string]: unknown;
+}
+
+// Type guard to check if it's an ImplementClientCommand
+function isImplementClientCommand(obj: unknown): obj is ImplementClientCommand {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'type' in obj &&
+    'data' in obj &&
+    (obj as { type: unknown }).type === 'ImplementClient'
+  );
+}
+
+// Default export for CLI usage
+export default async (commandOrArgs: ImplementClientCommand | CliArgs) => {
+  const command = isImplementClientCommand(commandOrArgs)
+    ? commandOrArgs
+    : {
+        type: 'ImplementClient' as const,
+        data: {
+          projectDir: commandOrArgs._?.[0] ?? './client',
+          iaSchemeDir: commandOrArgs._?.[1] ?? './.context',
+          // Design system path might be the 3rd or 4th argument (handling both cases)
+          designSystemPath: commandOrArgs._?.[2] ?? './client/design-system-principles.md',
+        },
+        timestamp: new Date(),
+      };
+
+  const result = await handleImplementClientCommandInternal(command);
+  if (result.type === 'ClientImplemented') {
+    console.log('Client implemented successfully');
+  } else {
+    console.error(`Failed: ${result.data.error}`);
+  }
 };

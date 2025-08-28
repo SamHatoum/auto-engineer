@@ -1,9 +1,15 @@
 {
   "name": "@auto-engineer/backend-checks",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "README.md",
@@ -21,12 +27,15 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.3.4",
+    "@auto-engineer/message-bus": "^0.4.0",
     "debug": "^4.4.1",
     "execa": "^9.5.2",
     "fast-glob": "^3.3.2"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.6.0"
   }
 }

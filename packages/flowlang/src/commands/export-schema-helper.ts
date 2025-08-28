@@ -1,8 +1,6 @@
-#!/usr/bin/env node
-import { resolve } from 'path';
-import { writeFileSync, mkdirSync } from 'fs';
-import { pathToFileURL } from 'url';
 import createDebug from 'debug';
+import { getFs } from './filestore.node';
+import type { IExtendedFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:export-schema-helper');
 
@@ -12,7 +10,9 @@ const main = async () => {
 
   try {
     // Import getFlows from the project's node_modules to ensure we use the same module context
-    const projectFlowlangPath = resolve(
+    const getFileStore = getFs as () => Promise<IExtendedFileStore>;
+    const fs: IExtendedFileStore = await getFileStore();
+    const projectFlowlangPath = fs.join(
       directory,
       'node_modules',
       '@auto-engineer',
@@ -24,12 +24,13 @@ const main = async () => {
     );
     debug('Importing getFlows from: %s', projectFlowlangPath);
 
+    const { pathToFileURL } = await import('url');
     const flowlangModule = (await import(pathToFileURL(projectFlowlangPath).href)) as {
       getFlows: typeof import('../loader/getFlows').getFlows;
     };
     const { getFlows } = flowlangModule;
 
-    const flowsPath = resolve(directory, 'flows');
+    const flowsPath = fs.join(directory, 'flows');
     debug('Resolved flows path: %s', flowsPath);
 
     const result = await getFlows({ root: flowsPath });
@@ -42,11 +43,11 @@ const main = async () => {
     );
 
     const json = JSON.stringify(schema, null, 2);
-    const contextDir = resolve(directory, '.context');
-    const outPath = resolve(contextDir, 'schema.json');
+    const contextDir = fs.join(directory, '.context');
+    const outPath = fs.join(contextDir, 'schema.json');
 
-    mkdirSync(contextDir, { recursive: true });
-    writeFileSync(outPath, json);
+    await fs.ensureDir(contextDir);
+    await fs.writeText(outPath, json);
     debug('Schema written to: %s', outPath);
 
     // Output success as JSON for parent process
