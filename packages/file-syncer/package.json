@@ -12,7 +12,6 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "start:server": "tsx src/server.ts . .js,.html,.css",
-    "start:client": "serve src -l 8080",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
