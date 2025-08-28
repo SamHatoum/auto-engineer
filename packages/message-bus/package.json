@@ -27,8 +27,6 @@
     "event-driven",
     "cqrs"
   ],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
     "tsx": "^4.20.3",
