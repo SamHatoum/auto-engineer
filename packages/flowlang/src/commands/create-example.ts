@@ -1,5 +1,6 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { getFs } from './filestore.node';
+import { execSync } from 'child_process';
 
 export type CreateExampleCommand = Command<
   'CreateExample',
@@ -30,6 +31,39 @@ export type ExampleCreationFailedEvent = Event<
 const EXAMPLE_FOLDERS: Record<string, string> = {
   'shopping-assistant': 'shopping-assitant', // Note: keeping the typo to match actual folder name
 };
+
+// Detect which package manager is available
+async function getPackageManager(): Promise<'pnpm' | 'npm'> {
+  try {
+    execSync('pnpm --version', { stdio: 'ignore' });
+    return 'pnpm';
+  } catch {
+    // npm is always available with Node.js
+    return 'npm';
+  }
+}
+
+// Install dependencies in the target directory
+async function installDependencies(targetDirectory: string): Promise<{ success: boolean; packageManager: string }> {
+  const packageManager = await getPackageManager();
+
+  try {
+    console.log(`✓ Installing dependencies...`);
+
+    // Change to the target directory and run install
+    const command = packageManager === 'pnpm' ? 'pnpm install --silent' : 'npm install --silent';
+    execSync(command, {
+      cwd: targetDirectory,
+      stdio: 'pipe', // Suppress output
+    });
+
+    console.log(`✓ Dependencies installed`);
+    return { success: true, packageManager };
+  } catch (error) {
+    console.error(`✗ Failed to install dependencies`, error);
+    return { success: false, packageManager };
+  }
+}
 
 async function copyDirectoryRecursive(
   sourceDir: string,
@@ -111,6 +145,9 @@ async function handleCreateExampleCommandInternal(
       };
     }
 
+    // Create the target directory if it doesn't exist
+    await fs.ensureDir(targetDirectory);
+
     const createdFiles = await copyDirectoryRecursive(sourceDir, targetDirectory, true);
 
     return {
@@ -166,17 +203,20 @@ function isCreateExampleCommand(obj: unknown): obj is CreateExampleCommand {
     obj !== null &&
     'type' in obj &&
     'data' in obj &&
-    (obj as { type: unknown }).type === 'CreateExample'
+    ((obj as { type: unknown }).type === 'CreateExample' || (obj as { type: unknown }).type === 'create:example')
   );
 }
 
 function createCommandFromMessageBus(commandOrArgs: CreateExampleCommand): CreateExampleCommand {
   const data = commandOrArgs.data as CreateExampleCommand['data'] & CliArgs;
+  const exampleName = data.name ?? data.exampleName ?? 'shopping-assistant';
+  // Use the destination if provided, otherwise use the example name as directory
+  const targetDirectory = data.targetDirectory ?? data.destination ?? data.arg2 ?? exampleName;
   return {
     type: 'CreateExample',
     data: {
-      exampleName: data.name ?? data.exampleName ?? 'shopping-assistant',
-      targetDirectory: data.targetDirectory ?? data.destination ?? data.arg2 ?? process.cwd(),
+      exampleName,
+      targetDirectory,
     },
     timestamp: commandOrArgs.timestamp ?? new Date(),
     requestId: commandOrArgs.requestId ?? `cli-${Date.now()}`,
@@ -184,11 +224,14 @@ function createCommandFromMessageBus(commandOrArgs: CreateExampleCommand): Creat
 }
 
 function createCommandFromCliArgs(args: CliArgs): CreateExampleCommand {
+  const exampleName = args.name ?? args.exampleName ?? 'shopping-assistant';
+  // Use the destination if provided, otherwise use the example name as directory
+  const targetDirectory = args.destination ?? args.targetDirectory ?? exampleName;
   return {
     type: 'CreateExample',
     data: {
-      exampleName: args.name ?? args.exampleName ?? 'shopping-assistant',
-      targetDirectory: args.destination ?? args.targetDirectory ?? process.cwd(),
+      exampleName,
+      targetDirectory,
     },
     timestamp: args.timestamp ?? new Date(),
     requestId: args.requestId ?? `cli-${Date.now()}`,
@@ -197,46 +240,33 @@ function createCommandFromCliArgs(args: CliArgs): CreateExampleCommand {
 
 // Export for CLI usage - this matches what plugin-loader expects
 const handler = async (commandOrArgs: CreateExampleCommand | CliArgs) => {
-  // Get the file system instance
-  const fs = await getFs();
-
-  // Write to a debug file since console output seems to be suppressed
-  const debugInfo = `Handler received: ${JSON.stringify(commandOrArgs, null, 2)}\n`;
-  await fs.writeText('/tmp/create-example-debug.txt', debugInfo);
-
   // Handle both Command object from message bus and plain args
   const command = isCreateExampleCommand(commandOrArgs)
     ? createCommandFromMessageBus(commandOrArgs)
     : createCommandFromCliArgs(commandOrArgs);
 
-  await fs.writeText(
-    '/tmp/create-example-debug.txt',
-    `${debugInfo}Command created: ${JSON.stringify(command, null, 2)}\n`,
-  );
-
-  console.log('Creating example with command:', JSON.stringify(command, null, 2));
-
   try {
     const result = await handleCreateExampleCommandInternal(command);
 
-    console.log('Result:', JSON.stringify(result, null, 2));
-
     if (result.type === 'ExampleCreated') {
       const createdData = result.data as { exampleName: string; targetDirectory: string; filesCreated: string[] };
-      console.log(`✅ Example "${createdData.exampleName}" created successfully!`);
-      console.log(`📁 Created ${createdData.filesCreated.length} files in ${createdData.targetDirectory}`);
+      console.log(`✓ Created "${createdData.exampleName}" example in ./${createdData.targetDirectory}/`);
 
-      // List some of the created files
-      if (createdData.filesCreated.length > 0) {
-        console.log('Files created:');
-        createdData.filesCreated.slice(0, 10).forEach((file: string) => console.log(`  - ${file}`));
-        if (createdData.filesCreated.length > 10) {
-          console.log(`  ... and ${createdData.filesCreated.length - 10} more files`);
-        }
+      // Install dependencies
+      const { success, packageManager } = await installDependencies(createdData.targetDirectory);
+
+      // Print next steps instructions
+      console.log('\nGet started:');
+      console.log(`   cd ${createdData.targetDirectory}`);
+
+      if (!success) {
+        console.log(`   ${packageManager} install`);
       }
+
+      console.log(`   ${packageManager} dev\n`);
     } else {
       const errorData = result.data as { exampleName: string; targetDirectory: string; error: string };
-      console.error(`❌ Failed to create example: ${errorData.error}`);
+      console.error(`✗ Failed to create example: ${errorData.error}`);
       process.exit(1);
     }
   } catch (error) {

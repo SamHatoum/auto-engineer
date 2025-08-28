@@ -74,7 +74,7 @@ const createCLI = () => {
 type CommandData = Record<string, unknown>;
 
 const commandMappers: Record<string, (args: (string | string[])[], options: Record<string, unknown>) => CommandData> = {
-  'create:example': (args) => ({ name: args[0] }),
+  'create:example': (args) => ({ name: args[0], destination: args[1] }),
   'export:schema': (args) => ({ contextDir: args[0], flowsDir: args[1] }),
   'generate:server': (args) => ({ schemaPath: args[0], destination: args[1] }),
   'implement:server': (args) => ({ serverDirectory: args[0] }),
@@ -294,7 +294,7 @@ export default {
           const options = args[args.length - 1] as Record<string, unknown>;
 
           // Debug logging
-          if (process.env.DEBUG?.includes('cli:')) {
+          if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
             console.error('DEBUG cli: Raw args:', args);
             console.error('DEBUG cli: Command args:', cmdArgs);
           }
@@ -309,7 +309,7 @@ export default {
           // Prepare command data based on the command type
           const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options);
 
-          if (process.env.DEBUG?.includes('cli:')) {
+          if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
             console.error('DEBUG cli: Prepared command data:', commandData);
           }
 

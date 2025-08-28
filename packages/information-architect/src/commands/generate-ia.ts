@@ -87,7 +87,7 @@ async function getUniqueSchemaPath(
     const content = await fs.readFile(filePath, 'utf-8');
     existingSchema = JSON.parse(content) as object;
     debugFiles('Existing schema loaded successfully from: %s', filePath);
-  } catch (error) {
+  } catch {
     debugFiles('No existing schema found at: %s', filePath);
     // If we can't read/parse it, treat as no existing schema
   }

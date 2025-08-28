@@ -1,6 +1,8 @@
-import { chromium, Browser } from 'playwright';
 import { exec, execSync } from 'child_process';
 import createDebug from 'debug';
+
+// Type imports don't trigger module loading
+import type { Browser, BrowserType, ChromiumBrowser } from 'playwright';
 
 const debug = createDebug('frontend-checks:browser');
 const debugInstall = createDebug('frontend-checks:install');
@@ -11,6 +13,7 @@ class BrowserManager {
   private static instance: BrowserManager | null = null;
   private browser: Browser | null = null;
   private browserInstalled = false;
+  private chromium: BrowserType<ChromiumBrowser> | null = null;
 
   private constructor() {}
 
@@ -22,6 +25,16 @@ class BrowserManager {
     return BrowserManager.instance;
   }
 
+  private async getChromium(): Promise<BrowserType<ChromiumBrowser>> {
+    if (!this.chromium) {
+      debug('Dynamically importing playwright...');
+      const playwright = await import('playwright');
+      this.chromium = playwright.chromium;
+      debug('Playwright imported successfully');
+    }
+    return this.chromium;
+  }
+
   private async ensureBrowserInstalled(): Promise<void> {
     if (this.browserInstalled) {
       debugInstall('Browser already marked as installed');
@@ -31,6 +44,7 @@ class BrowserManager {
     try {
       // Try to launch to see if browser is already installed
       debugInstall('Testing if Chromium is already installed...');
+      const chromium = await this.getChromium();
       const testBrowser = await chromium.launch();
       await testBrowser.close();
       this.browserInstalled = true;
@@ -63,6 +77,7 @@ class BrowserManager {
       debug('Browser not initialized, ensuring installation and launching');
       await this.ensureBrowserInstalled();
       debug('Launching Chromium browser');
+      const chromium = await this.getChromium();
       this.browser = await chromium.launch();
       debug('Browser launched successfully');
     } else {
