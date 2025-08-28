@@ -6,6 +6,13 @@ const debugCommand = createDebug('message-bus:command');
 const debugEvent = createDebug('message-bus:event');
 const debugHandler = createDebug('message-bus:handler');
 
+// Set non-error-like colors for debug namespaces
+// Colors: 0=gray, 1=red, 2=green, 3=yellow, 4=blue, 5=magenta, 6=cyan
+debug.color = '6'; // cyan
+debugCommand.color = '4'; // blue
+debugEvent.color = '2'; // green
+debugHandler.color = '6'; // cyan
+
 type MessageBusState = {
   commandHandlers: Record<string, CommandHandler>;
   eventHandlers: Record<string, EventHandler[]>;

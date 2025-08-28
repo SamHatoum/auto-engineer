@@ -13,6 +13,14 @@ const debugPlugins = createDebug('cli:plugin-loader:plugins');
 const debugConflicts = createDebug('cli:plugin-loader:conflicts');
 const debugBus = createDebug('cli:plugin-loader:bus');
 
+// Set non-error-like colors (avoid red/orange)
+// Colors: 0=gray, 1=red, 2=green, 3=yellow, 4=blue, 5=magenta, 6=cyan
+debug.color = '4'; // blue
+debugConfig.color = '6'; // cyan
+debugPlugins.color = '2'; // green
+debugConflicts.color = '3'; // yellow (ok for conflicts)
+debugBus.color = '4'; // blue
+
 export interface CliCommand {
   handler: () => Promise<unknown>;
   description: string;
