@@ -142,7 +142,7 @@ auto generate:server
 # 4. The generated server is ready to run:
 cd server
 npm install
-npm run dev
+npm run start
 ```
 
 ## Advanced Features

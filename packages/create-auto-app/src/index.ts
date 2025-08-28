@@ -202,7 +202,7 @@ function printSuccessMessage(name: string, packageManager: string, installDeps: 
   if (!installDeps) {
     console.log(chalk.cyan(`  ${packageManager} install`));
   }
-  console.log(chalk.cyan(`  ${packageManager} run dev\n`));
+  console.log(chalk.cyan(`  ${packageManager} run start\n`));
 }
 
 async function handleTemplateCreation(
@@ -322,7 +322,7 @@ An Auto Engineer project.
 ${packageManager} install
 
 # Start development
-${packageManager} run dev
+${packageManager} run start
 \`\`\`
 
 ## Available Commands

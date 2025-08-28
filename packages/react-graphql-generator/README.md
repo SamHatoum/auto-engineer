@@ -304,7 +304,7 @@ Works with the Auto Engineer ecosystem:
 
    ```bash
    cd client
-   npm run dev
+   npm run start
    ```
 
 3. **Generate GraphQL Types** (when schema changes):
