@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "start": "tsx src/index.ts",
-    "start:server": "tsx src/server.ts . .js,.html,.css",
+    "start:server": "tsx src/server.ts ../../../shop/flows .flow.ts,.d.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run",
