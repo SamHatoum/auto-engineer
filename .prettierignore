@@ -24,3 +24,6 @@
 # OS files
 **/.DS_Store
 **/Thumbs.db
+
+# Template files (should not be formatted)
+packages/create-auto-app/templates/**

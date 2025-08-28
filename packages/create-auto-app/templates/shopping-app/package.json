@@ -1,0 +1,25 @@
+{
+  "name": "shopping-assistant",
+  "type": "module",
+  "scripts": {
+    "start": "dotenv -e .env -- pnpm --parallel start",
+    "build": "pnpm --parallel build"
+  },
+  "dependencies": {
+    "@auto-engineer/message-bus": "latest",
+    "@auto-engineer/backend-checks": "latest",
+    "@auto-engineer/design-system-importer": "latest",
+    "@auto-engineer/emmett-generator": "latest",
+    "@auto-engineer/flowlang": "latest",
+    "@auto-engineer/frontend-checks": "latest",
+    "@auto-engineer/frontend-implementation": "latest",
+    "@auto-engineer/information-architect": "latest",
+    "@auto-engineer/react-graphql-generator": "latest",
+    "@auto-engineer/server-implementer": "latest"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "dotenv-cli": "^9.0.0",
+    "tsx": "^3.12.7"
+  }
+}
