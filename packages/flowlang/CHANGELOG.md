@@ -1,5 +1,11 @@
 # @auto-engineer/flowlang
 
+## 0.6.1
+
+### Patch Changes
+
+- removes top-level `url` import to restore browser compatibility
+
 ## 0.6.0
 
 ### Minor Changes

@@ -9,7 +9,6 @@ import type { Integration } from '../types';
 
 import { flowsToSchema } from './flow-to-schema';
 import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
-import { pathToFileURL } from 'url';
 import type { IFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:getFlows');
@@ -55,16 +54,16 @@ async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Pr
 }
 
 async function executeNative(files: string[]) {
+  if (typeof process === 'undefined' || !process.versions?.node) {
+    throw new Error('getFlows: native mode is only supported in Node.js');
+  }
+  const { pathToFileURL } = await import('node:url');
   debugImport('native: importing %d files', files.length);
   for (const file of files) {
-    debugImport('native: importing file %s', file);
     const url = `${pathToFileURL(file).href}?t=${Date.now()}`;
-    debugImport('native: import URL %s', url);
     const mod = (await import(url)) as Record<string, unknown>;
-    debugImport('native: imported module keys: %o', Object.keys(mod));
     for (const [, val] of Object.entries(mod)) if (isIntegrationObject(val)) integrationRegistry.register(val);
   }
-  debugImport('native: after import, flows count: %d', registry.getAllFlows().length);
 }
 
 async function createVfsIfNeeded(providedVfs?: IFileStore): Promise<IFileStore> {
