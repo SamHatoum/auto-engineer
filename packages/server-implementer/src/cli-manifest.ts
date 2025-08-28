@@ -13,12 +13,11 @@ export const CLI_MANIFEST: CliManifest = {
     'implement:slice': {
       handler: () => import('./commands/implement-slice'),
       description: 'AI implements a specific server slice',
-      usage: 'implement:slice <server-dir> <slice-name>',
-      examples: ['$ auto implement:slice ./server enters-shopping-criteria'],
-      args: [
-        { name: 'server-dir', description: 'Server directory path', required: true },
-        { name: 'slice-name', description: 'Name of the slice to implement', required: true },
+      usage: 'implement:slice <slice-path>',
+      examples: [
+        '$ auto implement:slice ./server/src/domain/flows/seasonal-assistant/enters-shopping-criteria-into-assistant',
       ],
+      args: [{ name: 'slice-path', description: 'Path to the slice directory to implement', required: true }],
     },
   },
 };

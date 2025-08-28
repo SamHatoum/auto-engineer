@@ -78,7 +78,7 @@ const commandMappers: Record<string, (args: (string | string[])[], options: Reco
   'export:schema': (args) => ({ contextDir: args[0], flowsDir: args[1] }),
   'generate:server': (args) => ({ schemaPath: args[0], destination: args[1] }),
   'implement:server': (args) => ({ serverDirectory: args[0] }),
-  'implement:slice': (args) => ({ serverDir: args[0], sliceName: args[1] }),
+  'implement:slice': (args) => ({ slicePath: args[0] }),
   'generate:client': (args) => ({
     starterDir: args[0],
     targetDir: args[1],
