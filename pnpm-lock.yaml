@@ -344,6 +344,9 @@ importers:
       inquirer:
         specifier: ^9.2.15
         version: 9.3.7
+      jiti:
+        specifier: ^2.5.1
+        version: 2.5.1
       kleur:
         specifier: ^4.1.5
         version: 4.1.5
@@ -375,6 +378,43 @@ importers:
       tsx:
         specifier: ^4.20.3
         version: 4.20.3
+
+  packages/create-auto-engineer:
+    dependencies:
+      chalk:
+        specifier: ^5.3.0
+        version: 5.4.1
+      commander:
+        specifier: ^12.0.0
+        version: 12.1.0
+      execa:
+        specifier: ^9.6.0
+        version: 9.6.0
+      fs-extra:
+        specifier: ^11.2.0
+        version: 11.3.0
+      inquirer:
+        specifier: ^9.2.15
+        version: 9.3.7
+      ora:
+        specifier: ^8.0.1
+        version: 8.2.0
+    devDependencies:
+      '@types/fs-extra':
+        specifier: ^11.0.4
+        version: 11.0.4
+      '@types/inquirer':
+        specifier: ^9.0.7
+        version: 9.0.8
+      '@types/node':
+        specifier: ^20.11.19
+        version: 20.19.8
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
+      typescript:
+        specifier: ^5.3.3
+        version: 5.8.3
 
   packages/design-system-importer:
     dependencies:
@@ -7977,7 +8017,7 @@ snapshots:
     dependencies:
       '@types/node': 20.19.8
       cosmiconfig: 9.0.0(typescript@5.5.4)
-      jiti: 2.5.0
+      jiti: 2.5.1
       typescript: 5.5.4
 
   cosmiconfig@9.0.0(typescript@5.5.4):
@@ -9239,8 +9279,7 @@ snapshots:
 
   jiti@2.5.0: {}
 
-  jiti@2.5.1:
-    optional: true
+  jiti@2.5.1: {}
 
   js-tokens@4.0.0: {}
 
