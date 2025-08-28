@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.5.1
+
+### Patch Changes
+
+- Uses AI with a default provider
+
 ## 0.5.0
 
 ### Minor Changes

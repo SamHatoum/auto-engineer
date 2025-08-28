@@ -1,5 +1,13 @@
 # @auto-engineer/server-implementer
 
+## 0.5.1
+
+### Patch Changes
+
+- Uses AI with a default provider
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.5.1
+
 ## 0.5.0
 
 ### Minor Changes
