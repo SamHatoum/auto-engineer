@@ -28,19 +28,16 @@ dispatch.custom = <T>(_commandFactory: () => T) => {};
 
 export function fold<T>(_reducer: (event: T) => string) {}
 
-// Command handler for new pattern
-export type CommandHandler<TCommand extends Command = Command> = {
+export type CommandHandler<TCommand extends Command = Command, TEvent extends Event = Event> = {
   name: string;
-  handle: (command: TCommand) => Promise<void>;
+  handle: (command: TCommand) => Promise<TEvent | TEvent[] | void>;
 };
 
-// Event handler for subscriptions
 export type EventHandler<TEvent extends Event = Event> = {
   name: string;
   handle: (event: TEvent) => Promise<void> | void;
 };
 
-// Event subscription
 export type EventSubscription = {
   unsubscribe: () => void;
 };

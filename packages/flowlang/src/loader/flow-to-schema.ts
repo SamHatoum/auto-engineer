@@ -7,6 +7,9 @@ import { globalIntegrationRegistry } from '../integration-registry';
 import createDebug from 'debug';
 
 const debugIntegrations = createDebug('flowlang:getFlows:integrations');
+if ('color' in debugIntegrations && typeof debugIntegrations === 'object') {
+  (debugIntegrations as { color: string }).color = '6';
+} // cyan
 
 // Helper function to extract Zod schema type information
 const extractZodType = (schema: z.ZodTypeAny): string => {

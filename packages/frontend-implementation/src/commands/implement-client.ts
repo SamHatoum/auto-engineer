@@ -1,5 +1,21 @@
 import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
 import { runAIAgent } from '../agent';
+import createDebug from 'debug';
+
+const debug = createDebug('frontend-implementation:implement-client');
+
+export const implementClientManifest = {
+  handler: () => Promise.resolve({ default: implementClientCommandHandler }),
+  description: 'AI implements client',
+  usage: 'implement:client <client> <context> <principles> <design>',
+  examples: ['$ auto implement:client ./client ./.context ./design-principles.md ./design-system.md'],
+  args: [
+    { name: 'client', description: 'Client directory path', required: true },
+    { name: 'context', description: 'Context directory path', required: true },
+    { name: 'principles', description: 'Design principles file', required: true },
+    { name: 'design', description: 'Design system file', required: true },
+  ],
+};
 
 export type ImplementClientCommand = Command<
   'ImplementClient',
@@ -34,7 +50,7 @@ async function handleImplementClientCommandInternal(
     // Run the AI agent with absolute paths
     await runAIAgent(projectDir, iaSchemeDir, designSystemPath);
 
-    console.log('AI project implementation complete!');
+    debug('AI project implementation complete!');
 
     return {
       type: 'ClientImplemented',
@@ -47,7 +63,7 @@ async function handleImplementClientCommandInternal(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Failed to implement client:', error);
+    debug('Failed to implement client: %O', error);
 
     return {
       type: 'ClientImplementationFailed',
@@ -62,54 +78,23 @@ async function handleImplementClientCommandInternal(
   }
 }
 
-export const implementClientCommandHandler: CommandHandler<ImplementClientCommand> = {
+export const implementClientCommandHandler: CommandHandler<
+  ImplementClientCommand,
+  ClientImplementedEvent | ClientImplementationFailedEvent
+> = {
   name: 'ImplementClient',
-  handle: async (command: ImplementClientCommand): Promise<void> => {
+  handle: async (
+    command: ImplementClientCommand,
+  ): Promise<ClientImplementedEvent | ClientImplementationFailedEvent> => {
     const result = await handleImplementClientCommandInternal(command);
     if (result.type === 'ClientImplemented') {
-      console.log('Client implemented successfully');
+      debug('Client implemented successfully');
     } else {
-      console.error(`Failed: ${result.data.error}`);
+      debug('Failed: %s', result.data.error);
     }
+    return result;
   },
 };
 
-// CLI arguments interface
-interface CliArgs {
-  _: string[];
-  [key: string]: unknown;
-}
-
-// Type guard to check if it's an ImplementClientCommand
-function isImplementClientCommand(obj: unknown): obj is ImplementClientCommand {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    'data' in obj &&
-    (obj as { type: unknown }).type === 'ImplementClient'
-  );
-}
-
-// Default export for CLI usage
-export default async (commandOrArgs: ImplementClientCommand | CliArgs) => {
-  const command = isImplementClientCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'ImplementClient' as const,
-        data: {
-          projectDir: commandOrArgs._?.[0] ?? './client',
-          iaSchemeDir: commandOrArgs._?.[1] ?? './.context',
-          // Design system path might be the 3rd or 4th argument (handling both cases)
-          designSystemPath: commandOrArgs._?.[2] ?? './client/design-system-principles.md',
-        },
-        timestamp: new Date(),
-      };
-
-  const result = await handleImplementClientCommandInternal(command);
-  if (result.type === 'ClientImplemented') {
-    console.log('Client implemented successfully');
-  } else {
-    console.error(`Failed: ${result.data.error}`);
-  }
-};
+// Default export is the command handler
+export default implementClientCommandHandler;

@@ -15,6 +15,9 @@ import type { DataSinkItem, DataSourceItem, DataItem } from './types';
 import createDebug from 'debug';
 
 const debug = createDebug('flowlang:flow');
+if ('color' in debug && typeof debug === 'object') {
+  (debug as { color: string }).color = '6';
+} // cyan
 
 export const flow = (name: string, fn: () => void) => {
   debug('Starting flow definition: %s', name);

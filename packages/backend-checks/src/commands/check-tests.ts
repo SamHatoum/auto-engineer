@@ -10,6 +10,15 @@ const debugHandler = createDebug('backend-checks:tests:handler');
 const debugProcess = createDebug('backend-checks:tests:process');
 const debugResult = createDebug('backend-checks:tests:result');
 
+export const checkTestsManifest = {
+  handler: () => import('./check-tests'),
+  description: 'Run Vitest test suites',
+  usage: 'check:tests <directory>',
+  examples: ['$ auto check:tests ./server', '$ auto check:tests ./server --scope project'],
+  args: [{ name: 'directory', description: 'Directory containing tests', required: true }],
+  options: [{ name: '--scope <scope>', description: 'Test scope: slice (default) or project' }],
+};
+
 export type CheckTestsCommand = Command<
   'CheckTests',
   {
@@ -87,215 +96,143 @@ function parseVitestOutput(output: string): {
   return { failedTests, testsRun, testsPassed, testsFailed };
 }
 
-// eslint-disable-next-line complexity
-async function handleCheckTestsCommandInternal(
-  command: CheckTestsCommand,
-): Promise<TestsCheckPassedEvent | TestsCheckFailedEvent> {
-  const { targetDirectory, scope = 'slice' } = command.data;
+export const checkTestsCommandHandler: CommandHandler<CheckTestsCommand> = {
+  name: 'CheckTests',
+  // eslint-disable-next-line complexity
+  handle: async (command: CheckTestsCommand): Promise<TestsCheckPassedEvent | TestsCheckFailedEvent> => {
+    debug('CommandHandler executing for CheckTests');
+    const { targetDirectory, scope = 'slice' } = command.data;
 
-  debug('Handling CheckTestsCommand');
-  debug('  Target directory: %s', targetDirectory);
-  debug('  Scope: %s', scope);
-  debug('  Request ID: %s', command.requestId);
-  debug('  Correlation ID: %s', command.correlationId ?? 'none');
+    debug('Handling CheckTestsCommand');
+    debug('  Target directory: %s', targetDirectory);
+    debug('  Scope: %s', scope);
+    debug('  Request ID: %s', command.requestId);
+    debug('  Correlation ID: %s', command.correlationId ?? 'none');
 
-  try {
-    const targetDir = path.resolve(targetDirectory);
-    const projectRoot = await findProjectRoot(targetDir);
+    try {
+      const targetDir = path.resolve(targetDirectory);
+      const projectRoot = await findProjectRoot(targetDir);
 
-    debugHandler('Resolved paths:');
-    debugHandler('  Target directory: %s', targetDir);
-    debugHandler('  Project root: %s', projectRoot);
+      debugHandler('Resolved paths:');
+      debugHandler('  Target directory: %s', targetDir);
+      debugHandler('  Project root: %s', projectRoot);
 
-    // Find test files
-    const testPattern = scope === 'slice' ? path.join(targetDir, '**/*.specs.ts') : '**/*.specs.ts';
+      // Find test files
+      const testPattern = scope === 'slice' ? path.join(targetDir, '**/*.specs.ts') : '**/*.specs.ts';
 
-    const testFiles = await fg([testPattern], {
-      cwd: projectRoot,
-      absolute: true,
-    });
+      const testFiles = await fg([testPattern], {
+        cwd: projectRoot,
+        absolute: true,
+      });
 
-    if (testFiles.length === 0) {
-      debugResult('No test files found');
+      if (testFiles.length === 0) {
+        debugResult('No test files found');
+        return {
+          type: 'TestsCheckPassed',
+          data: {
+            targetDirectory,
+            testsRun: 0,
+            testsPassed: 0,
+          },
+          timestamp: new Date(),
+          requestId: command.requestId,
+          correlationId: command.correlationId,
+        };
+      }
+
+      debugProcess('Running tests with Vitest...');
+      debugProcess('Test files: %d', testFiles.length);
+
+      // Run tests with Vitest
+      const args = ['vitest', 'run', '--reporter=verbose'];
+
+      if (scope === 'slice') {
+        // Run only tests in the target directory
+        args.push(targetDir);
+      }
+
+      const result = await execa('npx', args, {
+        cwd: projectRoot,
+        stdio: 'pipe',
+        reject: false,
+        env: {
+          ...process.env,
+          CI: 'true', // Ensures non-interactive mode
+        },
+      });
+
+      const output = (result.stdout ?? '') + (result.stderr ?? '');
+      const { failedTests, testsRun, testsPassed, testsFailed } = parseVitestOutput(output);
+
+      if (result.exitCode !== 0 || failedTests.length > 0) {
+        debugResult('Tests failed');
+        debugResult('Failed tests: %d', testsFailed);
+        debugResult('Failed files: %s', failedTests.join(', '));
+
+        // Extract only error messages, not full output
+        const errorLines = output
+          .split('\n')
+          .filter(
+            (line) =>
+              (line.includes('✓') === false && line.includes('✗')) ||
+              line.includes('Error:') ||
+              line.includes('AssertionError') ||
+              line.includes('expected') ||
+              line.includes('received') ||
+              line.includes('FAIL'),
+          )
+          .join('\n');
+
+        return {
+          type: 'TestsCheckFailed',
+          data: {
+            targetDirectory,
+            errors: errorLines || output.substring(0, 1000),
+            failedTests: failedTests.map((f) => path.relative(targetDir, f)),
+            testsRun,
+            testsFailed,
+          },
+          timestamp: new Date(),
+          requestId: command.requestId,
+          correlationId: command.correlationId,
+        };
+      }
+
+      debugResult('All tests passed');
+      debugResult('Tests run: %d', testsRun);
+      debugResult('Tests passed: %d', testsPassed);
+
       return {
         type: 'TestsCheckPassed',
         data: {
           targetDirectory,
-          testsRun: 0,
-          testsPassed: 0,
+          testsRun,
+          testsPassed,
         },
         timestamp: new Date(),
         requestId: command.requestId,
         correlationId: command.correlationId,
       };
-    }
-
-    debugProcess('Running tests with Vitest...');
-    debugProcess('Test files: %d', testFiles.length);
-
-    // Run tests with Vitest
-    const args = ['vitest', 'run', '--reporter=verbose'];
-
-    if (scope === 'slice') {
-      // Run only tests in the target directory
-      args.push(targetDir);
-    }
-
-    const result = await execa('npx', args, {
-      cwd: projectRoot,
-      stdio: 'pipe',
-      reject: false,
-      env: {
-        ...process.env,
-        CI: 'true', // Ensures non-interactive mode
-      },
-    });
-
-    const output = (result.stdout ?? '') + (result.stderr ?? '');
-    const { failedTests, testsRun, testsPassed, testsFailed } = parseVitestOutput(output);
-
-    if (result.exitCode !== 0 || failedTests.length > 0) {
-      debugResult('Tests failed');
-      debugResult('Failed tests: %d', testsFailed);
-      debugResult('Failed files: %s', failedTests.join(', '));
-
-      // Extract only error messages, not full output
-      const errorLines = output
-        .split('\n')
-        .filter(
-          (line) =>
-            (line.includes('✓') === false && line.includes('✗')) ||
-            line.includes('Error:') ||
-            line.includes('AssertionError') ||
-            line.includes('expected') ||
-            line.includes('received') ||
-            line.includes('FAIL'),
-        )
-        .join('\n');
+    } catch (error) {
+      debug('ERROR: Exception caught: %O', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
       return {
         type: 'TestsCheckFailed',
         data: {
           targetDirectory,
-          errors: errorLines || output.substring(0, 1000),
-          failedTests: failedTests.map((f) => path.relative(targetDir, f)),
-          testsRun,
-          testsFailed,
+          errors: errorMessage,
+          failedTests: [],
+          testsRun: 0,
+          testsFailed: 0,
         },
         timestamp: new Date(),
         requestId: command.requestId,
         correlationId: command.correlationId,
       };
     }
-
-    debugResult('All tests passed');
-    debugResult('Tests run: %d', testsRun);
-    debugResult('Tests passed: %d', testsPassed);
-
-    return {
-      type: 'TestsCheckPassed',
-      data: {
-        targetDirectory,
-        testsRun,
-        testsPassed,
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-  } catch (error) {
-    debug('ERROR: Exception caught: %O', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
-    return {
-      type: 'TestsCheckFailed',
-      data: {
-        targetDirectory,
-        errors: errorMessage,
-        failedTests: [],
-        testsRun: 0,
-        testsFailed: 0,
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-  }
-}
-
-export const checkTestsCommandHandler: CommandHandler<CheckTestsCommand> = {
-  name: 'CheckTests',
-  handle: async (command: CheckTestsCommand): Promise<void> => {
-    debug('CommandHandler executing for CheckTests');
-    const result = await handleCheckTestsCommandInternal(command);
-
-    if (result.type === 'TestsCheckPassed') {
-      debug('Command handler completed: success');
-      console.log(`✅ All tests passed`);
-      console.log(`   Tests run: ${result.data.testsRun}`);
-      console.log(`   Tests passed: ${result.data.testsPassed}`);
-    } else {
-      debug('Command handler completed: failure');
-      console.error(`❌ Tests failed`);
-      console.error(`   Tests run: ${result.data.testsRun}`);
-      console.error(`   Tests failed: ${result.data.testsFailed}`);
-      if (result.data.failedTests.length > 0) {
-        console.error(`   Failed files: ${result.data.failedTests.join(', ')}`);
-      }
-      if (result.data.errors) {
-        console.error(`   Errors:\n${result.data.errors.substring(0, 500)}`);
-      }
-      process.exit(1);
-    }
   },
 };
 
-// CLI arguments interface
-interface CliArgs {
-  _: string[];
-  scope?: 'slice' | 'project';
-  [key: string]: unknown;
-}
-
-// Type guard
-function isCheckTestsCommand(obj: unknown): obj is CheckTestsCommand {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    'data' in obj &&
-    (obj as { type: unknown }).type === 'CheckTests'
-  );
-}
-
-// Default export for CLI usage
-export default async (commandOrArgs: CheckTestsCommand | CliArgs) => {
-  const command = isCheckTestsCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'CheckTests' as const,
-        data: {
-          targetDirectory: commandOrArgs._?.[0] ?? 'server',
-          scope: commandOrArgs.scope ?? 'slice',
-        },
-        timestamp: new Date(),
-      };
-
-  const result = await handleCheckTestsCommandInternal(command);
-  if (result.type === 'TestsCheckPassed') {
-    console.log(`✅ All tests passed`);
-    console.log(`   Tests run: ${result.data.testsRun}`);
-    console.log(`   Tests passed: ${result.data.testsPassed}`);
-  } else {
-    console.error(`❌ Tests failed`);
-    console.error(`   Tests run: ${result.data.testsRun}`);
-    console.error(`   Tests failed: ${result.data.testsFailed}`);
-    if (result.data.failedTests.length > 0) {
-      console.error(`   Failed files: ${result.data.failedTests.join(', ')}`);
-    }
-    if (result.data.errors) {
-      console.error(`   Errors:\n${result.data.errors.substring(0, 500)}`);
-    }
-    process.exit(1);
-  }
-};
+// Default export for CLI usage - just export the handler
+export default checkTestsCommandHandler;

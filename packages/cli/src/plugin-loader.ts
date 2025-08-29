@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 import createJiti from 'jiti';
 import createDebug from 'debug';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
-import type { Command, CommandHandler } from '@auto-engineer/message-bus';
+import type { CommandHandler, Command, Event } from '@auto-engineer/message-bus';
 import type { CliManifest } from './manifest-types';
 
 const debug = createDebug('cli:plugin-loader');
@@ -42,6 +42,7 @@ export class PluginLoader {
   private conflicts = new Map<string, string[]>(); // alias -> [package1, package2, ...]
   private loadedPlugins = new Set<string>(); // Track successfully loaded plugins
   private messageBus: MessageBus;
+  private aliasToHandlerName = new Map<string, string>(); // Map CLI alias to handler name
 
   // For testing - allow overrides
   public loadConfig?: (configPath: string) => Promise<PluginConfig>;
@@ -49,6 +50,77 @@ export class PluginLoader {
 
   constructor() {
     this.messageBus = createMessageBus();
+  }
+
+  private isValidHandler(item: unknown): boolean {
+    return item !== null && item !== undefined && typeof item === 'object' && 'handle' in item && 'name' in item;
+  }
+
+  private findCommandHandler(module: Record<string, unknown>): unknown {
+    // Look for the command handler - prefer default export
+    const handler = module.default ?? module.handler;
+
+    // If default is a valid handler, use it
+    if (
+      this.isValidHandler(handler) ||
+      (handler !== null && handler !== undefined && typeof handler === 'object' && 'handle' in handler)
+    ) {
+      return handler;
+    }
+
+    // Otherwise, look for named exports
+    for (const key of Object.keys(module)) {
+      const exportedItem = module[key];
+      if (this.isValidHandler(exportedItem)) {
+        debugBus('Using named export %s as handler', key);
+        return exportedItem;
+      }
+    }
+
+    return handler; // Return whatever we found even if not valid
+  }
+
+  private subscribeToCommandEvents(commandHandler: CommandHandler): void {
+    const handlerBaseName = commandHandler.name.replace(/^(Check|Generate|Implement|Import|Export|Create|Copy)/, '');
+    const possibleEventTypes = [
+      // Standard patterns
+      `${commandHandler.name}Completed`,
+      `${commandHandler.name}Failed`,
+      `${commandHandler.name}Success`,
+      `${commandHandler.name}Error`,
+      // Patterns with base name
+      `${handlerBaseName}Implemented`,
+      `${handlerBaseName}Implementation`,
+      `${handlerBaseName}ImplementationFailed`,
+      `${handlerBaseName}Generated`,
+      `${handlerBaseName}GenerationFailed`,
+      `${handlerBaseName}Imported`,
+      `${handlerBaseName}ImportFailed`,
+      `${handlerBaseName}Exported`,
+      `${handlerBaseName}ExportFailed`,
+      `${handlerBaseName}Created`,
+      `${handlerBaseName}CreationFailed`,
+      // Check patterns
+      `${handlerBaseName}CheckPassed`,
+      `${handlerBaseName}CheckFailed`,
+      `${handlerBaseName}Passed`,
+      `${handlerBaseName}Failed`,
+      // Keep original patterns too
+      `Check${handlerBaseName}Passed`,
+      `Check${handlerBaseName}Failed`,
+    ];
+
+    // Subscribe to each possible event type
+    for (const eventType of possibleEventTypes) {
+      this.messageBus.subscribeToEvent(eventType, {
+        name: `CLI_${eventType}_Handler`,
+        handle: (event: Event) => {
+          debugBus('CLI received event %s: %O', eventType, event);
+          this.handleCommandEvent(eventType, event);
+        },
+      });
+      debugBus('Subscribed to event: %s', eventType);
+    }
   }
 
   private async loadConfigFile(configPath: string): Promise<PluginConfig | null> {
@@ -231,17 +303,6 @@ export class PluginLoader {
       package: 'custom-alias',
     };
     this.commands.set(alias, commandEntry);
-
-    // Register with message bus
-    const commandHandler: CommandHandler = {
-      name: alias,
-      handle: async (command: Command): Promise<void> => {
-        debugBus('Handling custom alias command %s', alias);
-        await t.handle(command);
-      },
-    };
-    this.messageBus.registerCommandHandler(commandHandler);
-    debugBus('Registered custom alias %s with message bus', alias);
   }
 
   private processFunctionAlias(alias: string, target: unknown): void {
@@ -383,82 +444,142 @@ export class PluginLoader {
       category: candidate.command.category,
     });
 
-    // Register the command with the message bus
-    debugBus('Registering command %s with message bus', alias);
+    debugBus('Loading command handler for %s', alias);
 
-    // Create a command handler for the message bus
-    const commandHandler: CommandHandler = {
-      name: alias,
-      handle: async (command: Command): Promise<void> => {
-        debugBus('Handling command %s via message bus', alias);
+    try {
+      // Load the actual handler from the plugin
+      const module = (await candidate.command.handler()) as Record<string, unknown> & {
+        default?: unknown;
+        handler?: unknown;
+      };
+      debugBus('Loaded module for %s', alias);
 
-        try {
-          // Load the actual handler from the plugin
-          const module = (await candidate.command.handler()) as Record<string, unknown> & {
-            default?: unknown;
-            handler?: unknown;
-          };
-          debugBus('Loaded module for %s', alias);
+      // Look for the command handler
+      const handler = this.findCommandHandler(module);
 
-          // Look for standard handler export patterns
-          const handlerName = `handle${alias
-            .split(':')
-            .map((s) => s[0].toUpperCase() + s.slice(1))
-            .join('')}Command`;
+      if (handler === null || handler === undefined || typeof handler !== 'object' || !('handle' in handler)) {
+        debugBus('Available exports: %o', Object.keys(module));
+        debugBus('Default export type: %s', typeof module.default);
+        debugBus('Default export value: %o', module.default);
+        throw new Error(`No valid CommandHandler found for command ${alias} in ${candidate.packageName}`);
+      }
 
-          const moduleHandler = module[handlerName];
-          const defaultHandler = module.default;
-          const namedHandler = module.handler;
+      const commandHandler = handler as CommandHandler;
 
-          let handler: unknown = null;
-          if (moduleHandler !== undefined) {
-            handler = moduleHandler;
-          } else if (defaultHandler !== undefined) {
-            handler = defaultHandler;
-          } else if (namedHandler !== undefined) {
-            handler = namedHandler;
-          }
+      // Store mapping from alias to handler name
+      this.aliasToHandlerName.set(alias, commandHandler.name);
 
-          if (handler === null) {
-            debugBus('Available exports: %o', Object.keys(module));
-            throw new Error(`No handler found for command ${alias} in ${candidate.packageName}`);
-          }
+      // Register with the message bus using the handler's name
+      debugBus('Registering command handler %s with message bus', commandHandler.name);
+      this.messageBus.registerCommandHandler(commandHandler);
 
-          debugBus('Found handler for %s, type: %s', alias, typeof handler);
+      // Subscribe to common event patterns for this command
+      this.subscribeToCommandEvents(commandHandler);
+    } catch (error) {
+      debugBus('Error registering command %s: %O', alias, error);
+      throw error;
+    }
+  }
 
-          // Execute the handler with the command
-          debugBus('Calling handler with command: %o', command);
-          const handlerFunc = handler as (command: Command) => Promise<void>;
-          await handlerFunc(command);
-          debugBus('Handler execution complete for %s', alias);
-        } catch (error) {
-          debugBus('Error handling command %s: %O', alias, error);
-          throw error;
-        }
-      },
-    };
+  private formatFieldKey(key: string): string {
+    return key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+  }
 
-    // Register with the message bus
-    this.messageBus.registerCommandHandler(commandHandler);
+  private displayArrayValue(value: unknown[], logFn: (msg: string) => void): void {
+    logFn(`   ${value.length} items`);
+    if (typeof value[0] === 'string') {
+      value.slice(0, 3).forEach((item) => logFn(`     - ${String(item)}`));
+      if (value.length > 3) {
+        logFn(`     ... and ${value.length - 3} more`);
+      }
+    }
+  }
 
-    // Set up event listener for command responses if needed
-    const responseEventName = `${alias}Response`;
-    debugBus('Setting up response listener for %s', responseEventName);
-    this.messageBus.subscribeToEvent(responseEventName, {
-      name: `${alias}ResponseHandler`,
-      handle: async (event: unknown) => {
-        debugBus('Received response for %s: %O', alias, event);
-        // Handle response if needed (logging, analytics, etc.)
-      },
-    });
+  private displayFieldValue(key: string, value: unknown, isError: boolean): void {
+    const formattedKey = this.formatFieldKey(key);
+    const logFn = isError ? console.error : console.log;
+
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      logFn(`   ${formattedKey}: ${String(value)}`);
+    } else if (Array.isArray(value) && value.length > 0) {
+      logFn(`   ${formattedKey}:`);
+      this.displayArrayValue(value, logFn);
+    } else if (typeof value === 'object' && value !== null) {
+      logFn(`   ${formattedKey}: [object]`);
+    }
+  }
+
+  private handleCommandEvent(eventType: string, event: Event): void {
+    // Handle different event types and log appropriately
+    if (eventType.endsWith('Failed') || eventType.endsWith('Error')) {
+      this.handleFailureEvent(eventType, event);
+    } else if (eventType.endsWith('Passed') || eventType.endsWith('Completed')) {
+      this.handleSuccessEvent(eventType, event);
+    } else {
+      // Generic event logging
+      console.log(`ℹ️  ${eventType}`);
+      console.log(`   Data: ${JSON.stringify(event.data, null, 2)}`);
+    }
+  }
+
+  private displayErrorField(data: Record<string, unknown>): void {
+    if (data.error !== undefined && data.error !== null) {
+      console.error(`   Error: ${String(data.error)}`);
+    }
+  }
+
+  private displayErrorsField(data: Record<string, unknown>): void {
+    if (data.errors === undefined || data.errors === null) return;
+
+    if (typeof data.errors === 'string') {
+      console.error(`   Errors: ${data.errors}`);
+    } else if (Array.isArray(data.errors)) {
+      console.error(`   Errors: ${data.errors.length}`);
+      data.errors.slice(0, 3).forEach((err) => console.error(`     - ${String(err)}`));
+      if (data.errors.length > 3) {
+        console.error(`     ... and ${data.errors.length - 3} more`);
+      }
+    }
+  }
+
+  private handleFailureEvent(eventType: string, event: Event): void {
+    const data = event.data as Record<string, unknown>;
+    console.error(`❌ ${eventType}`);
+
+    this.displayErrorField(data);
+    this.displayErrorsField(data);
+
+    // Display any other fields in the data object generically
+    const displayedFields = new Set(['error', 'errors']);
+    for (const [key, value] of Object.entries(data)) {
+      if (displayedFields.has(key) || value === null || value === undefined) continue;
+      this.displayFieldValue(key, value, true);
+    }
+
+    process.exit(1);
+  }
+
+  private handleSuccessEvent(eventType: string, event: Event): void {
+    const data = event.data as Record<string, unknown>;
+    console.log(`✅ ${eventType}`);
+
+    // Display all fields in the data object generically
+    for (const [key, value] of Object.entries(data)) {
+      if (value === null || value === undefined) continue;
+      this.displayFieldValue(key, value, false);
+    }
   }
 
   async executeCommand(commandAlias: string, data: unknown): Promise<void> {
     debugBus('Executing command %s through message bus', commandAlias);
 
+    // Get the actual handler name from the alias
+    const handlerName = this.aliasToHandlerName.get(commandAlias) ?? commandAlias;
+    debugBus('Mapped alias %s to handler %s', commandAlias, handlerName);
+
     // Create command object that matches the Command interface
     const command: Command = {
-      type: commandAlias,
+      type: handlerName,
       data: data as Record<string, unknown>,
       timestamp: new Date(),
       requestId: `cli-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,

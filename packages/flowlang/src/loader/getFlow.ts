@@ -11,6 +11,9 @@ import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
 import { IFileStore } from '@auto-engineer/file-store';
 
 const debugIntegrations = createDebug('flowlang:getFlow:integrations');
+if ('color' in debugIntegrations && typeof debugIntegrations === 'object') {
+  (debugIntegrations as { color: string }).color = '6';
+} // cyan
 
 export interface GetFlowOptions {
   vfs: IFileStore;

@@ -3,6 +3,9 @@ import { getFs } from './filestore.node';
 import type { IExtendedFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:export-schema-helper');
+if ('color' in debug && typeof debug === 'object') {
+  (debug as { color: string }).color = '4';
+} // blue
 
 const main = async () => {
   const directory = process.argv[2] || process.cwd();

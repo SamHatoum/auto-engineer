@@ -12,9 +12,21 @@ import { print, ASTNode } from 'graphql';
 import createDebug from 'debug';
 
 const debug = createDebug('flowlang:fluent-builder');
+if ('color' in debug && typeof debug === 'object') {
+  (debug as { color: string }).color = '6';
+} // cyan
 const debugCommand = createDebug('flowlang:fluent-builder:command');
+if ('color' in debugCommand && typeof debugCommand === 'object') {
+  (debugCommand as { color: string }).color = '4';
+} // blue
 const debugQuery = createDebug('flowlang:fluent-builder:query');
+if ('color' in debugQuery && typeof debugQuery === 'object') {
+  (debugQuery as { color: string }).color = '4';
+} // blue
 const debugReact = createDebug('flowlang:fluent-builder:react');
+if ('color' in debugReact && typeof debugReact === 'object') {
+  (debugReact as { color: string }).color = '2';
+} // green
 
 export interface FluentCommandSliceBuilder {
   stream(name: string): FluentCommandSliceBuilder;

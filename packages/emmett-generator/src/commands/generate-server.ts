@@ -18,7 +18,17 @@ const debugFiles = createDebug('emmett:generate-server:files');
 const debugDeps = createDebug('emmett:generate-server:deps');
 const debugScaffold = createDebug('emmett:generate-server:scaffold');
 
-// Local CQRS types to avoid cross-package type resolution issues during build
+export const generateServerManifest = {
+  handler: () => Promise.resolve({ default: generateServerCommandHandler }),
+  description: 'Generate server from schema.json',
+  usage: 'generate:server <schema> <dest>',
+  examples: ['$ auto generate:server .context/schema.json .'],
+  args: [
+    { name: 'schema', description: 'Path to schema.json file', required: true },
+    { name: 'dest', description: 'Destination directory for generated server', required: true },
+  ],
+};
+
 type DefaultRecord = Record<string, unknown>;
 export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord> = Readonly<{
   type: CommandType;
@@ -34,9 +44,9 @@ export type Event<EventType extends string = string, EventData extends DefaultRe
   requestId?: string;
   correlationId?: string;
 }>;
-export type CommandHandler<TCommand extends Command = Command> = {
+export type CommandHandler<TCommand extends Command = Command, TResult = unknown> = {
   name: string;
-  handle: (command: TCommand) => Promise<void>;
+  handle: (command: TCommand) => Promise<TResult>;
 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,7 +79,6 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
-// eslint-disable-next-line complexity
 async function handleGenerateServerCommandInternal(
   command: GenerateServerCommand,
 ): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
@@ -128,7 +137,7 @@ async function handleGenerateServerCommandInternal(
 
     const serverDir = join(absDest, 'server');
     debug('Server directory: %s', serverDir);
-    console.debug('🔄 Generating server...', serverDir);
+    debug('🔄 Generating server... %s', serverDir);
 
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
@@ -212,15 +221,19 @@ async function handleGenerateServerCommandInternal(
   }
 }
 
-export const generateServerCommandHandler: CommandHandler<GenerateServerCommand> = {
+export const generateServerCommandHandler: CommandHandler<
+  GenerateServerCommand,
+  ServerGeneratedEvent | ServerGenerationFailedEvent
+> = {
   name: 'GenerateServer',
-  handle: async (command: GenerateServerCommand): Promise<void> => {
+  handle: async (command: GenerateServerCommand): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
     const result = await handleGenerateServerCommandInternal(command);
     if (result.type === 'ServerGenerated') {
-      console.log(`Server generated at ${result.data.serverDir}`);
+      debug('Server generated at %s', result.data.serverDir);
     } else {
-      console.error(`Failed to generate server: ${result.data.error}`);
+      debug('Failed to generate server: %s', result.data.error);
     }
+    return result;
   },
 };
 
@@ -428,65 +441,31 @@ main().catch((err) => {
 }
 
 async function installDependenciesAndGenerateSchema(serverDir: string, workingDir: string): Promise<void> {
-  console.log('📦 Installing dependencies...');
+  debugDeps('📦 Installing dependencies...');
   debugDeps('Starting dependency installation in %s', serverDir);
 
   try {
     debugDeps('Running: pnpm install');
     await execa('pnpm', ['install'], { cwd: serverDir });
-    console.log('✅ Dependencies installed successfully');
+    debugDeps('✅ Dependencies installed successfully');
     debugDeps('Dependencies installed successfully');
 
-    console.log('🔄 Generating GraphQL schema...');
+    debugDeps('🔄 Generating GraphQL schema...');
     debugDeps('Running: tsx scripts/generate-schema.ts');
     await execa('tsx', ['scripts/generate-schema.ts'], { cwd: serverDir });
 
     const schemaPath = join(workingDir, '.context', 'schema.graphql');
-    console.log(`✅ GraphQL schema generated at: ${schemaPath}`);
+    debugDeps('✅ GraphQL schema generated at: %s', schemaPath);
     debugDeps('GraphQL schema generated at: %s', schemaPath);
   } catch (error) {
     debugDeps('Failed to install dependencies or generate schema: %O', error);
-    console.warn(
-      `⚠️  Failed to install dependencies or generate schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    debugDeps(
+      '⚠️  Failed to install dependencies or generate schema: %s',
+      error instanceof Error ? error.message : 'Unknown error',
     );
-    console.warn('You can manually run: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
+    debugDeps('You can manually run: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
   }
 }
 
-// CLI arguments interface
-interface CliArgs {
-  _: string[];
-  [key: string]: unknown;
-}
-
-// Type guard to check if it's a GenerateServerCommand
-function isGenerateServerCommand(obj: unknown): obj is GenerateServerCommand {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    'data' in obj &&
-    (obj as { type: unknown }).type === 'GenerateServer'
-  );
-}
-
-// Default export for CLI usage
-export default async (commandOrArgs: GenerateServerCommand | CliArgs) => {
-  const command = isGenerateServerCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'GenerateServer' as const,
-        data: {
-          schemaPath: commandOrArgs._?.[0] ?? '.context/schema.json',
-          destination: commandOrArgs._?.[1] ?? '.',
-        },
-        timestamp: new Date(),
-      };
-
-  const result = await handleGenerateServerCommandInternal(command);
-  if (result.type === 'ServerGenerated') {
-    console.log(`✅ Server generated at ${result.data.serverDir}`);
-  } else {
-    console.error(`❌ Failed to generate server: ${result.data.error}`);
-  }
-};
+// Default export is the command handler
+export default generateServerCommandHandler;

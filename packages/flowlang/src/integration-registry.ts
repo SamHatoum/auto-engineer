@@ -3,6 +3,9 @@ import { Integration } from './types';
 import createDebug from 'debug';
 
 const debug = createDebug('flowlang:integrations');
+if ('color' in debug && typeof debug === 'object') {
+  (debug as { color: string }).color = '6';
+} // cyan
 
 // Global registry for integrations
 class GlobalIntegrationRegistry {

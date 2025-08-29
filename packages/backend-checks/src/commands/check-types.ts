@@ -10,11 +10,20 @@ const debugHandler = createDebug('backend-checks:types:handler');
 const debugProcess = createDebug('backend-checks:types:process');
 const debugResult = createDebug('backend-checks:types:result');
 
+export const checkTypesManifest = {
+  handler: () => import('./check-types'),
+  description: 'TypeScript type checking',
+  usage: 'check:types <directory>',
+  examples: ['$ auto check:types ./server', '$ auto check:types ./server --scope project'],
+  args: [{ name: 'directory', description: 'Directory to check', required: true }],
+  options: [{ name: '--scope <scope>', description: 'Check scope: slice (default) or project' }],
+};
+
 export type CheckTypesCommand = Command<
   'CheckTypes',
   {
     targetDirectory: string;
-    scope?: 'slice' | 'project'; // slice checks only the target dir, project checks from root
+    scope?: 'slice' | 'project';
   }
 >;
 
@@ -74,205 +83,143 @@ function extractFailedFiles(output: string, rootDir: string, targetDir?: string)
   return Array.from(failedFiles);
 }
 
-// eslint-disable-next-line complexity
-async function handleCheckTypesCommandInternal(
-  command: CheckTypesCommand,
-): Promise<TypeCheckPassedEvent | TypeCheckFailedEvent> {
-  const { targetDirectory, scope = 'slice' } = command.data;
+export const checkTypesCommandHandler: CommandHandler<CheckTypesCommand> = {
+  name: 'CheckTypes',
+  // eslint-disable-next-line complexity
+  handle: async (command: CheckTypesCommand): Promise<TypeCheckPassedEvent | TypeCheckFailedEvent> => {
+    debug('CommandHandler executing for CheckTypes');
+    const { targetDirectory, scope = 'slice' } = command.data;
 
-  debug('Handling CheckTypesCommand');
-  debug('  Target directory: %s', targetDirectory);
-  debug('  Scope: %s', scope);
-  debug('  Request ID: %s', command.requestId);
-  debug('  Correlation ID: %s', command.correlationId ?? 'none');
+    debug('Handling CheckTypesCommand');
+    debug('  Target directory: %s', targetDirectory);
+    debug('  Scope: %s', scope);
+    debug('  Request ID: %s', command.requestId);
+    debug('  Correlation ID: %s', command.correlationId ?? 'none');
 
-  try {
-    const targetDir = path.resolve(targetDirectory);
-    const projectRoot = await findProjectRoot(targetDir);
+    try {
+      const targetDir = path.resolve(targetDirectory);
+      const projectRoot = await findProjectRoot(targetDir);
 
-    debugHandler('Resolved paths:');
-    debugHandler('  Target directory: %s', targetDir);
-    debugHandler('  Project root: %s', projectRoot);
+      debugHandler('Resolved paths:');
+      debugHandler('  Target directory: %s', targetDir);
+      debugHandler('  Project root: %s', projectRoot);
 
-    debugProcess('Running TypeScript compiler check...');
+      debugProcess('Running TypeScript compiler check...');
 
-    const result = await execa('npx', ['tsc', '--noEmit'], {
-      cwd: projectRoot,
-      stdio: 'pipe',
-      reject: false,
-    });
+      const result = await execa('npx', ['tsc', '--noEmit'], {
+        cwd: projectRoot,
+        stdio: 'pipe',
+        reject: false,
+      });
 
-    const output = (result.stdout ?? '') + (result.stderr ?? '');
+      const output = (result.stdout ?? '') + (result.stderr ?? '');
 
-    if (result.exitCode !== 0 || output.includes('error')) {
-      // Filter errors to only those in the target directory if scope is 'slice'
-      const failedFiles = extractFailedFiles(output, projectRoot, scope === 'slice' ? targetDir : undefined);
+      if (result.exitCode !== 0 || output.includes('error')) {
+        // Filter errors to only those in the target directory if scope is 'slice'
+        const failedFiles = extractFailedFiles(output, projectRoot, scope === 'slice' ? targetDir : undefined);
 
-      if (scope === 'slice') {
-        // Filter output to only show errors from target directory
-        const relativePath = path.relative(projectRoot, targetDir);
-        const filteredOutput = output
-          .split('\n')
-          .filter((line) => {
-            const hasError = line.includes('error TS') || line.includes('): error');
-            const notNodeModules = !line.includes('node_modules');
-            const hasTargetPath = line.includes(relativePath) || line.includes(targetDir);
-            return hasError && notNodeModules && hasTargetPath;
-          })
-          .join('\n');
+        if (scope === 'slice') {
+          // Filter output to only show errors from target directory
+          const relativePath = path.relative(projectRoot, targetDir);
+          const filteredOutput = output
+            .split('\n')
+            .filter((line) => {
+              const hasError = line.includes('error TS') || line.includes('): error');
+              const notNodeModules = !line.includes('node_modules');
+              const hasTargetPath = line.includes(relativePath) || line.includes(targetDir);
+              return hasError && notNodeModules && hasTargetPath;
+            })
+            .join('\n');
 
-        if (filteredOutput.trim() === '') {
-          // No errors in the target directory specifically
-          const files = await fg(['**/*.ts'], { cwd: targetDir });
+          if (filteredOutput.trim() === '') {
+            // No errors in the target directory specifically
+            const files = await fg(['**/*.ts'], { cwd: targetDir });
 
-          debugResult('Type check passed (no errors in target directory)');
-          debugResult('Checked files: %d', files.length);
+            debugResult('Type check passed (no errors in target directory)');
+            debugResult('Checked files: %d', files.length);
+
+            return {
+              type: 'TypeCheckPassed',
+              data: {
+                targetDirectory,
+                checkedFiles: files.length,
+              },
+              timestamp: new Date(),
+              requestId: command.requestId,
+              correlationId: command.correlationId,
+            };
+          }
+
+          debugResult('Type check failed');
+          debugResult('Failed files: %d', failedFiles.length);
+          debugResult('Errors: %s', filteredOutput.substring(0, 500));
 
           return {
-            type: 'TypeCheckPassed',
+            type: 'TypeCheckFailed',
             data: {
               targetDirectory,
-              checkedFiles: files.length,
+              errors: filteredOutput,
+              failedFiles: failedFiles.map((f) => path.relative(targetDir, f)),
+            },
+            timestamp: new Date(),
+            requestId: command.requestId,
+            correlationId: command.correlationId,
+          };
+        } else {
+          // Project scope - return all errors
+          debugResult('Type check failed (project scope)');
+          debugResult('Failed files: %d', failedFiles.length);
+
+          return {
+            type: 'TypeCheckFailed',
+            data: {
+              targetDirectory,
+              errors: output,
+              failedFiles: failedFiles.map((f) => path.relative(projectRoot, f)),
             },
             timestamp: new Date(),
             requestId: command.requestId,
             correlationId: command.correlationId,
           };
         }
-
-        debugResult('Type check failed');
-        debugResult('Failed files: %d', failedFiles.length);
-        debugResult('Errors: %s', filteredOutput.substring(0, 500));
-
-        return {
-          type: 'TypeCheckFailed',
-          data: {
-            targetDirectory,
-            errors: filteredOutput,
-            failedFiles: failedFiles.map((f) => path.relative(targetDir, f)),
-          },
-          timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
-        };
-      } else {
-        // Project scope - return all errors
-        debugResult('Type check failed (project scope)');
-        debugResult('Failed files: %d', failedFiles.length);
-
-        return {
-          type: 'TypeCheckFailed',
-          data: {
-            targetDirectory,
-            errors: output,
-            failedFiles: failedFiles.map((f) => path.relative(projectRoot, f)),
-          },
-          timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
-        };
       }
-    }
 
-    // Success case
-    const files = await fg(['**/*.ts'], {
-      cwd: scope === 'slice' ? targetDir : projectRoot,
-    });
+      // Success case
+      const files = await fg(['**/*.ts'], {
+        cwd: scope === 'slice' ? targetDir : projectRoot,
+      });
 
-    debugResult('Type check passed');
-    debugResult('Checked files: %d', files.length);
+      debugResult('Type check passed');
+      debugResult('Checked files: %d', files.length);
 
-    return {
-      type: 'TypeCheckPassed',
-      data: {
-        targetDirectory,
-        checkedFiles: files.length,
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-  } catch (error) {
-    debug('ERROR: Exception caught: %O', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      return {
+        type: 'TypeCheckPassed',
+        data: {
+          targetDirectory,
+          checkedFiles: files.length,
+        },
+        timestamp: new Date(),
+        requestId: command.requestId,
+        correlationId: command.correlationId,
+      };
+    } catch (error) {
+      debug('ERROR: Exception caught: %O', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
-    return {
-      type: 'TypeCheckFailed',
-      data: {
-        targetDirectory,
-        errors: errorMessage,
-        failedFiles: [],
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-  }
-}
-
-export const checkTypesCommandHandler: CommandHandler<CheckTypesCommand> = {
-  name: 'CheckTypes',
-  handle: async (command: CheckTypesCommand): Promise<void> => {
-    debug('CommandHandler executing for CheckTypes');
-    const result = await handleCheckTypesCommandInternal(command);
-
-    if (result.type === 'TypeCheckPassed') {
-      debug('Command handler completed: success');
-      console.log(`✅ Type check passed`);
-      console.log(`   Checked ${result.data.checkedFiles} files`);
-    } else {
-      debug('Command handler completed: failure');
-      console.error(`❌ Type check failed`);
-      console.error(`   Failed files: ${result.data.failedFiles.join(', ')}`);
-      if (result.data.errors) {
-        console.error(`   Errors:\n${result.data.errors.substring(0, 500)}`);
-      }
-      process.exit(1);
+      return {
+        type: 'TypeCheckFailed',
+        data: {
+          targetDirectory,
+          errors: errorMessage,
+          failedFiles: [],
+        },
+        timestamp: new Date(),
+        requestId: command.requestId,
+        correlationId: command.correlationId,
+      };
     }
   },
 };
 
-// CLI arguments interface
-interface CliArgs {
-  _: string[];
-  scope?: 'slice' | 'project';
-  [key: string]: unknown;
-}
-
-// Type guard
-function isCheckTypesCommand(obj: unknown): obj is CheckTypesCommand {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    'data' in obj &&
-    (obj as { type: unknown }).type === 'CheckTypes'
-  );
-}
-
-// Default export for CLI usage
-export default async (commandOrArgs: CheckTypesCommand | CliArgs) => {
-  const command = isCheckTypesCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'CheckTypes' as const,
-        data: {
-          targetDirectory: commandOrArgs._?.[0] ?? 'server',
-          scope: commandOrArgs.scope ?? 'slice',
-        },
-        timestamp: new Date(),
-      };
-
-  const result = await handleCheckTypesCommandInternal(command);
-  if (result.type === 'TypeCheckPassed') {
-    console.log(`✅ Type check passed`);
-    console.log(`   Checked ${result.data.checkedFiles} files`);
-  } else {
-    console.error(`❌ Type check failed`);
-    console.error(`   Failed files: ${result.data.failedFiles.join(', ')}`);
-    if (result.data.errors) {
-      console.error(`   Errors:\n${result.data.errors.substring(0, 500)}`);
-    }
-    process.exit(1);
-  }
-};
+// Default export for CLI usage - just export the handler
+export default checkTypesCommandHandler;

@@ -11,4 +11,5 @@ ignoredBuiltDependencies:
   - esbuild
 
 overrides:
+  '@auto-engineer/design-system-importer': link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
   punycode: ^2.3.1

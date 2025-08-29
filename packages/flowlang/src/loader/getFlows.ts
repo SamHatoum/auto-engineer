@@ -12,7 +12,17 @@ import { loadEsbuild, vfsPlugin, execIndexModule } from './shared-build';
 import type { IFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:getFlows');
+if ('color' in debug && typeof debug === 'object') {
+  (debug as { color: string }).color = '6';
+} // cyan
 const debugImport = createDebug('flowlang:getFlows:import');
+if ('color' in debugImport && typeof debugImport === 'object') {
+  (debugImport as { color: string }).color = '4';
+} // blue
+const debugError = createDebug('flowlang:getFlows:error');
+if ('color' in debugError && typeof debugError === 'object') {
+  (debugError as { color: string }).color = '3';
+} // yellow
 
 const isBrowser = typeof window !== 'undefined' || typeof self !== 'undefined';
 const DEFAULT_PATTERN = /\.(flow|integration)\.(ts|tsx|js|jsx|mjs|cjs)$/;
@@ -130,19 +140,19 @@ async function executeBundleMode(
           const single = `import "${file.replace(/"/g, '\\"')}";`;
           await execIndexModule(esbuild, vfs, single, '/virtual-single.ts', plugins, extendedMap);
         } catch (err) {
-          console.error(`[bundle:fallback] error in ${file}:`, err);
+          debugError('[bundle:fallback] error in %s: %O', file, err);
         }
       }
       debugImport('fallback done: flows=%d', registry.getAllFlows().length);
     }
   } catch (err) {
-    console.error('[bundle] execIndexModule failed:', err);
+    debugError('[bundle] execIndexModule failed: %O', err);
     for (const file of files) {
       try {
         const single = `import "${file.replace(/"/g, '\\"')}";`;
         await execIndexModule(esbuild, vfs, single, '/virtual-single.ts', plugins, extendedMap);
       } catch (fileErr) {
-        console.error(`[bundle:fallback-after-failure] error in ${file}:`, fileErr);
+        debugError('[bundle:fallback-after-failure] error in %s: %O', file, fileErr);
       }
     }
     debugImport('after failure fallback: flows=%d', registry.getAllFlows().length);

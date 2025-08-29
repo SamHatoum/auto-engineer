@@ -10,6 +10,18 @@ const debugHandler = createDebug('backend-checks:lint:handler');
 const debugProcess = createDebug('backend-checks:lint:process');
 const debugResult = createDebug('backend-checks:lint:result');
 
+export const checkLintManifest = {
+  handler: () => import('./check-lint'),
+  description: 'ESLint with optional auto-fix',
+  usage: 'check:lint <directory> [--fix]',
+  examples: ['$ auto check:lint ./server', '$ auto check:lint ./server --fix'],
+  args: [{ name: 'directory', description: 'Directory to lint', required: true }],
+  options: [
+    { name: '--fix', description: 'Automatically fix linting issues' },
+    { name: '--scope <scope>', description: 'Lint scope: slice (default) or project' },
+  ],
+};
+
 export type CheckLintCommand = Command<
   'CheckLint',
   {
@@ -118,253 +130,193 @@ function parseEslintOutput(output: string): {
   };
 }
 
-// eslint-disable-next-line complexity
-async function handleCheckLintCommandInternal(
-  command: CheckLintCommand,
-): Promise<LintCheckPassedEvent | LintCheckFailedEvent> {
-  const { targetDirectory, scope = 'slice', fix = false } = command.data;
+export const checkLintCommandHandler: CommandHandler<CheckLintCommand> = {
+  name: 'CheckLint',
+  // eslint-disable-next-line complexity
+  handle: async (command: CheckLintCommand) => {
+    debug('CommandHandler executing for CheckLint');
+    const { targetDirectory, scope = 'slice', fix = false } = command.data;
 
-  debug('Handling CheckLintCommand');
-  debug('  Target directory: %s', targetDirectory);
-  debug('  Scope: %s', scope);
-  debug('  Auto-fix: %s', fix);
-  debug('  Request ID: %s', command.requestId);
-  debug('  Correlation ID: %s', command.correlationId ?? 'none');
+    debug('Handling CheckLintCommand');
+    debug('  Target directory: %s', targetDirectory);
+    debug('  Scope: %s', scope);
+    debug('  Auto-fix: %s', fix);
+    debug('  Request ID: %s', command.requestId);
+    debug('  Correlation ID: %s', command.correlationId ?? 'none');
 
-  try {
-    const targetDir = path.resolve(targetDirectory);
-    const projectRoot = await findProjectRoot(targetDir);
+    try {
+      const targetDir = path.resolve(targetDirectory);
+      const projectRoot = await findProjectRoot(targetDir);
 
-    debugHandler('Resolved paths:');
-    debugHandler('  Target directory: %s', targetDir);
-    debugHandler('  Project root: %s', projectRoot);
+      debugHandler('Resolved paths:');
+      debugHandler('  Target directory: %s', targetDir);
+      debugHandler('  Project root: %s', projectRoot);
 
-    // Find TypeScript files to lint
-    const pattern = scope === 'slice' ? path.join(targetDir, '**/*.ts') : 'src/**/*.ts';
+      // Find TypeScript files to lint
+      const pattern = scope === 'slice' ? path.join(targetDir, '**/*.ts') : 'src/**/*.ts';
 
-    const files = await fg([pattern], {
-      cwd: projectRoot,
-      absolute: false,
-    });
+      const files = await fg([pattern], {
+        cwd: projectRoot,
+        absolute: false,
+      });
 
-    if (files.length === 0) {
-      debugResult('No TypeScript files found to lint');
+      if (files.length === 0) {
+        debugResult('No TypeScript files found to lint');
+        return {
+          type: 'LintCheckPassed',
+          data: {
+            targetDirectory,
+            filesChecked: 0,
+          },
+          timestamp: new Date(),
+          requestId: command.requestId,
+          correlationId: command.correlationId,
+        };
+      }
+
+      debugProcess('Running ESLint...');
+      debugProcess('Files to check: %d', files.length);
+
+      // Build ESLint command
+      const args = ['eslint'];
+
+      if (scope === 'slice') {
+        // Lint only files in target directory
+        const relativePath = path.relative(projectRoot, targetDir);
+        args.push(`${relativePath}/**/*.ts`);
+      } else {
+        args.push('src/**/*.ts');
+      }
+
+      args.push('--max-warnings', '0');
+
+      // Look for ESLint config
+      const configPath = path.join(projectRoot, 'eslint.config.ts');
+      if (
+        await access(configPath)
+          .then(() => true)
+          .catch(() => false)
+      ) {
+        args.push('--config', configPath);
+      } else {
+        // Try parent directory config
+        const parentConfig = path.join(projectRoot, '..', '..', 'eslint.config.ts');
+        if (
+          await access(parentConfig)
+            .then(() => true)
+            .catch(() => false)
+        ) {
+          args.push('--config', parentConfig);
+        }
+      }
+
+      if (fix) {
+        args.push('--fix');
+      }
+
+      const result = await execa('npx', args, {
+        cwd: projectRoot,
+        stdio: 'pipe',
+        reject: false,
+      });
+
+      const output = (result.stdout ?? '') + (result.stderr ?? '');
+
+      if (result.exitCode !== 0 && output.includes('error')) {
+        const { filesWithIssues, errorCount, warningCount, formattedErrors } = parseEslintOutput(output);
+
+        debugResult('Lint check failed');
+        debugResult('Files with issues: %d', filesWithIssues.length);
+        debugResult('Errors: %d, Warnings: %d', errorCount, warningCount);
+
+        return {
+          type: 'LintCheckFailed',
+          data: {
+            targetDirectory,
+            errors: formattedErrors || output.substring(0, 1000),
+            filesWithIssues: filesWithIssues.map((f) => {
+              // Make paths relative to target directory
+              if (path.isAbsolute(f)) {
+                return path.relative(targetDir, f);
+              }
+              return f;
+            }),
+            errorCount,
+            warningCount,
+          },
+          timestamp: new Date(),
+          requestId: command.requestId,
+          correlationId: command.correlationId,
+        };
+      }
+
+      debugResult('Lint check passed');
+      debugResult('Files checked: %d', files.length);
+
+      interface SuccessData {
+        targetDirectory: string;
+        filesChecked: number;
+        filesFixed?: number;
+      }
+
+      const successData: SuccessData = {
+        targetDirectory,
+        filesChecked: files.length,
+      };
+
+      if (fix) {
+        // Count fixed files by checking the output for "fixed" messages
+        const fixedMatch = output.match(/(\d+)\s+error[s]?\s+.*potentially fixable/);
+        if (fixedMatch) {
+          successData.filesFixed = parseInt(fixedMatch[1], 10);
+        }
+      }
+
       return {
         type: 'LintCheckPassed',
-        data: {
-          targetDirectory,
-          filesChecked: 0,
-        },
+        data: successData,
         timestamp: new Date(),
         requestId: command.requestId,
         correlationId: command.correlationId,
       };
-    }
-
-    debugProcess('Running ESLint...');
-    debugProcess('Files to check: %d', files.length);
-
-    // Build ESLint command
-    const args = ['eslint'];
-
-    if (scope === 'slice') {
-      // Lint only files in target directory
-      const relativePath = path.relative(projectRoot, targetDir);
-      args.push(`${relativePath}/**/*.ts`);
-    } else {
-      args.push('src/**/*.ts');
-    }
-
-    args.push('--max-warnings', '0');
-
-    // Look for ESLint config
-    const configPath = path.join(projectRoot, 'eslint.config.ts');
-    if (
-      await access(configPath)
-        .then(() => true)
-        .catch(() => false)
-    ) {
-      args.push('--config', configPath);
-    } else {
-      // Try parent directory config
-      const parentConfig = path.join(projectRoot, '..', '..', 'eslint.config.ts');
-      if (
-        await access(parentConfig)
-          .then(() => true)
-          .catch(() => false)
-      ) {
-        args.push('--config', parentConfig);
-      }
-    }
-
-    if (fix) {
-      args.push('--fix');
-    }
-
-    const result = await execa('npx', args, {
-      cwd: projectRoot,
-      stdio: 'pipe',
-      reject: false,
-    });
-
-    const output = (result.stdout ?? '') + (result.stderr ?? '');
-
-    if (result.exitCode !== 0 && output.includes('error')) {
-      const { filesWithIssues, errorCount, warningCount, formattedErrors } = parseEslintOutput(output);
-
-      debugResult('Lint check failed');
-      debugResult('Files with issues: %d', filesWithIssues.length);
-      debugResult('Errors: %d, Warnings: %d', errorCount, warningCount);
+    } catch (error) {
+      debug('ERROR: Exception caught: %O', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
       return {
         type: 'LintCheckFailed',
         data: {
           targetDirectory,
-          errors: formattedErrors || output.substring(0, 1000),
-          filesWithIssues: filesWithIssues.map((f) => {
-            // Make paths relative to target directory
-            if (path.isAbsolute(f)) {
-              return path.relative(targetDir, f);
-            }
-            return f;
-          }),
-          errorCount,
-          warningCount,
+          errors: errorMessage,
+          filesWithIssues: [],
+          errorCount: 0,
+          warningCount: 0,
         },
         timestamp: new Date(),
         requestId: command.requestId,
         correlationId: command.correlationId,
       };
     }
-
-    debugResult('Lint check passed');
-    debugResult('Files checked: %d', files.length);
-
-    interface SuccessData {
-      targetDirectory: string;
-      filesChecked: number;
-      filesFixed?: number;
-    }
-
-    const successData: SuccessData = {
-      targetDirectory,
-      filesChecked: files.length,
-    };
-
-    if (fix) {
-      // Count fixed files by checking the output for "fixed" messages
-      const fixedMatch = output.match(/(\d+)\s+error[s]?\s+.*potentially fixable/);
-      if (fixedMatch) {
-        successData.filesFixed = parseInt(fixedMatch[1], 10);
-      }
-    }
-
-    return {
-      type: 'LintCheckPassed',
-      data: successData,
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-  } catch (error) {
-    debug('ERROR: Exception caught: %O', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
-    return {
-      type: 'LintCheckFailed',
-      data: {
-        targetDirectory,
-        errors: errorMessage,
-        filesWithIssues: [],
-        errorCount: 0,
-        warningCount: 0,
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-  }
-}
-
-export const checkLintCommandHandler: CommandHandler<CheckLintCommand> = {
-  name: 'CheckLint',
-  handle: async (command: CheckLintCommand): Promise<void> => {
-    debug('CommandHandler executing for CheckLint');
-    const result = await handleCheckLintCommandInternal(command);
-
-    if (result.type === 'LintCheckPassed') {
-      debug('Command handler completed: success');
-      console.log(`✅ Lint check passed`);
-      console.log(`   Files checked: ${result.data.filesChecked}`);
-      if (result.data.filesFixed !== undefined) {
-        console.log(`   Files fixed: ${result.data.filesFixed}`);
-      }
-    } else {
-      debug('Command handler completed: failure');
-      console.error(`❌ Lint check failed`);
-      console.error(`   Errors: ${result.data.errorCount}`);
-      console.error(`   Warnings: ${result.data.warningCount}`);
-      if (result.data.filesWithIssues.length > 0) {
-        console.error(`   Files with issues: ${result.data.filesWithIssues.join(', ')}`);
-      }
-      if (result.data.errors) {
-        console.error(`   Details:\n${result.data.errors.substring(0, 500)}`);
-      }
-      process.exit(1);
-    }
   },
 };
 
-// CLI arguments interface
-interface CliArgs {
-  _: string[];
-  scope?: 'slice' | 'project';
-  fix?: boolean;
-  [key: string]: unknown;
-}
+// Default export for CLI usage - just export the handler
+export default checkLintCommandHandler;
 
-// Type guard
-function isCheckLintCommand(obj: unknown): obj is CheckLintCommand {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    'data' in obj &&
-    (obj as { type: unknown }).type === 'CheckLint'
-  );
-}
+/*
+I want to refactor this to work as such:
+  1. update @auto-engineer/packages/message-bus/src/types.ts so that CommandHandler always emit Events generically, this will make all the current command handlers fail. let's start with just
+   @auto-engineer/packages/backend-checks/src/commands/check-lint.ts so that we can get it right.
+  2. in @auto-engineer/packages/backend-checks/src/commands/check-lint.ts, do this:
+     1. make the command handler emit events so it can work with the new types
+     2. remove all console logs, but keep detailed debugs, and make sure the event contains all the information that a user might be interested in seeing
+     3. remove the internalCommand handler call. there should only be one command handler that is the main one here. no need for a CLI specific entry point
+  3. modify the @cli/src/plugin-loader.ts so that:
+    a. once it knows what the command handler is, it registers it with the message bus. that's the only entry point it should have access to.
+    b. it should subscribe to the events that the command handler emits.
+    c. it should log the events to the console.
+    d. it should exit with the appropriate code based on the event type
+    e. regarding the aliases map, that's something it can hold internally, but it should not be used to register the command handler with the message bus. the message bus doesn't care about aliases, only the command name.
+  4. modify the @message-bus/src/message-bus.ts so that it will fail loudly if you try to register a command handler with a name that is already registered.
 
-// Default export for CLI usage
-export default async (commandOrArgs: CheckLintCommand | CliArgs) => {
-  const command = isCheckLintCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'CheckLint' as const,
-        data: {
-          targetDirectory: commandOrArgs._?.[0] ?? 'server',
-          scope: commandOrArgs.scope ?? 'slice',
-          fix: commandOrArgs.fix ?? false,
-        },
-        timestamp: new Date(),
-      };
-
-  const result = await handleCheckLintCommandInternal(command);
-  if (result.type === 'LintCheckPassed') {
-    console.log(`✅ Lint check passed`);
-    console.log(`   Files checked: ${result.data.filesChecked}`);
-    if (result.data.filesFixed !== undefined) {
-      console.log(`   Files fixed: ${result.data.filesFixed}`);
-    }
-  } else {
-    console.error(`❌ Lint check failed`);
-    console.error(`   Errors: ${result.data.errorCount}`);
-    console.error(`   Warnings: ${result.data.warningCount}`);
-    if (result.data.filesWithIssues.length > 0) {
-      console.error(`   Files with issues: ${result.data.filesWithIssues.join(', ')}`);
-    }
-    if (result.data.errors) {
-      console.error(`   Details:\n${result.data.errors.substring(0, 500)}`);
-    }
-    process.exit(1);
-  }
-};
+*/

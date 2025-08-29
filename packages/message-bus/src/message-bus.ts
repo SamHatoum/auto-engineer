@@ -30,7 +30,9 @@ export function createMessageBus() {
     debugHandler('Registering command handler: %s', commandHandler.name);
 
     if (state.commandHandlers[commandHandler.name] !== undefined) {
-      debugHandler('WARNING: Overwriting existing handler for: %s', commandHandler.name);
+      const error = `Command handler already registered for command: ${commandHandler.name}`;
+      debugHandler('ERROR: %s', error);
+      throw new Error(error);
     }
 
     state.commandHandlers[commandHandler.name] = commandHandler as CommandHandler;
@@ -56,10 +58,19 @@ export function createMessageBus() {
       debugCommand('Executing handler for: %s', command.type);
       const startTime = Date.now();
 
-      await commandHandler.handle(command);
+      const result = await commandHandler.handle(command);
 
       const duration = Date.now() - startTime;
       debugCommand('Handler executed successfully in %dms', duration);
+
+      // If handler returned events, publish them
+      if (result) {
+        const events = Array.isArray(result) ? result : [result];
+        for (const event of events) {
+          debugCommand('Publishing event from command handler: %s', event.type);
+          await publishEvent(event);
+        }
+      }
     } catch (error) {
       debugCommand('ERROR: Handler failed for command %s: %O', command.type, error);
       throw new Error(`Command handling failed: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);

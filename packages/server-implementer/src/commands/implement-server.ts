@@ -9,6 +9,14 @@ const debugHandler = createDebug('server-impl:command:handler');
 const debugProcess = createDebug('server-impl:command:process');
 const debugResult = createDebug('server-impl:command:result');
 
+export const implementServerManifest = {
+  handler: () => Promise.resolve({ default: implementServerCommandHandler }),
+  description: 'AI implements server TODOs and tests',
+  usage: 'implement:server <server-dir>',
+  examples: ['$ auto implement:server ./server'],
+  args: [{ name: 'server-dir', description: 'Server directory path', required: true }],
+};
+
 export type ImplementServerCommand = Command<
   'ImplementServer',
   {
@@ -108,63 +116,30 @@ async function handleImplementServerCommandInternal(
   }
 }
 
-export const implementServerCommandHandler: CommandHandler<ImplementServerCommand> = {
+export const implementServerCommandHandler: CommandHandler<
+  ImplementServerCommand,
+  ServerImplementedEvent | ServerImplementationFailedEvent
+> = {
   name: 'ImplementServer',
-  handle: async (command: ImplementServerCommand): Promise<void> => {
+  handle: async (
+    command: ImplementServerCommand,
+  ): Promise<ServerImplementedEvent | ServerImplementationFailedEvent> => {
     debug('CommandHandler executing for ImplementServer');
     const result = await handleImplementServerCommandInternal(command);
 
     if (result.type === 'ServerImplemented') {
       debug('Command handler completed: success');
-      console.log(`✅ Server implementation completed successfully`);
+      debug('✅ Server implementation completed successfully');
       if (result.data.flowsImplemented > 0) {
-        console.log(`   ${result.data.flowsImplemented} flows implemented`);
+        debug('   %d flows implemented', result.data.flowsImplemented);
       }
     } else {
       debug('Command handler completed: failure - %s', result.data.error);
-      console.error(`❌ Server implementation failed: ${result.data.error}`);
-      process.exit(1);
+      debug('❌ Server implementation failed: %s', result.data.error);
     }
+    return result;
   },
 };
 
-// CLI arguments interface
-interface CliArgs {
-  _: string[];
-  [key: string]: unknown;
-}
-
-// Type guard to check if it's an ImplementServerCommand
-function isImplementServerCommand(obj: unknown): obj is ImplementServerCommand {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    'data' in obj &&
-    (obj as { type: unknown }).type === 'ImplementServer'
-  );
-}
-
-// Default export for CLI usage
-export default async (commandOrArgs: ImplementServerCommand | CliArgs) => {
-  const command = isImplementServerCommand(commandOrArgs)
-    ? commandOrArgs
-    : {
-        type: 'ImplementServer' as const,
-        data: {
-          serverDirectory: commandOrArgs._?.[0] ?? 'server',
-        },
-        timestamp: new Date(),
-      };
-
-  const result = await handleImplementServerCommandInternal(command);
-  if (result.type === 'ServerImplemented') {
-    console.log(`✅ Server implementation completed successfully`);
-    if (result.data.flowsImplemented > 0) {
-      console.log(`   ${result.data.flowsImplemented} flows implemented`);
-    }
-  } else {
-    console.error(`❌ Server implementation failed: ${result.data.error}`);
-    process.exit(1);
-  }
-};
+// Default export is the command handler
+export default implementServerCommandHandler;

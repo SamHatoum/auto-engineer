@@ -5,6 +5,9 @@ import { writeFileSync, mkdirSync } from 'fs';
 import createDebug from 'debug';
 
 const debug = createDebug('flowlang:export-schema-runner');
+if ('color' in debug && typeof debug === 'object') {
+  (debug as { color: string }).color = '4';
+} // blue
 
 const main = async () => {
   const contextDir = process.argv[2] || './.context';

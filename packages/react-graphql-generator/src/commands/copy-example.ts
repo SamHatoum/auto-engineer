@@ -2,6 +2,20 @@ import { type CommandHandler, type Command, type Event } from '@auto-engineer/me
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import createDebug from 'debug';
+
+const debug = createDebug('react-graphql-generator:copy-example');
+
+export const copyExampleManifest = {
+  handler: () => Promise.resolve({ default: copyExampleCommandHandler }),
+  description: 'Copy example React GraphQL template',
+  usage: 'copy:example <example-name> <destination>',
+  examples: ['$ auto copy:example shadcn-starter ./my-starter'],
+  args: [
+    { name: 'example-name', description: 'Name of the example template', required: true },
+    { name: 'destination', description: 'Destination directory', required: true },
+  ],
+};
 
 export type CopyExampleCommand = Command<
   'CopyExample',
@@ -111,7 +125,7 @@ export async function handleCopyExampleCommand(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Failed to copy example:', error);
+    debug('Failed to copy example: %O', error);
 
     return {
       type: 'ExampleCopyFailed',
@@ -127,14 +141,21 @@ export async function handleCopyExampleCommand(
   }
 }
 
-export const copyExampleCommandHandler: CommandHandler<CopyExampleCommand> = {
+export const copyExampleCommandHandler: CommandHandler<
+  CopyExampleCommand,
+  ExampleCopiedEvent | ExampleCopyFailedEvent
+> = {
   name: 'CopyExample',
-  handle: async (command: CopyExampleCommand): Promise<void> => {
+  handle: async (command: CopyExampleCommand): Promise<ExampleCopiedEvent | ExampleCopyFailedEvent> => {
     const result = await handleCopyExampleCommand(command);
     if (result.type === 'ExampleCopied') {
-      console.log(`Starter "${result.data.starterName}" copied successfully to ${result.data.targetDir}`);
+      debug('Starter "%s" copied successfully to %s', result.data.starterName, result.data.targetDir);
     } else {
-      console.error(`Failed to copy starter: ${result.data.error}`);
+      debug('Failed to copy starter: %s', result.data.error);
     }
+    return result;
   },
 };
+
+// Default export is the command handler
+export default copyExampleCommandHandler;
