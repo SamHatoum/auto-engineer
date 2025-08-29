@@ -73,58 +73,13 @@ const createCLI = () => {
 // Type-safe command data mappers
 type CommandData = Record<string, unknown>;
 
-const commandMappers: Record<string, (args: (string | string[])[], options: Record<string, unknown>) => CommandData> = {
-  'create:example': (args) => ({ name: args[0], destination: args[1] }),
-  'export:schema': (args) => ({ contextDir: args[0], flowsDir: args[1] }),
-  'generate:server': (args) => ({ schemaPath: args[0], destination: args[1] }),
-  'implement:server': (args) => ({ serverDirectory: args[0] }),
-  'implement:slice': (args) => ({ slicePath: args[0] }),
-  'generate:client': (args) => ({
-    starterDir: args[0],
-    targetDir: args[1],
-    iaSchemaPath: args[2],
-    gqlSchemaPath: args[3],
-    figmaVariablesPath: args[4],
-  }),
-  'implement:client': (args) => ({
-    projectDir: args[0],
-    iaSchemeDir: args[1],
-    designSystemPath: args[3] ?? args[2],
-  }),
-  'check:types': (args, options) => ({
-    targetDirectory: args[0],
-    fix: options.fix ?? false,
-    scope: options.scope,
-  }),
-  'check:tests': (args, options) => ({
-    targetDirectory: args[0],
-    scope: options.scope,
-  }),
-  'check:lint': (args, options) => ({
-    targetDirectory: args[0],
-    fix: options.fix ?? false,
-    scope: options.scope,
-  }),
-  'check:client': (args) => ({ clientDir: args[0] }),
-  'import:design-system': (args) => ({
-    outputDir: args[0],
-    strategy: args[1],
-    filterPath: args[2],
-  }),
-  'generate:ia': (args) => ({
-    outputDir: args[0],
-    // Handle variadic arguments - args[1] might be an array if variadic
-    flowFiles: Array.isArray(args[1]) ? args[1] : args.slice(1),
-  }),
-  'copy:example': (args) => ({ exampleName: args[0], destination: args[1] }),
-};
-
 const prepareCommandData = (
   alias: string,
   args: (string | string[])[],
   options: Record<string, unknown>,
+  pluginLoader: PluginLoader,
 ): CommandData => {
-  const mapper = commandMappers[alias];
+  const mapper = pluginLoader.getCommandMapper(alias);
   if (mapper !== undefined) {
     return mapper(args, options);
   }
@@ -307,7 +262,7 @@ export default {
           });
 
           // Prepare command data based on the command type
-          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options);
+          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options, pluginLoader);
 
           if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
             console.error('DEBUG cli: Prepared command data:', commandData);
@@ -407,10 +362,12 @@ const loadEnvFile = () => {
   }
 };
 
-const initializeEnvironment = () => {
+const initializeEnvironment = (shouldClearConsole = true) => {
   checkNodeVersion();
   loadEnvFile();
-  clearConsole();
+  if (shouldClearConsole) {
+    clearConsole();
+  }
   setupSignalHandlers();
 };
 
@@ -434,18 +391,20 @@ const handleProgramError = (error: unknown) => {
 
 const main = async () => {
   try {
-    initializeEnvironment();
+    // Check if help or version is being requested
+    const isHelpOrVersion =
+      process.argv.includes('--help') ||
+      process.argv.includes('-h') ||
+      process.argv.includes('--version') ||
+      process.argv.includes('-V');
 
-    const program = createCLI();
-    program.parse(process.argv, { from: 'user' });
-    const globalOptions = program.opts();
+    initializeEnvironment(!isHelpOrVersion);
 
+    // For help/version, we need to load the config with defaults to show all commands
     const config = loadConfig({
-      debug: Boolean(globalOptions.debug),
-      noColor: Boolean(globalOptions.noColor),
-      output: globalOptions.json === true ? 'json' : 'text',
-      apiToken: typeof globalOptions.apiToken === 'string' ? globalOptions.apiToken : undefined,
-      projectPath: typeof globalOptions.projectPath === 'string' ? globalOptions.projectPath : undefined,
+      debug: process.argv.includes('-d') || process.argv.includes('--debug'),
+      noColor: process.argv.includes('--no-color'),
+      output: process.argv.includes('--json') ? 'json' : 'text',
     });
 
     validateConfig(config);

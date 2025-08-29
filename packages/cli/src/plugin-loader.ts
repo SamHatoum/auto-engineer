@@ -46,6 +46,10 @@ export class PluginLoader {
   private messageBus: MessageBus;
   private aliasToHandlerName = new Map<string, string>(); // Map CLI alias to handler name
   private hasGlobalEventSubscription = false; // Track if we've set up global event subscription
+  private commandMappers = new Map<
+    string,
+    (args: (string | string[])[], options: Record<string, unknown>) => Record<string, unknown>
+  >(); // Dynamic command mappers
 
   // For testing - allow overrides
   public loadConfig?: (configPath: string) => Promise<PluginConfig>;
@@ -407,6 +411,54 @@ export class PluginLoader {
     return this.loadedPlugins.size;
   }
 
+  getCommandMapper(
+    alias: string,
+  ): ((args: (string | string[])[], options: Record<string, unknown>) => Record<string, unknown>) | undefined {
+    return this.commandMappers.get(alias);
+  }
+
+  private buildCommandMapper(alias: string, command: CliCommand): void {
+    const mapper = (args: (string | string[])[], options: Record<string, unknown>): Record<string, unknown> => {
+      const commandData: Record<string, unknown> = {};
+
+      // Map positional arguments based on the command's args definition
+      if (command.args) {
+        command.args.forEach((argDef, index) => {
+          if (args[index] !== undefined) {
+            // Convert arg name to camelCase for the data property
+            const propName = argDef.name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+            commandData[propName] = args[index];
+          }
+        });
+      }
+
+      // Map options
+      if (command.options) {
+        command.options.forEach((optDef) => {
+          // Extract option name from format like "--fix" or "--scope <scope>"
+          const optMatch = optDef.name.match(/^--([a-zA-Z-]+)/);
+          if (optMatch) {
+            const optName = optMatch[1].replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+            if (options[optName] !== undefined || options[optMatch[1]] !== undefined) {
+              commandData[optName] = options[optName] ?? options[optMatch[1]];
+            }
+          }
+        });
+      }
+
+      // Handle special cases for variadic arguments
+      if (alias === 'generate:ia' && command.args && command.args.length > 1) {
+        commandData.outputDir = args[0];
+        commandData.flowFiles = Array.isArray(args[1]) ? args[1] : args.slice(1);
+      }
+
+      return commandData;
+    };
+
+    this.commandMappers.set(alias, mapper);
+    debugPlugins('Built command mapper for %s', alias);
+  }
+
   private async registerCommand(alias: string, candidate: { packageName: string; command: CliCommand }) {
     // Store the command for CLI use with all metadata
     this.commands.set(alias, {
@@ -419,6 +471,9 @@ export class PluginLoader {
       options: candidate.command.options,
       category: candidate.command.category,
     });
+
+    // Build and store command mapper based on args and options
+    this.buildCommandMapper(alias, candidate.command);
 
     debugBus('Loading command handler for %s', alias);
 
