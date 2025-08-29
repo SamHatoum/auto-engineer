@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.3.1
+
+### Patch Changes
+
+- version bump for testihng
+
 ## 0.3.0
 
 ### Minor Changes

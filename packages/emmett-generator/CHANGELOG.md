@@ -1,5 +1,14 @@
 # @auto-engineer/emmett-generator
 
+## 0.8.1
+
+### Patch Changes
+
+- version bump for testihng
+- Updated dependencies
+  - @auto-engineer/flowlang@0.7.1
+  - @auto-engineer/message-bus@0.5.1
+
 ## 0.8.0
 
 ### Minor Changes

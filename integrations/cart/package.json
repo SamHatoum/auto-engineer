@@ -1,12 +1,12 @@
 {
   "name": "@auto-engineer/cart-integration",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@auto-engineer/flowlang": "^0.7.0",
-    "@auto-engineer/ai-gateway": "^0.6.0",
+    "@auto-engineer/flowlang": "^0.7.1",
+    "@auto-engineer/ai-gateway": "^0.6.1",
     "axios": "^1.6.0",
     "zod": "^3.22.4"
   },

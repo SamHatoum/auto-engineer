@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.5.1
+
+### Patch Changes
+
+- version bump for testihng
+
 ## 0.5.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @auto-engineer/frontend-implementation
 
+## 0.6.1
+
+### Patch Changes
+
+- version bump for testihng
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.6.1
+  - @auto-engineer/message-bus@0.5.1
+
 ## 0.6.0
 
 ### Minor Changes

@@ -1,5 +1,13 @@
 # @auto-engineer/backend-checks
 
+## 0.2.1
+
+### Patch Changes
+
+- version bump for testihng
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.1
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # @auto-engineer/flowlang
 
+## 0.7.1
+
+### Patch Changes
+
+- version bump for testihng
+- Updated dependencies
+  - @auto-engineer/file-store@0.3.1
+  - @auto-engineer/message-bus@0.5.1
+
 ## 0.7.0
 
 ### Minor Changes
