@@ -1,5 +1,16 @@
 # @auto-engineer/backend-checks
 
+## 0.2.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.0
+
 ## 0.1.0
 
 ### Minor Changes

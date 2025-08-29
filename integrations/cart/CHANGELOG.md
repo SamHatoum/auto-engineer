@@ -1,5 +1,17 @@
 # @auto-engineer/cart-integration
 
+## 0.6.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.6.0
+  - @auto-engineer/flowlang@0.7.0
+
 ## 0.5.0
 
 ### Minor Changes

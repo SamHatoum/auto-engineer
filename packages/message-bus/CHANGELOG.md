@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.5.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
 ## 0.4.0
 
 ### Minor Changes

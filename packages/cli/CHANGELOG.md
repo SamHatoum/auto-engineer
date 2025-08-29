@@ -1,5 +1,16 @@
 # @auto-engineer/cli
 
+## 0.7.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.0
+
 ## 0.6.0
 
 ### Minor Changes

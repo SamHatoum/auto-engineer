@@ -1,5 +1,17 @@
 # @auto-engineer/flowlang
 
+## 0.7.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.3.0
+  - @auto-engineer/message-bus@0.5.0
+
 ## 0.6.1
 
 ### Patch Changes
