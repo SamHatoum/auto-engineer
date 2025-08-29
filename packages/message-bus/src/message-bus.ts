@@ -16,6 +16,7 @@ debugHandler.color = '6'; // cyan
 type MessageBusState = {
   commandHandlers: Record<string, CommandHandler>;
   eventHandlers: Record<string, EventHandler[]>;
+  allEventHandlers: EventHandler[]; // Handlers that receive ALL events
 };
 
 export function createMessageBus() {
@@ -23,6 +24,7 @@ export function createMessageBus() {
   const state: MessageBusState = {
     commandHandlers: {},
     eventHandlers: {},
+    allEventHandlers: [],
   };
   debug('Message bus state initialized');
 
@@ -114,8 +116,17 @@ export function createMessageBus() {
     debugEvent('  Timestamp: %s', event.timestamp || 'none');
     debugEvent('  Data keys: %o', Object.keys(event.data));
 
-    const handlers = state.eventHandlers[event.type] ?? [];
-    debugEvent('Found %d handlers for event %s', handlers.length, event.type);
+    // Get both specific handlers and all-event handlers
+    const specificHandlers = state.eventHandlers[event.type] ?? [];
+    const allHandlers = state.allEventHandlers;
+    const handlers = [...specificHandlers, ...allHandlers];
+
+    debugEvent(
+      'Found %d specific + %d all-event handlers for event %s',
+      specificHandlers.length,
+      allHandlers.length,
+      event.type,
+    );
 
     if (handlers.length === 0) {
       debugEvent('No handlers registered for event: %s', event.type);
@@ -147,6 +158,24 @@ export function createMessageBus() {
     }
   }
 
+  function subscribeAll<TEvent extends Event = Event>(handler: EventHandler<TEvent>): EventSubscription {
+    debugEvent('Subscribing to ALL events with handler: %s', handler.name);
+
+    state.allEventHandlers.push(handler as EventHandler);
+    debugEvent('All-event handler added, total all-event handlers: %d', state.allEventHandlers.length);
+
+    return {
+      unsubscribe: () => {
+        debugEvent('Unsubscribing all-event handler: %s', handler.name);
+        const index = state.allEventHandlers.indexOf(handler as EventHandler);
+        if (index > -1) {
+          state.allEventHandlers.splice(index, 1);
+          debugEvent('All-event handler removed, remaining: %d', state.allEventHandlers.length);
+        }
+      },
+    };
+  }
+
   function registerEventHandler<TEvent extends Event>(eventHandler: EventHandler<TEvent>): EventSubscription {
     debugHandler('Registering event handler: %s', eventHandler.name);
     // For backward compatibility, infer event type from handler name
@@ -156,7 +185,7 @@ export function createMessageBus() {
 
   debug('Message bus creation complete');
   debug(
-    '  Available methods: registerCommandHandler, sendCommand, publishEvent, subscribeToEvent, registerEventHandler',
+    '  Available methods: registerCommandHandler, sendCommand, publishEvent, subscribeToEvent, subscribeAll, registerEventHandler',
   );
 
   return {
@@ -165,6 +194,7 @@ export function createMessageBus() {
     sendCommand,
     publishEvent,
     subscribeToEvent,
+    subscribeAll,
   };
 }
 

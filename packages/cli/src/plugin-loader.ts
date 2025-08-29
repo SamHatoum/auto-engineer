@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import { pathToFileURL } from 'url';
 import createJiti from 'jiti';
 import createDebug from 'debug';
+import yaml from 'yaml';
+import chalk from 'chalk';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
 import type { CommandHandler, Command, Event } from '@auto-engineer/message-bus';
 import type { CliManifest } from './manifest-types';
@@ -43,6 +45,7 @@ export class PluginLoader {
   private loadedPlugins = new Set<string>(); // Track successfully loaded plugins
   private messageBus: MessageBus;
   private aliasToHandlerName = new Map<string, string>(); // Map CLI alias to handler name
+  private hasGlobalEventSubscription = false; // Track if we've set up global event subscription
 
   // For testing - allow overrides
   public loadConfig?: (configPath: string) => Promise<PluginConfig>;
@@ -50,6 +53,22 @@ export class PluginLoader {
 
   constructor() {
     this.messageBus = createMessageBus();
+    this.setupGlobalEventSubscription();
+  }
+
+  private setupGlobalEventSubscription(): void {
+    if (this.hasGlobalEventSubscription) return;
+
+    this.messageBus.subscribeAll({
+      name: 'CLI_GlobalEventLogger',
+      handle: async (event: Event) => {
+        debugBus('CLI received event: %s', event.type);
+        this.handleCommandEvent(event.type, event);
+      },
+    });
+
+    this.hasGlobalEventSubscription = true;
+    debugBus('Global event subscription set up');
   }
 
   private isValidHandler(item: unknown): boolean {
@@ -80,49 +99,6 @@ export class PluginLoader {
     return handler; // Return whatever we found even if not valid
   }
 
-  private subscribeToCommandEvents(commandHandler: CommandHandler): void {
-    const handlerBaseName = commandHandler.name.replace(/^(Check|Generate|Implement|Import|Export|Create|Copy)/, '');
-    const possibleEventTypes = [
-      // Standard patterns
-      `${commandHandler.name}Completed`,
-      `${commandHandler.name}Failed`,
-      `${commandHandler.name}Success`,
-      `${commandHandler.name}Error`,
-      // Patterns with base name
-      `${handlerBaseName}Implemented`,
-      `${handlerBaseName}Implementation`,
-      `${handlerBaseName}ImplementationFailed`,
-      `${handlerBaseName}Generated`,
-      `${handlerBaseName}GenerationFailed`,
-      `${handlerBaseName}Imported`,
-      `${handlerBaseName}ImportFailed`,
-      `${handlerBaseName}Exported`,
-      `${handlerBaseName}ExportFailed`,
-      `${handlerBaseName}Created`,
-      `${handlerBaseName}CreationFailed`,
-      // Check patterns
-      `${handlerBaseName}CheckPassed`,
-      `${handlerBaseName}CheckFailed`,
-      `${handlerBaseName}Passed`,
-      `${handlerBaseName}Failed`,
-      // Keep original patterns too
-      `Check${handlerBaseName}Passed`,
-      `Check${handlerBaseName}Failed`,
-    ];
-
-    // Subscribe to each possible event type
-    for (const eventType of possibleEventTypes) {
-      this.messageBus.subscribeToEvent(eventType, {
-        name: `CLI_${eventType}_Handler`,
-        handle: (event: Event) => {
-          debugBus('CLI received event %s: %O', eventType, event);
-          this.handleCommandEvent(eventType, event);
-        },
-      });
-      debugBus('Subscribed to event: %s', eventType);
-    }
-  }
-
   private async loadConfigFile(configPath: string): Promise<PluginConfig | null> {
     try {
       if (this.loadConfig) {
@@ -136,7 +112,7 @@ export class PluginLoader {
         const jiti = createJiti(import.meta.url, {
           interopDefault: true,
         });
-        const config = jiti(configPath) as PluginConfig;
+        const config = await jiti.import<PluginConfig>(configPath);
         debugConfig('TypeScript config loaded successfully');
         return config;
       }
@@ -472,9 +448,6 @@ export class PluginLoader {
       // Register with the message bus using the handler's name
       debugBus('Registering command handler %s with message bus', commandHandler.name);
       this.messageBus.registerCommandHandler(commandHandler);
-
-      // Subscribe to common event patterns for this command
-      this.subscribeToCommandEvents(commandHandler);
     } catch (error) {
       debugBus('Error registering command %s: %O', alias, error);
       throw error;
@@ -516,10 +489,88 @@ export class PluginLoader {
     } else if (eventType.endsWith('Passed') || eventType.endsWith('Completed')) {
       this.handleSuccessEvent(eventType, event);
     } else {
-      // Generic event logging
-      console.log(`ℹ️  ${eventType}`);
-      console.log(`   Data: ${JSON.stringify(event.data, null, 2)}`);
+      this.displayMessage(event);
     }
+  }
+
+  private displayMessage(message: Event | Command): void {
+    const data = message.data;
+    if (data === null || data === undefined) return;
+    let output = '';
+    // For simple values, display inline
+    if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
+      output = `   ${chalk.cyan(String(data))}`;
+    } else if (typeof data === 'object') {
+      // Strip any ANSI codes that might be in the data values
+      const cleanData = JSON.parse(
+        JSON.stringify(data, (_key, value) => {
+          if (typeof value === 'string') {
+            return value.replace(/\x1b\[[0-9;]*m/g, '');
+          }
+          return value;
+        }),
+      );
+      output = yaml.stringify(data, {
+        indent: 2,
+        lineWidth: 80,
+      });
+    }
+
+    const date = new Date(message.timestamp || Date.now());
+    const timestamp = date.toTimeString().split(' ')[0] + '.' + date.getMilliseconds().toString().padStart(3, '0');
+
+    const isCommand = 'type' in message && !('correlationId' in message);
+    const backgroundColor = isCommand ? '#00CED1' : '#FF6B35';
+
+    const padding = ''.padEnd(message.type.padEnd(20, ' ').length - message.type.length, ' ');
+    console.log(chalk.gray(timestamp), chalk.bgHex(backgroundColor).white.bold(` ${message.type} `) + padding);
+    console.log(this.highlightYaml(output));
+  }
+
+  private highlightYaml(yamlStr: string): string {
+    // Apply syntax highlighting and indentation
+    const highlightedYaml = yamlStr
+      .split('\n')
+      .filter((line) => line.trim()) // Remove empty lines
+      .map((line) => {
+        // Apply syntax highlighting
+        let highlighted = line;
+
+        // Highlight keys (word before colon)
+        highlighted = highlighted.replace(/^(\s*)([a-zA-Z0-9_-]+)(:)/g, (match, indent, key, colon) => {
+          return indent + chalk.cyanBright(key) + chalk.gray(colon);
+        });
+
+        // Highlight string values (in quotes)
+        highlighted = highlighted.replace(/(["'])((?:\\.|(?!\1).)*?)\1/g, (match, quote, content) => {
+          return chalk.gray(quote) + chalk.green(content) + chalk.gray(quote);
+        });
+
+        // Highlight numbers
+        highlighted = highlighted.replace(/:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*$/g, (match, num) => {
+          return chalk.gray(':') + ' ' + chalk.yellow(num);
+        });
+
+        // Highlight booleans
+        highlighted = highlighted.replace(/:\s*(true|false)\s*$/g, (match, bool) => {
+          return chalk.gray(':') + ' ' + chalk.magenta(bool);
+        });
+
+        // Highlight null
+        highlighted = highlighted.replace(/:\s*(null)\s*$/g, (match, nullVal) => {
+          return chalk.gray(':') + ' ' + chalk.gray(nullVal);
+        });
+
+        // Highlight array markers
+        highlighted = highlighted.replace(/^(\s*)(- )/g, (match, indent, marker) => {
+          return indent + chalk.gray(marker);
+        });
+
+        return `   ${highlighted}`;
+      })
+      .join('\n');
+
+    return highlightedYaml;
   }
 
   private displayErrorField(data: Record<string, unknown>): void {
@@ -584,7 +635,7 @@ export class PluginLoader {
       timestamp: new Date(),
       requestId: `cli-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     };
-
+    this.displayMessage(command);
     await this.messageBus.sendCommand(command);
   }
 

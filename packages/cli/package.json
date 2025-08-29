@@ -57,6 +57,7 @@
     "inquirer": "^9.2.15",
     "jiti": "^2.5.1",
     "kleur": "^4.1.5",
+    "yaml": "^2.6.1",
     "marked": "^15.0.12",
     "marked-terminal": "^7.3.0",
     "ora": "^8.0.1",
@@ -65,6 +66,7 @@
   "devDependencies": {
     "@types/figlet": "^1.5.8",
     "@types/inquirer": "^9.0.7",
+    "@types/js-yaml": "^4.0.9",
     "@types/marked": "^6.0.0",
     "@types/marked-terminal": "^6.1.1",
     "tsx": "^4.20.3"

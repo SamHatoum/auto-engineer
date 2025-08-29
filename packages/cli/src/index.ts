@@ -11,7 +11,7 @@ import { createOutput } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 import { PluginLoader } from './plugin-loader';
 
-const VERSION = process.env.npm_package_version ?? '0.1.2';
+const VERSION = process.env.npm_package_version ?? '0.7.0';
 
 const checkNodeVersion = () => {
   const nodeVersion = process.version;
