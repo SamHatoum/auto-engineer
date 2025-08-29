@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { pathToFileURL } from 'url';
 import createJiti from 'jiti';
 import createDebug from 'debug';
-import yaml from 'yaml';
+import { stringify } from 'yaml';
 import chalk from 'chalk';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
 import type { CommandHandler, Command, Event } from '@auto-engineer/message-bus';
@@ -565,7 +565,7 @@ export class PluginLoader {
           return value;
         }),
       );
-      output = yaml.stringify(data, {
+      output = stringify(data, {
         indent: 2,
         lineWidth: 80,
       });
