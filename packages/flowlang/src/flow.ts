@@ -19,16 +19,21 @@ if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '6';
 } // cyan
 
-export const flow = (name: string, fn: () => void) => {
+export function flow(name: string, fn: () => void): void;
+export function flow(name: string, id: string, fn: () => void): void;
+export function flow(name: string, idOrFn: string | (() => void), fn?: () => void): void {
+  const id = typeof idOrFn === 'string' ? idOrFn : undefined;
+  const callback = typeof idOrFn === 'function' ? idOrFn : fn!;
+
   debug('Starting flow definition: %s', name);
-  const flowObj = startFlow(name);
+  const flowObj = startFlow(name, id);
   debug('Executing flow function for: %s', name);
-  fn();
+  callback();
   debug('Flow function executed, registering flow: %s with %d slices', name, flowObj.slices.length);
   registry.register(flowObj);
   clearCurrentFlow();
   debug('Flow registered and context cleared: %s', name);
-};
+}
 
 export const client = (fn: () => void) => {
   const slice = getCurrentSlice();

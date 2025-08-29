@@ -33,6 +33,68 @@ export type DesignSystemImportFailedEvent = Event<
 >;
 
 // Handler
+async function loadFilterFunction(filterPath?: string): Promise<FilterFunctionType | undefined> {
+  if (typeof filterPath !== 'string' || filterPath.trim().length === 0) {
+    debugFilter('No filter path provided, proceeding without custom filter');
+    return undefined;
+  }
+
+  debugFilter('Loading custom filter from: %s', filterPath);
+  let loader: FilterLoader | undefined;
+  try {
+    loader = new FilterLoader();
+    debugFilter('FilterLoader instance created');
+    const filterFn = await loader.loadFilter(filterPath);
+    debugFilter('Filter function loaded successfully');
+    return filterFn;
+  } catch (e) {
+    debugFilter('ERROR: Failed to load filter from %s: %O', filterPath, e);
+    debugFilter('WARNING: Could not import filter from %s. Skipping custom filter. Error: %O', filterPath, e);
+    return undefined;
+  } finally {
+    if (loader) {
+      debugFilter('Cleaning up FilterLoader');
+      loader.cleanup();
+    }
+  }
+}
+
+function createSuccessEvent(command: ImportDesignSystemCommand, outputDir: string): DesignSystemImportedEvent {
+  const successEvent: DesignSystemImportedEvent = {
+    type: 'DesignSystemImported',
+    data: { outputDir },
+    timestamp: new Date(),
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+  };
+  debugResult('Returning success event: DesignSystemImported');
+  debugResult('  Output directory: %s', outputDir);
+  return successEvent;
+}
+
+function createFailureEvent(
+  command: ImportDesignSystemCommand,
+  error: unknown,
+  outputDir: string,
+): DesignSystemImportFailedEvent {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  debugHandler('ERROR: Design system import failed: %O', error);
+  debugResult('Error message: %s', errorMessage);
+
+  const failureEvent: DesignSystemImportFailedEvent = {
+    type: 'DesignSystemImportFailed',
+    data: { error: errorMessage, outputDir },
+    timestamp: new Date(),
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+  };
+  debugResult('Returning failure event: DesignSystemImportFailed');
+  debugResult('  Error: %s', errorMessage);
+  debugResult('  Output directory: %s', outputDir);
+  return failureEvent;
+}
+
+// Handler
 async function handleImportDesignSystemCommandInternal(
   command: ImportDesignSystemCommand,
 ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> {
@@ -49,65 +111,16 @@ async function handleImportDesignSystemCommandInternal(
     const resolvedStrategy = strategy ? ImportStrategy[strategy] : ImportStrategy.WITH_COMPONENT_SETS;
     debugHandler('Resolved strategy: %s', resolvedStrategy);
 
-    let filterFn: FilterFunctionType | undefined;
-    let loader: FilterLoader | undefined;
-    if (typeof filterPath === 'string' && filterPath.trim().length > 0) {
-      debugFilter('Loading custom filter from: %s', filterPath);
-      try {
-        loader = new FilterLoader();
-        debugFilter('FilterLoader instance created');
-        filterFn = await loader.loadFilter(filterPath);
-        debugFilter('Filter function loaded successfully');
-      } catch (e) {
-        debugFilter('ERROR: Failed to load filter from %s: %O', filterPath, e);
-        debugFilter('WARNING: Could not import filter from %s. Skipping custom filter. Error: %O', filterPath, e);
-      } finally {
-        if (loader) {
-          debugFilter('Cleaning up FilterLoader');
-          loader.cleanup();
-        }
-      }
-    } else {
-      debugFilter('No filter path provided, proceeding without custom filter');
-    }
+    const filterFn = await loadFilterFunction(filterPath);
 
     debugHandler('Calling importDesignSystemComponentsFromFigma...');
     await importDesignSystemComponentsFromFigma(outputDir, resolvedStrategy, filterFn);
     debugHandler('Import completed successfully');
     debugHandler('Design system files processed to %s', outputDir);
 
-    const successEvent: DesignSystemImportedEvent = {
-      type: 'DesignSystemImported',
-      data: {
-        outputDir,
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-    debugResult('Returning success event: DesignSystemImported');
-    debugResult('  Output directory: %s', outputDir);
-    return successEvent;
+    return createSuccessEvent(command, outputDir);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    debugHandler('ERROR: Design system import failed: %O', error);
-    debugResult('Error message: %s', errorMessage);
-    debugHandler('Error importing design system: %O', error);
-
-    const failureEvent: DesignSystemImportFailedEvent = {
-      type: 'DesignSystemImportFailed',
-      data: {
-        error: errorMessage,
-        outputDir,
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
-    debugResult('Returning failure event: DesignSystemImportFailed');
-    debugResult('  Error: %s', errorMessage);
-    debugResult('  Output directory: %s', outputDir);
-    return failureEvent;
+    return createFailureEvent(command, error, outputDir);
   }
 }
 

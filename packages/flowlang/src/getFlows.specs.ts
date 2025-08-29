@@ -226,4 +226,22 @@ describe('getFlows', (_mode) => {
       ),
     ).toBe(true);
   });
+
+  it('should have ids for flows and slices that have ids', async () => {
+    const flows = await getFlows({ vfs: vfs, root: root });
+
+    const schemas = flows.toSchema();
+
+    const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
+    if (!testFlowWithIds) return;
+    const commandSlice = testFlowWithIds.slices.find((s) => s.name === 'Create test item');
+    expect(commandSlice?.id).toBe('SLICE-001');
+    expect(commandSlice?.type).toBe('command');
+    const querySlice = testFlowWithIds.slices.find((s) => s.name === 'Get test items');
+    expect(querySlice?.id).toBe('SLICE-002');
+    expect(querySlice?.type).toBe('query');
+    const reactSlice = testFlowWithIds.slices.find((s) => s.name === 'React to test event');
+    expect(reactSlice?.id).toBe('SLICE-003');
+    expect(reactSlice?.type).toBe('react');
+  });
 });

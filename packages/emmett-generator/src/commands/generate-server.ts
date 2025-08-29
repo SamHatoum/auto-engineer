@@ -79,6 +79,140 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
+async function validateSchemaFile(
+  absSchema: string,
+  command: GenerateServerCommand,
+): Promise<ServerGenerationFailedEvent | null> {
+  if (!existsSync(absSchema)) {
+    debug('Schema file not found at %s', absSchema);
+    return {
+      type: 'ServerGenerationFailed',
+      data: {
+        schemaPath: command.data.schemaPath,
+        destination: command.data.destination,
+        error: `Schema file not found at ${absSchema}`,
+      },
+      timestamp: new Date(),
+      requestId: command.requestId,
+      correlationId: command.correlationId,
+    };
+  }
+  return null;
+}
+
+async function readAndParseSchema(absSchema: string): Promise<SpecsSchemaType> {
+  debugSchema('Reading schema file from %s', absSchema);
+  const content = await readFile(absSchema, 'utf8');
+
+  debugSchema('Schema content length: %d bytes', content.length);
+  const spec = JSON.parse(content) as SpecsSchemaType;
+
+  debugSchema('Parsed schema:');
+  debugSchema('  Flows: %d', spec.flows?.length || 0);
+  debugSchema('  Messages: %d', spec.messages?.length || 0);
+  debugSchema('  Integrations: %d', spec.integrations?.length ?? 0);
+
+  logFlowDetails(spec);
+  return spec;
+}
+
+function logFlowDetails(spec: SpecsSchemaType): void {
+  if (spec.flows !== undefined && spec.flows.length > 0) {
+    debugSchema(
+      'Flow names: %o',
+      spec.flows.map((f) => f.name),
+    );
+    spec.flows.forEach((flow) => {
+      debugSchema('  Flow "%s" has %d slices', flow.name, flow.slices?.length || 0);
+      flow.slices?.forEach((slice) => {
+        debugSchema('    Slice: %s (type: %s)', slice.name, slice.type);
+      });
+    });
+  }
+}
+
+async function generateAndWriteScaffold(spec: SpecsSchemaType, serverDir: string): Promise<void> {
+  const domainFlowsPath = join(serverDir, 'src', 'domain', 'flows');
+  debugScaffold('Generating scaffold file plans');
+  debugScaffold('  Domain flows path: %s', domainFlowsPath);
+  debugScaffold('  Number of flows: %d', spec.flows?.length || 0);
+
+  const filePlans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations, domainFlowsPath);
+
+  debugScaffold('Generated %d file plans', filePlans.length);
+  if (filePlans.length > 0) {
+    debugScaffold('Sample file paths:');
+    filePlans.slice(0, 5).forEach((plan) => {
+      debugScaffold('  - %s', plan.outputPath);
+    });
+  }
+
+  await writeScaffoldFilePlans(filePlans);
+  debugScaffold('Written all scaffold files');
+}
+
+async function copyAllFiles(serverDir: string): Promise<void> {
+  const packageRoot = path.resolve(__dirname, '..');
+  debugFiles('Package root: %s', packageRoot);
+
+  debugFiles('Copying utility files...');
+  await copyRootFilesFromSrc(path.join(packageRoot, 'utils'), path.join(serverDir, 'src', 'utils'));
+
+  debugFiles('Copying server.ts...');
+  await copyRootFilesFromSrc(path.join(packageRoot, 'server.ts'), path.join(serverDir, 'src'));
+
+  debugFiles('Copying domain shared files...');
+  await copySharedAndRootFiles(path.join(packageRoot, 'domain'), path.join(serverDir, 'src', 'domain'));
+}
+
+async function writeConfigurationFiles(serverDir: string, absDest: string): Promise<void> {
+  debugFiles('Writing package.json...');
+  await writePackage(serverDir);
+
+  debugFiles('Writing tsconfig.json...');
+  await writeTsconfig(serverDir);
+
+  debugFiles('Writing vitest config...');
+  await writeVitestConfig(serverDir);
+
+  debugFiles('Generating GraphQL schema script...');
+  await generateSchemaScript(serverDir, absDest);
+}
+
+function createServerSuccessEvent(
+  command: GenerateServerCommand,
+  serverDir: string,
+  absDest: string,
+): ServerGeneratedEvent {
+  return {
+    type: 'ServerGenerated',
+    data: {
+      schemaPath: command.data.schemaPath,
+      destination: command.data.destination,
+      serverDir,
+      contextSchemaGraphQL: join(absDest, '.context', 'schema.graphql'),
+    },
+    timestamp: new Date(),
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+  };
+}
+
+function createServerFailureEvent(command: GenerateServerCommand, error: unknown): ServerGenerationFailedEvent {
+  debug('Server generation failed with error: %O', error);
+  return {
+    type: 'ServerGenerationFailed',
+    data: {
+      schemaPath: command.data.schemaPath,
+      destination: command.data.destination,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    },
+    timestamp: new Date(),
+    requestId: command.requestId,
+    correlationId: command.correlationId,
+  };
+}
+
 async function handleGenerateServerCommandInternal(
   command: GenerateServerCommand,
 ): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
@@ -96,45 +230,14 @@ async function handleGenerateServerCommandInternal(
     debug('  Absolute destination: %s', absDest);
     debug('  Absolute schema: %s', absSchema);
 
-    if (!existsSync(absSchema)) {
-      debug('Schema file not found at %s', absSchema);
-      return {
-        type: 'ServerGenerationFailed',
-        data: {
-          schemaPath,
-          destination,
-          error: `Schema file not found at ${absSchema}`,
-        },
-        timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
-      };
-    }
+    // Validate schema file exists
+    const validationError = await validateSchemaFile(absSchema, command);
+    if (validationError) return validationError;
 
-    debugSchema('Reading schema file from %s', absSchema);
-    const content = await readFile(absSchema, 'utf8');
+    // Read and parse schema
+    const spec = await readAndParseSchema(absSchema);
 
-    debugSchema('Schema content length: %d bytes', content.length);
-    const spec = JSON.parse(content) as SpecsSchemaType;
-
-    debugSchema('Parsed schema:');
-    debugSchema('  Flows: %d', spec.flows?.length || 0);
-    debugSchema('  Messages: %d', spec.messages?.length || 0);
-    debugSchema('  Integrations: %d', spec.integrations?.length ?? 0);
-
-    if (spec.flows !== undefined && spec.flows.length > 0) {
-      debugSchema(
-        'Flow names: %o',
-        spec.flows.map((f) => f.name),
-      );
-      spec.flows.forEach((flow) => {
-        debugSchema('  Flow "%s" has %d slices', flow.name, flow.slices?.length || 0);
-        flow.slices?.forEach((slice) => {
-          debugSchema('    Slice: %s (type: %s)', slice.name, slice.type);
-        });
-      });
-    }
-
+    // Setup server directory
     const serverDir = join(absDest, 'server');
     debug('Server directory: %s', serverDir);
     debug('🔄 Generating server... %s', serverDir);
@@ -142,82 +245,25 @@ async function handleGenerateServerCommandInternal(
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
 
-    const domainFlowsPath = join(serverDir, 'src', 'domain', 'flows');
-    debugScaffold('Generating scaffold file plans');
-    debugScaffold('  Domain flows path: %s', domainFlowsPath);
-    debugScaffold('  Number of flows: %d', spec.flows?.length || 0);
+    // Generate scaffold files
+    await generateAndWriteScaffold(spec, serverDir);
 
-    const filePlans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations, domainFlowsPath);
+    // Copy files
+    await copyAllFiles(serverDir);
 
-    debugScaffold('Generated %d file plans', filePlans.length);
-    if (filePlans.length > 0) {
-      debugScaffold('Sample file paths:');
-      filePlans.slice(0, 5).forEach((plan) => {
-        debugScaffold('  - %s', plan.outputPath);
-      });
-    }
+    // Write configuration files
+    await writeConfigurationFiles(serverDir, absDest);
 
-    await writeScaffoldFilePlans(filePlans);
-    debugScaffold('Written all scaffold files');
-
-    // Copy package resources from this package, not from process.cwd()
-    const packageRoot = path.resolve(__dirname, '..');
-    debugFiles('Package root: %s', packageRoot);
-
-    debugFiles('Copying utility files...');
-    await copyRootFilesFromSrc(path.join(packageRoot, 'utils'), path.join(serverDir, 'src', 'utils'));
-
-    debugFiles('Copying server.ts...');
-    await copyRootFilesFromSrc(path.join(packageRoot, 'server.ts'), path.join(serverDir, 'src'));
-
-    debugFiles('Copying domain shared files...');
-    await copySharedAndRootFiles(path.join(packageRoot, 'domain'), path.join(serverDir, 'src', 'domain'));
-
-    debugFiles('Writing package.json...');
-    await writePackage(serverDir);
-
-    debugFiles('Writing tsconfig.json...');
-    await writeTsconfig(serverDir);
-
-    debugFiles('Writing vitest config...');
-    await writeVitestConfig(serverDir);
-
-    debugFiles('Generating GraphQL schema script...');
-    await generateSchemaScript(serverDir, absDest);
-
-    // Try to install deps and build GraphQL schema, but do not fail the whole command if this step fails
+    // Install dependencies and generate schema
     debugDeps('Installing dependencies and generating GraphQL schema...');
     await installDependenciesAndGenerateSchema(serverDir, absDest);
 
     debug('Server generation completed successfully');
     debug('Server directory: %s', serverDir);
 
-    return {
-      type: 'ServerGenerated',
-      data: {
-        schemaPath,
-        destination,
-        serverDir,
-        contextSchemaGraphQL: join(absDest, '.context', 'schema.graphql'),
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
+    return createServerSuccessEvent(command, serverDir, absDest);
   } catch (error) {
-    debug('Server generation failed with error: %O', error);
-
-    return {
-      type: 'ServerGenerationFailed',
-      data: {
-        schemaPath,
-        destination,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      },
-      timestamp: new Date(),
-      requestId: command.requestId,
-      correlationId: command.correlationId,
-    };
+    return createServerFailureEvent(command, error);
   }
 }
 

@@ -154,6 +154,7 @@ const StateExampleSchema = z
 const BaseSliceSchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the slice'),
     description: z.string().optional(),
     stream: z.string().optional().describe('Event stream pattern for this slice'),
     via: z.array(z.string()).optional().describe('Integration names used by this slice'),
@@ -229,6 +230,7 @@ const SliceSchema = z.discriminatedUnion('type', [CommandSliceSchema, QuerySlice
 const FlowSchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the flow'),
     description: z.string().optional(),
     slices: z.array(SliceSchema),
   })
@@ -238,6 +240,7 @@ const FlowSchema = z
 const FlowNamesOnlySchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the flow'),
     description: z.string().optional(),
   })
   .describe('Flow with just name for initial planning');
@@ -246,6 +249,7 @@ const FlowNamesOnlySchema = z
 const SliceNamesOnlySchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the slice'),
     description: z.string().optional(),
     type: z.enum(['command', 'query', 'react']),
   })
@@ -254,6 +258,7 @@ const SliceNamesOnlySchema = z
 const FlowWithSliceNamesSchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the flow'),
     description: z.string().optional(),
     slices: z.array(SliceNamesOnlySchema),
   })
@@ -263,6 +268,7 @@ const FlowWithSliceNamesSchema = z
 const ClientServerNamesSliceSchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the slice'),
     type: z.enum(['command', 'query', 'react']),
     description: z.string().optional(),
     client: z
@@ -281,6 +287,7 @@ const ClientServerNamesSliceSchema = z
 const FlowWithClientServerNamesSchema = z
   .object({
     name: z.string(),
+    id: z.string().optional().describe('Optional unique identifier for the flow'),
     description: z.string().optional(),
     slices: z.array(ClientServerNamesSliceSchema),
   })

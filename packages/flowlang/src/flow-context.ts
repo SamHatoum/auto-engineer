@@ -10,9 +10,10 @@ interface FlowContext {
 
 let context: FlowContext | null = null;
 
-export function startFlow(name: string): Flow {
+export function startFlow(name: string, id?: string): Flow {
   const flow: Flow = {
     name,
+    id,
     slices: [],
   };
   context = {

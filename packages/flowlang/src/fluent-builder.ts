@@ -57,11 +57,12 @@ export interface FluentReactionSliceBuilder {
 class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   private slice: CommandSlice;
 
-  constructor(name: string) {
+  constructor(name: string, id?: string) {
     debugCommand('Creating command slice: %s', name);
     this.slice = {
       type: 'command',
       name,
+      id,
       client: { description: '', specs: [] },
       server: { description: '', gwt: [], data: undefined },
     };
@@ -163,11 +164,12 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
 class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   private slice: QuerySlice;
 
-  constructor(name: string) {
+  constructor(name: string, id?: string) {
     debugQuery('Creating query slice: %s', name);
     this.slice = {
       type: 'query',
       name,
+      id,
       client: { description: '', specs: [] },
       server: { description: '', gwt: [], data: undefined },
     };
@@ -249,11 +251,12 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
 class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   private slice: ReactSlice;
 
-  constructor(name: string) {
+  constructor(name: string, id?: string) {
     debugReact('Creating reaction slice: %s', name);
     this.slice = {
       type: 'react',
       name,
+      id,
       server: { gwt: [], data: undefined },
     };
     addSlice(this.slice);
@@ -299,17 +302,17 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   }
 }
 
-export const commandSlice = (name: string): FluentCommandSliceBuilder => {
+export const commandSlice = (name: string, id?: string): FluentCommandSliceBuilder => {
   debug('Creating command slice via factory: %s', name);
-  return new CommandSliceBuilderImpl(name);
+  return new CommandSliceBuilderImpl(name, id);
 };
 
-export const querySlice = (name: string): FluentQuerySliceBuilder => {
+export const querySlice = (name: string, id?: string): FluentQuerySliceBuilder => {
   debug('Creating query slice via factory: %s', name);
-  return new QuerySliceBuilderImpl(name);
+  return new QuerySliceBuilderImpl(name, id);
 };
 
-export const reactSlice = (name: string): FluentReactionSliceBuilder => {
+export const reactSlice = (name: string, id?: string): FluentReactionSliceBuilder => {
   debug('Creating reaction slice via factory: %s', name);
-  return new ReactionSliceBuilderImpl(name);
+  return new ReactionSliceBuilderImpl(name, id);
 };
