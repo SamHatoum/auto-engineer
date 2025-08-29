@@ -25,13 +25,6 @@ const checkNodeVersion = () => {
   }
 };
 
-const clearConsole = () => {
-  if (process.stdout.isTTY) {
-    // Clear console for TTY environments
-    process.stdout.write('\x1Bc');
-  }
-};
-
 const setupSignalHandlers = () => {
   process.on('SIGINT', () => {
     console.log('\n' + chalk.yellow('Operation cancelled by user'));
@@ -362,12 +355,9 @@ const loadEnvFile = () => {
   }
 };
 
-const initializeEnvironment = (shouldClearConsole = true) => {
+const initializeEnvironment = () => {
   checkNodeVersion();
   loadEnvFile();
-  if (shouldClearConsole) {
-    clearConsole();
-  }
   setupSignalHandlers();
 };
 
@@ -398,7 +388,7 @@ const main = async () => {
       process.argv.includes('--version') ||
       process.argv.includes('-V');
 
-    initializeEnvironment(!isHelpOrVersion);
+    initializeEnvironment();
 
     // For help/version, we need to load the config with defaults to show all commands
     const config = loadConfig({
