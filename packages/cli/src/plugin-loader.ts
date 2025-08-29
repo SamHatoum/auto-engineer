@@ -522,8 +522,7 @@ export class PluginLoader {
     const isCommand = 'type' in message && !('correlationId' in message);
     const backgroundColor = isCommand ? '#00CED1' : '#FF6B35';
 
-    const padding = ''.padEnd(message.type.padEnd(20, ' ').length - message.type.length, ' ');
-    console.log(chalk.gray(timestamp), chalk.bgHex(backgroundColor).white.bold(` ${message.type} `) + padding);
+    console.log(chalk.gray(timestamp), chalk.bgHex(backgroundColor).white.bold(` ${message.type} `));
     console.log(this.highlightYaml(output));
   }
 
