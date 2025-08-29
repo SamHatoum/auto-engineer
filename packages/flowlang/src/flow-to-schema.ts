@@ -1,9 +1,8 @@
-import { SpecsSchema } from '../schema';
+import { SpecsSchema } from './schema';
 import { z } from 'zod';
-import { Flow, Message } from '../index';
-import { messageRegistry } from '../message-registry';
-import { Integration } from '../types';
-import { globalIntegrationRegistry } from '../integration-registry';
+import { Flow, Message } from './index';
+import { Integration } from './types';
+import { globalIntegrationRegistry } from './integration-registry';
 import createDebug from 'debug';
 
 const debugIntegrations = createDebug('flowlang:getFlows:integrations');
@@ -244,12 +243,7 @@ export const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
     }
   >();
 
-  // FIRST: Add all declared messages from messageRegistry
-  for (const msg of messageRegistry.getAll()) {
-    messages.set(msg.name, msg);
-  }
-
-  // SECOND: Add messages from integration schemas
+  // Add messages from integration schemas
   const registeredIntegrations = globalIntegrationRegistry.getAll();
   debugIntegrations(
     `[flowsToSchema] Found ${registeredIntegrations.length} registered integrations:`,

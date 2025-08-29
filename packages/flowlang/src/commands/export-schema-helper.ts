@@ -1,6 +1,6 @@
 import createDebug from 'debug';
 import { getFs } from './filestore.node';
-import type { IExtendedFileStore } from '@auto-engineer/file-store';
+import { IExtendedFileStore, NodeFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:export-schema-helper');
 if ('color' in debug && typeof debug === 'object') {
@@ -29,14 +29,14 @@ const main = async () => {
 
     const { pathToFileURL } = await import('url');
     const flowlangModule = (await import(pathToFileURL(projectFlowlangPath).href)) as {
-      getFlows: typeof import('../loader/getFlows').getFlows;
+      getFlows: typeof import('../getFlows').getFlows;
     };
     const { getFlows } = flowlangModule;
 
     const flowsPath = fs.join(directory, 'flows');
     debug('Resolved flows path: %s', flowsPath);
 
-    const result = await getFlows({ root: flowsPath });
+    const result = await getFlows({ vfs: new NodeFileStore(), root: flowsPath });
     const schema = result.toSchema();
     debug(
       'Schema generated with %d flows, %d messages, %d integrations',

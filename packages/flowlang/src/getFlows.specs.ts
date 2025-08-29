@@ -1,24 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { getFlows } from './loader/getFlows';
 import { SpecsSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { NodeFileStore } from '@auto-engineer/file-store';
+import { getFlows } from './getFlows';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const vfs = new NodeFileStore();
+const root = path.resolve(__dirname);
 
-describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', (mode) => {
+describe('getFlows', (_mode) => {
   // eslint-disable-next-line complexity
   it('loads multiple flows and generates correct schemas', async () => {
-    const vfs = new NodeFileStore();
-    const flows = await getFlows({ vfs, root: path.resolve(__dirname), mode });
+    const flows = await getFlows({ vfs, root: path.resolve(__dirname) });
     const schemas = flows.toSchema();
 
     const parseResult = SpecsSchema.safeParse(schemas);
     if (!parseResult.success) {
-      console.error(`[${mode}] Schema validation errors:`, parseResult.error.format());
+      console.error(`Schema validation errors:`, parseResult.error.format());
     }
     expect(parseResult.success).toBe(true);
 
@@ -31,12 +32,12 @@ describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', 
     expect(Array.isArray(flowsArray)).toBe(true);
     expect(flowsArray.length).toBeGreaterThanOrEqual(2);
 
-    const names = flowsArray.map((f) => f.name);
+    const names = flowsArray.map((f: { name: string }) => f.name);
     expect(names).toContain('items');
     expect(names).toContain('Place order');
 
-    const items = flowsArray.find((f) => f.name === 'items');
-    const placeOrder = flowsArray.find((f) => f.name === 'Place order');
+    const items = flowsArray.find((f: { name: string }) => f.name === 'items');
+    const placeOrder = flowsArray.find((f: { name: string }) => f.name === 'Place order');
     expect(items).toBeDefined();
     expect(placeOrder).toBeDefined();
 
@@ -148,7 +149,7 @@ describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', 
   });
 
   it('validates the complete schema with Zod', async () => {
-    const flows = await getFlows({ mode });
+    const flows = await getFlows({ vfs: vfs, root });
     const schemas = flows.toSchema();
     const parsed = SpecsSchema.parse(schemas);
     expect(parsed.variant).toBe('specs');
@@ -158,7 +159,7 @@ describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', 
   });
 
   it('handles flows with integrations', async () => {
-    const flows = await getFlows({ mode });
+    const flows = await getFlows({ vfs: vfs, root: root });
     const specsSchema = flows.toSchema();
 
     const flowsWithIntegrations = specsSchema.flows.filter((f) =>
@@ -182,7 +183,7 @@ describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', 
   });
 
   it('handles react slices correctly', async () => {
-    const flows = await getFlows({ mode });
+    const flows = await getFlows({ vfs: vfs, root: root });
     const specsSchema = flows.toSchema();
 
     const reactSlices = specsSchema.flows.flatMap((f) => f.slices.filter((s) => s.type === 'react'));
@@ -202,12 +203,12 @@ describe.each<['native' | 'bundle']>([['native'], ['bundle']])('getFlows (%s)', 
   });
 
   it('parses and validates a complete flow with all slice types', async () => {
-    const flows = await getFlows({ mode });
+    const flows = await getFlows({ vfs: vfs, root: root });
     const schemas = flows.toSchema();
 
     const validationResult = SpecsSchema.safeParse(schemas);
     if (!validationResult.success) {
-      console.error(`[${mode}] Validation errors:`, JSON.stringify(validationResult.error.format(), null, 2));
+      console.error(`Validation errors:`, JSON.stringify(validationResult.error.format(), null, 2));
     }
     expect(validationResult.success).toBe(true);
 

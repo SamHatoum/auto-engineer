@@ -17,7 +17,7 @@ export type {
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
-export { registerIntegrations } from './integration-registry';
+//export { registerIntegrations } from './integration-registry';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';
@@ -45,8 +45,8 @@ export type { SliceTypeValueInterface } from './flow';
 export { SliceType } from './flow';
 
 // Flow conversion utilities
-export { getFlow } from './loader/getFlow';
-export { getFlows } from './loader/getFlows';
+export { getFlow } from './getFlow';
+export { getFlows } from './getFlows';
 
 // Event and command builders
 export {

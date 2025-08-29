@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SpecsSchema } from '../schema';
+import { SpecsSchema } from './schema';
 import { getFlow, GetFlowOptions } from './getFlow';
 import { IFileStore } from '@auto-engineer/file-store';
 import createDebug from 'debug';
@@ -16,8 +16,8 @@ export interface ConvertFlowToJsonOptions extends Omit<GetFlowOptions, 'filePath
 }
 
 export const convertFlowToJson = async (opts: ConvertFlowToJsonOptions): Promise<string> => {
-  const { vfs, filePath, outputPath, importMap, esbuildWasmURL } = opts;
-  const result = await getFlow({ vfs, filePath, importMap, esbuildWasmURL });
+  const { vfs, filePath, outputPath, importMap } = opts;
+  const result = await getFlow({ vfs, filePath, importMap });
   const schema = result.toSchema();
   try {
     SpecsSchema.parse(schema);

@@ -15,12 +15,10 @@ import {
   type Command,
   type Event,
   type State,
-  registerIntegrations,
 } from '@auto-engineer/flowlang';
 
 import { AI, ProductCatalog, type DoChat, type ChatCompleted, type Products } from '../server/src/integrations';
 
-registerIntegrations(ProductCatalog, AI);
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',

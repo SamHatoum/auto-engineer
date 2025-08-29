@@ -3,6 +3,7 @@
 import { resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 import createDebug from 'debug';
+import { NodeFileStore } from '@auto-engineer/file-store';
 
 const debug = createDebug('flowlang:export-schema-runner');
 if ('color' in debug && typeof debug === 'object') {
@@ -30,7 +31,7 @@ const main = async () => {
     const flowsPath = resolve(process.cwd(), flowsDir);
     debug('Resolved flows path: %s', flowsPath);
 
-    const result = await getFlows({ root: flowsPath });
+    const result = await getFlows({ vfs: new NodeFileStore(), root: flowsPath });
     const schema = result.toSchema();
     debug(
       'Schema generated with %d flows, %d messages, %d integrations',
