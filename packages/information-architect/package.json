@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/information-architect",
-  "version": "0.6.2",
+  "version": "0.6.4",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,10 +29,10 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "^0.6.2",
-    "@auto-engineer/message-bus": "^0.5.2",
+    "@auto-engineer/message-bus": "^0.5.4",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {
-    "@auto-engineer/cli": "^0.7.2"
+    "@auto-engineer/cli": "^0.7.4"
   }
 }

@@ -4,6 +4,8 @@ import chalk from 'chalk';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
+import Debug from 'debug';
 
 import { loadConfig, validateConfig } from './utils/config';
 import { handleError } from './utils/errors';
@@ -11,7 +13,39 @@ import { createOutput } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 import { PluginLoader } from './plugin-loader';
 
-const VERSION = process.env.npm_package_version ?? '0.7.0';
+const debug = Debug('auto-engineer:cli');
+
+// Get version from package.json - works in both dev and production
+const getVersion = (): string => {
+  try {
+    // Try to read from package.json relative to this file
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Try multiple possible locations for package.json
+    // In dev: src/index.ts -> ../package.json
+    // In dist: dist/src/index.js -> ../../package.json
+    const possiblePaths = [
+      path.join(__dirname, '..', 'package.json'), // dev environment
+      path.join(__dirname, '..', '..', 'package.json'), // dist build
+    ];
+
+    for (const packageJsonPath of possiblePaths) {
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as { version: string };
+        return packageJson.version;
+      }
+    }
+  } catch {
+    // Fall through to env variable
+  }
+
+  // Fallback to npm_package_version (works when run via npm scripts)
+  // If neither works, show unknown
+  return process.env.npm_package_version ?? 'unknown';
+};
+
+const VERSION = getVersion();
 
 const checkNodeVersion = () => {
   const nodeVersion = process.version;
@@ -97,6 +131,7 @@ const prepareCommandData = (
 interface LoadedCommand {
   handler?: unknown;
   description: string;
+  version?: string;
   usage?: string;
   examples?: string[];
   args?: Array<{ name: string; description: string; required?: boolean }>;
@@ -184,7 +219,7 @@ export default {
   }
 
   // Use plugin system
-  output.info('Loading plugins from auto.config.ts...');
+  debug('Loading plugins from %s', configPath);
 
   try {
     const pluginLoader = new PluginLoader();
@@ -231,15 +266,32 @@ export default {
         });
       }
 
+      // Add version option to each command if package has version
+      const commandInfo = loadedCommands.get(alias);
+      if (commandInfo && 'version' in commandInfo) {
+        cmd.option('--version', 'Display version of the package providing this command');
+      }
+
       cmd.action(async (...args: unknown[]) => {
         try {
-          await analytics.track({ command: alias, success: true });
-
           // Extract arguments and options
           // Commander passes: [...args, command, options]
           // For variadic, all extra args are collected into an array
           const cmdArgs = args.slice(0, -2); // Last two are command and options
           const options = args[args.length - 1] as Record<string, unknown>;
+
+          // Check if --version flag was passed
+          if (options.version === true) {
+            const commandInfo = loadedCommands.get(alias);
+            const version =
+              commandInfo && 'version' in commandInfo && typeof commandInfo.version === 'string'
+                ? commandInfo.version
+                : 'unknown';
+            console.log(version);
+            return;
+          }
+
+          await analytics.track({ command: alias, success: true });
 
           // Debug logging
           if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
@@ -274,7 +326,7 @@ export default {
     }
 
     const pluginCount = pluginLoader.getLoadedPluginCount();
-    output.success(`Loaded ${commands.size} commands from ${pluginCount} plugins`);
+    debug('Loaded %d commands from %d plugins', commands.size, pluginCount);
   } catch (error) {
     output.error('Failed to load plugins');
     console.error(error);

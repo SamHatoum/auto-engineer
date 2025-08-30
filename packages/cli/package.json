@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.7.2",
+  "version": "0.7.5",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -12,6 +12,10 @@
     "./manifest-types": {
       "types": "./dist/src/manifest-types.d.ts",
       "import": "./dist/src/manifest-types.js"
+    },
+    "./utils/get-package-version": {
+      "types": "./dist/src/utils/get-package-version.d.ts",
+      "import": "./dist/src/utils/get-package-version.js"
     }
   },
   "bin": {
@@ -46,7 +50,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.5.2",
+    "@auto-engineer/message-bus": "^0.5.4",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "debug": "^4.4.1",

@@ -27,6 +27,7 @@ export interface CliCommand {
   handler: () => Promise<unknown>;
   description: string;
   package: string;
+  version?: string; // Package version
   usage?: string;
   examples?: string[];
   args?: Array<{ name: string; description: string; required?: boolean }>;
@@ -180,10 +181,11 @@ export class PluginLoader {
       for (const [alias, command] of Object.entries(manifest.commands)) {
         debugPlugins('Processing command %s from %s', alias, packageName);
 
-        // Add the category from the manifest to each command
+        // Add the category and version from the manifest to each command
         const commandWithCategory = {
           ...command,
           category: manifest.category ?? packageName,
+          version: manifest.version,
         };
 
         // Track all packages that want this alias
@@ -465,6 +467,7 @@ export class PluginLoader {
       handler: candidate.command.handler,
       description: candidate.command.description,
       package: candidate.packageName,
+      version: candidate.command.version,
       usage: candidate.command.usage,
       examples: candidate.command.examples,
       args: candidate.command.args,

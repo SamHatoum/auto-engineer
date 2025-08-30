@@ -1,5 +1,27 @@
 # @auto-engineer/cli
 
+## 0.7.5
+
+### Patch Changes
+
+- fix version reporting
+
+## 0.7.4
+
+### Patch Changes
+
+- version test
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.4
+
+## 0.7.3
+
+### Patch Changes
+
+- fix version report
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.3
+
 ## 0.7.2
 
 ### Patch Changes

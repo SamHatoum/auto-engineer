@@ -129,7 +129,7 @@ importers:
   packages/cli:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       chalk:
         specifier: ^5.3.0
@@ -236,7 +236,7 @@ importers:
   packages/design-system-importer:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       figma-api:
         specifier: 2.0.2-beta
@@ -246,7 +246,7 @@ importers:
         version: 3.14.0
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
 
   packages/file-store: {}
@@ -279,7 +279,7 @@ importers:
         specifier: ^0.3.2
         version: link:../file-store
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
@@ -307,7 +307,7 @@ importers:
         version: 3.24.6(zod@3.25.76)
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
       '@types/node':
         specifier: ^20.0.0
@@ -322,7 +322,7 @@ importers:
   packages/frontend-checks:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       debug:
         specifier: ^4.4.1
@@ -338,7 +338,7 @@ importers:
         version: 5.9.2
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
 
   packages/frontend-generator-react-graphql:
@@ -347,7 +347,7 @@ importers:
         specifier: ^0.6.2
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       debug:
         specifier: ^4.4.1
@@ -363,7 +363,7 @@ importers:
         version: 4.104.0(ws@8.18.3)(zod@3.25.76)
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
       '@types/ejs':
         specifier: ^3.1.5
@@ -375,7 +375,7 @@ importers:
         specifier: ^0.6.2
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0
@@ -397,7 +397,7 @@ importers:
         version: 3.25.76
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
       playwright:
         specifier: ^1.54.1
@@ -409,14 +409,14 @@ importers:
         specifier: ^0.6.2
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
 
   packages/message-bus:
@@ -437,7 +437,7 @@ importers:
   packages/server-checks:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       debug:
         specifier: ^4.4.1
@@ -450,16 +450,16 @@ importers:
         version: 3.3.3
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
 
   packages/server-generator-apollo-emmett:
     dependencies:
       '@auto-engineer/flow':
-        specifier: ^0.1.1
+        specifier: ^0.1.3
         version: link:../flow
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.2
@@ -514,7 +514,7 @@ importers:
         version: 4.2.0
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
       '@types/ejs':
         specifier: ^3.1.5
@@ -529,7 +529,7 @@ importers:
         specifier: ^0.6.2
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.2
+        specifier: ^0.5.4
         version: link:../message-bus
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0
@@ -545,7 +545,7 @@ importers:
         version: 5.4.19(@types/node@22.18.0)
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.2
+        specifier: ^0.7.4
         version: link:../cli
       '@types/fs-extra':
         specifier: ^11.0.4
