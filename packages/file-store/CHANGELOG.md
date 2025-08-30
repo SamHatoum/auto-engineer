@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.3.2
+
+### Patch Changes
+
+- renamed packages
+
 ## 0.3.1
 
 ### Patch Changes

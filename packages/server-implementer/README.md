@@ -33,7 +33,7 @@ This plugin provides the following commands:
 
 ## What does this plugin do?
 
-The Server Implementer uses AI capabilities to implement business logic, database operations, and integration code for backend services. It bridges the gap between generated code scaffolds and functional implementations.
+The Server Implementer uses AI capabilities to implement business logic, database operations, and integration code for server services. It bridges the gap between generated code scaffolds and functional implementations.
 
 ## Key Features
 
@@ -227,9 +227,9 @@ export default {
 
 Works with the Auto Engineer ecosystem:
 
-- **@auto-engineer/emmett-generator**: Implements generated command handlers and queries
-- **@auto-engineer/backend-checks**: Validates implementations pass type checking and tests
-- **@auto-engineer/flowlang**: Uses flow specifications to understand business requirements
+- **@auto-engineer/server-generator-apollo-emmett**: Implements generated command handlers and queries
+- **@auto-engineer/server-checks**: Validates implementations pass type checking and tests
+- **@auto-engineer/flow**: Uses flow specifications to understand business requirements
 - **@auto-engineer/ai-gateway**: Leverages AI models for intelligent code generation
 
 ## Quality Assurance
@@ -261,4 +261,4 @@ The AI understands:
 - Adapts to project-specific requirements and constraints
 - Supports incremental improvement over time
 
-The Server Implementer transforms code scaffolds into implementations, accelerating backend development while maintaining code quality and consistency.
+The Server Implementer transforms code scaffolds into implementations, accelerating server development while maintaining code quality and consistency.

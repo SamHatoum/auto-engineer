@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/file-syncer",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,7 +29,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.5.1",
+    "@auto-engineer/message-bus": "^0.5.2",
     "chokidar": "^3.6.0",
     "socket.io": "^4.7.5"
   },

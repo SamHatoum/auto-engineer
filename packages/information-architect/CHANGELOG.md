@@ -1,5 +1,14 @@
 # @auto-engineer/information-architect
 
+## 0.6.2
+
+### Patch Changes
+
+- renamed packages
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.2
+  - @auto-engineer/ai-gateway@0.6.2
+
 ## 0.6.1
 
 ### Patch Changes

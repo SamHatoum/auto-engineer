@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.6.2
+
+### Patch Changes
+
+- renamed packages
+
 ## 0.6.1
 
 ### Patch Changes

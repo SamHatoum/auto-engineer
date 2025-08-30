@@ -1,15 +1,15 @@
 // Import specific command handlers to resolve conflicts or create aliases
-// import { checkTypesCommandHandler } from '@auto-engineer/backend-checks';
+// import { checkTypesCommandHandler } from '@auto-engineer/server-checks';
 
 export default {
   plugins: [
-    '@auto-engineer/flowlang',
-    '@auto-engineer/emmett-generator',
-    '@auto-engineer/flowlang',
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
+    '@auto-engineer/flow',
     '@auto-engineer/frontend-checks',
-    '@auto-engineer/frontend-implementation',
+    '@auto-engineer/frontend-implementer',
     '@auto-engineer/information-architect',
-    '@auto-engineer/react-graphql-generator',
+    '@auto-engineer/frontend-generator-react-graphql',
     '@auto-engineer/server-implementer',
   ],
 

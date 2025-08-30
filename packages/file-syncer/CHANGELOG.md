@@ -1,5 +1,13 @@
 # @auto-engineer/file-syncer
 
+## 0.4.2
+
+### Patch Changes
+
+- renamed packages
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.2
+
 ## 0.4.1
 
 ### Patch Changes

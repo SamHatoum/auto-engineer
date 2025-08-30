@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.5.2
+
+### Patch Changes
+
+- renamed packages
+
 ## 0.5.1
 
 ### Patch Changes

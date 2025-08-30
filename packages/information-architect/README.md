@@ -32,7 +32,7 @@ This plugin provides the following commands:
 
 ## What does this plugin do?
 
-The Information Architect plugin analyzes business requirements and generates structured information architectures that serve as blueprints for application development. It creates user experience flows, content hierarchies, navigation structures, and interaction patterns that guide the development of frontend and backend systems.
+The Information Architect plugin analyzes business requirements and generates structured information architectures that serve as blueprints for application development. It creates user experience flows, content hierarchies, navigation structures, and interaction patterns that guide the development of frontend and server systems.
 
 ## Key Features
 
@@ -244,7 +244,7 @@ Defines reusable component specifications:
 
 ### Data Models and Relationships
 
-Defines backend data structure requirements:
+Defines server data structure requirements:
 
 ```json
 {
@@ -333,11 +333,11 @@ export default {
 
 The Information Architect serves as a foundation for other plugins:
 
-- **@auto-engineer/flowlang**: Uses IA specifications to generate business flows
-- **@auto-engineer/emmett-generator**: Creates backend models from IA data specifications
-- **@auto-engineer/react-graphql-generator**: Generates frontend structure based on IA navigation
+- **@auto-engineer/flow**: Uses IA specifications to generate business flows
+- **@auto-engineer/server-generator-apollo-emmett**: Creates server models from IA data specifications
+- **@auto-engineer/frontend-generator-react-graphql**: Generates frontend structure based on IA navigation
 - **@auto-engineer/design-system-importer**: Applies design system constraints to IA components
-- **@auto-engineer/frontend-implementation**: Implements pages and components per IA specifications
+- **@auto-engineer/frontend-implementer**: Implements pages and components per IA specifications
 
 ## Workflow
 
@@ -375,7 +375,7 @@ Generated architecture includes:
 The IA serves as input for subsequent development phases:
 
 - Frontend scaffolding follows navigation structure
-- Backend models implement data specifications
+- Server models implement data specifications
 - Component implementations follow IA component specs
 - User testing validates against defined user journeys
 

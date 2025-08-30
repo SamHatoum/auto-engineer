@@ -426,7 +426,7 @@ export class PluginLoader {
         command.args.forEach((argDef, index) => {
           if (args[index] !== undefined) {
             // Convert arg name to camelCase for the data property
-            const propName = argDef.name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+            const propName = argDef.name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
             commandData[propName] = args[index];
           }
         });
@@ -438,7 +438,7 @@ export class PluginLoader {
           // Extract option name from format like "--fix" or "--scope <scope>"
           const optMatch = optDef.name.match(/^--([a-zA-Z-]+)/);
           if (optMatch) {
-            const optName = optMatch[1].replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+            const optName = optMatch[1].replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
             if (options[optName] !== undefined || options[optMatch[1]] !== undefined) {
               commandData[optName] = options[optName] ?? options[optMatch[1]];
             }
@@ -557,12 +557,14 @@ export class PluginLoader {
       output = `   ${chalk.cyan(String(data))}`;
     } else if (typeof data === 'object') {
       // Strip any ANSI codes that might be in the data values
-      const cleanData = JSON.parse(
+      // Clean ANSI codes from data for JSON output
+      JSON.parse(
         JSON.stringify(data, (_key, value) => {
           if (typeof value === 'string') {
+            // eslint-disable-next-line no-control-regex
             return value.replace(/\x1b\[[0-9;]*m/g, '');
           }
-          return value;
+          return value as unknown;
         }),
       );
       output = stringify(data, {

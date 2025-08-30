@@ -81,6 +81,6 @@ message-bus:event   Data keys: [ 'userId', 'name', 'email' ]
 ## Tips
 
 - Use wildcards: `DEBUG=message-bus:*` to see all message-bus logs
-- Combine with other packages: `DEBUG=message-bus:*,flowlang:*`
+- Combine with other packages: `DEBUG=message-bus:*,flow:*`
 - Save to file: `DEBUG=message-bus:* pnpm dev 2> debug.log`
 - Disable colors: `DEBUG_COLORS=false DEBUG=message-bus:* pnpm dev`

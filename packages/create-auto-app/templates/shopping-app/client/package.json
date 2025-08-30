@@ -21,7 +21,7 @@
   "dependencies": {
     "@apollo/client": "^3.13.8",
     "@auto-engineer/ai-gateway": "^0.4.2",
-    "@auto-engineer/react-graphql-generator": "^0.3.0",
+    "@auto-engineer/frontend-generator-react-graphql": "^0.3.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",

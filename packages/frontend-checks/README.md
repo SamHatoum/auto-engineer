@@ -326,8 +326,8 @@ jobs:
 
 Works with the Auto Engineer ecosystem:
 
-- @auto-engineer/react-graphql-generator: Validates generated React applications
-- @auto-engineer/frontend-implementation: Checks AI-implemented code quality
+- @auto-engineer/frontend-generator-react-graphql: Validates generated React applications
+- @auto-engineer/frontend-implementer: Checks AI-implemented code quality
 - @auto-engineer/design-system-importer: Validates design system usage consistency
 - @auto-engineer/information-architect: Validates implementation against IA specifications
 

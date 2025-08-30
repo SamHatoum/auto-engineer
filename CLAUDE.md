@@ -37,19 +37,19 @@ pnpm test <test-file-pattern>
 ### Key Applications
 
 - **apps/cli**: Main CLI interface (`auto-engineer` or `ag` commands)
-- **apps/api**: Backend API server with message bus integration
+- **apps/api**: Server API server with message bus integration
 
 ### Core Packages
 
-- **flowlang**: DSL for defining flows with fluent API
-- **emmett-generator**: Code generation from flow specifications using EJS templates
+- **flow**: DSL for defining flows with fluent API
+- **server-generator-apollo-emmett**: Code generation from flow specifications using EJS templates
 - **ai-integration**: Unified AI provider interface (OpenAI, Anthropic, Google AI, X.AI)
 - **message-bus**: Event-driven messaging system with CQRS pattern
 - **frontend-scaffold**: React/GraphQL application scaffolding with Shadcn/ui
 
 ## Key Patterns
 
-### FlowLang DSL
+### Flow DSL
 
 Uses fluent API for command, query, and reaction slices:
 
@@ -84,7 +84,7 @@ At least one AI provider key is required:
 
 ## Code Generation
 
-The emmett-generator package creates:
+The server-generator-apollo-emmett package creates:
 
 - GraphQL/Apollo server implementations
 - Type-safe command/event handling

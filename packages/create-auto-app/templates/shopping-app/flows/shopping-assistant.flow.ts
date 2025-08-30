@@ -15,7 +15,7 @@ import {
   type Command,
   type Event,
   type State,
-} from '@auto-engineer/flowlang';
+} from '@auto-engineer/flow';
 
 import { AI, ProductCatalog, type DoChat, type ChatCompleted, type Products } from '../server/src/integrations';
 

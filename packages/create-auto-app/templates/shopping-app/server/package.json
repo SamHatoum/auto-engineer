@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "latest",
-    "@auto-engineer/flowlang": "latest",
+    "@auto-engineer/flow": "latest",
     "axios": "^1.11.0",
     "@event-driven-io/emmett": "^0.38.2",
     "type-graphql": "^2.0.0-rc.2",

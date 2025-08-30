@@ -44,21 +44,25 @@ npm install -g @auto-engineer/cli
 2. Install plugins for your use case:
 
 ```bash
-# For backend development
-npm install @auto-engineer/flowlang @auto-engineer/emmett-generator @auto-engineer/server-implementer
+# For server development
+npm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett @auto-engineer/server-implementer
 
 # For frontend development
-npm install @auto-engineer/react-graphql-generator @auto-engineer/frontend-implementation
+npm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
 
 # For validation and testing
-npm install @auto-engineer/backend-checks @auto-engineer/frontend-checks
+npm install @auto-engineer/server-checks @auto-engineer/frontend-checks
 ```
 
 3. Create configuration (`auto.config.ts`):
 
 ```typescript
 export default {
-  plugins: ['@auto-engineer/flowlang', '@auto-engineer/emmett-generator', '@auto-engineer/server-implementer'],
+  plugins: [
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
+    '@auto-engineer/server-implementer',
+  ],
 
   // Optional: Handle command conflicts
   aliases: {
@@ -77,17 +81,17 @@ auto generate:server .context/schema.json .
 
 ## Available Plugins
 
-| Plugin                                   | Commands                                   | Description                         |
-| ---------------------------------------- | ------------------------------------------ | ----------------------------------- |
-| `@auto-engineer/flowlang`                | `create:example`, `export:schema`          | Flow modeling and schema export     |
-| `@auto-engineer/emmett-generator`        | `generate:server`                          | Server code generation              |
-| `@auto-engineer/server-implementer`      | `implement:server`, `implement:slice`      | AI server implementation            |
-| `@auto-engineer/react-graphql-generator` | `generate:client`, `copy:example`          | React client scaffolding            |
-| `@auto-engineer/frontend-implementation` | `implement:client`                         | AI client implementation            |
-| `@auto-engineer/information-architect`   | `generate:ia`                              | Information architecture generation |
-| `@auto-engineer/design-system-importer`  | `import:design-system`                     | Figma design system import          |
-| `@auto-engineer/backend-checks`          | `check:types`, `check:lint`, `check:tests` | Backend validation                  |
-| `@auto-engineer/frontend-checks`         | `check:client`                             | Frontend validation                 |
+| Plugin                                            | Commands                                   | Description                         |
+| ------------------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| `@auto-engineer/flow`                             | `create:example`, `export:schema`          | Flow modeling and schema export     |
+| `@auto-engineer/server-generator-apollo-emmett`   | `generate:server`                          | Server code generation              |
+| `@auto-engineer/server-implementer`               | `implement:server`, `implement:slice`      | AI server implementation            |
+| `@auto-engineer/frontend-generator-react-graphql` | `generate:client`, `copy:example`          | React client scaffolding            |
+| `@auto-engineer/frontend-implementer`             | `implement:client`                         | AI client implementation            |
+| `@auto-engineer/information-architect`            | `generate:ia`                              | Information architecture generation |
+| `@auto-engineer/design-system-importer`           | `import:design-system`                     | Figma design system import          |
+| `@auto-engineer/server-checks`                    | `check:types`, `check:lint`, `check:tests` | Server validation                   |
+| `@auto-engineer/frontend-checks`                  | `check:client`                             | Frontend validation                 |
 
 ## Configuration
 
@@ -100,14 +104,14 @@ The CLI looks for an `auto.config.ts` file in your project root:
 export default {
   // List of npm packages to load as plugins
   plugins: [
-    '@auto-engineer/flowlang',
-    '@auto-engineer/emmett-generator',
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
     // ... more plugins
   ],
 
   // Optional: Override command aliases when conflicts occur
   aliases: {
-    'create:example': '@auto-engineer/flowlang',
+    'create:example': '@auto-engineer/flow',
     // ... more overrides
   },
 };
@@ -135,7 +139,7 @@ export default {
 };
 ```
 
-The alias resolution works per command, not per package. Each package can expose multiple commands, and you resolve conflicts for specific command aliases. For example, if both `backend-checks` and `another-package` provide a `check:types` command, you specify which package handles that specific command.
+The alias resolution works per command, not per package. Each package can expose multiple commands, and you resolve conflicts for specific command aliases. For example, if both `server-checks` and `another-package` provide a `check:types` command, you specify which package handles that specific command.
 
 ## Commands
 
@@ -143,12 +147,12 @@ Commands are provided by installed plugins. Run `auto --help` to see available c
 
 ### Common Plugin Commands
 
-Flow Development (requires `@auto-engineer/flowlang`)
+Flow Development (requires `@auto-engineer/flow`)
 
 - `create:example <name>` - Create an example project
 - `export:schema <context> <flows>` - Export flow schemas
 
-Backend Generation (requires respective plugins)
+Server Generation (requires respective plugins)
 
 - `generate:server <schema> <dest>` - Generate server from schema
 - `implement:server <server-dir>` - AI implements server
@@ -265,7 +269,7 @@ DEBUG=* auto create:example test
 DEBUG=cli:plugin-loader auto --help
 
 # Debug specific plugins
-DEBUG=flowlang:* auto export:schema ./context ./flows
+DEBUG=flow:* auto export:schema ./context ./flows
 ```
 
 ## License

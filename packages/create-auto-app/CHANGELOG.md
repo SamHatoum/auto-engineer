@@ -1,5 +1,11 @@
 # create-auto-app
 
+## 0.2.2
+
+### Patch Changes
+
+- renamed packages
+
 ## 0.2.1
 
 ### Patch Changes

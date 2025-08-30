@@ -4,15 +4,15 @@
 export default {
   // List of Auto Engineer packages to load as plugins
   plugins: [
-    '@auto-engineer/flowlang',
-    '@auto-engineer/emmett-generator',
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
-    '@auto-engineer/frontend-implementation',
+    '@auto-engineer/frontend-implementer',
     '@auto-engineer/design-system-importer',
     '@auto-engineer/information-architect',
-    '@auto-engineer/backend-checks',
+    '@auto-engineer/server-checks',
     '@auto-engineer/frontend-checks',
-    '@auto-engineer/react-graphql-generator',
+    '@auto-engineer/frontend-generator-react-graphql',
   ],
 
   // Optional: Override command aliases when there are conflicts between packages
@@ -20,8 +20,8 @@ export default {
   // Each package can expose multiple commands, so we resolve conflicts per command
   aliases: {
     // Example: If multiple packages register 'check:types':
-    // 'check:types': '@auto-engineer/backend-checks',
-    // Example: If both react-graphql-generator and another package register 'generate:client':
-    // 'generate:client': '@auto-engineer/react-graphql-generator',
+    // 'check:types': '@auto-engineer/server-checks',
+    // Example: If both frontend-generator-react-graphql and another package register 'generate:client':
+    // 'generate:client': '@auto-engineer/frontend-generator-react-graphql',
   },
 };

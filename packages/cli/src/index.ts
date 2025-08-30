@@ -174,8 +174,8 @@ const setupProgram = async (config: ReturnType<typeof loadConfig>) => {
     console.log(`
 export default {
   plugins: [
-    '@auto-engineer/flowlang',
-    '@auto-engineer/emmett-generator',
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
     // Add more plugins as needed
   ]
@@ -381,13 +381,6 @@ const handleProgramError = (error: unknown) => {
 
 const main = async () => {
   try {
-    // Check if help or version is being requested
-    const isHelpOrVersion =
-      process.argv.includes('--help') ||
-      process.argv.includes('-h') ||
-      process.argv.includes('--version') ||
-      process.argv.includes('-V');
-
     initializeEnvironment();
 
     // For help/version, we need to load the config with defaults to show all commands
