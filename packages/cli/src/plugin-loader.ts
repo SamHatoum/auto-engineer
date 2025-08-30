@@ -129,7 +129,10 @@ export class PluginLoader {
       return (configModule.default ?? configModule) as PluginConfig;
     } catch (error) {
       debugConfig('Error loading config: %O', error);
-      console.error(`Failed to load config from ${configPath}:`, error);
+      // Only show config loading errors when debugging
+      if (process.env.DEBUG?.includes('auto-engineer:')) {
+        console.error(`Failed to load config from ${configPath}:`, error);
+      }
       return null;
     }
   }
@@ -199,7 +202,10 @@ export class PluginLoader {
       }
     } catch (error) {
       debugPlugins('Failed to load plugin %s: %O', packageName, error);
-      console.warn(`Failed to load plugin ${packageName}:`, error);
+      // Only show plugin loading errors when debugging
+      if (process.env.DEBUG?.includes('auto-engineer:')) {
+        console.warn(`Failed to load plugin ${packageName}:`, error);
+      }
     }
   }
 
