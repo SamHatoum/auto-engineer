@@ -20,7 +20,7 @@ importers:
         specifier: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
         version: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
       '@auto-engineer/flow':
-        specifier: ^0.5.7
+        specifier: ^0.1.1
         version: link:packages/flow
       axios:
         specifier: ^1.10.0
