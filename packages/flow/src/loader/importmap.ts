@@ -1,7 +1,21 @@
 import createDebug from 'debug';
 
 export async function createEnhancedImportMap(base: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
-  const [flowMod, fluentMod, buildersMod, testingMod, dataFlowMod, flowReg, intReg] = await Promise.all([
+  // internal modules used by flows
+  const [
+    flowMod,
+    fluentMod,
+    buildersMod,
+    testingMod,
+    dataFlowMod,
+    flowReg,
+    intReg,
+    selfEntry,
+    // externals
+    zod,
+    gqlTag,
+    debugMod,
+  ] = await Promise.all([
     import('../flow'),
     import('../fluent-builder'),
     import('../builders'),
@@ -9,12 +23,14 @@ export async function createEnhancedImportMap(base: Record<string, unknown> = {}
     import('../data-flow-builders'),
     import('../flow-registry'),
     import('../integration-registry'),
+    import('../index'),
+    import('zod'),
+    import('graphql-tag'),
+    import('debug'),
   ]);
 
   return {
     ...base,
-
-    // common internal conveniences
     '../flow': flowMod,
     '../fluent-builder': fluentMod,
     '../builders': buildersMod,
@@ -22,16 +38,14 @@ export async function createEnhancedImportMap(base: Record<string, unknown> = {}
     '../data-flow-builders': dataFlowMod,
     '../flow-registry': flowReg,
     '../integration-registry': intReg,
-
     './flow': flowMod,
     './fluent-builder': fluentMod,
     './builders': buildersMod,
     './testing': testingMod,
     './data-flow-builders': dataFlowMod,
-
-    // externals
-    'graphql-tag': (await import('graphql-tag')).default ?? (await import('graphql-tag')),
-    zod: await import('zod'),
-    debug: { default: createDebug },
+    '@auto-engineer/flow': selfEntry,
+    zod,
+    'graphql-tag': (gqlTag as any).default ?? gqlTag,
+    debug: { default: (debugMod as any).default ?? createDebug },
   };
 }

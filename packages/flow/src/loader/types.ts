@@ -13,11 +13,6 @@ export type ModuleCode = {
 
 export type Graph = Map<string, ModuleCode>;
 
-export type BuildContext = {
-  vfs: IFileStore;
-  importMap: Record<string, unknown>;
-};
-
 export type ExecuteOptions = {
   entryFiles: string[];
   vfs: IFileStore;
