@@ -27,6 +27,7 @@ export interface CliCommand {
   handler: () => Promise<unknown>;
   description: string;
   package: string;
+  version?: string; // Package version
   usage?: string;
   examples?: string[];
   args?: Array<{ name: string; description: string; required?: boolean }>;
@@ -128,7 +129,10 @@ export class PluginLoader {
       return (configModule.default ?? configModule) as PluginConfig;
     } catch (error) {
       debugConfig('Error loading config: %O', error);
-      console.error(`Failed to load config from ${configPath}:`, error);
+      // Only show config loading errors when debugging
+      if (process.env.DEBUG?.includes('auto-engineer:') === true) {
+        console.error(`Failed to load config from ${configPath}:`, error);
+      }
       return null;
     }
   }
@@ -180,10 +184,11 @@ export class PluginLoader {
       for (const [alias, command] of Object.entries(manifest.commands)) {
         debugPlugins('Processing command %s from %s', alias, packageName);
 
-        // Add the category from the manifest to each command
+        // Add the category and version from the manifest to each command
         const commandWithCategory = {
           ...command,
           category: manifest.category ?? packageName,
+          version: manifest.version,
         };
 
         // Track all packages that want this alias
@@ -197,7 +202,10 @@ export class PluginLoader {
       }
     } catch (error) {
       debugPlugins('Failed to load plugin %s: %O', packageName, error);
-      console.warn(`Failed to load plugin ${packageName}:`, error);
+      // Only show plugin loading errors when debugging
+      if (process.env.DEBUG?.includes('auto-engineer:') === true) {
+        console.warn(`Failed to load plugin ${packageName}:`, error);
+      }
     }
   }
 
@@ -465,6 +473,7 @@ export class PluginLoader {
       handler: candidate.command.handler,
       description: candidate.command.description,
       package: candidate.packageName,
+      version: candidate.command.version,
       usage: candidate.command.usage,
       examples: candidate.command.examples,
       args: candidate.command.args,
@@ -701,6 +710,10 @@ export class PluginLoader {
 
   getConflicts(): Map<string, string[]> {
     return this.conflicts;
+  }
+
+  getMessageBus(): MessageBus {
+    return this.messageBus;
   }
 }
 

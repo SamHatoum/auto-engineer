@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Engineer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Auto Brand Colors */
+            --brand-red: #ec3f4a;
+            --brand-orange: #ff8a1d;
+            --brand-green: #5ec72d;
+            --brand-blue: #42c3f7;
+            --brand-primary: #0057dd;
+        }
+        
+        /* Dark theme (default) */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --bg-hover: #333337;
+            --border: #3a3a3d;
+            --border-light: #4a4a4d;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            --accent: #0057dd;
+            --accent-hover: #0046b5;
+            --success: #5ec72d;
+            --error: #ec3f4a;
+            --warning: #ff8a1d;
+            --code-bg: #0d0e11;
+        }
+        
+        /* Light theme */
+        [data-theme="light"] {
+            --bg-primary: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f4f4f5;
+            --bg-hover: #e4e4e7;
+            --border: #e4e4e7;
+            --border-light: #d4d4d8;
+            --text-primary: #18181b;
+            --text-secondary: #52525b;
+            --text-tertiary: #71717a;
+            --accent: #0057dd;
+            --accent-hover: #0046b5;
+            --success: #5ec72d;
+            --error: #ec3f4a;
+            --warning: #ff8a1d;
+            --code-bg: #f4f4f5;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Tab color indicators */
+        .tab-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+        
+        .tab-indicator.command { background: var(--brand-primary); }
+        .tab-indicator.event { background: var(--brand-orange); }
+        .tab-indicator.state { background: var(--brand-green); }
+        
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-mark svg {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        /* Theme switcher dropdown */
+        .theme-switcher {
+            position: relative;
+        }
+        
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+        
+        .theme-toggle:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
+        }
+        
+        .theme-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-4px);
+            transition: all 0.15s ease;
+            z-index: 1000;
+            min-width: 140px;
+        }
+        
+        .theme-dropdown.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .theme-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary) !important;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .theme-option:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary) !important;
+        }
+        
+        .theme-option.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary) !important;
+        }
+        
+        .theme-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        
+        /* New Layout */
+        .app-layout {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+        
+        /* Left sidebar for registry */
+        .sidebar-left {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            transition: background-color 0.3s ease;
+        }
+        
+        /* Center content area */
+        .center-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Request Bar (Postman-like) */
+        .request-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .method-selector {
+            position: relative;
+            min-width: 200px;
+        }
+        
+        .method-select {
+            width: 100%;
+            padding: 10px 40px 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            transition: all 0.15s ease;
+        }
+        
+        .method-select:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+        
+        .method-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
+        }
+        
+        .method-selector::after {
+            content: '▼';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-tertiary);
+            font-size: 10px;
+        }
+        
+        .method-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+        
+        .method-indicator.command { background: var(--brand-primary); }
+        .method-indicator.state { background: var(--brand-green); }
+        
+        .endpoint-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            transition: all 0.15s ease;
+        }
+        
+        .endpoint-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
+        }
+        
+        .send-button {
+            padding: 10px 24px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .send-button:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 87, 221, 0.3);
+        }
+        
+        .send-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Request/Response Container */
+        .request-response-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Request Panel (left half) */
+        .request-panel {
+            flex: 1;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-tabs {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 16px;
+        }
+        
+        .panel-tab {
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .panel-tab:hover {
+            color: var(--text-secondary);
+        }
+        
+        .panel-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+        
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* Response Panel (right half) */
+        .response-panel {
+            flex: 1;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .response-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .response-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+        }
+        
+        .status-dot.success {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(94, 199, 45, 0.5);
+        }
+        
+        .status-dot.error {
+            background: var(--error);
+            box-shadow: 0 0 8px rgba(236, 63, 74, 0.5);
+        }
+        
+        .response-time {
+            color: var(--text-tertiary);
+            font-size: 11px;
+        }
+        
+        .response-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        /* Right sidebar for events */
+        .sidebar-right {
+            width: 360px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease;
+        }
+        
+        .events-header {
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .events-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .events-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .events-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+        
+        /* Registry sections in left sidebar */
+        .handlers-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .handlers-header {
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.3s ease;
+        }
+        
+        .handlers-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+        }
+        
+        .handlers-count {
+            font-size: 11px;
+            padding: 3px 8px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .handlers-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+        
+        .handler-group {
+            margin: 0;
+        }
+        
+        .handler-group-header {
+            padding: 8px 20px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .handler-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.15s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .handler-item.selected {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .handler-item.selected::before {
+            background: var(--accent);
+        }
+        
+        .handler-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: transparent;
+            transition: background 0.15s ease;
+        }
+        
+        .handler-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .handler-item:hover::before {
+            background: var(--accent);
+        }
+        
+        .handler-type-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        
+        .handler-type-indicator.command {
+            background: #42c3f7; /* Blue from logo */
+        }
+        
+        .handler-type-indicator.event {
+            background: #ff8a1d; /* Orange from logo */
+        }
+        
+        .handler-type-indicator.state {
+            background: #5ec72d; /* Green from logo */
+        }
+        
+        .handler-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .empty {
+            padding: 32px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        
+        /* Form elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        
+        .input, .textarea {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: all 0.15s ease;
+        }
+        
+        .input:focus, .textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
+        }
+        
+        .textarea {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 12px;
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 87, 221, 0.3);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button-small {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+        
+        .button-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .button-secondary:hover {
+            background: var(--bg-hover);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            transition: background-color 0.3s ease;
+            flex: 1;
+        }
+        
+        .response-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .response-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+        }
+        
+        .status-dot.success {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(94, 199, 45, 0.5);
+        }
+        
+        .status-dot.error {
+            background: var(--error);
+            box-shadow: 0 0 8px rgba(236, 63, 74, 0.5);
+        }
+        
+        .response-time {
+            color: var(--text-tertiary);
+            font-size: 11px;
+        }
+        
+        .empty {
+            padding: 32px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+        
+        .keyboard-shortcut {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-family: 'SF Mono', monospace;
+        }
+        
+        /* Event items in right sidebar */
+        .event-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            transition: all 0.15s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .event-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--brand-orange);
+            opacity: 0.5;
+            transition: opacity 0.15s ease;
+        }
+        
+        .event-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+        
+        .event-item:hover::before {
+            opacity: 1;
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .event-type {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 12px;
+        }
+        
+        .event-time {
+            color: var(--text-tertiary);
+            font-size: 10px;
+        }
+        
+        .event-data {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 10px;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 100px;
+            overflow-y: auto;
+            transition: background-color 0.3s ease;
+        }
+        
+        /* WebSocket status indicator */
+        .ws-status {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .ws-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            animation: pulse 2s infinite;
+        }
+        
+        .ws-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(94, 199, 45, 0.5);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+        
+        @media (max-width: 1200px) {
+            .sidebar-left {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-right {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="header">
+        <div class="header-logo">
+            <div class="logo-mark" id="logoMark">
+            </div>
+            <div>
+                <span class="logo-text">auto engineer</span>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="theme-switcher">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleThemeDropdown()">
+                    <svg class="theme-icon" id="currentThemeIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <!-- Icon will be set based on current theme -->
+                    </svg>
+                </button>
+                <div class="theme-dropdown" id="themeDropdown">
+                    <button class="theme-option" onclick="setTheme('light')">
+                        <svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span>Light</span>
+                    </button>
+                    <button class="theme-option" onclick="setTheme('dark')">
+                        <svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                        <span>Dark</span>
+                    </button>
+                    <button class="theme-option" onclick="setTheme('system')">
+                        <svg class="theme-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>System</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="app-layout">
+        <!-- Left Sidebar: Registry -->
+        <div class="sidebar-left">
+            <div class="handlers-section">
+                <div class="handlers-header">
+                    <span class="handlers-title">Commands</span>
+                    <span class="handlers-count" id="totalHandlersCount">0</span>
+                </div>
+                <div class="handlers-list" id="handlersList">
+                    <div class="empty">No handlers registered</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Center Content -->
+        <div class="center-content">
+            <!-- Request Bar -->
+            <div class="request-bar">
+                <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
+                    <span style="color: var(--text-tertiary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Selected Command:</span>
+                    <span id="selectedCommand" style="font-family: 'SF Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text-primary);">None</span>
+                </div>
+                <input type="text" class="endpoint-input" id="requestIdInput" placeholder="Request ID (optional)" style="max-width: 200px;" />
+                <button class="send-button" onclick="sendRequest()" id="sendButton" disabled>
+                    Send
+                    <span class="keyboard-shortcut">⌘ ↵</span>
+                </button>
+            </div>
+            
+            <!-- Request/Response Container -->
+            <div class="request-response-container">
+                <!-- Request Panel -->
+                <div class="request-panel">
+                    <div class="panel-content" style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+                        <div id="paramsSection">
+                            <div class="section-header" style="background: transparent; padding: 0 0 12px 0; border-bottom: 1px solid var(--border);">
+                                <span class="section-title">Parameters</span>
+                            </div>
+                            <div id="paramsContainer" style="padding-top: 12px;">
+                                <div class="empty" id="emptyParams">No parameters required</div>
+                                <!-- Parameters will be added dynamically -->
+                            </div>
+                        </div>
+                        <div id="bodySection">
+                            <div class="section-header" style="background: transparent; padding: 0 0 12px 0; border-bottom: 1px solid var(--border);">
+                                <span class="section-title">Request Body (JSON)</span>
+                            </div>
+                            <div style="padding-top: 12px;">
+                                <textarea class="textarea" id="requestBody" style="min-height: 200px; font-family: 'SF Mono', monospace; width: 100%;">{}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Response Panel -->
+                <div class="response-panel">
+                    <div class="response-header">
+                        <div class="response-status">
+                            <div class="status-dot" id="statusDot"></div>
+                            <span id="statusText">Ready</span>
+                        </div>
+                        <span class="response-time" id="responseTime"></span>
+                    </div>
+                    <div class="response-content">
+                        <div class="code-block" id="responseContent" style="height: 100%;">No response yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar: Events -->
+        <div class="sidebar-right">
+            <div class="events-header">
+                <div class="events-title">
+                    <span class="tab-indicator event"></span>
+                    Events
+                </div>
+                <div class="events-controls">
+                    <button class="button button-small button-secondary" onclick="loadEvents()">↻</button>
+                    <button class="button button-small button-secondary" onclick="clearEvents()">Clear</button>
+                </div>
+            </div>
+            <div class="search-box" style="padding: 12px; border-bottom: 1px solid var(--border);">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="eventSearch" placeholder="Search events..." style="background-color: var(--bg-secondary); color: var(--text-primary);">
+            </div>
+            <div class="events-list" id="eventsContainer">
+                <div class="empty">No events yet</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ws-status">
+        <div class="ws-dot" id="wsDot"></div>
+        <span id="wsText">Connecting...</span>
+    </div>
+    
+    <script>
+        const API_BASE = window.location.origin;
+        let currentState = {};
+        let currentEvents = [];
+        let responseStartTime;
+        let availableCommands = [];
+        let currentCommand = localStorage.getItem('lastCommand') || null;
+        
+        // Logo SVGs - exact content from logo files  
+        const logoLight = `<svg width="637" height="637" viewBox="0 0 637 637" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_1042_573)">
+            <rect width="637" height="637"/>
+            <path d="M693.161 -427.743L-623.632 1532.31L-591.107 1552.06L725.686 -407.988L693.161 -427.743Z" fill="#EC3F4A"/>
+            <path d="M725.695 -407.962L-591.097 1552.09L-571.511 1563.98L745.281 -396.066L725.695 -407.962Z" fill="white"/>
+            <path d="M745.281 -396.071L-571.511 1563.98L-538.986 1583.73L777.807 -376.315L745.281 -396.071Z" fill="#FF8A1D"/>
+            <path d="M777.815 -376.302L-538.978 1583.75L-519.391 1595.64L797.402 -364.406L777.815 -376.302Z" fill="white"/>
+            <path d="M797.394 -364.425L-519.399 1595.62L-486.874 1615.38L829.919 -344.67L797.394 -364.425Z" fill="#5EC72D"/>
+            <path d="M829.913 -344.684L-486.879 1615.37L-467.293 1627.26L849.499 -332.787L829.913 -344.684Z" fill="white"/>
+            <path d="M849.467 -332.791L-467.326 1627.26L-434.801 1647.01L881.992 -313.035L849.467 -332.791Z" fill="#42C3F7"/>
+            <path d="M882 -313.038L-434.792 1647.01L-415.206 1658.91L901.587 -301.142L882 -313.038Z" fill="white"/>
+            <path d="M673.55 -439.635L-643.242 1520.42L-623.656 1532.31L693.136 -427.738L673.55 -439.635Z" fill="white"/>
+            <path d="M512.644 100H121.718C109.652 100 100 109.667 100 121.751V513.277C100 525.361 109.652 535.028 121.718 535.028H512.644C524.71 535.028 534.362 525.361 534.362 513.277V121.751C534.362 109.667 524.71 100 512.644 100Z" fill="#1A1A1A"/>
+            <path d="M413.706 481.86C451.11 481.86 481.274 451.649 481.274 414.189C481.274 376.728 451.11 346.518 413.706 346.518C376.303 346.518 346.139 376.728 346.139 414.189C346.139 451.649 376.303 481.86 413.706 481.86Z" fill="white"/>
+            <path d="M153.089 347.968C153.089 347.243 153.813 346.518 154.537 346.518H287.017C287.741 346.518 288.465 347.243 288.465 347.968V412.98C288.465 413.705 287.741 414.43 287.017 414.43H257.095C256.371 414.43 255.647 415.155 255.647 415.88V480.893C255.647 481.618 254.923 482.343 254.199 482.343H188.321C187.597 482.343 186.873 481.618 186.873 480.893V415.88C186.873 415.155 186.149 414.43 185.425 414.43H154.296C153.572 414.43 152.848 413.705 152.848 412.98V347.968H153.089Z" fill="white"/>
+            <path d="M347.587 153.17C346.863 153.17 346.139 153.895 346.139 154.621V223.017C346.139 259.269 376.303 288.513 413.706 288.513C451.11 288.513 481.274 259.269 481.274 223.017V154.621C481.274 153.895 480.55 153.17 479.826 153.17H347.345H347.587Z" fill="white"/>
+            <path d="M153.33 286.339C152.848 287.306 153.33 288.272 154.537 288.272H286.776C287.742 288.272 288.465 287.306 287.983 286.339L221.863 154.139C221.381 153.172 219.933 153.172 219.45 154.139L153.33 286.339Z" fill="white"/>
+            </g>
+            <defs>
+            <clipPath id="clip0_1042_573">
+            <rect width="637" height="637" fill="white"/>
+            </clipPath>
+            </defs>
+            </svg>`;
+        
+        const logoDark = `<svg width="637" height="637" viewBox="0 0 637 637" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_1042_512)">
+                <rect width="637" height="637"/>
+                <path d="M693.161 -427.743L-623.632 1532.31L-591.107 1552.06L725.686 -407.988L693.161 -427.743Z" fill="#EC3F4A"/>
+                <path d="M725.695 -407.962L-591.097 1552.09L-571.511 1563.98L745.281 -396.066L725.695 -407.962Z" fill="#1A1A1A"/>
+                <path d="M745.281 -396.071L-571.511 1563.98L-538.986 1583.73L777.807 -376.315L745.281 -396.071Z" fill="#FF8A1D"/>
+                <path d="M777.815 -376.302L-538.978 1583.75L-519.391 1595.64L797.402 -364.406L777.815 -376.302Z" fill="#1A1A1A"/>
+                <path d="M797.394 -364.425L-519.399 1595.62L-486.874 1615.38L829.919 -344.67L797.394 -364.425Z" fill="#5EC72D"/>
+                <path d="M829.913 -344.684L-486.879 1615.37L-467.293 1627.26L849.499 -332.787L829.913 -344.684Z" fill="#1A1A1A"/>
+                <path d="M849.467 -332.791L-467.326 1627.26L-434.801 1647.01L881.992 -313.035L849.467 -332.791Z" fill="#42C3F7"/>
+                <path d="M882 -313.038L-434.792 1647.01L-415.206 1658.91L901.587 -301.142L882 -313.038Z" fill="#1A1A1A"/>
+                <path d="M673.55 -439.635L-643.242 1520.42L-623.656 1532.31L693.136 -427.738L673.55 -439.635Z" fill="#1A1A1A"/>
+                <path d="M512.644 100H121.718C109.652 100 100 109.667 100 121.751V513.277C100 525.361 109.652 535.028 121.718 535.028H512.644C524.71 535.028 534.362 525.361 534.362 513.277V121.751C534.362 109.667 524.71 100 512.644 100Z" fill="white"/>
+                <path d="M413.706 481.86C451.11 481.86 481.274 451.649 481.274 414.189C481.274 376.728 451.11 346.518 413.706 346.518C376.303 346.518 346.139 376.728 346.139 414.189C346.139 451.649 376.303 481.86 413.706 481.86Z" fill="#1A1A1A"/>
+                <path d="M153.089 347.968C153.089 347.243 153.813 346.518 154.537 346.518H287.017C287.741 346.518 288.465 347.243 288.465 347.968V412.98C288.465 413.705 287.741 414.43 287.017 414.43H257.095C256.371 414.43 255.647 415.155 255.647 415.88V480.893C255.647 481.618 254.923 482.343 254.199 482.343H188.321C187.597 482.343 186.873 481.618 186.873 480.893V415.88C186.873 415.155 186.149 414.43 185.425 414.43H154.296C153.572 414.43 152.848 413.705 152.848 412.98V347.968H153.089Z" fill="#1A1A1A"/>
+                <path d="M347.587 153.17C346.863 153.17 346.139 153.895 346.139 154.621V223.017C346.139 259.269 376.303 288.513 413.706 288.513C451.11 288.513 481.274 259.269 481.274 223.017V154.621C481.274 153.895 480.55 153.17 479.826 153.17H347.345H347.587Z" fill="#1A1A1A"/>
+                <path d="M153.33 286.339C152.848 287.306 153.33 288.272 154.537 288.272H286.776C287.742 288.272 288.465 287.306 287.983 286.339L221.863 154.139C221.381 153.172 219.933 153.172 219.45 154.139L153.33 286.339Z" fill="#1A1A1A"/>
+                </g>
+                <defs>
+                <clipPath id="clip0_1042_512">
+                <rect width="637" height="637" fill="white"/>
+                </clipPath>
+                </defs>
+                </svg>`;
+
+        // Theme management
+        function getSystemTheme() {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                theme = getSystemTheme();
+            }
+            document.body.setAttribute('data-theme', theme);
+            
+            // Update logo based on theme
+            const logoMark = document.getElementById('logoMark');
+            if (logoMark) {
+                logoMark.innerHTML = theme === 'dark' ? logoDark : logoLight;
+            }
+        }
+        
+        function getThemeIcon(theme) {
+            const icons = {
+                light: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />',
+                dark: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />',
+                system: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />'
+            };
+            return icons[theme] || icons.system;
+        }
+        
+        function updateThemeIcon(theme) {
+            const iconElement = document.getElementById('currentThemeIcon');
+            if (iconElement) {
+                iconElement.innerHTML = getThemeIcon(theme);
+            }
+        }
+        
+        function toggleThemeDropdown() {
+            const dropdown = document.getElementById('themeDropdown');
+            dropdown.classList.toggle('open');
+        }
+        
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            applyTheme(theme);
+            updateThemeIcon(theme);
+            
+            // Update button states
+            document.querySelectorAll('.theme-option').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
+            });
+            
+            // Close dropdown
+            document.getElementById('themeDropdown').classList.remove('open');
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const switcher = document.querySelector('.theme-switcher');
+            if (!switcher.contains(e.target)) {
+                document.getElementById('themeDropdown').classList.remove('open');
+            }
+        });
+        
+        // Initialize theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('theme') === 'system') {
+                applyTheme('system');
+            }
+        });
+        
+        function selectCommand(command) {
+            currentCommand = command;
+            localStorage.setItem('lastCommand', command);
+            
+            // Update selected command display
+            document.getElementById('selectedCommand').textContent = command;
+            
+            // Update sidebar selection
+            document.querySelectorAll('.handler-item').forEach(item => {
+                item.classList.toggle('selected', item.dataset.command === command);
+            });
+            
+            // Enable send button
+            document.getElementById('sendButton').disabled = false;
+            
+            // Clear response
+            document.getElementById('responseContent').textContent = 'No response yet';
+            document.getElementById('statusDot').className = 'status-dot';
+            document.getElementById('statusText').textContent = 'Ready';
+            document.getElementById('responseTime').textContent = '';
+        }
+        
+        // Tab switching function removed - no longer needed
+        
+        async function sendRequest() {
+            if (!currentCommand) {
+                alert('Please select a command first');
+                return;
+            }
+            
+            responseStartTime = Date.now();
+            
+            try {
+                const requestId = document.getElementById('requestIdInput').value;
+                const bodyStr = document.getElementById('requestBody').value;
+                
+                const commandData = JSON.parse(bodyStr);
+                
+                const command = {
+                    type: currentCommand,
+                    data: commandData
+                };
+                
+                if (requestId) {
+                    command.requestId = requestId;
+                }
+                
+                const response = await fetch(`${API_BASE}/command`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(command)
+                });
+                
+                const responseTime = Date.now() - responseStartTime;
+                const result = await response.json();
+                
+                document.getElementById('responseContent').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('responseTime').textContent = `${responseTime}ms`;
+                
+                const statusDot = document.getElementById('statusDot');
+                const statusText = document.getElementById('statusText');
+                
+                if (response.ok && result.status === 'ack') {
+                    statusDot.className = 'status-dot success';
+                    statusText.textContent = 'Success';
+                } else {
+                    statusDot.className = 'status-dot error';
+                    statusText.textContent = response.status === 404 ? 'Command Not Found' : 'Error';
+                    
+                    // Show available commands if provided
+                    if (result.availableCommands) {
+                        const availableCommands = result.availableCommands.length > 0 
+                            ? `Available commands: ${result.availableCommands.join(', ')}`
+                            : 'No command handlers registered';
+                        result.availableCommands = availableCommands;
+                    }
+                }
+            } catch (error) {
+                const responseTime = Date.now() - responseStartTime;
+                
+                document.getElementById('responseContent').textContent = error.message;
+                document.getElementById('responseTime').textContent = `${responseTime}ms`;
+                
+                document.getElementById('statusDot').className = 'status-dot error';
+                document.getElementById('statusText').textContent = 'Error';
+            }
+        }
+        
+        async function loadRegistry() {
+            try {
+                const response = await fetch(`${API_BASE}/registry`);
+                const data = await response.json();
+                
+                const eventHandlers = data.eventHandlers || [];
+                const folds = data.folds || [];
+                const commandHandlers = data.commandHandlers || [];
+                
+                // Update count in sidebar (only commands now)
+                document.getElementById('totalHandlersCount').textContent = commandHandlers.length;
+                
+                // Build unified handlers list
+                const handlersListEl = document.getElementById('handlersList');
+                
+                if (totalCount === 0) {
+                    handlersListEl.innerHTML = '<div class="empty">No handlers registered</div>';
+                } else {
+                    let html = '';
+                    
+                    // Only show Command Handlers
+                    if (commandHandlers.length > 0) {
+                        html += '<div class="handler-group">';
+                        commandHandlers.forEach(handler => {
+                            html += `<div class="handler-item" onclick="selectCommand('${handler}')" data-command="${handler}">
+                                <div class="handler-type-indicator command"></div>
+                                <span class="handler-name">${handler}</span>
+                            </div>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    handlersListEl.innerHTML = html;
+                }
+                
+                // Store available commands
+                availableCommands = commandHandlers;
+                
+                // Restore last selected command if it's still available
+                const lastCommand = localStorage.getItem('lastCommand');
+                if (lastCommand && commandHandlers.includes(lastCommand)) {
+                    selectCommand(lastCommand);
+                }
+                
+            } catch (error) {
+                console.error('Failed to load registry:', error);
+            }
+        }
+        
+        async function loadState() {
+            try {
+                const response = await fetch(`${API_BASE}/state`);
+                currentState = await response.json();
+            } catch (error) {
+                console.error('Failed to load state:', error);
+            }
+        }
+        
+        async function loadEvents() {
+            try {
+                const response = await fetch(`${API_BASE}/events`);
+                currentEvents = await response.json();
+                displayEvents();
+            } catch (error) {
+                console.error('Failed to load events:', error);
+                document.getElementById('eventsContainer').innerHTML = '<div class="empty">Failed to load events</div>';
+            }
+        }
+        
+        function displayEvents() {
+            const searchTerm = document.getElementById('eventSearch').value.toLowerCase();
+            const container = document.getElementById('eventsContainer');
+            
+            if (currentEvents.length === 0) {
+                container.innerHTML = '<div class="empty">No events yet</div>';
+                return;
+            }
+            
+            let filteredEvents = currentEvents;
+            if (searchTerm) {
+                filteredEvents = currentEvents.filter(item => {
+                    const eventStr = JSON.stringify(item.event).toLowerCase();
+                    return eventStr.includes(searchTerm) || item.event.type.toLowerCase().includes(searchTerm);
+                });
+            }
+            
+            if (filteredEvents.length === 0) {
+                container.innerHTML = '<div class="empty">No matching events</div>';
+                return;
+            }
+            
+            // Display events in reverse chronological order (newest first)
+            const eventsHtml = filteredEvents
+                .slice()
+                .reverse()
+                .map((item, index) => {
+                    const time = new Date(item.timestamp).toLocaleTimeString();
+                    return `
+                        <div class="event-item">
+                            <div class="event-header">
+                                <div class="event-type">${item.event.type}</div>
+                                <div class="event-time">${time}</div>
+                            </div>
+                            <div class="event-data">${JSON.stringify(item.event.data, null, 2)}</div>
+                        </div>
+                    `;
+                })
+                .join('');
+            
+            container.innerHTML = eventsHtml;
+        }
+        
+        document.getElementById('eventSearch').addEventListener('input', displayEvents);
+        
+        async function clearEvents() {
+            currentEvents = [];
+            displayEvents();
+        }
+        
+        
+        // Keyboard shortcut for send
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                sendRequest();
+            }
+        });
+        
+        // WebSocket connection for real-time updates
+        const ws = new WebSocket(`ws://${window.location.hostname}:${window.location.port}`);
+        
+        ws.onopen = () => {
+            console.log('WebSocket connected');
+            document.getElementById('wsDot').classList.add('connected');
+            document.getElementById('wsText').textContent = 'Connected';
+        };
+        
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            if (message.type === 'event' || message.type === 'state') {
+                // Reload state when events occur
+                loadState();
+                // Also reload events
+                loadEvents();
+            } else if (message.type === 'commandError') {
+                // Show command error in response
+                document.getElementById('responseContent').textContent = JSON.stringify({
+                    status: 'error',
+                    commandId: message.commandId,
+                    error: message.error,
+                    timestamp: message.timestamp
+                }, null, 2);
+                document.getElementById('statusDot').className = 'status-dot error';
+                document.getElementById('statusText').textContent = 'Command Failed';
+                document.getElementById('responseTime').textContent = 'Async Error';
+            }
+        };
+        
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            document.getElementById('wsDot').classList.remove('connected');
+            document.getElementById('wsText').textContent = 'Disconnected';
+        };
+        
+        ws.onclose = () => {
+            document.getElementById('wsDot').classList.remove('connected');
+            document.getElementById('wsText').textContent = 'Disconnected';
+        };
+        
+        // Initial load
+        loadRegistry();
+        loadState();
+        loadEvents();
+        
+        // Initial command will be restored when registry loads
+        
+        // Refresh registry every 5 seconds
+        setInterval(loadRegistry, 5000);
+        
+        // Auto-refresh events every 2 seconds
+        setInterval(loadEvents, 2000);
+    </script>
+</body>
+</html>

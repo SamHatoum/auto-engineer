@@ -5,7 +5,6 @@ export default {
   plugins: [
     '@auto-engineer/flow',
     '@auto-engineer/server-generator-apollo-emmett',
-    '@auto-engineer/flow',
     '@auto-engineer/frontend-checks',
     '@auto-engineer/frontend-implementer',
     '@auto-engineer/information-architect',
