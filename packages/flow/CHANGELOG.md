@@ -5,6 +5,10 @@
 ### Patch Changes
 
 - additionally retuens externals and typings for flows
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/file-store@0.3.3
+  - @auto-engineer/message-bus@0.5.5
 
 ## 0.1.3
 

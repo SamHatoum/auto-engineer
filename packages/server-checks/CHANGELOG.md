@@ -1,5 +1,13 @@
 # @auto-engineer/server-checks
 
+## 0.1.4
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.5
+
 ## 0.1.3
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @auto-engineer/cli
 
+## 0.7.6
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.5
+
 ## 0.7.5
 
 ### Patch Changes

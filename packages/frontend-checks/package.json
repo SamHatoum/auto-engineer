@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/frontend-checks",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,7 +29,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.5.4",
+    "@auto-engineer/message-bus": "^0.5.5",
     "debug": "^4.4.1",
     "dotenv": "^16.6.1",
     "playwright": "^1.54.1",
@@ -39,6 +39,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "@auto-engineer/cli": "^0.7.4"
+    "@auto-engineer/cli": "^0.7.6"
   }
 }

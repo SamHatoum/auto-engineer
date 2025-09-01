@@ -1,5 +1,13 @@
 # @auto-engineer/frontend-checks
 
+## 0.6.5
+
+### Patch Changes
+
+- Bump versions
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.5
+
 ## 0.6.4
 
 ### Patch Changes

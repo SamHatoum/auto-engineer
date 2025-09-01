@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.6.3
+
+### Patch Changes
+
+- Bump versions
+
 ## 0.6.2
 
 ### Patch Changes
