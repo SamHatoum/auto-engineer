@@ -1310,7 +1310,7 @@
                 // Build unified handlers list
                 const handlersListEl = document.getElementById('handlersList');
                 
-                if (totalCount === 0) {
+                if (commandHandlers.length === 0) {
                     handlersListEl.innerHTML = '<div class="empty">No handlers registered</div>';
                 } else {
                     let html = '';

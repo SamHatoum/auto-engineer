@@ -1,5 +1,11 @@
 # create-auto-app
 
+## 0.2.3
+
+### Patch Changes
+
+- Bump versions
+
 ## 0.2.2
 
 ### Patch Changes

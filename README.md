@@ -222,7 +222,7 @@ auto-engineer/
 │   ├── server-generator-apollo-emmett/    # Server code generation
 │   ├── server-implementer/                # AI server implementation
 │   ├── frontend-generator-react-graphql/  # React client scaffolding
-│   ├── frontend-implementer/           # AI client implementation
+│   ├── frontend-implementer/              # AI client implementation
 │   ├── information-architect/             # IA generation
 │   ├── design-system-importer/            # Figma integration
 │   ├── server-checks/                     # Server validation

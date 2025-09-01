@@ -60,7 +60,7 @@ export class FileSyncer {
       // Send initial file sync
       this.getInitialFiles()
         .then((files) => {
-          socket.emit('initial-sync', { files });
+          socket.emit('initial-sync', { files, directory: path.resolve(this.watchDir) });
           debug('Sent initial sync with', files.length, 'files');
         })
         .catch((err) => {

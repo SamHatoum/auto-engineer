@@ -36,7 +36,7 @@ export async function startServer(watchDir: string) {
       files.push({ path: wire, content });
     }
     files.sort((a, b) => a.path.localeCompare(b.path));
-    return { files };
+    return { files, directory: path.resolve(watchDir) };
   }
 
   async function computeChanges(desired: Set<string>): Promise<WireChange[]> {
@@ -84,7 +84,7 @@ export async function startServer(watchDir: string) {
 
     // if we just transitioned to empty, push empty snapshot to rebaseline clients
     if (active.size === 0 && desired.size === 0 && toDelete.length > 0) {
-      io.emit('initial-sync', { files: [] });
+      io.emit('initial-sync', { files: [], directory: path.resolve(watchDir) });
       return;
     }
 
@@ -96,7 +96,7 @@ export async function startServer(watchDir: string) {
       const files = outgoing
         .map((o) => ({ path: o.path, content: o.content! }))
         .sort((a, b) => a.path.localeCompare(b.path));
-      io.emit('initial-sync', { files });
+      io.emit('initial-sync', { files, directory: path.resolve(watchDir) });
       return;
     }
 
