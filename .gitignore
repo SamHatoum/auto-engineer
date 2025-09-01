@@ -58,3 +58,5 @@ coverage
 .cursor
 /examples/design-system/.next/
 /examples/design-system/.source/
+
+/packages/create-auto-app/templates/*

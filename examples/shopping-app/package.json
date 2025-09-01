@@ -1,0 +1,42 @@
+{
+  "name": "shopping-assistant",
+  "type": "module",
+  "scripts": {
+    "auto": "auto",
+    "auto:dev": "auto dev",
+    "auto:generate:server": "auto generate:server",
+    "auto:generate:client": "auto generate:client",
+    "auto:implement": "auto implement",
+    "auto:check": "auto check",
+    "auto:watch": "node auto-watch.js",
+    "dev": "pnpm --parallel --filter './client' --filter './server' --filter './example-integrations/*' dev",
+    "dev:server": "cd server && pnpm dev",
+    "dev:client": "cd client && pnpm dev",
+    "dev:integrations": "pnpm --parallel --filter './example-integrations/*' dev",
+    "start": "dotenv -e .env -- pnpm --parallel start",
+    "build": "pnpm --parallel build",
+    "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
+    "start:product-api": "cd examples/product-catalogue-api && pnpm start",
+    "start:cart-api": "cd examples/cart-api && pnpm start",
+    "start:examples": "pnpm --parallel --filter @examples/* start 2>&1 | grep -E '(localhost|Local)' || true"
+  },
+  "dependencies": {
+    "@auto-engineer/cli": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/design-system-importer": "workspace:*",
+    "@auto-engineer/flow": "workspace:*",
+    "@auto-engineer/frontend-checks": "workspace:*",
+    "@auto-engineer/frontend-implementer": "workspace:*",
+    "@auto-engineer/frontend-generator-react-graphql": "workspace:*",
+    "@auto-engineer/information-architect": "workspace:*",
+    "@auto-engineer/server-checks": "workspace:*",
+    "@auto-engineer/server-generator-apollo-emmett": "workspace:*",
+    "@auto-engineer/server-implementer": "workspace:*"
+  },
+  "devDependencies": {
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "dotenv-cli": "^9.0.0",
+    "tsx": "^3.12.7"
+  }
+}
