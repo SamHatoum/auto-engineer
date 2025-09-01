@@ -369,6 +369,9 @@ export class MessageBusServer {
    * Register command handlers directly with the message bus
    */
   registerCommandHandlers(handlers: unknown[]): void {
+    debugBus('registerCommandHandlers called with', handlers.length, 'handlers');
+    debugBus('Current commandHandlerNames:', this.commandHandlerNames);
+
     for (const handler of handlers) {
       if (
         handler !== null &&
@@ -381,8 +384,12 @@ export class MessageBusServer {
         debugBus('Registering command handler:', cmdHandler.name);
         this.messageBus.registerCommandHandler(cmdHandler);
         this.commandHandlerNames.push(cmdHandler.name);
+      } else {
+        debugBus('Skipping invalid handler:', handler);
       }
     }
+
+    debugBus('After registration, commandHandlerNames:', this.commandHandlerNames);
   }
 
   /**
