@@ -155,6 +155,12 @@ async function createFromTemplate(templatePath: string, targetDir: string, proje
     throw error;
   }
 
+  // Create pnpm-workspace.yaml if it doesn't exist (needed for monorepo setup)
+  const workspaceYamlPath = path.join(targetDir, 'pnpm-workspace.yaml');
+  if (!(await fs.pathExists(workspaceYamlPath))) {
+    await fs.writeFile(workspaceYamlPath, "packages:\n  - '*'\n");
+  }
+
   // Get latest versions for all packages
   const packagesToCheck = [...AUTO_ENGINEER_PACKAGES];
   const versions = await getLatestVersions(packagesToCheck);
