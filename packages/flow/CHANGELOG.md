@@ -1,5 +1,11 @@
 # @auto-engineer/flow
 
+## 0.1.6
+
+### Patch Changes
+
+- version bump
+
 ## 0.1.5
 
 ### Patch Changes

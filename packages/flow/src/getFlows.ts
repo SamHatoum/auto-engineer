@@ -1,4 +1,3 @@
-// getFlows.ts
 import createDebug from 'debug';
 import { z } from 'zod';
 import { SpecsSchema } from './schema';
@@ -7,7 +6,12 @@ import type { Flow } from './index';
 import { flowsToSchema } from './flow-to-schema';
 import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
-import path from 'path';
+
+const dirnamePosix = (p: string) => {
+  const s = p.replace(/\/+$/, '');
+  const i = s.lastIndexOf('/');
+  return i > 0 ? s.slice(0, i) : '/';
+};
 
 const debug = createDebug('flow:getFlows');
 
@@ -18,7 +22,7 @@ const DTS_PATTERN = /\.d\.ts$/;
 
 export interface GetFlowsOptions {
   vfs: IFileStore;
-  root: string; // required now
+  root: string;
   pattern?: RegExp;
   importMap?: Record<string, unknown>;
 }
@@ -41,7 +45,7 @@ async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Pr
 export const getFlows = async (opts: GetFlowsOptions) => {
   const { vfs, root, pattern = DEFAULT_PATTERN, importMap = {} } = opts;
   const normRoot = toPosix(root);
-  const projectRoot = toPosix(path.resolve(normRoot, '..'));
+  const projectRoot = dirnamePosix(normRoot);
   const files = await discoverFiles(vfs, normRoot, pattern);
   if (files.length === 0) {
     throw new Error(`getFlows: no candidate files found. root=${normRoot} pattern=${String(pattern)}`);

@@ -275,7 +275,7 @@ importers:
         specifier: ^0.3.2
         version: link:../file-store
       '@auto-engineer/flow':
-        specifier: ^0.1.4
+        specifier: ^0.1.6
         version: link:../flow
       '@auto-engineer/message-bus':
         specifier: ^0.5.5

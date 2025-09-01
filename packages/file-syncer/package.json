@@ -30,7 +30,7 @@
   "dependencies": {
     "@auto-engineer/message-bus": "^0.5.5",
     "@auto-engineer/file-store": "^0.3.2",
-    "@auto-engineer/flow": "^0.1.4",
+    "@auto-engineer/flow": "^0.1.6",
     "chokidar": "^3.6.0",
     "socket.io": "^4.7.5"
   },

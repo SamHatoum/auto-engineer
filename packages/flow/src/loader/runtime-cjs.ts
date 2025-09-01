@@ -1,4 +1,3 @@
-import { createRequire } from 'module';
 import createDebug from 'debug';
 import type { Graph } from './types';
 import { dirname, toPosix } from './fs-path';
@@ -9,6 +8,17 @@ import type { Integration } from '../types';
 const debug = createDebug('flow:runtime');
 const dImp = createDebug('flow:runtime:require');
 
+// Lazy Node require — only used under Node. In browsers this throws,
+// which is fine because externals must be provided via importMap.
+function nodeRequire(spec: string): unknown {
+  if (typeof process === 'undefined' || typeof (process as NodeJS.Process | undefined)?.versions?.node !== 'string') {
+    throw new Error('Node require unavailable in browser');
+  }
+  // avoid bundlers rewriting `require`
+  const req = (0, eval)('require') as (id: string) => unknown;
+  return req(spec);
+}
+
 function isIntegrationObject(x: unknown): x is Integration {
   return (
     Boolean(x) &&
@@ -18,6 +28,7 @@ function isIntegrationObject(x: unknown): x is Integration {
     (x as { __brand: string }).__brand === 'Integration'
   );
 }
+
 function registerIntegrationsFrom(mod: unknown) {
   if (typeof mod !== 'object' || mod === null) return;
   for (const [, v] of Object.entries(mod as Record<string, unknown>)) {
@@ -46,18 +57,15 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
       const r = mod.resolved.get(spec);
 
       if (!r) {
-        // Not seen during build – fall back to Node from workspace root.
-        const nodeRequire = createRequire(process.cwd() + '/index.js');
+        // Not seen during build – fall back to Node only in Node envs.
         return nodeRequire(spec);
       }
 
       if (r.kind === 'mapped') return r.value;
       if (r.kind === 'vfs') return loadFromVfs(r.path);
 
-      // r.kind === 'external' => try Node require from workspace root first,
-      // then plain require as a last resort.
+      // r.kind === 'external' => in Node, try requiring it; in browser this will throw
       try {
-        const nodeRequire = createRequire(process.cwd() + '/index.js');
         return nodeRequire(r.spec);
       } catch (e2) {
         throw new Error(
