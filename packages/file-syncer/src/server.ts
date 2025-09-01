@@ -60,7 +60,7 @@ chokidar.watch(path.join(watchDir, FILE_GLOB)).on('all', (event, filePath) => {
 
 io.on('connection', (socket) => {
   getInitialFiles()
-    .then((files) => socket.emit('initial-sync', { files }))
+    .then((files) => socket.emit('initial-sync', { files, directory: path.resolve(watchDir) }))
     .catch((err) => console.error('Initial sync failed:', err));
 
   socket.on('client-file-change', (data: FileChangeMessage) => {
