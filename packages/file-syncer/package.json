@@ -10,7 +10,6 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "start": "tsx src/index.ts",
     "start:server": "DEBUG=flow:*,ai-gateway:mcp* tsx src/index.ts ../../../shop/flows",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
@@ -31,7 +30,7 @@
   "dependencies": {
     "@auto-engineer/message-bus": "^0.5.2",
     "@auto-engineer/file-store": "^0.3.2",
-    "@auto-engineer/flow": "^0.1.3",
+    "@auto-engineer/flow": "^0.1.4",
     "chokidar": "^3.6.0",
     "socket.io": "^4.7.5"
   },

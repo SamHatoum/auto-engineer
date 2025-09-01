@@ -1,5 +1,11 @@
 # @auto-engineer/flow
 
+## 0.1.4
+
+### Patch Changes
+
+- additionally retuens externals and typings for flows
+
 ## 0.1.3
 
 ### Patch Changes

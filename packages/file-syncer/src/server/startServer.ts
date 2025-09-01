@@ -15,40 +15,29 @@ export async function startServer(watchDir: string) {
   const vfs = new NodeFileStore();
   const active = new Map<string, FileMeta>();
 
-  console.log('[sync] >>> file-syncer v6 <<<', new Date().toISOString());
-  console.log(`[sync] watchDir     = ${watchDir}`);
-  console.log(`[sync] projectRoot  = ${projectRoot}`);
-  console.log(`[sync] Two-way flow-aware sync on ${watchDir} (ws://localhost:3001)`);
-
   const compute = () => computeDesiredSet({ vfs, watchDir, projectRoot });
 
   async function initialFiles(): Promise<WireInitial> {
-    console.log('[sync] initialFiles: computing…');
     const desired = await compute();
-    console.log(`[sync] initial desired size = ${desired.size}`);
 
     const files: WireInitial['files'] = [];
     for (const abs of desired) {
       const content = await readBase64(vfs, abs);
       if (content === null) {
-        console.warn(`[sync] initial: skip missing ${abs}`);
         continue;
       }
       const wire = toWirePath(abs, projectRoot);
       if (wire.startsWith('/..')) {
-        console.warn(`[sync] initial outside file: abs=${abs} wire=${wire}`);
       }
-      files.push({ path: wire, content });
       const size = await statSize(vfs, abs);
       const hash = await md5(vfs, abs);
       if (hash === null) {
-        console.warn(`[sync] initial: could not hash ${abs}`);
         continue;
       }
       active.set(abs, { hash, size });
+      files.push({ path: wire, content });
     }
-
-    console.log(`[sync] initialFiles -> sending ${files.length} files`);
+    files.sort((a, b) => a.path.localeCompare(b.path));
     return { files };
   }
 
@@ -57,7 +46,6 @@ export async function startServer(watchDir: string) {
     for (const abs of desired) {
       const hash = await md5(vfs, abs);
       if (hash === null) {
-        console.warn(`[sync] md5: could not read (skip): ${abs}`);
         continue;
       }
       const size = await statSize(vfs, abs);
@@ -65,7 +53,6 @@ export async function startServer(watchDir: string) {
       if (!prev || prev.hash !== hash || prev.size !== size) {
         const content = await readBase64(vfs, abs);
         if (content === null) {
-          console.warn(`[sync] readBase64 returned null (skip emit): ${abs}`);
           continue;
         }
         active.set(abs, { hash, size });
@@ -89,19 +76,35 @@ export async function startServer(watchDir: string) {
   }
 
   async function rebuildAndBroadcast(): Promise<void> {
-    console.log('[sync] rebuildAndBroadcast: recomputing desired set…');
     const desired = await compute();
-    console.log(`[sync] desired set size = ${desired.size}, active size = ${active.size}`);
-
+    const activeSizeBefore = active.size;
     const outgoing = await computeChanges(desired);
     const toDelete = computeDeletions(desired);
+    for (const ch of toDelete) {
+      io.emit('file-change', ch);
+    }
 
-    console.log(`[sync] diff -> adds/changes=${outgoing.length} deletes=${toDelete.length}`);
-
-    for (const ch of outgoing) io.emit('file-change', ch);
-    for (const ch of toDelete) io.emit('file-change', ch);
+    // if we just transitioned to empty, push empty snapshot to rebaseline clients
     if (active.size === 0 && desired.size === 0 && toDelete.length > 0) {
       io.emit('initial-sync', { files: [] });
+      return;
+    }
+
+    // ---- rehydrate from empty → send a single authoritative snapshot ----
+    const allAdds = outgoing.length > 0 && outgoing.every((x) => x.event === 'add');
+    const rehydrateFromEmpty = activeSizeBefore === 0 && allAdds && desired.size === outgoing.length;
+
+    if (rehydrateFromEmpty) {
+      const files = outgoing
+        .map((o) => ({ path: o.path, content: o.content! }))
+        .sort((a, b) => a.path.localeCompare(b.path));
+      io.emit('initial-sync', { files });
+      return;
+    }
+
+    // otherwise: normal incremental flow
+    for (const ch of outgoing) {
+      io.emit('file-change', ch);
     }
   }
 
@@ -111,7 +114,6 @@ export async function startServer(watchDir: string) {
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => {
       debounce = null;
-      console.log('[sync] watcher event → rebuilding (debounced)…');
       rebuildAndBroadcast().catch((err) => console.error('[sync] rebuild error', err));
     }, 100);
   };
@@ -125,11 +127,9 @@ export async function startServer(watchDir: string) {
     .on('error', (err) => console.error('[watcher]', err));
 
   io.on('connection', async (socket) => {
-    console.log('[sync] client connected → sending initial-sync…');
     try {
       const init = await initialFiles();
       socket.emit('initial-sync', init);
-      console.log('[sync] initial-sync sent.');
     } catch (e) {
       console.error('[sync] initial-sync failed:', e);
     }
@@ -137,14 +137,11 @@ export async function startServer(watchDir: string) {
     socket.on('client-file-change', async (msg: { event: 'write' | 'delete'; path: string; content?: string }) => {
       const relFromProject = msg.path.startsWith('/') ? msg.path.slice(1) : msg.path;
       const abs = path.join(projectRoot, relFromProject);
-
       try {
         if (msg.event === 'delete') {
-          console.log('[sync] client delete:', abs);
           await vfs.remove(abs);
           active.delete(abs);
         } else {
-          console.log('[sync] client write:', abs);
           const contentStr = msg.content;
           if (contentStr === undefined) {
             console.warn('[sync] client write: no content provided');
