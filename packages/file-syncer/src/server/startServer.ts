@@ -27,8 +27,6 @@ export async function startServer(watchDir: string) {
         continue;
       }
       const wire = toWirePath(abs, projectRoot);
-      if (wire.startsWith('/..')) {
-      }
       const size = await statSize(vfs, abs);
       const hash = await md5(vfs, abs);
       if (hash === null) {
