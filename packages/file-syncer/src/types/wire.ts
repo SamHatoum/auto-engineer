@@ -8,4 +8,5 @@ export type WireChange = {
 
 export type WireInitial = {
   files: Array<{ path: string; content: string }>;
+  directory: string;
 };
