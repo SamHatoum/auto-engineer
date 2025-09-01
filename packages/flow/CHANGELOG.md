@@ -1,5 +1,11 @@
 # @auto-engineer/flow
 
+## 0.1.7
+
+### Patch Changes
+
+- in browsers returns stubs for externals
+
 ## 0.1.6
 
 ### Patch Changes

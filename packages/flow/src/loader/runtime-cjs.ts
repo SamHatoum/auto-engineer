@@ -8,15 +8,55 @@ import type { Integration } from '../types';
 const debug = createDebug('flow:runtime');
 const dImp = createDebug('flow:runtime:require');
 
-// Lazy Node require — only used under Node. In browsers this throws,
-// which is fine because externals must be provided via importMap.
+function isNode(): boolean {
+  return typeof process !== 'undefined' && typeof (process as NodeJS.Process | undefined)?.versions?.node === 'string';
+}
+
 function nodeRequire(spec: string): unknown {
-  if (typeof process === 'undefined' || typeof (process as NodeJS.Process | undefined)?.versions?.node !== 'string') {
+  if (!isNode()) {
     throw new Error('Node require unavailable in browser');
   }
-  // avoid bundlers rewriting `require`
   const req = (0, eval)('require') as (id: string) => unknown;
   return req(spec);
+}
+
+function makeIntegration(): Integration {
+  return { __brand: 'Integration' } as unknown as Integration;
+}
+
+/**
+ * Universal stub for unresolved externals in the browser.
+ * - Any property access returns another stub.
+ * - Any function call returns a stub.
+ * - Common integration shapes are supported:
+ *   - createIntegration(...) -> branded Integration object
+ *   - Integration -> branded Integration object
+ */
+function getUniversalStub(_spec: string): unknown {
+  const handler: ProxyHandler<() => unknown> = {
+    get(_t, prop) {
+      // Provide branded Integration where it's likely expected
+      if (prop === 'createIntegration') {
+        return (..._args: unknown[]) => makeIntegration();
+      }
+      if (prop === 'Integration') {
+        return makeIntegration();
+      }
+      if (prop === 'default') {
+        return proxy;
+      }
+      return proxy;
+    },
+    apply() {
+      return proxy;
+    },
+    construct() {
+      return proxy;
+    },
+  };
+  const fn = (): unknown => proxy;
+  const proxy = new Proxy(fn, handler);
+  return proxy;
 }
 
 function isIntegrationObject(x: unknown): x is Integration {
@@ -57,22 +97,27 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
       const r = mod.resolved.get(spec);
 
       if (!r) {
-        // Not seen during build – fall back to Node only in Node envs.
-        return nodeRequire(spec);
+        // Not seen during build – in Node try real require, in browser return stub.
+        if (isNode()) return nodeRequire(spec);
+        return getUniversalStub(spec);
       }
 
       if (r.kind === 'mapped') return r.value;
       if (r.kind === 'vfs') return loadFromVfs(r.path);
 
-      // r.kind === 'external' => in Node, try requiring it; in browser this will throw
-      try {
-        return nodeRequire(r.spec);
-      } catch (e2) {
-        throw new Error(
-          `External "${r.spec}" could not be resolved via Node. ` +
-            `Install it (pnpm add ${r.spec}) or map it via importMap. (${(e2 as Error).message})`,
-        );
+      // r.kind === 'external'
+      if (isNode()) {
+        try {
+          return nodeRequire(r.spec);
+        } catch (e2) {
+          throw new Error(
+            `External "${r.spec}" could not be resolved via Node. ` +
+              `Install it (pnpm add ${r.spec}) or map it via importMap. (${(e2 as Error).message})`,
+          );
+        }
       }
+      // Browser: return a universal stub so schema generation can proceed without JS for externals
+      return getUniversalStub(r.spec);
     };
 
     try {

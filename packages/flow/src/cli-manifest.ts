@@ -1,12 +1,26 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
 import { exportSchemaManifest } from './commands/export-schema';
 
-// Get version from package.json
+function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+function isNode(): boolean {
+  return typeof process !== 'undefined' && typeof (process as NodeJS.Process | undefined)?.versions?.node === 'string';
+}
+
 const getVersion = (): string => {
+  if (isBrowser() || !isNode()) {
+    return 'unknown';
+  }
+
   try {
+    // Dynamic require to avoid breaking in browser
+    const nodeRequire = (0, eval)('require') as (id: string) => unknown;
+    const fs = nodeRequire('fs') as typeof import('fs');
+    const path = nodeRequire('path') as typeof import('path');
+    const { fileURLToPath } = nodeRequire('url') as typeof import('url');
+
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     // In dev: src/cli-manifest.ts -> ../../package.json
@@ -23,7 +37,7 @@ const getVersion = (): string => {
       }
     }
   } catch {
-    // Fall through
+    // Fall through - could be browser environment or missing deps
   }
   return 'unknown';
 };
