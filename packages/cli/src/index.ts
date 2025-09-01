@@ -4,6 +4,8 @@ import chalk from 'chalk';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
+import Debug from 'debug';
 
 import { loadConfig, validateConfig } from './utils/config';
 import { handleError } from './utils/errors';
@@ -11,7 +13,42 @@ import { createOutput } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 import { PluginLoader } from './plugin-loader';
 
-const VERSION = process.env.npm_package_version ?? '0.1.2';
+// Export DSL functions for use in auto.config.ts
+export { on, dispatch, fold } from './dsl/index';
+
+const debug = Debug('auto-engineer:cli');
+
+// Get version from package.json - works in both dev and production
+const getVersion = (): string => {
+  try {
+    // Try to read from package.json relative to this file
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // Try multiple possible locations for package.json
+    // In dev: src/index.ts -> ../package.json
+    // In dist: dist/src/index.js -> ../../package.json
+    const possiblePaths = [
+      path.join(__dirname, '..', 'package.json'), // dev environment
+      path.join(__dirname, '..', '..', 'package.json'), // dist build
+    ];
+
+    for (const packageJsonPath of possiblePaths) {
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as { version: string };
+        return packageJson.version;
+      }
+    }
+  } catch {
+    // Fall through to env variable
+  }
+
+  // Fallback to npm_package_version (works when run via npm scripts)
+  // If neither works, show unknown
+  return process.env.npm_package_version ?? 'unknown';
+};
+
+const VERSION = getVersion();
 
 const checkNodeVersion = () => {
   const nodeVersion = process.version;
@@ -22,13 +59,6 @@ const checkNodeVersion = () => {
     console.error(chalk.yellow('Auto-engineer requires Node.js 18.0.0 or higher.'));
     console.error(chalk.blue('Please upgrade Node.js and try again.'));
     process.exit(1);
-  }
-};
-
-const clearConsole = () => {
-  if (process.stdout.isTTY) {
-    // Clear console for TTY environments
-    process.stdout.write('\x1Bc');
   }
 };
 
@@ -73,58 +103,13 @@ const createCLI = () => {
 // Type-safe command data mappers
 type CommandData = Record<string, unknown>;
 
-const commandMappers: Record<string, (args: (string | string[])[], options: Record<string, unknown>) => CommandData> = {
-  'create:example': (args) => ({ name: args[0], destination: args[1] }),
-  'export:schema': (args) => ({ contextDir: args[0], flowsDir: args[1] }),
-  'generate:server': (args) => ({ schemaPath: args[0], destination: args[1] }),
-  'implement:server': (args) => ({ serverDirectory: args[0] }),
-  'implement:slice': (args) => ({ serverDir: args[0], sliceName: args[1] }),
-  'generate:client': (args) => ({
-    starterDir: args[0],
-    targetDir: args[1],
-    iaSchemaPath: args[2],
-    gqlSchemaPath: args[3],
-    figmaVariablesPath: args[4],
-  }),
-  'implement:client': (args) => ({
-    projectDir: args[0],
-    iaSchemeDir: args[1],
-    designSystemPath: args[3] ?? args[2],
-  }),
-  'check:types': (args, options) => ({
-    targetDirectory: args[0],
-    fix: options.fix ?? false,
-    scope: options.scope,
-  }),
-  'check:tests': (args, options) => ({
-    targetDirectory: args[0],
-    scope: options.scope,
-  }),
-  'check:lint': (args, options) => ({
-    targetDirectory: args[0],
-    fix: options.fix ?? false,
-    scope: options.scope,
-  }),
-  'check:client': (args) => ({ clientDir: args[0] }),
-  'import:design-system': (args) => ({
-    outputDir: args[0],
-    strategy: args[1],
-    filterPath: args[2],
-  }),
-  'generate:ia': (args) => ({
-    outputDir: args[0],
-    // Handle variadic arguments - args[1] might be an array if variadic
-    flowFiles: Array.isArray(args[1]) ? args[1] : args.slice(1),
-  }),
-  'copy:example': (args) => ({ exampleName: args[0], destination: args[1] }),
-};
-
 const prepareCommandData = (
   alias: string,
   args: (string | string[])[],
   options: Record<string, unknown>,
+  pluginLoader: PluginLoader,
 ): CommandData => {
-  const mapper = commandMappers[alias];
+  const mapper = pluginLoader.getCommandMapper(alias);
   if (mapper !== undefined) {
     return mapper(args, options);
   }
@@ -149,6 +134,7 @@ const prepareCommandData = (
 interface LoadedCommand {
   handler?: unknown;
   description: string;
+  version?: string;
   usage?: string;
   examples?: string[];
   args?: Array<{ name: string; description: string; required?: boolean }>;
@@ -226,8 +212,8 @@ const setupProgram = async (config: ReturnType<typeof loadConfig>) => {
     console.log(`
 export default {
   plugins: [
-    '@auto-engineer/flowlang',
-    '@auto-engineer/emmett-generator',
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
     // Add more plugins as needed
   ]
@@ -236,7 +222,7 @@ export default {
   }
 
   // Use plugin system
-  output.info('Loading plugins from auto.config.ts...');
+  debug('Loading plugins from %s', configPath);
 
   try {
     const pluginLoader = new PluginLoader();
@@ -283,15 +269,32 @@ export default {
         });
       }
 
+      // Add version option to each command if package has version
+      const commandInfo = loadedCommands.get(alias);
+      if (commandInfo && 'version' in commandInfo) {
+        cmd.option('--version', 'Display version of the package providing this command');
+      }
+
       cmd.action(async (...args: unknown[]) => {
         try {
-          await analytics.track({ command: alias, success: true });
-
           // Extract arguments and options
           // Commander passes: [...args, command, options]
           // For variadic, all extra args are collected into an array
           const cmdArgs = args.slice(0, -2); // Last two are command and options
           const options = args[args.length - 1] as Record<string, unknown>;
+
+          // Check if --version flag was passed
+          if (options.version === true) {
+            const commandInfo = loadedCommands.get(alias);
+            const version =
+              commandInfo && 'version' in commandInfo && typeof commandInfo.version === 'string'
+                ? commandInfo.version
+                : 'unknown';
+            console.log(version);
+            return;
+          }
+
+          await analytics.track({ command: alias, success: true });
 
           // Debug logging
           if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
@@ -307,7 +310,7 @@ export default {
           });
 
           // Prepare command data based on the command type
-          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options);
+          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options, pluginLoader);
 
           if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
             console.error('DEBUG cli: Prepared command data:', commandData);
@@ -326,7 +329,7 @@ export default {
     }
 
     const pluginCount = pluginLoader.getLoadedPluginCount();
-    output.success(`Loaded ${commands.size} commands from ${pluginCount} plugins`);
+    debug('Loaded %d commands from %d plugins', commands.size, pluginCount);
   } catch (error) {
     output.error('Failed to load plugins');
     console.error(error);
@@ -410,7 +413,6 @@ const loadEnvFile = () => {
 const initializeEnvironment = () => {
   checkNodeVersion();
   loadEnvFile();
-  clearConsole();
   setupSignalHandlers();
 };
 
@@ -432,24 +434,91 @@ const handleProgramError = (error: unknown) => {
   }
 };
 
+const startMessageBusServer = async (): Promise<void> => {
+  const { MessageBusServer } = await import('./server/server');
+  const { loadMessageBusConfig } = await import('./server/config-loader');
+
+  console.log(chalk.cyan('Starting Auto Engineer Message Bus Server...'));
+
+  // Check for config file
+  let configPath = path.resolve(process.cwd(), 'auto.config.ts');
+  if (!fs.existsSync(configPath)) {
+    configPath = path.resolve(process.cwd(), 'auto.config.js');
+  }
+
+  const server = new MessageBusServer({
+    port: 5555,
+    wsPort: 5551,
+    enableFileSync: true,
+    fileSyncDir: process.cwd(),
+    fileSyncExtensions: ['.js', '.ts', '.tsx', '.jsx', '.html', '.css'],
+  });
+
+  // Load message bus configuration if it exists
+  if (fs.existsSync(configPath)) {
+    await loadMessageBusConfig(configPath, server);
+
+    // Also try to load plugin command handlers
+    try {
+      const pluginLoader = new PluginLoader();
+      await pluginLoader.loadPlugins(configPath);
+
+      // Get the command handlers from the plugin loader's message bus
+      // and register them with the server's message bus
+      const pluginMessageBus = pluginLoader.getMessageBus();
+      const serverMessageBus = server.getMessageBus();
+
+      if (
+        pluginMessageBus !== null &&
+        pluginMessageBus !== undefined &&
+        serverMessageBus !== null &&
+        serverMessageBus !== undefined
+      ) {
+        const commandHandlers = pluginMessageBus.getCommandHandlers();
+        const handlerNames = Object.keys(commandHandlers);
+
+        debug('Transferring %d command handlers from plugins to server', handlerNames.length);
+
+        // Register each command handler with the server's tracking and message bus
+        const handlers = Object.values(commandHandlers);
+        server.registerCommandHandlers(handlers);
+        debug('Registered %d command handlers with server', handlers.length);
+      }
+    } catch (error) {
+      debug('Could not load plugins for server:', error);
+    }
+  }
+
+  await server.start();
+
+  // Keep the process running
+  process.on('SIGINT', () => {
+    console.log('\nShutting down server...');
+    void server.stop().then(() => {
+      process.exit(0);
+    });
+  });
+};
+
 const main = async () => {
   try {
     initializeEnvironment();
 
-    const program = createCLI();
-    program.parse(process.argv, { from: 'user' });
-    const globalOptions = program.opts();
-
+    // For help/version, we need to load the config with defaults to show all commands
     const config = loadConfig({
-      debug: Boolean(globalOptions.debug),
-      noColor: Boolean(globalOptions.noColor),
-      output: globalOptions.json === true ? 'json' : 'text',
-      apiToken: typeof globalOptions.apiToken === 'string' ? globalOptions.apiToken : undefined,
-      projectPath: typeof globalOptions.projectPath === 'string' ? globalOptions.projectPath : undefined,
+      debug: process.argv.includes('-d') || process.argv.includes('--debug'),
+      noColor: process.argv.includes('--no-color'),
+      output: process.argv.includes('--json') ? 'json' : 'text',
     });
 
     validateConfig(config);
     createOutput(config);
+
+    // Check if no command arguments provided (just 'auto')
+    if (process.argv.length === 2 || (process.argv.length === 3 && process.argv[2] === 'serve')) {
+      await startMessageBusServer();
+      return;
+    }
 
     const fullProgram = await setupProgram(config);
     await fullProgram.parseAsync(process.argv);

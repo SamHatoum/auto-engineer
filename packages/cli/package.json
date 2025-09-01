@@ -1,17 +1,23 @@
 {
   "name": "@auto-engineer/cli",
-  "version": "0.6.1",
+  "version": "0.7.5",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
+      "default": "./dist/src/index.js"
     },
     "./manifest-types": {
       "types": "./dist/src/manifest-types.d.ts",
       "import": "./dist/src/manifest-types.js"
+    },
+    "./utils/get-package-version": {
+      "types": "./dist/src/utils/get-package-version.d.ts",
+      "import": "./dist/src/utils/get-package-version.js"
     }
   },
   "bin": {
@@ -27,12 +33,12 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/bin/auto.js",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/bin/auto.js && cp -r src/server/*.html src/server/*.svg dist/src/server/ 2>/dev/null || true",
     "build:tsx": "echo 'Using tsx runtime, no build needed'",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
+    "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
     "flow": "tsx src/index.ts flow",
     "prepublishOnly": "npm run build",
@@ -46,12 +52,15 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.4.0",
+    "@auto-engineer/message-bus": "^0.5.4",
     "chalk": "^5.3.0",
+    "chokidar": "^3.6.0",
     "commander": "^12.0.0",
+    "cors": "^2.8.5",
     "debug": "^4.4.1",
     "dotenv": "^16.4.7",
     "execa": "^9.6.0",
+    "express": "^4.18.0",
     "figlet": "^1.7.0",
     "gradient-string": "^3.0.0",
     "inquirer": "^9.2.15",
@@ -60,11 +69,16 @@
     "marked": "^15.0.12",
     "marked-terminal": "^7.3.0",
     "ora": "^8.0.1",
-    "test": "^3.3.0"
+    "socket.io": "^4.7.5",
+    "test": "^3.3.0",
+    "yaml": "^2.6.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.0",
+    "@types/express": "^4.17.0",
     "@types/figlet": "^1.5.8",
     "@types/inquirer": "^9.0.7",
+    "@types/js-yaml": "^4.0.9",
     "@types/marked": "^6.0.0",
     "@types/marked-terminal": "^6.1.1",
     "tsx": "^4.20.3"

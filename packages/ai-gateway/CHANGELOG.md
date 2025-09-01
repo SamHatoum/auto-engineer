@@ -1,5 +1,23 @@
 # @auto-engineer/ai-gateway
 
+## 0.6.2
+
+### Patch Changes
+
+- renamed packages
+
+## 0.6.1
+
+### Patch Changes
+
+- version bump for testihng
+
+## 0.6.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
 ## 0.5.1
 
 ### Patch Changes

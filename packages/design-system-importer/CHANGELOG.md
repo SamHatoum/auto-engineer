@@ -1,5 +1,48 @@
 # @auto-engineer/design-system-importer
 
+## 0.6.4
+
+### Patch Changes
+
+- version test
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.4
+
+## 0.6.3
+
+### Patch Changes
+
+- fix version report
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.3
+
+## 0.6.2
+
+### Patch Changes
+
+- renamed packages
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.2
+
+## 0.6.1
+
+### Patch Changes
+
+- version bump for testihng
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.1
+
+## 0.6.0
+
+### Minor Changes
+
+- Major overhaul of the plugin system
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/message-bus@0.5.0
+
 ## 0.5.1
 
 ### Patch Changes

@@ -1,4 +1,4 @@
-import type { State, Integration } from '@auto-engineer/flowlang';
+import type { State, Integration } from '@auto-engineer/flow';
 import axios from 'axios';
 import { z } from '@auto-engineer/ai-gateway';
 

@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/message-bus",
-  "version": "0.4.0",
+  "version": "0.5.4",
   "publishConfig": {
     "access": "public"
   },

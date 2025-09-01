@@ -7,13 +7,5 @@
   },
   "include": ["src/**/*", "bin/**/*"],
   "exclude": ["node_modules", "dist", "**/*.specs.ts", "**/*.spec.ts", "**/*.test.ts"],
-  "references": [
-    { "path": "../design-system-importer" },
-    { "path": "../emmett-generator" },
-    { "path": "../flowlang" },
-    { "path": "../frontend-implementation" },
-    { "path": "../information-architect" },
-    { "path": "../message-bus" },
-    { "path": "../react-graphql-generator" }
-  ]
+  "references": []
 }

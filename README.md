@@ -43,9 +43,9 @@ pnpm install -g @auto-engineer/cli@latest
 mkdir my-app && cd my-app
 
 # Install plugins for your use case
-pnpm install @auto-engineer/flowlang @auto-engineer/emmett-generator
+pnpm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
 # Or install all common plugins
-pnpm install @auto-engineer/flowlang @auto-engineer/emmett-generator @auto-engineer/server-implementer @auto-engineer/react-graphql-generator
+pnpm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett @auto-engineer/server-implementer @auto-engineer/frontend-generator-react-graphql
 
 # Configure your API keys
 echo "ANTHROPIC_API_KEY=your-key-here" > .env
@@ -59,10 +59,10 @@ Create an `auto.config.ts` file in your project root to configure plugins:
 // auto.config.ts
 export default {
   plugins: [
-    '@auto-engineer/flowlang',
-    '@auto-engineer/emmett-generator',
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
-    '@auto-engineer/react-graphql-generator',
+    '@auto-engineer/frontend-generator-react-graphql',
     // Add more plugins as needed
   ],
 
@@ -86,11 +86,11 @@ pnpm install
 # Export the flow schemas
 auto export:schema ./.context ./flows
 
-# Generate and implement the backend
+# Generate and implement the server
 auto generate:server .context/schema.json .
 auto implement:server ./server
 
-# Run backend validation
+# Run server validation
 auto check:types ./server
 auto check:tests ./server
 auto check:lint ./server --fix
@@ -110,28 +110,28 @@ Auto Engineer uses a modular plugin architecture. Each plugin provides specific 
 
 ### Core Plugins
 
-| Plugin                      | Package                                  | Commands                                   | Description                         |
-| --------------------------- | ---------------------------------------- | ------------------------------------------ | ----------------------------------- |
-| **FlowLang**                | `@auto-engineer/flowlang`                | `create:example`, `export:schema`          | Flow modeling DSL and schema export |
-| **Emmett Generator**        | `@auto-engineer/emmett-generator`        | `generate:server`                          | Server code generation from schemas |
-| **Server Implementer**      | `@auto-engineer/server-implementer`      | `implement:server`, `implement:slice`      | AI-powered server implementation    |
-| **React GraphQL Generator** | `@auto-engineer/react-graphql-generator` | `generate:client`, `copy:example`          | React client scaffolding            |
-| **Frontend Implementation** | `@auto-engineer/frontend-implementation` | `implement:client`                         | AI-powered client implementation    |
-| **Information Architect**   | `@auto-engineer/information-architect`   | `generate:ia`                              | Information architecture generation |
-| **Design System Importer**  | `@auto-engineer/design-system-importer`  | `import:design-system`                     | Figma design system import          |
-| **Backend Checks**          | `@auto-engineer/backend-checks`          | `check:types`, `check:lint`, `check:tests` | Backend validation suite            |
-| **Frontend Checks**         | `@auto-engineer/frontend-checks`         | `check:client`                             | Frontend validation suite           |
+| Plugin                      | Package                                           | Commands                                   | Description                         |
+| --------------------------- | ------------------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| **Flow**                    | `@auto-engineer/flow`                             | `create:example`, `export:schema`          | Flow modeling DSL and schema export |
+| **Emmett Generator**        | `@auto-engineer/server-generator-apollo-emmett`   | `generate:server`                          | Server code generation from schemas |
+| **Server Implementer**      | `@auto-engineer/server-implementer`               | `implement:server`, `implement:slice`      | AI-powered server implementation    |
+| **React GraphQL Generator** | `@auto-engineer/frontend-generator-react-graphql` | `generate:client`, `copy:example`          | React client scaffolding            |
+| **Frontend Implementer**    | `@auto-engineer/frontend-implementer`             | `implement:client`                         | AI-powered client implementation    |
+| **Information Architect**   | `@auto-engineer/information-architect`            | `generate:ia`                              | Information architecture generation |
+| **Design System Importer**  | `@auto-engineer/design-system-importer`           | `import:design-system`                     | Figma design system import          |
+| **Server Checks**           | `@auto-engineer/server-checks`                    | `check:types`, `check:lint`, `check:tests` | Server validation suite             |
+| **Frontend Checks**         | `@auto-engineer/frontend-checks`                  | `check:client`                             | Frontend validation suite           |
 
 ### Installing Plugins
 
 Install only the plugins you need:
 
 ```bash
-# For backend development
-npm install @auto-engineer/flowlang @auto-engineer/emmett-generator @auto-engineer/server-implementer @auto-engineer/backend-checks
+# For server development
+npm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett @auto-engineer/server-implementer @auto-engineer/server-checks
 
 # For frontend development
-npm install @auto-engineer/react-graphql-generator @auto-engineer/frontend-implementation @auto-engineer/frontend-checks
+npm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer @auto-engineer/frontend-checks
 
 # For design system integration
 npm install @auto-engineer/design-system-importer @auto-engineer/information-architect
@@ -167,7 +167,7 @@ export default {
 
 Auto automates the SDLC through a configurable pipeline of agentic and procedural modules. The process turns high-level models into production-ready code through these key stages:
 
-1.  **Flow Modeling**: You (or an AI) start by creating a high-level ["Flow Model"](#-flow-models). This defines system behavior through command, query, and reaction "slices" that specify both frontend and backend requirements. This is where the core design work happens.
+1.  **Flow Modeling**: You (or an AI) start by creating a high-level ["Flow Model"](#-flow-models). This defines system behavior through command, query, and reaction "slices" that specify both frontend and server requirements. This is where the core design work happens.
 2.  **IA Generation**: An "information architect" agent automatically generates an information architecture schema from your model, similar to how a UX designer creates wireframes.
 3.  **Deterministic Scaffolding**: The IA schema is used to generate a complete, deterministic application scaffold.
 4.  **Spec-Driven Precision**: The scaffold is populated with placeholders containing implementation hints and in-situ prompts. The initial flow model also generates deterministic tests. This combination of fine-grained prompts and tests precisely guides the AI.
@@ -185,7 +185,7 @@ Commands are provided by installed plugins. Run `auto --help` to see available c
 - `create:example <name>` - Create an example project
 - `export:schema <context> <flows>` - Export flow schemas
 
-**Backend Generation**
+**Server Generation**
 
 - `generate:server <schema> <dest>` - Generate server from schema
 - `implement:server <server-dir>` - AI implements server
@@ -217,26 +217,26 @@ Auto Engineer follows a command/event-driven architecture:
 ```
 auto-engineer/
 ├── packages/
-│   ├── cli/                     # Main CLI with plugin loader
-│   ├── flowlang/                # Flow modeling DSL
-│   ├── emmett-generator/        # Server code generation
-│   ├── server-implementer/      # AI server implementation
-│   ├── react-graphql-generator/ # React client scaffolding
-│   ├── frontend-implementation/ # AI client implementation
-│   ├── information-architect/   # IA generation
-│   ├── design-system-importer/  # Figma integration
-│   ├── backend-checks/          # Backend validation
-│   ├── frontend-checks/         # Frontend validation
-│   ├── ai-gateway/              # Unified AI provider interface
-│   ├── message-bus/             # Event-driven messaging
-│   └── file-store/              # File system operations
+│   ├── cli/                               # Main CLI with plugin loader
+│   ├── flow/                              # Flow modeling DSL
+│   ├── server-generator-apollo-emmett/    # Server code generation
+│   ├── server-implementer/                # AI server implementation
+│   ├── frontend-generator-react-graphql/  # React client scaffolding
+│   ├── frontend-implementer/           # AI client implementation
+│   ├── information-architect/             # IA generation
+│   ├── design-system-importer/            # Figma integration
+│   ├── server-checks/                     # Server validation
+│   ├── frontend-checks/                   # Frontend validation
+│   ├── ai-gateway/                        # Unified AI provider interface
+│   ├── message-bus/                       # Event-driven messaging
+│   └── file-store/                        # File system operations
 ├── integrations/
-│   ├── ai-chat-completion/      # AI provider integrations
-│   ├── cart/                    # Cart service integration
-│   └── product-catalogue/       # Product catalog integration
+│   ├── ai-chat-completion/                # AI provider integrations
+│   ├── cart/                              # Cart service integration
+│   └── product-catalogue/                 # Product catalog integration
 └── examples/
-    ├── cart-api/                # Example cart API
-    └── product-catalogue-api/   # Example product API
+    ├── cart-api/                          # Example cart API
+    └── product-catalogue-api/             # Example product API
 ```
 
 ## 🤝 Contributing

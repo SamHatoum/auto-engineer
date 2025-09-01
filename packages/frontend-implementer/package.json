@@ -1,0 +1,45 @@
+{
+  "name": "@auto-engineer/frontend-implementer",
+  "version": "0.1.3",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "ai-agent": "tsx -r dotenv/config src/agent-cli.ts",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "link:dev": "pnpm build && pnpm link --global",
+    "unlink:dev": "pnpm unlink --global",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@auto-engineer/ai-gateway": "^0.6.2",
+    "@auto-engineer/message-bus": "^0.5.4",
+    "@modelcontextprotocol/sdk": "^1.3.0",
+    "debug": "^4.4.1",
+    "jsdom": "^26.1.0",
+    "openai": "^5.7.0",
+    "vite": "^5.4.1",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "^0.7.4",
+    "playwright": "^1.54.1"
+  }
+}

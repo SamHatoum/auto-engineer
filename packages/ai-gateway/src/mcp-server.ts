@@ -40,9 +40,9 @@ interface RegisteredTool {
   };
 }
 
-debugServer('Creating MCP server instance - name: frontend-implementation, version: 0.1.0');
+debugServer('Creating MCP server instance - name: frontend-implementer, version: 0.1.0');
 const server = new McpServer({
-  name: 'frontend-implementation',
+  name: 'frontend-implementer',
   version: '0.1.0',
 });
 

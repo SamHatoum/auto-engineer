@@ -11,9 +11,72 @@ const debugHandler = createDebug('server-impl:slice:handler');
 const debugProcess = createDebug('server-impl:slice:process');
 const debugResult = createDebug('server-impl:slice:result');
 
+export const implementSliceManifest = {
+  handler: () => Promise.resolve({ default: implementSliceCommandHandler }),
+  description: 'AI implements a specific server slice',
+  usage: 'implement:slice <slice-path>',
+  examples: [
+    '$ auto implement:slice ./server/src/domain/flows/seasonal-assistant/enters-shopping-criteria-into-assistant',
+  ],
+  args: [{ name: 'slice-path', description: 'Path to the slice directory to implement', required: true }],
+};
+
+export type ImplementSliceCommand = Command<
+  'ImplementSlice',
+  {
+    slicePath: string;
+    context?: {
+      previousOutputs?: string;
+      attemptNumber?: number;
+    };
+  }
+>;
+
+export type SliceImplementedEvent = Event<
+  'SliceImplemented',
+  {
+    slicePath: string;
+    filesImplemented: string[];
+  }
+>;
+
+export type SliceImplementationFailedEvent = Event<
+  'SliceImplementationFailed',
+  {
+    slicePath: string;
+    error: string;
+  }
+>;
+
+// Helper function to extract code block from AI response
+function extractCodeBlock(text: string): string {
+  return text
+    .replace(/```(?:ts|typescript)?/g, '')
+    .replace(/```/g, '')
+    .trim();
+}
+
+// Load all TypeScript files from the slice directory
+async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
+  const files = await fg(['*.ts'], { cwd: sliceDir });
+  const context: Record<string, string> = {};
+  for (const file of files) {
+    const absPath = path.join(sliceDir, file);
+    context[file] = await readFile(absPath, 'utf-8');
+  }
+  return context;
+}
+
+// Find files that need implementation
+function findFilesToImplement(contextFiles: Record<string, string>): Array<[string, string]> {
+  return Object.entries(contextFiles).filter(
+    ([, content]) => content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS'),
+  );
+}
+
 // System prompt for AI implementation
 const SYSTEM_PROMPT = `
-You are a software engineer implementing missing logic in a sliced event-driven TypeScript backend. Each slice contains partially scaffolded code, and your task is to complete the logic following implementation instructions embedded in each file.
+You are a software engineer implementing missing logic in a sliced event-driven TypeScript server. Each slice contains partially scaffolded code, and your task is to complete the logic following implementation instructions embedded in each file.
 
 Project Characteristics:
 - Architecture: sliced event-sourced CQRS (Command, Query, Reaction slices)
@@ -55,62 +118,6 @@ You must:
 -  Return the entire updated file (no commentary and remove all implementation instructions).
 - Ensure the output is valid TypeScript.
 `;
-
-export type ImplementSliceCommand = Command<
-  'ImplementSlice',
-  {
-    sliceDirectory: string;
-    flowName: string;
-    context?: {
-      previousOutputs?: string;
-      attemptNumber?: number;
-    };
-  }
->;
-
-export type SliceImplementedEvent = Event<
-  'SliceImplemented',
-  {
-    sliceDirectory: string;
-    flowName: string;
-    filesImplemented: string[];
-  }
->;
-
-export type SliceImplementationFailedEvent = Event<
-  'SliceImplementationFailed',
-  {
-    sliceDirectory: string;
-    flowName: string;
-    error: string;
-  }
->;
-
-// Helper function to extract code block from AI response
-function extractCodeBlock(text: string): string {
-  return text
-    .replace(/```(?:ts|typescript)?/g, '')
-    .replace(/```/g, '')
-    .trim();
-}
-
-// Load all TypeScript files from the slice directory
-async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
-  const files = await fg(['*.ts'], { cwd: sliceDir });
-  const context: Record<string, string> = {};
-  for (const file of files) {
-    const absPath = path.join(sliceDir, file);
-    context[file] = await readFile(absPath, 'utf-8');
-  }
-  return context;
-}
-
-// Find files that need implementation
-function findFilesToImplement(contextFiles: Record<string, string>): Array<[string, string]> {
-  return Object.entries(contextFiles).filter(
-    ([, content]) => content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS'),
-  );
-}
 
 // Build prompt for initial implementation
 function buildInitialPrompt(targetFile: string, context: Record<string, string>): string {
@@ -161,8 +168,7 @@ Return only the corrected full contents of ${targetFile}, no commentary, no mark
 
 // Main implementation function
 async function implementSlice(
-  sliceDir: string,
-  flowName: string,
+  slicePath: string,
   context?: { previousOutputs?: string; attemptNumber?: number },
 ): Promise<{ success: boolean; filesImplemented: string[]; error?: string }> {
   const availableProviders = getAvailableProviders();
@@ -174,13 +180,13 @@ async function implementSlice(
   }
 
   const AI_PROVIDER = availableProviders[0];
-  const sliceName = path.basename(sliceDir);
+  const sliceName = path.basename(slicePath);
 
-  debugProcess(`Implementing slice: ${sliceName} for flow: ${flowName}`);
+  debugProcess(`Implementing slice: ${sliceName}`);
 
   try {
     // Load all context files
-    const contextFiles = await loadContextFiles(sliceDir);
+    const contextFiles = await loadContextFiles(slicePath);
     const filesToImplement = findFilesToImplement(contextFiles);
     const implementedFiles: string[] = [];
 
@@ -208,7 +214,7 @@ async function implementSlice(
       const cleanedCode = extractCodeBlock(aiOutput);
 
       // Write the implemented file
-      const filePath = path.join(sliceDir, targetFile);
+      const filePath = path.join(slicePath, targetFile);
       await writeFile(filePath, cleanedCode, 'utf-8');
 
       debugProcess(`Successfully implemented ${targetFile}`);
@@ -227,10 +233,9 @@ async function implementSlice(
 }
 
 function logCommandDebugInfo(command: ImplementSliceCommand): void {
-  const { sliceDirectory, flowName, context } = command.data;
+  const { slicePath, context } = command.data;
   debug('Handling ImplementSliceCommand');
-  debug('  Slice directory: %s', sliceDirectory);
-  debug('  Flow name: %s', flowName);
+  debug('  Slice path: %s', slicePath);
   debug('  Context provided: %s', context ? 'yes' : 'no');
   if (context) {
     debug('  Attempt number: %d', context.attemptNumber ?? 1);
@@ -243,8 +248,7 @@ function createFailedEvent(command: ImplementSliceCommand, error: string): Slice
   return {
     type: 'SliceImplementationFailed',
     data: {
-      sliceDirectory: command.data.sliceDirectory,
-      flowName: command.data.flowName,
+      slicePath: command.data.slicePath,
       error,
     },
     timestamp: new Date(),
@@ -257,8 +261,7 @@ function createSuccessEvent(command: ImplementSliceCommand, filesImplemented: st
   return {
     type: 'SliceImplemented',
     data: {
-      sliceDirectory: command.data.sliceDirectory,
-      flowName: command.data.flowName,
+      slicePath: command.data.slicePath,
       filesImplemented,
     },
     timestamp: new Date(),
@@ -277,12 +280,12 @@ function logRetryContext(context: { previousOutputs?: string; attemptNumber?: nu
 export async function handleImplementSliceCommand(
   command: ImplementSliceCommand,
 ): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> {
-  const { sliceDirectory, flowName, context } = command.data;
+  const { slicePath, context } = command.data;
 
   logCommandDebugInfo(command);
 
   try {
-    const sliceRoot = path.resolve(sliceDirectory);
+    const sliceRoot = path.resolve(slicePath);
     debugHandler('Resolved paths:');
     debugHandler('  Slice root: %s', sliceRoot);
 
@@ -294,7 +297,7 @@ export async function handleImplementSliceCommand(
     debugProcess('Starting slice implementation for: %s', sliceRoot);
     logRetryContext(context);
 
-    const result = await implementSlice(sliceRoot, flowName, context);
+    const result = await implementSlice(sliceRoot, context);
 
     if (!result.success) {
       return createFailedEvent(command, result.error ?? 'Implementation failed');
@@ -313,21 +316,27 @@ export async function handleImplementSliceCommand(
   }
 }
 
-export const implementSliceCommandHandler: CommandHandler<ImplementSliceCommand> = {
+export const implementSliceCommandHandler: CommandHandler<
+  ImplementSliceCommand,
+  SliceImplementedEvent | SliceImplementationFailedEvent
+> = {
   name: 'ImplementSlice',
-  handle: async (command: ImplementSliceCommand): Promise<void> => {
+  handle: async (command: ImplementSliceCommand): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> => {
     debug('CommandHandler executing for ImplementSlice');
     const result = await handleImplementSliceCommand(command);
 
     if (result.type === 'SliceImplemented') {
       debug('Command handler completed: success');
-      console.log(`✅ Slice implementation completed successfully`);
-      console.log(`   Flow: ${result.data.flowName}`);
-      console.log(`   Files implemented: ${result.data.filesImplemented.length}`);
+      debug('✅ Slice implementation completed successfully');
+      debug('   Slice: %s', path.basename(result.data.slicePath));
+      debug('   Files implemented: %d', result.data.filesImplemented.length);
     } else {
       debug('Command handler completed: failure - %s', result.data.error);
-      console.error(`❌ Slice implementation failed: ${result.data.error}`);
-      process.exit(1);
+      debug('❌ Slice implementation failed: %s', result.data.error);
     }
+    return result;
   },
 };
+
+// Default export is the command handler
+export default implementSliceCommandHandler;

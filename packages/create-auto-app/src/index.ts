@@ -21,18 +21,18 @@ interface ProjectOptions {
 
 const AUTO_ENGINEER_PACKAGES = [
   '@auto-engineer/message-bus',
-  '@auto-engineer/backend-checks',
+  '@auto-engineer/server-checks',
   '@auto-engineer/design-system-importer',
-  '@auto-engineer/emmett-generator',
-  '@auto-engineer/flowlang',
+  '@auto-engineer/server-generator-apollo-emmett',
+  '@auto-engineer/flow',
   '@auto-engineer/frontend-checks',
-  '@auto-engineer/frontend-implementation',
+  '@auto-engineer/frontend-implementer',
   '@auto-engineer/information-architect',
-  '@auto-engineer/react-graphql-generator',
+  '@auto-engineer/frontend-generator-react-graphql',
   '@auto-engineer/server-implementer',
 ];
 
-const MINIMAL_PACKAGES = ['@auto-engineer/flowlang', '@auto-engineer/emmett-generator'];
+const MINIMAL_PACKAGES = ['@auto-engineer/flow', '@auto-engineer/server-generator-apollo-emmett'];
 
 async function detectPackageManager(): Promise<'npm' | 'pnpm' | 'yarn'> {
   try {
@@ -330,7 +330,7 @@ ${packageManager} run start
 - \`auto generate:server\` - Generate server from flows
 - \`auto generate:client\` - Generate client application
 - \`auto check:frontend\` - Run frontend checks
-- \`auto check:backend\` - Run backend checks
+- \`auto check:server\` - Run server checks
 
 ## Learn More
 

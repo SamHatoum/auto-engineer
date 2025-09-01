@@ -9,6 +9,7 @@ export interface CommandDefinition {
 
 export interface CliManifest {
   category: string;
+  version?: string; // Package version
   commands: Record<string, CommandDefinition>;
 }
 

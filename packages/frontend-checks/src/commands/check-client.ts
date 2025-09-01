@@ -11,6 +11,14 @@ const debugServer = createDebug('frontend-checks:command:server');
 const debugChecks = createDebug('frontend-checks:command:checks');
 const debugResult = createDebug('frontend-checks:command:result');
 
+export const checkClientManifest = {
+  handler: () => Promise.resolve({ default: checkClientCommandHandler }),
+  description: 'Full frontend validation suite',
+  usage: 'check:client <client-dir>',
+  examples: ['$ auto check:client ./client'],
+  args: [{ name: 'client-dir', description: 'Client directory to check', required: true }],
+};
+
 export type CheckClientCommand = Command<
   'CheckClient',
   {
@@ -27,6 +35,9 @@ export type ClientCheckedEvent = Event<
     buildErrors: number;
     consoleErrors: number;
     allChecksPassed: boolean;
+    tsErrorDetails?: string[];
+    buildErrorDetails?: string[];
+    consoleErrorDetails?: string[];
   }
 >;
 
@@ -83,15 +94,15 @@ function createSuccessEvent(
   clientDirectory: string,
   tsErrors: string[],
   buildErrors: string[],
-  consoleErrorCount: number,
+  consoleErrors: string[],
   command: CheckClientCommand,
 ): ClientCheckedEvent {
-  const allChecksPassed = tsErrors.length === 0 && buildErrors.length === 0 && consoleErrorCount === 0;
+  const allChecksPassed = tsErrors.length === 0 && buildErrors.length === 0 && consoleErrors.length === 0;
 
   debugResult('Checks completed:');
   debugResult('  TypeScript errors: %d', tsErrors.length);
   debugResult('  Build errors: %d', buildErrors.length);
-  debugResult('  Console errors: %d', consoleErrorCount);
+  debugResult('  Console errors: %d', consoleErrors.length);
   debugResult('  All checks passed: %s', allChecksPassed);
 
   return {
@@ -100,8 +111,11 @@ function createSuccessEvent(
       clientDirectory,
       tsErrors: tsErrors.length,
       buildErrors: buildErrors.length,
-      consoleErrors: consoleErrorCount,
+      consoleErrors: consoleErrors.length,
       allChecksPassed,
+      tsErrorDetails: tsErrors.length > 0 ? tsErrors : undefined,
+      buildErrorDetails: buildErrors.length > 0 ? buildErrors : undefined,
+      consoleErrorDetails: consoleErrors.length > 0 ? consoleErrors : undefined,
     },
     timestamp: new Date(),
     requestId: command.requestId,
@@ -132,8 +146,7 @@ async function runTypeScriptChecks(clientRoot: string): Promise<string[]> {
   const tsErrors = await getTsErrors(clientRoot);
   debugChecks('TypeScript errors found: %d', tsErrors.length);
   if (tsErrors.length > 0) {
-    console.log('TypeScript errors:');
-    tsErrors.forEach((error) => console.log('  ', error));
+    tsErrors.forEach((error) => debugChecks('  TS Error: %s', error));
   }
   return tsErrors;
 }
@@ -143,15 +156,14 @@ async function runBuildChecks(clientRoot: string): Promise<string[]> {
   const buildErrors = await getBuildErrors(clientRoot);
   debugChecks('Build errors found: %d', buildErrors.length);
   if (buildErrors.length > 0) {
-    console.log('Build errors:');
-    buildErrors.forEach((error) => console.log('  ', error));
+    buildErrors.forEach((error) => debugChecks('  Build Error: %s', error));
   }
   return buildErrors;
 }
 
 async function runBrowserChecks(
   clientRoot: string,
-): Promise<{ consoleErrorCount: number; devServer: { process: ChildProcess; url: string } | null }> {
+): Promise<{ consoleErrors: string[]; devServer: { process: ChildProcess; url: string } | null }> {
   debugChecks('Starting dev server for browser checks...');
   try {
     const server = await startDevServer(clientRoot);
@@ -166,15 +178,14 @@ async function runBrowserChecks(
     debugChecks('Console errors found: %d', consoleErrorCount);
 
     if (consoleErrors.length > 0) {
-      console.log('Console errors:');
-      consoleErrors.forEach((error) => console.log('  ', error));
+      consoleErrors.forEach((error) => debugChecks('  Console Error: %s', error));
     }
 
-    return { consoleErrorCount, devServer: server };
+    return { consoleErrors, devServer: server };
   } catch (error) {
     debugChecks('Failed to run browser checks: %O', error);
-    console.warn('Warning: Could not run browser checks:', error);
-    return { consoleErrorCount: 0, devServer: null };
+    debugChecks('Warning: Could not run browser checks: %O', error);
+    return { consoleErrors: [], devServer: null };
   }
 }
 
@@ -213,16 +224,16 @@ export async function handleCheckClientCommand(
     const tsErrors = await runTypeScriptChecks(clientRoot);
     const buildErrors = await runBuildChecks(clientRoot);
 
-    let consoleErrorCount = 0;
+    let consoleErrors: string[] = [];
     if (!skipBrowserChecks) {
       const browserResult = await runBrowserChecks(clientRoot);
-      consoleErrorCount = browserResult.consoleErrorCount;
+      consoleErrors = browserResult.consoleErrors;
       devServer = browserResult.devServer;
     } else {
       debugChecks('Skipping browser checks as requested');
     }
 
-    const successEvent = createSuccessEvent(clientDirectory, tsErrors, buildErrors, consoleErrorCount, command);
+    const successEvent = createSuccessEvent(clientDirectory, tsErrors, buildErrors, consoleErrors, command);
     debugResult('Returning event: ClientChecked');
     return successEvent;
   } catch (error) {
@@ -253,7 +264,7 @@ export async function handleCheckClientCommand(
 
 export const checkClientCommandHandler: CommandHandler<CheckClientCommand> = {
   name: 'CheckClient',
-  handle: async (command: CheckClientCommand): Promise<void> => {
+  handle: async (command: CheckClientCommand): Promise<ClientCheckedEvent | ClientCheckFailedEvent> => {
     debug('CommandHandler executing for CheckClient');
     const result = await handleCheckClientCommand(command);
 
@@ -262,19 +273,19 @@ export const checkClientCommandHandler: CommandHandler<CheckClientCommand> = {
 
       if (allChecksPassed) {
         debug('Command handler completed: all checks passed');
-        console.log('✅ All frontend checks passed successfully');
       } else {
         debug('Command handler completed: some checks failed');
-        console.log('❌ Frontend checks failed:');
-        if (tsErrors > 0) console.log(`   - ${tsErrors} TypeScript errors`);
-        if (buildErrors > 0) console.log(`   - ${buildErrors} build errors`);
-        if (consoleErrors > 0) console.log(`   - ${consoleErrors} console errors`);
-        process.exit(1);
+        debug('TypeScript errors: %d', tsErrors);
+        debug('Build errors: %d', buildErrors);
+        debug('Console errors: %d', consoleErrors);
       }
     } else {
       debug('Command handler completed: failure - %s', result.data.error);
-      console.error(`❌ Frontend checks failed: ${result.data.error}`);
-      process.exit(1);
     }
+
+    return result;
   },
 };
+
+// Default export is the command handler
+export default checkClientCommandHandler;

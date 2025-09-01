@@ -22,12 +22,7 @@
     "release": "changeset publish",
     "prepare": "husky",
     "install": "turbo run install build",
-    "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm install @auto-engineer/cli latest -g --force && pnpm update @auto-engineer/cli latest -g",
-    "## ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------": "",
-    "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
-    "start:product-api": "cd examples/product-catalogue-api && pnpm start",
-    "start:cart-api": "cd examples/cart-api && pnpm start",
-    "start:examples": "pnpm --parallel --filter @examples/* start 2>&1 | grep -E '(localhost|Local)' || true"
+    "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm install @auto-engineer/cli latest -g --force && pnpm update @auto-engineer/cli latest -g"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
@@ -48,14 +43,14 @@
     "prettier": "^3.3.3",
     "tsx": "^4.7.1",
     "turbo": "^2.5.6",
-    "typescript": "~5.5.0",
+    "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
     "vitest": "^3.2.3"
   },
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.15.0",
   "resolutions": {
     "punycode": "^2.3.1",
     "@types/react": "^18.3.23",
@@ -63,7 +58,8 @@
   },
   "dependencies": {
     "@auto-engineer/ai-gateway": "^0.4.0",
-    "@auto-engineer/flowlang": "^0.5.7",
+    "@auto-engineer/design-system-importer": "link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer",
+    "@auto-engineer/flow": "^0.1.1",
     "axios": "^1.10.0",
     "debug": "^4.4.1",
     "dotenv": "^16.4.5"
