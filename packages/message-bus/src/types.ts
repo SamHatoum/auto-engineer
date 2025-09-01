@@ -18,16 +18,6 @@ export type Event<EventType extends string = string, EventData extends DefaultRe
   correlationId?: string;
 }>;
 
-// Utility functions
-export function on<T>(_handler: (event: T) => void) {}
-
-export function dispatch<T>(_command: T) {}
-dispatch.parallel = <T>(_commands: T[]) => {};
-dispatch.sequence = <T>(_commands: T[]) => {};
-dispatch.custom = <T>(_commandFactory: () => T) => {};
-
-export function fold<T>(_reducer: (event: T) => string) {}
-
 export type CommandHandler<TCommand extends Command = Command, TEvent extends Event = Event> = {
   name: string;
   handle: (command: TCommand) => Promise<TEvent | TEvent[] | void>;

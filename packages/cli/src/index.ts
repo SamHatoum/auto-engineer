@@ -13,6 +13,9 @@ import { createOutput } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 import { PluginLoader } from './plugin-loader';
 
+// Export DSL functions for use in auto.config.ts
+export { on, dispatch, fold } from './dsl/index';
+
 const debug = Debug('auto-engineer:cli');
 
 // Get version from package.json - works in both dev and production
@@ -431,6 +434,72 @@ const handleProgramError = (error: unknown) => {
   }
 };
 
+const startMessageBusServer = async (): Promise<void> => {
+  const { MessageBusServer } = await import('./server/server');
+  const { loadMessageBusConfig } = await import('./server/config-loader');
+
+  console.log(chalk.cyan('Starting Auto Engineer Message Bus Server...'));
+
+  // Check for config file
+  let configPath = path.resolve(process.cwd(), 'auto.config.ts');
+  if (!fs.existsSync(configPath)) {
+    configPath = path.resolve(process.cwd(), 'auto.config.js');
+  }
+
+  const server = new MessageBusServer({
+    port: 5555,
+    wsPort: 5551,
+    enableFileSync: true,
+    fileSyncDir: process.cwd(),
+    fileSyncExtensions: ['.js', '.ts', '.tsx', '.jsx', '.html', '.css'],
+  });
+
+  // Load message bus configuration if it exists
+  if (fs.existsSync(configPath)) {
+    await loadMessageBusConfig(configPath, server);
+
+    // Also try to load plugin command handlers
+    try {
+      const pluginLoader = new PluginLoader();
+      await pluginLoader.loadPlugins(configPath);
+
+      // Get the command handlers from the plugin loader's message bus
+      // and register them with the server's message bus
+      const pluginMessageBus = pluginLoader.getMessageBus();
+      const serverMessageBus = server.getMessageBus();
+
+      if (
+        pluginMessageBus !== null &&
+        pluginMessageBus !== undefined &&
+        serverMessageBus !== null &&
+        serverMessageBus !== undefined
+      ) {
+        const commandHandlers = pluginMessageBus.getCommandHandlers();
+        const handlerNames = Object.keys(commandHandlers);
+
+        debug('Transferring %d command handlers from plugins to server', handlerNames.length);
+
+        // Register each command handler with the server's tracking and message bus
+        const handlers = Object.values(commandHandlers);
+        server.registerCommandHandlers(handlers);
+        debug('Registered %d command handlers with server', handlers.length);
+      }
+    } catch (error) {
+      debug('Could not load plugins for server:', error);
+    }
+  }
+
+  await server.start();
+
+  // Keep the process running
+  process.on('SIGINT', () => {
+    console.log('\nShutting down server...');
+    void server.stop().then(() => {
+      process.exit(0);
+    });
+  });
+};
+
 const main = async () => {
   try {
     initializeEnvironment();
@@ -444,6 +513,12 @@ const main = async () => {
 
     validateConfig(config);
     createOutput(config);
+
+    // Check if no command arguments provided (just 'auto')
+    if (process.argv.length === 2 || (process.argv.length === 3 && process.argv[2] === 'serve')) {
+      await startMessageBusServer();
+      return;
+    }
 
     const fullProgram = await setupProgram(config);
     await fullProgram.parseAsync(process.argv);

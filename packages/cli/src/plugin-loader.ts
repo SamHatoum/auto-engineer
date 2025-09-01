@@ -130,7 +130,7 @@ export class PluginLoader {
     } catch (error) {
       debugConfig('Error loading config: %O', error);
       // Only show config loading errors when debugging
-      if (process.env.DEBUG?.includes('auto-engineer:')) {
+      if (process.env.DEBUG?.includes('auto-engineer:') === true) {
         console.error(`Failed to load config from ${configPath}:`, error);
       }
       return null;
@@ -203,7 +203,7 @@ export class PluginLoader {
     } catch (error) {
       debugPlugins('Failed to load plugin %s: %O', packageName, error);
       // Only show plugin loading errors when debugging
-      if (process.env.DEBUG?.includes('auto-engineer:')) {
+      if (process.env.DEBUG?.includes('auto-engineer:') === true) {
         console.warn(`Failed to load plugin ${packageName}:`, error);
       }
     }
@@ -710,6 +710,10 @@ export class PluginLoader {
 
   getConflicts(): Map<string, string[]> {
     return this.conflicts;
+  }
+
+  getMessageBus(): MessageBus {
+    return this.messageBus;
   }
 }
 
