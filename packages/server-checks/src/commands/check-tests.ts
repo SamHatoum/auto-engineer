@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import path from 'path';
 import { execa } from 'execa';
 import fg from 'fast-glob';
@@ -9,15 +9,6 @@ const debug = createDebug('bacserverkend-checks:tests');
 const debugHandler = createDebug('server-checks:tests:handler');
 const debugProcess = createDebug('server-checks:tests:process');
 const debugResult = createDebug('server-checks:tests:result');
-
-export const checkTestsManifest = {
-  handler: () => import('./check-tests'),
-  description: 'Run Vitest test suites',
-  usage: 'check:tests <directory>',
-  examples: ['$ auto check:tests ./server', '$ auto check:tests ./server --scope project'],
-  args: [{ name: 'directory', description: 'Directory containing tests', required: true }],
-  options: [{ name: '--scope <scope>', description: 'Test scope: slice (default) or project' }],
-};
 
 export type CheckTestsCommand = Command<
   'CheckTests',
@@ -47,57 +38,25 @@ export type TestsCheckFailedEvent = Event<
   }
 >;
 
-async function findProjectRoot(startDir: string): Promise<string> {
-  let dir = startDir;
-  while (dir !== path.dirname(dir)) {
-    try {
-      await access(path.join(dir, 'package.json'));
-      return dir;
-    } catch {
-      dir = path.dirname(dir);
-    }
-  }
-  throw new Error('Could not find project root (no package.json found)');
-}
-
-function parseVitestOutput(output: string): {
-  failedTests: string[];
-  testsRun: number;
-  testsPassed: number;
-  testsFailed: number;
-} {
-  const failedTests: string[] = [];
-  let testsRun = 0;
-  let testsPassed = 0;
-  let testsFailed = 0;
-
-  // Parse test results from output
-  const failPattern = /FAIL\s+(.+\.specs?\.ts)/g;
-
-  for (const match of output.matchAll(failPattern)) {
-    failedTests.push(match[1]);
-  }
-
-  // Try to extract test counts from summary
-  const summaryMatch = output.match(/Tests\s+(\d+)\s+passed(?:\s+\|\s+(\d+)\s+failed)?/);
-  if (summaryMatch) {
-    testsPassed = parseInt(summaryMatch[1], 10);
-    testsFailed = summaryMatch[2] ? parseInt(summaryMatch[2], 10) : 0;
-    testsRun = testsPassed + testsFailed;
-  } else {
-    // Fallback: count PASS and FAIL lines
-    const passMatches = output.match(/PASS/g);
-    const failMatches = output.match(/FAIL/g);
-    testsPassed = passMatches ? passMatches.length : 0;
-    testsFailed = failMatches ? failMatches.length : 0;
-    testsRun = testsPassed + testsFailed;
-  }
-
-  return { failedTests, testsRun, testsPassed, testsFailed };
-}
-
-export const checkTestsCommandHandler: CommandHandler<CheckTestsCommand> = {
+export const commandHandler = defineCommandHandler<CheckTestsCommand>({
   name: 'CheckTests',
+  alias: 'check:tests',
+  description: 'Run Vitest test suites',
+  category: 'check',
+  fields: {
+    targetDirectory: {
+      description: 'Directory containing tests',
+      required: true,
+    },
+    scope: {
+      description: 'Test scope: slice (default) or project',
+      required: false,
+    },
+  },
+  examples: [
+    '$ auto check:tests --target-directory=./server',
+    '$ auto check:tests --target-directory=./server --scope=project',
+  ],
   // eslint-disable-next-line complexity
   handle: async (command: CheckTestsCommand): Promise<TestsCheckPassedEvent | TestsCheckFailedEvent> => {
     debug('CommandHandler executing for CheckTests');
@@ -232,7 +191,56 @@ export const checkTestsCommandHandler: CommandHandler<CheckTestsCommand> = {
       };
     }
   },
-};
+});
+
+async function findProjectRoot(startDir: string): Promise<string> {
+  let dir = startDir;
+  while (dir !== path.dirname(dir)) {
+    try {
+      await access(path.join(dir, 'package.json'));
+      return dir;
+    } catch {
+      dir = path.dirname(dir);
+    }
+  }
+  throw new Error('Could not find project root (no package.json found)');
+}
+
+function parseVitestOutput(output: string): {
+  failedTests: string[];
+  testsRun: number;
+  testsPassed: number;
+  testsFailed: number;
+} {
+  const failedTests: string[] = [];
+  let testsRun = 0;
+  let testsPassed = 0;
+  let testsFailed = 0;
+
+  // Parse test results from output
+  const failPattern = /FAIL\s+(.+\.specs?\.ts)/g;
+
+  for (const match of output.matchAll(failPattern)) {
+    failedTests.push(match[1]);
+  }
+
+  // Try to extract test counts from summary
+  const summaryMatch = output.match(/Tests\s+(\d+)\s+passed(?:\s+\|\s+(\d+)\s+failed)?/);
+  if (summaryMatch) {
+    testsPassed = parseInt(summaryMatch[1], 10);
+    testsFailed = summaryMatch[2] ? parseInt(summaryMatch[2], 10) : 0;
+    testsRun = testsPassed + testsFailed;
+  } else {
+    // Fallback: count PASS and FAIL lines
+    const passMatches = output.match(/PASS/g);
+    const failMatches = output.match(/FAIL/g);
+    testsPassed = passMatches ? passMatches.length : 0;
+    testsFailed = failMatches ? failMatches.length : 0;
+    testsRun = testsPassed + testsFailed;
+  }
+
+  return { failedTests, testsRun, testsPassed, testsFailed };
+}
 
 // Default export for CLI usage - just export the handler
-export default checkTestsCommandHandler;
+export default commandHandler;

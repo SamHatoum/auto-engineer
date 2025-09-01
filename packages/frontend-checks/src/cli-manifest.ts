@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { checkClientManifest } from './commands/check-client';
+import { checkClientCommandHandler } from './commands/check-client';
 
 // Get version from package.json
 const getVersion = (): string => {
@@ -28,10 +28,20 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [checkClientCommandHandler];
+
+// Also export old format for backward compatibility during migration
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/frontend-checks',
   version: getVersion(),
   commands: {
-    'check:client': checkClientManifest,
+    [checkClientCommandHandler.alias]: {
+      handler: () => Promise.resolve({ default: checkClientCommandHandler }),
+      description: checkClientCommandHandler.description,
+      usage: `${checkClientCommandHandler.alias} <clientDirectory>`,
+      examples: checkClientCommandHandler.examples,
+      args: [{ name: 'clientDirectory', description: 'Client directory to check', required: true }],
+    },
   },
 };

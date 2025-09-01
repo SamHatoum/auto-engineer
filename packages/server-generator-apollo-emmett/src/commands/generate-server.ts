@@ -11,23 +11,13 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execa } from 'execa';
 import createDebug from 'debug';
+import { defineCommandHandler } from '@auto-engineer/message-bus';
 
 const debug = createDebug('emmett:generate-server');
 const debugSchema = createDebug('emmett:generate-server:schema');
 const debugFiles = createDebug('emmett:generate-server:files');
 const debugDeps = createDebug('emmett:generate-server:deps');
 const debugScaffold = createDebug('emmett:generate-server:scaffold');
-
-export const generateServerManifest = {
-  handler: () => Promise.resolve({ default: generateServerCommandHandler }),
-  description: 'Generate server from schema.json',
-  usage: 'generate:server <schema> <dest>',
-  examples: ['$ auto generate:server .context/schema.json .'],
-  args: [
-    { name: 'schema', description: 'Path to schema.json file', required: true },
-    { name: 'dest', description: 'Destination directory for generated server', required: true },
-  ],
-};
 
 type DefaultRecord = Record<string, unknown>;
 export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord> = Readonly<{
@@ -78,6 +68,33 @@ export type ServerGenerationFailedEvent = Event<
     error: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<GenerateServerCommand>({
+  name: 'GenerateServer',
+  alias: 'generate:server',
+  description: 'Generate server from schema.json',
+  category: 'generate',
+  fields: {
+    schemaPath: {
+      description: 'Path to schema.json file',
+      required: true,
+    },
+    destination: {
+      description: 'Destination directory for generated server',
+      required: true,
+    },
+  },
+  examples: ['$ auto generate:server --schema-path=.context/schema.json --destination=.'],
+  handle: async (command: GenerateServerCommand): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
+    const result = await handleGenerateServerCommandInternal(command);
+    if (result.type === 'ServerGenerated') {
+      debug('Server generated at %s', result.data.serverDir);
+    } else {
+      debug('Failed to generate server: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 async function validateSchemaFile(
   absSchema: string,
@@ -266,22 +283,6 @@ async function handleGenerateServerCommandInternal(
     return createServerFailureEvent(command, error);
   }
 }
-
-export const generateServerCommandHandler: CommandHandler<
-  GenerateServerCommand,
-  ServerGeneratedEvent | ServerGenerationFailedEvent
-> = {
-  name: 'GenerateServer',
-  handle: async (command: GenerateServerCommand): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
-    const result = await handleGenerateServerCommandInternal(command);
-    if (result.type === 'ServerGenerated') {
-      debug('Server generated at %s', result.data.serverDir);
-    } else {
-      debug('Failed to generate server: %s', result.data.error);
-    }
-    return result;
-  },
-};
 
 async function copyRootFilesFromSrc(from: string, to: string): Promise<void> {
   debugFiles('copyRootFilesFromSrc: from=%s, to=%s', from, to);
@@ -514,4 +515,4 @@ async function installDependenciesAndGenerateSchema(serverDir: string, workingDi
 }
 
 // Default export is the command handler
-export default generateServerCommandHandler;
+export default commandHandler;

@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
 import { FrontendScaffoldBuilder } from '../builder';
 import { generateComponents } from '../generator/generateComponents';
@@ -12,20 +12,6 @@ import createDebug from 'debug';
 const debug = createDebug('frontend-generator-react-graphql:command');
 const debugBuilder = createDebug('frontend-generator-react-graphql:command:builder');
 const debugGeneration = createDebug('frontend-generator-react-graphql:command:generation');
-
-export const generateClientManifest = {
-  handler: () => Promise.resolve({ default: generateClientCommandHandler }),
-  description: 'Generate React client app',
-  usage: 'generate:client <starter> <client> <ia> <gql> [vars]',
-  examples: ['$ auto generate:client ./shadcn-starter ./client ./auto-ia.json ./schema.graphql ./figma-vars.json'],
-  args: [
-    { name: 'starter', description: 'Starter template path', required: true },
-    { name: 'client', description: 'Client output directory', required: true },
-    { name: 'ia', description: 'Information architecture JSON file', required: true },
-    { name: 'gql', description: 'GraphQL schema file', required: true },
-    { name: 'vars', description: 'Figma variables JSON file', required: false },
-  ],
-};
 
 export type GenerateClientCommand = Command<
   'GenerateClient',
@@ -52,6 +38,50 @@ export type ClientGenerationFailedEvent = Event<
     targetDir: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<GenerateClientCommand>({
+  name: 'GenerateClient',
+  alias: 'generate:client',
+  description: 'Generate React client app',
+  category: 'generate',
+  fields: {
+    starterDir: {
+      description: 'Starter template path',
+      required: true,
+    },
+    targetDir: {
+      description: 'Client output directory',
+      required: true,
+    },
+    iaSchemaPath: {
+      description: 'Information architecture JSON file',
+      required: true,
+    },
+    gqlSchemaPath: {
+      description: 'GraphQL schema file',
+      required: true,
+    },
+    figmaVariablesPath: {
+      description: 'Figma variables JSON file',
+      required: true,
+    },
+  },
+  examples: [
+    '$ auto generate:client --starter-dir=./shadcn-starter --target-dir=./client --ia-schema-path=./auto-ia.json --gql-schema-path=./schema.graphql --figma-variables-path=./figma-vars.json',
+  ],
+  handle: async (command: GenerateClientCommand): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> => {
+    debug('Command handler invoked for GenerateClient');
+    const result = await handleGenerateClientCommandInternal(command);
+    if (result.type === 'ClientGenerated') {
+      debug('Handler completed successfully');
+      debug('Client generated successfully');
+    } else {
+      debug('Handler failed with error: %s', result.data.error);
+      debug('Failed: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 async function handleGenerateClientCommandInternal(
   command: GenerateClientCommand,
@@ -140,24 +170,5 @@ async function handleGenerateClientCommandInternal(
   }
 }
 
-export const generateClientCommandHandler: CommandHandler<
-  GenerateClientCommand,
-  ClientGeneratedEvent | ClientGenerationFailedEvent
-> = {
-  name: 'GenerateClient',
-  handle: async (command: GenerateClientCommand): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> => {
-    debug('Command handler invoked for GenerateClient');
-    const result = await handleGenerateClientCommandInternal(command);
-    if (result.type === 'ClientGenerated') {
-      debug('Handler completed successfully');
-      debug('Client generated successfully');
-    } else {
-      debug('Handler failed with error: %s', result.data.error);
-      debug('Failed: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
 // Default export is the command handler
-export default generateClientCommandHandler;
+export default commandHandler;

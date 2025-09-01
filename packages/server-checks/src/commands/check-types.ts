@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import path from 'path';
 import { execa } from 'execa';
 import fg from 'fast-glob';
@@ -9,15 +9,6 @@ const debug = createDebug('server-checks:types');
 const debugHandler = createDebug('server-checks:types:handler');
 const debugProcess = createDebug('server-checks:types:process');
 const debugResult = createDebug('server-checks:types:result');
-
-export const checkTypesManifest = {
-  handler: () => import('./check-types'),
-  description: 'TypeScript type checking',
-  usage: 'check:types <directory>',
-  examples: ['$ auto check:types ./server', '$ auto check:types ./server --scope project'],
-  args: [{ name: 'directory', description: 'Directory to check', required: true }],
-  options: [{ name: '--scope <scope>', description: 'Check scope: slice (default) or project' }],
-};
 
 export type CheckTypesCommand = Command<
   'CheckTypes',
@@ -44,47 +35,25 @@ export type TypeCheckFailedEvent = Event<
   }
 >;
 
-async function findProjectRoot(startDir: string): Promise<string> {
-  let dir = startDir;
-  while (dir !== path.dirname(dir)) {
-    try {
-      await access(path.join(dir, 'package.json'));
-      await access(path.join(dir, 'tsconfig.json'));
-      return dir;
-    } catch {
-      dir = path.dirname(dir);
-    }
-  }
-  throw new Error('Could not find project root (no package.json or tsconfig.json found)');
-}
-
-function extractFailedFiles(output: string, rootDir: string, targetDir?: string): string[] {
-  const failedFiles = new Set<string>();
-
-  const patterns = [
-    /^([^:]+\.ts)\(\d+,\d+\): error/gm,
-    /error TS\d+: .+ '([^']+\.ts)'/gm,
-    /^([^:]+\.ts):\d+:\d+ - error/gm,
-  ];
-
-  for (const pattern of patterns) {
-    for (const match of output.matchAll(pattern)) {
-      const filePath = match[1] ? path.resolve(rootDir, match[1]) : '';
-
-      const notNodeModules = !filePath.includes('node_modules');
-      const inTarget = targetDir === undefined || filePath.startsWith(targetDir);
-
-      if (notNodeModules && inTarget) {
-        failedFiles.add(filePath);
-      }
-    }
-  }
-
-  return Array.from(failedFiles);
-}
-
-export const checkTypesCommandHandler: CommandHandler<CheckTypesCommand> = {
+export const commandHandler = defineCommandHandler<CheckTypesCommand>({
   name: 'CheckTypes',
+  alias: 'check:types',
+  description: 'TypeScript type checking',
+  category: 'check',
+  fields: {
+    targetDirectory: {
+      description: 'Directory to check',
+      required: true,
+    },
+    scope: {
+      description: 'Check scope: slice (default) or project',
+      required: false,
+    },
+  },
+  examples: [
+    '$ auto check:types --target-directory=./server',
+    '$ auto check:types --target-directory=./server --scope=project',
+  ],
   // eslint-disable-next-line complexity
   handle: async (command: CheckTypesCommand): Promise<TypeCheckPassedEvent | TypeCheckFailedEvent> => {
     debug('CommandHandler executing for CheckTypes');
@@ -219,7 +188,46 @@ export const checkTypesCommandHandler: CommandHandler<CheckTypesCommand> = {
       };
     }
   },
-};
+});
+
+async function findProjectRoot(startDir: string): Promise<string> {
+  let dir = startDir;
+  while (dir !== path.dirname(dir)) {
+    try {
+      await access(path.join(dir, 'package.json'));
+      await access(path.join(dir, 'tsconfig.json'));
+      return dir;
+    } catch {
+      dir = path.dirname(dir);
+    }
+  }
+  throw new Error('Could not find project root (no package.json or tsconfig.json found)');
+}
+
+function extractFailedFiles(output: string, rootDir: string, targetDir?: string): string[] {
+  const failedFiles = new Set<string>();
+
+  const patterns = [
+    /^([^:]+\.ts)\(\d+,\d+\): error/gm,
+    /error TS\d+: .+ '([^']+\.ts)'/gm,
+    /^([^:]+\.ts):\d+:\d+ - error/gm,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of output.matchAll(pattern)) {
+      const filePath = match[1] ? path.resolve(rootDir, match[1]) : '';
+
+      const notNodeModules = !filePath.includes('node_modules');
+      const inTarget = targetDir === undefined || filePath.startsWith(targetDir);
+
+      if (notNodeModules && inTarget) {
+        failedFiles.add(filePath);
+      }
+    }
+  }
+
+  return Array.from(failedFiles);
+}
 
 // Default export for CLI usage - just export the handler
-export default checkTypesCommandHandler;
+export default commandHandler;

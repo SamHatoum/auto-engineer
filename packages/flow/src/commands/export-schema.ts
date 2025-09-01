@@ -1,22 +1,12 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+#!/usr/bin/env node
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { getFs } from './filestore.node';
 import createDebug from 'debug';
 
 const debug = createDebug('flow:export-schema');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '4';
-} // blue
-
-export const exportSchemaManifest = {
-  handler: () => Promise.resolve({ default: exportSchemaCommandHandler }),
-  description: 'Export flow schemas to context directory',
-  usage: 'export:schema <context> <flows>',
-  examples: ['$ auto export:schema ./.context ./flows'],
-  args: [
-    { name: 'context', description: 'Context directory path', required: true },
-    { name: 'flows', description: 'Flows directory path', required: true },
-  ],
-};
+}
 
 export type ExportSchemaCommand = Command<
   'ExportSchema',
@@ -40,6 +30,29 @@ export type SchemaExportFailedEvent = Event<
     error: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<ExportSchemaCommand>({
+  name: 'ExportSchema',
+  alias: 'export:schema',
+  description: 'Export flow schemas to context directory',
+  category: 'export',
+  fields: {
+    directory: {
+      description: 'Context directory path',
+      required: true,
+    },
+  },
+  examples: ['$ auto export:schema --directory=./.context'],
+  handle: async (command: ExportSchemaCommand): Promise<SchemaExportedEvent | SchemaExportFailedEvent> => {
+    const result = await handleExportSchemaCommand(command);
+    if (result.type === 'SchemaExported') {
+      debug('✅ Flow schema written to: %s', result.data.outputPath);
+    } else {
+      debug('❌ Failed to export schema: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 export async function handleExportSchemaCommand(
   command: ExportSchemaCommand,
@@ -136,21 +149,5 @@ export async function handleExportSchemaCommand(
   }
 }
 
-export const exportSchemaCommandHandler: CommandHandler<
-  ExportSchemaCommand,
-  SchemaExportedEvent | SchemaExportFailedEvent
-> = {
-  name: 'ExportSchema',
-  handle: async (command: ExportSchemaCommand): Promise<SchemaExportedEvent | SchemaExportFailedEvent> => {
-    const result = await handleExportSchemaCommand(command);
-    if (result.type === 'SchemaExported') {
-      debug('✅ Flow schema written to: %s', result.data.outputPath);
-    } else {
-      debug('❌ Failed to export schema: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
 // Default export is the command handler
-export default exportSchemaCommandHandler;
+export default commandHandler;

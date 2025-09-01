@@ -1,21 +1,10 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import createDebug from 'debug';
 
 const debug = createDebug('frontend-generator-react-graphql:copy-example');
-
-export const copyExampleManifest = {
-  handler: () => Promise.resolve({ default: copyExampleCommandHandler }),
-  description: 'Copy example React GraphQL template',
-  usage: 'copy:example <example-name> <destination>',
-  examples: ['$ auto copy:example shadcn-starter ./my-starter'],
-  args: [
-    { name: 'example-name', description: 'Name of the example template', required: true },
-    { name: 'destination', description: 'Destination directory', required: true },
-  ],
-};
 
 export type CopyExampleCommand = Command<
   'CopyExample',
@@ -41,6 +30,33 @@ export type ExampleCopyFailedEvent = Event<
     targetDir: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<CopyExampleCommand>({
+  name: 'CopyExample',
+  alias: 'copy:example',
+  description: 'Copy example React GraphQL template',
+  category: 'copy',
+  fields: {
+    starterName: {
+      description: 'Name of the example template',
+      required: true,
+    },
+    targetDir: {
+      description: 'Destination directory',
+      required: true,
+    },
+  },
+  examples: ['$ auto copy:example --starter-name=shadcn-starter --target-dir=./my-starter'],
+  handle: async (command: CopyExampleCommand): Promise<ExampleCopiedEvent | ExampleCopyFailedEvent> => {
+    const result = await handleCopyExampleCommand(command);
+    if (result.type === 'ExampleCopied') {
+      debug('Starter "%s" copied successfully to %s', result.data.starterName, result.data.targetDir);
+    } else {
+      debug('Failed to copy starter: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 async function copyDirectory(src: string, dest: string): Promise<void> {
   await fs.mkdir(dest, { recursive: true });
@@ -141,21 +157,5 @@ export async function handleCopyExampleCommand(
   }
 }
 
-export const copyExampleCommandHandler: CommandHandler<
-  CopyExampleCommand,
-  ExampleCopiedEvent | ExampleCopyFailedEvent
-> = {
-  name: 'CopyExample',
-  handle: async (command: CopyExampleCommand): Promise<ExampleCopiedEvent | ExampleCopyFailedEvent> => {
-    const result = await handleCopyExampleCommand(command);
-    if (result.type === 'ExampleCopied') {
-      debug('Starter "%s" copied successfully to %s', result.data.starterName, result.data.targetDir);
-    } else {
-      debug('Failed to copy starter: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
 // Default export is the command handler
-export default copyExampleCommandHandler;
+export default commandHandler;

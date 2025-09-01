@@ -6,7 +6,7 @@ import createDebug from 'debug';
 import { stringify } from 'yaml';
 import chalk from 'chalk';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
-import type { CommandHandler, Command, Event } from '@auto-engineer/message-bus';
+import type { CommandHandler, Command, Event, UnifiedCommandHandler } from '@auto-engineer/message-bus';
 import type { CliManifest } from './manifest-types';
 
 const debug = createDebug('cli:plugin-loader');
@@ -161,45 +161,122 @@ export class PluginLoader {
     }
   }
 
+  private convertUnifiedToCliCommand(handler: UnifiedCommandHandler<Command>, packageName: string): CliCommand {
+    // All fields become options (no positional args anymore)
+    const options: Array<{ name: string; description: string }> = [];
+
+    for (const [fieldName, fieldDef] of Object.entries(handler.fields)) {
+      if (fieldDef.flag === true) {
+        // Boolean flag option
+        const flagName = `--${fieldName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`).replace(/^-/, '')}`;
+        options.push({
+          name: flagName,
+          description: fieldDef.description,
+        });
+      } else {
+        // Regular option
+        const optName = `--${fieldName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`).replace(/^-/, '')}`;
+        options.push({
+          name: `${optName} <value>`,
+          description: fieldDef.description,
+        });
+      }
+    }
+
+    // Generate usage string without positional args
+    const usage = handler.alias;
+
+    return {
+      handler: () => Promise.resolve({ default: handler }),
+      description: handler.description,
+      package: packageName,
+      category: handler.category ?? packageName,
+      usage,
+      examples: handler.examples,
+      args: undefined, // No positional args
+      options: options.length > 0 ? options : undefined,
+    };
+  }
+
+  private async processUnifiedCommands(
+    packageName: string,
+    commands: UnifiedCommandHandler<Command>[],
+    aliasMap: Map<string, { packageName: string; command: unknown }[]>,
+  ): Promise<void> {
+    debugPlugins('Found COMMANDS export (new format) in %s', packageName);
+    this.loadedPlugins.add(packageName);
+
+    for (const unifiedHandler of commands) {
+      const alias = unifiedHandler.alias;
+      debugPlugins('Processing unified command %s from %s', alias, packageName);
+
+      // Convert unified handler to CLI command format
+      const cliCommand = this.convertUnifiedToCliCommand(unifiedHandler, packageName);
+
+      if (!aliasMap.has(alias)) {
+        aliasMap.set(alias, []);
+      }
+      aliasMap.get(alias)!.push({
+        packageName,
+        command: cliCommand,
+      });
+    }
+  }
+
+  private async processManifestCommands(
+    packageName: string,
+    manifest: CliManifest,
+    aliasMap: Map<string, { packageName: string; command: unknown }[]>,
+  ): Promise<void> {
+    debugPlugins('Found CLI_MANIFEST (old format) in %s', packageName);
+    this.loadedPlugins.add(packageName);
+
+    // Process each command in the manifest
+    for (const [alias, command] of Object.entries(manifest.commands)) {
+      debugPlugins('Processing command %s from %s', alias, packageName);
+
+      // Add the category and version from the manifest to each command
+      const commandWithCategory = {
+        ...command,
+        category: manifest.category ?? packageName,
+        version: manifest.version,
+      };
+
+      // Track all packages that want this alias
+      if (!aliasMap.has(alias)) {
+        aliasMap.set(alias, []);
+      }
+      aliasMap.get(alias)!.push({
+        packageName,
+        command: commandWithCategory,
+      });
+    }
+  }
+
   private async processPlugin(
     packageName: string,
     aliasMap: Map<string, { packageName: string; command: unknown }[]>,
   ): Promise<void> {
     debugPlugins('Loading plugin: %s', packageName);
     try {
-      const pkg = (await this.loadPlugin(packageName)) as { CLI_MANIFEST?: CliManifest };
+      const pkg = (await this.loadPlugin(packageName)) as {
+        CLI_MANIFEST?: CliManifest;
+        COMMANDS?: UnifiedCommandHandler<Command>[];
+      };
 
-      if (!pkg.CLI_MANIFEST) {
-        debugPlugins('Package %s does not export CLI_MANIFEST, skipping', packageName);
+      // Check for new unified command format first
+      if (pkg.COMMANDS) {
+        await this.processUnifiedCommands(packageName, pkg.COMMANDS, aliasMap);
         return;
       }
 
-      debugPlugins('Found CLI_MANIFEST in %s', packageName);
-      const manifest = pkg.CLI_MANIFEST;
-
-      // Track that this plugin was successfully loaded
-      this.loadedPlugins.add(packageName);
-
-      // Process each command in the manifest
-      for (const [alias, command] of Object.entries(manifest.commands)) {
-        debugPlugins('Processing command %s from %s', alias, packageName);
-
-        // Add the category and version from the manifest to each command
-        const commandWithCategory = {
-          ...command,
-          category: manifest.category ?? packageName,
-          version: manifest.version,
-        };
-
-        // Track all packages that want this alias
-        if (!aliasMap.has(alias)) {
-          aliasMap.set(alias, []);
-        }
-        aliasMap.get(alias)!.push({
-          packageName,
-          command: commandWithCategory,
-        });
+      // Fall back to old CLI_MANIFEST format
+      if (!pkg.CLI_MANIFEST) {
+        debugPlugins('Package %s does not export CLI_MANIFEST or COMMANDS, skipping', packageName);
+        return;
       }
+
+      await this.processManifestCommands(packageName, pkg.CLI_MANIFEST, aliasMap);
     } catch (error) {
       debugPlugins('Failed to load plugin %s: %O', packageName, error);
       // Only show plugin loading errors when debugging
@@ -425,33 +502,53 @@ export class PluginLoader {
     return this.commandMappers.get(alias);
   }
 
-  private buildCommandMapper(alias: string, command: CliCommand): void {
+  private buildCommandMapper(
+    alias: string,
+    command: CliCommand,
+    unifiedHandler?: UnifiedCommandHandler<Command>,
+  ): void {
     const mapper = (args: (string | string[])[], options: Record<string, unknown>): Record<string, unknown> => {
       const commandData: Record<string, unknown> = {};
 
-      // Map positional arguments based on the command's args definition
-      if (command.args) {
-        command.args.forEach((argDef, index) => {
-          if (args[index] !== undefined) {
-            // Convert arg name to camelCase for the data property
-            const propName = argDef.name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
-            commandData[propName] = args[index];
-          }
-        });
-      }
+      if (unifiedHandler !== undefined && unifiedHandler.fields !== undefined) {
+        // Handle unified command format - all fields are options now
+        const fieldsArray = Object.entries(unifiedHandler.fields);
 
-      // Map options
-      if (command.options) {
-        command.options.forEach((optDef) => {
-          // Extract option name from format like "--fix" or "--scope <scope>"
-          const optMatch = optDef.name.match(/^--([a-zA-Z-]+)/);
-          if (optMatch) {
-            const optName = optMatch[1].replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
-            if (options[optName] !== undefined || options[optMatch[1]] !== undefined) {
-              commandData[optName] = options[optName] ?? options[optMatch[1]];
-            }
+        // Map all options
+        fieldsArray.forEach(([fieldName]) => {
+          const kebabName = fieldName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`).replace(/^-/, '');
+          if (options[kebabName] !== undefined) {
+            commandData[fieldName] = options[kebabName];
+          } else if (options[fieldName] !== undefined) {
+            commandData[fieldName] = options[fieldName];
           }
         });
+      } else {
+        // Fall back to old format
+        // Map positional arguments based on the command's args definition
+        if (command.args) {
+          command.args.forEach((argDef, index) => {
+            if (args[index] !== undefined) {
+              // Convert arg name to camelCase for the data property
+              const propName = argDef.name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+              commandData[propName] = args[index];
+            }
+          });
+        }
+
+        // Map options
+        if (command.options) {
+          command.options.forEach((optDef) => {
+            // Extract option name from format like "--fix" or "--scope <scope>"
+            const optMatch = optDef.name.match(/^--([a-zA-Z-]+)/);
+            if (optMatch) {
+              const optName = optMatch[1].replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+              if (options[optName] !== undefined || options[optMatch[1]] !== undefined) {
+                commandData[optName] = options[optName] ?? options[optMatch[1]];
+              }
+            }
+          });
+        }
       }
 
       // Handle special cases for variadic arguments
@@ -481,9 +578,6 @@ export class PluginLoader {
       category: candidate.command.category,
     });
 
-    // Build and store command mapper based on args and options
-    this.buildCommandMapper(alias, candidate.command);
-
     debugBus('Loading command handler for %s', alias);
 
     try {
@@ -505,6 +599,14 @@ export class PluginLoader {
       }
 
       const commandHandler = handler as CommandHandler;
+
+      // Build and store command mapper based on args and options
+      // Pass unified handler if it has fields property
+      const unifiedHandler =
+        'fields' in handler && (handler as UnifiedCommandHandler<Command>).fields !== undefined
+          ? (handler as UnifiedCommandHandler<Command>)
+          : undefined;
+      this.buildCommandMapper(alias, candidate.command, unifiedHandler);
 
       // Store mapping from alias to handler name
       this.aliasToHandlerName.set(alias, commandHandler.name);

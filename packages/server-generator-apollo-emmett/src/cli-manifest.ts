@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { generateServerManifest } from './commands/generate-server';
+import { commandHandler as generateServerHandler } from './commands/generate-server';
 
 // Get version from package.json
 const getVersion = (): string => {
@@ -28,10 +28,20 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [generateServerHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/server-generator-apollo-emmett',
   version: getVersion(),
   commands: {
-    'generate:server': generateServerManifest,
+    [generateServerHandler.alias]: {
+      handler: () => Promise.resolve({ default: generateServerHandler }),
+      description: generateServerHandler.description,
+      usage: `${generateServerHandler.alias} <args>`,
+      examples: generateServerHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
   },
 };

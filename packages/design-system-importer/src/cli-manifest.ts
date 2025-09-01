@@ -1,5 +1,5 @@
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { importDesignSystemManifest } from './commands/import-design-system';
+import { commandHandler as importDesignSystemHandler } from './commands/import-design-system';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -28,10 +28,24 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [importDesignSystemHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/design-system-importer',
   version: getVersion(),
   commands: {
-    'import:design-system': importDesignSystemManifest,
+    [importDesignSystemHandler.alias]: {
+      handler: () => Promise.resolve({ default: importDesignSystemHandler }),
+      description: importDesignSystemHandler.description,
+      usage: `${importDesignSystemHandler.alias} <args>`,
+      examples: importDesignSystemHandler.examples,
+      args: [
+        { name: 'outputDir', description: 'Source directory for design system', required: true },
+        { name: 'strategy', description: 'Import mode (e.g., WITH_COMPONENT_SETS)', required: false },
+        { name: 'filterPath', description: 'Optional filter file', required: false },
+      ],
+    },
   },
 };

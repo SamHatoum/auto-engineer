@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,17 +14,6 @@ const debugResult = createDebug('ia:generate-command:result');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-export const generateIAManifest = {
-  handler: () => Promise.resolve({ default: generateIACommandHandler }),
-  description: 'Generate Information Architecture',
-  usage: 'generate:ia <context> <flows...>',
-  examples: ['$ auto generate:ia ./.context ./flows/*.flow.ts'],
-  args: [
-    { name: 'context', description: 'Context directory', required: true },
-    { name: 'flows...', description: 'Flow files to analyze', required: true },
-  ],
-};
 
 export type GenerateIACommand = Command<
   'GenerateIA',
@@ -51,6 +40,34 @@ export type IAGenerationFailedEvent = Event<
     flowFiles: string[];
   }
 >;
+
+export const commandHandler = defineCommandHandler<GenerateIACommand>({
+  name: 'GenerateIA',
+  alias: 'generate:ia',
+  description: 'Generate Information Architecture',
+  category: 'generate',
+  fields: {
+    outputDir: {
+      description: 'Context directory',
+      required: true,
+    },
+    flowFiles: {
+      description: 'Flow files to analyze',
+      required: true,
+      // Note: flowFiles is an array, so it doesn't have a simple position
+    },
+  },
+  examples: ['$ auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts'],
+  handle: async (command: GenerateIACommand): Promise<IAGeneratedEvent | IAGenerationFailedEvent> => {
+    const result = await handleGenerateIACommandInternal(command);
+    if (result.type === 'IAGenerated') {
+      debug('IA schema generated successfully');
+    } else {
+      debug('Failed: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> {
   const mdPath = path.join(designSystemDir, 'design-system.md');
@@ -204,18 +221,5 @@ async function handleGenerateIACommandInternal(
   }
 }
 
-export const generateIACommandHandler: CommandHandler<GenerateIACommand, IAGeneratedEvent | IAGenerationFailedEvent> = {
-  name: 'GenerateIA',
-  handle: async (command: GenerateIACommand): Promise<IAGeneratedEvent | IAGenerationFailedEvent> => {
-    const result = await handleGenerateIACommandInternal(command);
-    if (result.type === 'IAGenerated') {
-      debug('IA schema generated successfully');
-    } else {
-      debug('Failed: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
 // Default export is the command handler
-export default generateIACommandHandler;
+export default commandHandler;

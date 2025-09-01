@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import path from 'path';
 import { existsSync } from 'fs';
 import { getTsErrors, getBuildErrors, getConsoleErrors, closeBrowser } from '../index';
@@ -10,14 +10,6 @@ const debugHandler = createDebug('frontend-checks:command:handler');
 const debugServer = createDebug('frontend-checks:command:server');
 const debugChecks = createDebug('frontend-checks:command:checks');
 const debugResult = createDebug('frontend-checks:command:result');
-
-export const checkClientManifest = {
-  handler: () => Promise.resolve({ default: checkClientCommandHandler }),
-  description: 'Full frontend validation suite',
-  usage: 'check:client <client-dir>',
-  examples: ['$ auto check:client ./client'],
-  args: [{ name: 'client-dir', description: 'Client directory to check', required: true }],
-};
 
 export type CheckClientCommand = Command<
   'CheckClient',
@@ -48,6 +40,49 @@ export type ClientCheckFailedEvent = Event<
     error: string;
   }
 >;
+
+export const checkClientCommandHandler = defineCommandHandler<CheckClientCommand>({
+  name: 'CheckClient',
+  alias: 'check:client',
+  description: 'Full frontend validation suite',
+  category: 'validation',
+
+  fields: {
+    clientDirectory: {
+      description: 'Client directory to check',
+      required: true,
+    },
+    skipBrowserChecks: {
+      description: 'Skip browser-based validation checks',
+      required: false,
+      flag: true,
+    },
+  },
+
+  examples: ['$ auto check:client --client-directory=./client'],
+
+  handle: async (command: CheckClientCommand): Promise<ClientCheckedEvent | ClientCheckFailedEvent> => {
+    debug('CommandHandler executing for CheckClient');
+    const result = await handleCheckClientCommand(command);
+
+    if (result.type === 'ClientChecked') {
+      const { tsErrors, buildErrors, consoleErrors, allChecksPassed } = result.data;
+
+      if (allChecksPassed) {
+        debug('Command handler completed: all checks passed');
+      } else {
+        debug('Command handler completed: some checks failed');
+        debug('TypeScript errors: %d', tsErrors);
+        debug('Build errors: %d', buildErrors);
+        debug('Console errors: %d', consoleErrors);
+      }
+    } else {
+      debug('Command handler completed: failure - %s', result.data.error);
+    }
+
+    return result;
+  },
+});
 
 async function startDevServer(clientDir: string): Promise<{ process: ChildProcess; url: string }> {
   debugServer('Starting dev server in: %s', clientDir);
@@ -262,30 +297,4 @@ export async function handleCheckClientCommand(
   }
 }
 
-export const checkClientCommandHandler: CommandHandler<CheckClientCommand> = {
-  name: 'CheckClient',
-  handle: async (command: CheckClientCommand): Promise<ClientCheckedEvent | ClientCheckFailedEvent> => {
-    debug('CommandHandler executing for CheckClient');
-    const result = await handleCheckClientCommand(command);
-
-    if (result.type === 'ClientChecked') {
-      const { tsErrors, buildErrors, consoleErrors, allChecksPassed } = result.data;
-
-      if (allChecksPassed) {
-        debug('Command handler completed: all checks passed');
-      } else {
-        debug('Command handler completed: some checks failed');
-        debug('TypeScript errors: %d', tsErrors);
-        debug('Build errors: %d', buildErrors);
-        debug('Console errors: %d', consoleErrors);
-      }
-    } else {
-      debug('Command handler completed: failure - %s', result.data.error);
-    }
-
-    return result;
-  },
-};
-
-// Default export is the command handler
 export default checkClientCommandHandler;

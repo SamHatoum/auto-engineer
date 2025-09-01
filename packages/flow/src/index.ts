@@ -122,7 +122,7 @@ export { CLI_MANIFEST } from './cli-manifest';
 
 // Commands
 export {
-  exportSchemaCommandHandler,
+  commandHandler as exportSchemaCommandHandler,
   type ExportSchemaCommand,
   type SchemaExportedEvent,
   type SchemaExportFailedEvent,

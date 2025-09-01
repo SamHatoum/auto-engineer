@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { generateIAManifest } from './commands/generate-ia';
+import { commandHandler as generateIAHandler } from './commands/generate-ia';
 
 // Get version from package.json
 const getVersion = (): string => {
@@ -28,10 +28,20 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [generateIAHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/information-architect',
   version: getVersion(),
   commands: {
-    'generate:ia': generateIAManifest,
+    [generateIAHandler.alias]: {
+      handler: () => Promise.resolve({ default: generateIAHandler }),
+      description: generateIAHandler.description,
+      usage: `${generateIAHandler.alias} <args>`,
+      examples: generateIAHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
   },
 };

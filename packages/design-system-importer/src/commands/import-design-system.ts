@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { importDesignSystemComponentsFromFigma, ImportStrategy, type FilterFunctionType } from '../index';
 import { FilterLoader } from '../utils/FilterLoader';
 import createDebug from 'debug';
@@ -31,6 +31,44 @@ export type DesignSystemImportFailedEvent = Event<
     outputDir: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<ImportDesignSystemCommand>({
+  name: 'ImportDesignSystem',
+  alias: 'import:design-system',
+  description: 'Import Figma design system',
+  category: 'import',
+  fields: {
+    outputDir: {
+      description: 'Source directory for design system',
+      required: true,
+    },
+    strategy: {
+      description: 'Import mode (e.g., WITH_COMPONENT_SETS)',
+      required: false,
+    },
+    filterPath: {
+      description: 'Optional filter file',
+      required: false,
+    },
+  },
+  examples: [
+    '$ auto import:design-system --output-dir=./.context --strategy=WITH_COMPONENT_SETS --filter-path=./shadcn-filter.ts',
+  ],
+  handle: async (
+    command: ImportDesignSystemCommand,
+  ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> => {
+    debug('CommandHandler executing for ImportDesignSystem');
+    const result = await handleImportDesignSystemCommandInternal(command);
+    if (result.type === 'DesignSystemImported') {
+      debug('Command handler completed: success');
+      debugResult('Design system imported successfully to %s', result.data.outputDir);
+    } else {
+      debug('Command handler completed: failure - %s', result.data.error);
+      debugResult('Failed: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 // Handler
 async function loadFilterFunction(filterPath?: string): Promise<FilterFunctionType | undefined> {
@@ -124,36 +162,5 @@ async function handleImportDesignSystemCommandInternal(
   }
 }
 
-const importDesignSystemCommandHandler: CommandHandler<ImportDesignSystemCommand> = {
-  name: 'ImportDesignSystem',
-  handle: async (
-    command: ImportDesignSystemCommand,
-  ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> => {
-    debug('CommandHandler executing for ImportDesignSystem');
-    const result = await handleImportDesignSystemCommandInternal(command);
-    if (result.type === 'DesignSystemImported') {
-      debug('Command handler completed: success');
-      debugResult('Design system imported successfully to %s', result.data.outputDir);
-    } else {
-      debug('Command handler completed: failure - %s', result.data.error);
-      debugResult('Failed: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
-// CLI manifest entry for this command
-export const importDesignSystemManifest = {
-  handler: () => Promise.resolve({ default: importDesignSystemCommandHandler }),
-  description: 'Import Figma design system',
-  usage: 'import:design-system <src> <mode> [filter]',
-  examples: ['$ auto import:design-system ./.context WITH_COMPONENT_SETS ./shadcn-filter.ts'],
-  args: [
-    { name: 'src', description: 'Source directory for design system', required: true },
-    { name: 'mode', description: 'Import mode (e.g., WITH_COMPONENT_SETS)', required: true },
-    { name: 'filter', description: 'Optional filter file', required: false },
-  ],
-};
-
 // Default export is the command handler
-export default importDesignSystemCommandHandler;
+export default commandHandler;

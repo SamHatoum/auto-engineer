@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import path from 'path';
 import { existsSync } from 'fs';
 import { runFlows } from '../agent/runFlows';
@@ -8,14 +8,6 @@ const debug = createDebug('server-impl:command');
 const debugHandler = createDebug('server-impl:command:handler');
 const debugProcess = createDebug('server-impl:command:process');
 const debugResult = createDebug('server-impl:command:result');
-
-export const implementServerManifest = {
-  handler: () => Promise.resolve({ default: implementServerCommandHandler }),
-  description: 'AI implements server TODOs and tests',
-  usage: 'implement:server <server-dir>',
-  examples: ['$ auto implement:server ./server'],
-  args: [{ name: 'server-dir', description: 'Server directory path', required: true }],
-};
 
 export type ImplementServerCommand = Command<
   'ImplementServer',
@@ -39,6 +31,38 @@ export type ServerImplementationFailedEvent = Event<
     error: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<ImplementServerCommand>({
+  name: 'ImplementServer',
+  alias: 'implement:server',
+  description: 'AI implements server TODOs and tests',
+  category: 'implement',
+  fields: {
+    serverDirectory: {
+      description: 'Server directory path',
+      required: true,
+    },
+  },
+  examples: ['$ auto implement:server --server-directory=./server'],
+  handle: async (
+    command: ImplementServerCommand,
+  ): Promise<ServerImplementedEvent | ServerImplementationFailedEvent> => {
+    debug('CommandHandler executing for ImplementServer');
+    const result = await handleImplementServerCommandInternal(command);
+
+    if (result.type === 'ServerImplemented') {
+      debug('Command handler completed: success');
+      debug('✅ Server implementation completed successfully');
+      if (result.data.flowsImplemented > 0) {
+        debug('   %d flows implemented', result.data.flowsImplemented);
+      }
+    } else {
+      debug('Command handler completed: failure - %s', result.data.error);
+      debug('❌ Server implementation failed: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 async function handleImplementServerCommandInternal(
   command: ImplementServerCommand,
@@ -116,30 +140,5 @@ async function handleImplementServerCommandInternal(
   }
 }
 
-export const implementServerCommandHandler: CommandHandler<
-  ImplementServerCommand,
-  ServerImplementedEvent | ServerImplementationFailedEvent
-> = {
-  name: 'ImplementServer',
-  handle: async (
-    command: ImplementServerCommand,
-  ): Promise<ServerImplementedEvent | ServerImplementationFailedEvent> => {
-    debug('CommandHandler executing for ImplementServer');
-    const result = await handleImplementServerCommandInternal(command);
-
-    if (result.type === 'ServerImplemented') {
-      debug('Command handler completed: success');
-      debug('✅ Server implementation completed successfully');
-      if (result.data.flowsImplemented > 0) {
-        debug('   %d flows implemented', result.data.flowsImplemented);
-      }
-    } else {
-      debug('Command handler completed: failure - %s', result.data.error);
-      debug('❌ Server implementation failed: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
 // Default export is the command handler
-export default implementServerCommandHandler;
+export default commandHandler;

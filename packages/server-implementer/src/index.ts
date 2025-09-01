@@ -1,14 +1,14 @@
 export { CLI_MANIFEST } from './cli-manifest';
 
 export {
-  implementServerCommandHandler,
+  commandHandler as implementServerCommandHandler,
   type ImplementServerCommand,
   type ServerImplementedEvent,
   type ServerImplementationFailedEvent,
 } from './commands/implement-server';
 
 export {
-  implementSliceCommandHandler,
+  commandHandler as implementSliceCommandHandler,
   handleImplementSliceCommand,
   type ImplementSliceCommand,
   type SliceImplementedEvent,

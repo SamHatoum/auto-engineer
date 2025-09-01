@@ -1,21 +1,21 @@
 export { CLI_MANIFEST } from './cli-manifest';
 
 export {
-  checkTypesCommandHandler,
+  commandHandler as checkTypesCommandHandler,
   type CheckTypesCommand,
   type TypeCheckPassedEvent,
   type TypeCheckFailedEvent,
 } from './commands/check-types';
 
 export {
-  checkTestsCommandHandler,
+  commandHandler as checkTestsCommandHandler,
   type CheckTestsCommand,
   type TestsCheckPassedEvent,
   type TestsCheckFailedEvent,
 } from './commands/check-tests';
 
 export {
-  checkLintCommandHandler,
+  commandHandler as checkLintCommandHandler,
   type CheckLintCommand,
   type LintCheckPassedEvent,
   type LintCheckFailedEvent,

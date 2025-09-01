@@ -1,5 +1,5 @@
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { exportSchemaManifest } from './commands/export-schema';
+import { commandHandler as exportSchemaHandler } from './commands/export-schema';
 
 function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
@@ -42,10 +42,20 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [exportSchemaHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/flow',
   version: getVersion(),
   commands: {
-    'export:schema': exportSchemaManifest,
+    [exportSchemaHandler.alias]: {
+      handler: () => Promise.resolve({ default: exportSchemaHandler }),
+      description: exportSchemaHandler.description,
+      usage: `${exportSchemaHandler.alias} <args>`,
+      examples: exportSchemaHandler.examples,
+      args: [{ name: 'directory', description: 'Context directory path', required: true }],
+    },
   },
 };

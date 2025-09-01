@@ -75,7 +75,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export { CLI_MANIFEST } from './cli-manifest';
-export * from './commands/generate-client';
-export * from './commands/copy-example';
+export {
+  commandHandler as generateClientCommandHandler,
+  type GenerateClientCommand,
+  type ClientGeneratedEvent,
+  type ClientGenerationFailedEvent,
+} from './commands/generate-client';
+export {
+  commandHandler as copyExampleCommandHandler,
+  type CopyExampleCommand,
+  type ExampleCopiedEvent,
+  type ExampleCopyFailedEvent,
+} from './commands/copy-example';
 export * from './figma-helpers';
 export * from './templates/createFile';

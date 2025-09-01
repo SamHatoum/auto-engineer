@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { implementClientManifest } from './commands/implement-client';
+import { commandHandler as implementClientHandler } from './commands/implement-client';
 
 // Get version from package.json
 const getVersion = (): string => {
@@ -28,10 +28,20 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [implementClientHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/frontend-implementer',
   version: getVersion(),
   commands: {
-    'implement:client': implementClientManifest,
+    [implementClientHandler.alias]: {
+      handler: () => Promise.resolve({ default: implementClientHandler }),
+      description: implementClientHandler.description,
+      usage: `${implementClientHandler.alias} <args>`,
+      examples: implementClientHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
   },
 };

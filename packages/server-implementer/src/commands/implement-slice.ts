@@ -1,4 +1,4 @@
-import { type CommandHandler, type Command, type Event } from '@auto-engineer/message-bus';
+import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { generateTextWithAI, getAvailableProviders } from '@auto-engineer/ai-gateway';
 import path from 'path';
 import { existsSync } from 'fs';
@@ -10,16 +10,6 @@ const debug = createDebug('server-impl:slice');
 const debugHandler = createDebug('server-impl:slice:handler');
 const debugProcess = createDebug('server-impl:slice:process');
 const debugResult = createDebug('server-impl:slice:result');
-
-export const implementSliceManifest = {
-  handler: () => Promise.resolve({ default: implementSliceCommandHandler }),
-  description: 'AI implements a specific server slice',
-  usage: 'implement:slice <slice-path>',
-  examples: [
-    '$ auto implement:slice ./server/src/domain/flows/seasonal-assistant/enters-shopping-criteria-into-assistant',
-  ],
-  args: [{ name: 'slice-path', description: 'Path to the slice directory to implement', required: true }],
-};
 
 export type ImplementSliceCommand = Command<
   'ImplementSlice',
@@ -47,6 +37,41 @@ export type SliceImplementationFailedEvent = Event<
     error: string;
   }
 >;
+
+export const commandHandler = defineCommandHandler<ImplementSliceCommand>({
+  name: 'ImplementSlice',
+  alias: 'implement:slice',
+  description: 'AI implements a specific server slice',
+  category: 'implement',
+  fields: {
+    slicePath: {
+      description: 'Path to the slice directory to implement',
+      required: true,
+    },
+    context: {
+      description: 'Context for retry attempts with previous outputs',
+      required: false,
+    },
+  },
+  examples: [
+    '$ auto implement:slice --slice-path=./server/src/domain/flows/seasonal-assistant/enters-shopping-criteria-into-assistant',
+  ],
+  handle: async (command: ImplementSliceCommand): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> => {
+    debug('CommandHandler executing for ImplementSlice');
+    const result = await handleImplementSliceCommand(command);
+
+    if (result.type === 'SliceImplemented') {
+      debug('Command handler completed: success');
+      debug('✅ Slice implementation completed successfully');
+      debug('   Slice: %s', path.basename(result.data.slicePath));
+      debug('   Files implemented: %d', result.data.filesImplemented.length);
+    } else {
+      debug('Command handler completed: failure - %s', result.data.error);
+      debug('❌ Slice implementation failed: %s', result.data.error);
+    }
+    return result;
+  },
+});
 
 // Helper function to extract code block from AI response
 function extractCodeBlock(text: string): string {
@@ -316,27 +341,5 @@ export async function handleImplementSliceCommand(
   }
 }
 
-export const implementSliceCommandHandler: CommandHandler<
-  ImplementSliceCommand,
-  SliceImplementedEvent | SliceImplementationFailedEvent
-> = {
-  name: 'ImplementSlice',
-  handle: async (command: ImplementSliceCommand): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> => {
-    debug('CommandHandler executing for ImplementSlice');
-    const result = await handleImplementSliceCommand(command);
-
-    if (result.type === 'SliceImplemented') {
-      debug('Command handler completed: success');
-      debug('✅ Slice implementation completed successfully');
-      debug('   Slice: %s', path.basename(result.data.slicePath));
-      debug('   Files implemented: %d', result.data.filesImplemented.length);
-    } else {
-      debug('Command handler completed: failure - %s', result.data.error);
-      debug('❌ Slice implementation failed: %s', result.data.error);
-    }
-    return result;
-  },
-};
-
 // Default export is the command handler
-export default implementSliceCommandHandler;
+export default commandHandler;

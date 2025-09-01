@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { checkTypesManifest } from './commands/check-types';
-import { checkLintManifest } from './commands/check-lint';
-import { checkTestsManifest } from './commands/check-tests';
+import { commandHandler as checkTypesHandler } from './commands/check-types';
+import { commandHandler as checkLintHandler } from './commands/check-lint';
+import { commandHandler as checkTestsHandler } from './commands/check-tests';
 
 // Get version from package.json
 const getVersion = (): string => {
@@ -30,12 +30,34 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [checkTypesHandler, checkLintHandler, checkTestsHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/server-checks',
   version: getVersion(),
   commands: {
-    'check:types': checkTypesManifest,
-    'check:lint': checkLintManifest,
-    'check:tests': checkTestsManifest,
+    [checkTypesHandler.alias]: {
+      handler: () => Promise.resolve({ default: checkTypesHandler }),
+      description: checkTypesHandler.description,
+      usage: `${checkTypesHandler.alias} <args>`,
+      examples: checkTypesHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
+    [checkLintHandler.alias]: {
+      handler: () => Promise.resolve({ default: checkLintHandler }),
+      description: checkLintHandler.description,
+      usage: `${checkLintHandler.alias} <args>`,
+      examples: checkLintHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
+    [checkTestsHandler.alias]: {
+      handler: () => Promise.resolve({ default: checkTestsHandler }),
+      description: checkTestsHandler.description,
+      usage: `${checkTestsHandler.alias} <args>`,
+      examples: checkTestsHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
   },
 };

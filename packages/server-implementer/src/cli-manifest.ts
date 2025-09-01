@@ -1,6 +1,6 @@
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { implementServerManifest } from './commands/implement-server';
-import { implementSliceManifest } from './commands/implement-slice';
+import { commandHandler as implementServerHandler } from './commands/implement-server';
+import { commandHandler as implementSliceHandler } from './commands/implement-slice';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -29,11 +29,27 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [implementServerHandler, implementSliceHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/server-implementer',
   version: getVersion(),
   commands: {
-    'implement:server': implementServerManifest,
-    'implement:slice': implementSliceManifest,
+    [implementServerHandler.alias]: {
+      handler: () => Promise.resolve({ default: implementServerHandler }),
+      description: implementServerHandler.description,
+      usage: `${implementServerHandler.alias} <args>`,
+      examples: implementServerHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
+    [implementSliceHandler.alias]: {
+      handler: () => Promise.resolve({ default: implementSliceHandler }),
+      description: implementSliceHandler.description,
+      usage: `${implementSliceHandler.alias} <args>`,
+      examples: implementSliceHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
   },
 };

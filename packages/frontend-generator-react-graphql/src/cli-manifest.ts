@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { CliManifest } from '@auto-engineer/cli/manifest-types';
-import { generateClientManifest } from './commands/generate-client';
-import { copyExampleManifest } from './commands/copy-example';
+import { commandHandler as generateClientHandler } from './commands/generate-client';
+import { commandHandler as copyExampleHandler } from './commands/copy-example';
 
 // Get version from package.json
 const getVersion = (): string => {
@@ -29,11 +29,27 @@ const getVersion = (): string => {
   return 'unknown';
 };
 
+// Export new unified format
+export const COMMANDS = [generateClientHandler, copyExampleHandler];
+
+// Keep old format temporarily
 export const CLI_MANIFEST: CliManifest = {
   category: '@auto-engineer/frontend-generator-react-graphql',
   version: getVersion(),
   commands: {
-    'generate:client': generateClientManifest,
-    'copy:example': copyExampleManifest,
+    [generateClientHandler.alias]: {
+      handler: () => Promise.resolve({ default: generateClientHandler }),
+      description: generateClientHandler.description,
+      usage: `${generateClientHandler.alias} <args>`,
+      examples: generateClientHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
+    [copyExampleHandler.alias]: {
+      handler: () => Promise.resolve({ default: copyExampleHandler }),
+      description: copyExampleHandler.description,
+      usage: `${copyExampleHandler.alias} <args>`,
+      examples: copyExampleHandler.examples,
+      args: [{ name: 'directory', description: 'Directory path', required: true }],
+    },
   },
 };
