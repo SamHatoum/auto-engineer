@@ -275,7 +275,7 @@ importers:
         specifier: ^0.3.2
         version: link:../file-store
       '@auto-engineer/flow':
-        specifier: ^0.1.3
+        specifier: ^0.1.4
         version: link:../flow
       '@auto-engineer/message-bus':
         specifier: ^0.5.2
@@ -480,7 +480,7 @@ importers:
   packages/server-generator-apollo-emmett:
     dependencies:
       '@auto-engineer/flow':
-        specifier: ^0.1.3
+        specifier: ^0.1.4
         version: link:../flow
       '@auto-engineer/message-bus':
         specifier: ^0.5.4
