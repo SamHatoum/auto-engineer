@@ -16,31 +16,39 @@ interface FileChangeMessage {
 }
 
 const watchDir = process.argv[2] || '.';
-const extensions = process.argv[3] ? process.argv[3]?.split(',') : ['.js', '.html', '.css'];
+
+const FILE_GLOB = '**/*.ts';
+const FILE_EXT = '.ts';
 
 async function getInitialFiles(): Promise<Array<{ path: string; content: string }>> {
   const files: Array<{ path: string; content: string }> = [];
+
   const walk = async (dir: string) => {
     const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       const relativePath = path.relative(watchDir, fullPath);
+
       if (entry.isDirectory()) {
         await walk(fullPath);
-      } else if (entry.isFile() && extensions.some((ext) => relativePath.endsWith(ext))) {
-        const content = fs.readFileSync(fullPath, 'base64');
-        files.push({ path: relativePath, content });
+      } else if (entry.isFile()) {
+        if (relativePath.endsWith(FILE_EXT)) {
+          const content = fs.readFileSync(fullPath, 'base64');
+          files.push({ path: relativePath, content });
+        }
       }
     }
   };
+
   await walk(watchDir);
   return files;
 }
 
-chokidar.watch(watchDir).on('all', (event, filePath) => {
-  if (!extensions.some((ext) => filePath.endsWith(ext))) return;
-
+chokidar.watch(path.join(watchDir, FILE_GLOB)).on('all', (event, filePath) => {
   const relativePath = path.relative(watchDir, filePath);
+
+  if (!relativePath.endsWith(FILE_EXT)) return;
 
   if (event === 'add' || event === 'change') {
     const content = fs.readFileSync(filePath, 'base64');
@@ -69,4 +77,4 @@ io.on('connection', (socket) => {
   });
 });
 
-console.log(`Two-way sync on ${watchDir} for ${extensions.join(', ')} files on ws://localhost:3001`);
+console.log(`Two-way sync on ${watchDir} for ${FILE_GLOB} files on ws://localhost:3001`);
