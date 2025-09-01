@@ -1,3 +1,4 @@
+import { createRequire } from 'module';
 import createDebug from 'debug';
 import type { Graph } from './types';
 import { dirname, toPosix } from './fs-path';
@@ -24,25 +25,16 @@ function registerIntegrationsFrom(mod: unknown) {
   }
 }
 
-/**
- * Run a transpiled CJS graph
- * All non-VFS imports MUST be provided via the graph's resolved "mapped" entries (importMap).
- */
 export function runGraph(entryFiles: string[], graph: Graph): void {
   const exportsCache = new Map<string, unknown>();
 
   function loadFromVfs(absPath: string) {
     const path = toPosix(absPath);
-
-    // cycle-safe: if present, return (even if still initializing)
     if (exportsCache.has(path)) return exportsCache.get(path);
 
     const mod = graph.get(path);
-    if (!mod) {
-      throw new Error(`Module "${path}" not in graph. Make sure executeAST() included this file.`);
-    }
+    if (!mod) throw new Error(`Module "${path}" not in graph. Make sure executeAST() included this file.`);
 
-    // seed cache BEFORE eval to break cycles
     const module = { exports: {} as Record<string, unknown> };
     exportsCache.set(path, module.exports);
 
@@ -51,27 +43,34 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
 
     const requireVfs = (spec: string): unknown => {
       dImp('[%s] require(%s)', path, spec);
-
       const r = mod.resolved.get(spec);
+
       if (!r) {
-        // Not seen during graph build -> that’s a build/runtime mismatch.
-        throw new Error(
-          `Unresolved import "${spec}" from ${path}. ` +
-            `All imports must be pre-resolved during graph build or provided via importMap.`,
-        );
+        // Not seen during build – fall back to Node from workspace root.
+        const nodeRequire = createRequire(process.cwd() + '/index.js');
+        return nodeRequire(spec);
       }
 
       if (r.kind === 'mapped') return r.value;
       if (r.kind === 'vfs') return loadFromVfs(r.path);
 
-      // 'external' must have been mapped earlier; never call native require
-      throw new Error(`External "${r.spec}" is not mapped. Provide it via importMap when calling executeAST/getFlows.`);
+      // r.kind === 'external' => try Node require from workspace root first,
+      // then plain require as a last resort.
+      try {
+        const nodeRequire = createRequire(process.cwd() + '/index.js');
+        return nodeRequire(r.spec);
+      } catch (e2) {
+        throw new Error(
+          `External "${r.spec}" could not be resolved via Node. ` +
+            `Install it (pnpm add ${r.spec}) or map it via importMap. (${(e2 as Error).message})`,
+        );
+      }
     };
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-implied-eval
       const fn = new Function('require', 'module', 'exports', '__filename', '__dirname', mod.js) as (
-        require: (s: string) => unknown,
+        req: (s: string) => unknown,
         module: { exports: Record<string, unknown> },
         exports: Record<string, unknown>,
         __filename: string,
@@ -81,16 +80,13 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
       fn(requireVfs, module, module.exports, __filename, __dirname);
       exportsCache.set(path, module.exports);
       registerIntegrationsFrom(module.exports);
-      return module.exports as unknown;
+      return module.exports;
     } catch (err) {
       debug('execution error in %s: %o', path, err);
       throw err;
     }
   }
 
-  for (const entry of entryFiles) {
-    loadFromVfs(entry);
-  }
-
+  for (const entry of entryFiles) loadFromVfs(entry);
   debug('runGraph: flows=%d integrations=%d', registry.getAllFlows().length, integrationRegistry.getAll().length);
 }

@@ -45,7 +45,7 @@ export async function createEnhancedImportMap(base: Record<string, unknown> = {}
     './data-flow-builders': dataFlowMod,
     '@auto-engineer/flow': selfEntry,
     zod,
-    'graphql-tag': (gqlTag as any).default ?? gqlTag,
-    debug: { default: (debugMod as any).default ?? createDebug },
+    'graphql-tag': (gqlTag as { default?: unknown }).default ?? gqlTag,
+    debug: { default: (debugMod as { default?: unknown }).default ?? createDebug },
   };
 }

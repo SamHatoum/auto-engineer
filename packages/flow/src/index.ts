@@ -45,7 +45,6 @@ export type { SliceTypeValueInterface } from './flow';
 export { SliceType } from './flow';
 
 // Flow conversion utilities
-export { getFlow } from './getFlow';
 export { getFlows } from './getFlows';
 
 // Event and command builders

@@ -44,6 +44,7 @@ export class NodeFileStore implements IExtendedFileStore {
 
   async listTree(root: string = '/'): Promise<Array<{ path: string; type: 'file' | 'dir'; size: number }>> {
     const out: Array<{ path: string; type: 'file' | 'dir'; size: number }> = [];
+
     const walk = async (absDir: string) => {
       let entries: Dirent[];
       try {
@@ -54,17 +55,39 @@ export class NodeFileStore implements IExtendedFileStore {
       out.push({ path: toPosix(absDir), type: 'dir', size: 0 });
       for (const e of entries) {
         const abs = path.join(absDir, e.name);
-        if (e.isDirectory()) {
-          await walk(abs);
-        } else {
-          const st = await fsp.stat(abs).catch(() => null);
-          out.push({ path: toPosix(abs), type: 'file', size: st?.size ?? 0 });
+        try {
+          if (e.isDirectory()) {
+            await walk(abs);
+          } else if (e.isSymbolicLink()) {
+            // Resolve symlink target
+            const st = await fsp.stat(abs).catch(() => null);
+            if (!st) continue;
+            if (st.isDirectory()) {
+              // Follow symlink to directory
+              await walk(abs);
+            } else {
+              out.push({ path: toPosix(abs), type: 'file', size: st.size });
+            }
+          } else {
+            // Regular file
+            const st = await fsp.stat(abs).catch(() => null);
+            out.push({ path: toPosix(abs), type: 'file', size: st?.size ?? 0 });
+          }
+        } catch {
+          // Ignore broken symlinks, races, permission errors
         }
       }
     };
+
     const absRoot = toAbs(root);
     await walk(absRoot);
-    out.sort((a, b) => (a.type === b.type ? a.path.localeCompare(b.path) : a.type === 'dir' ? -1 : 1));
+
+    // Ensure stable ordering: dirs first, then files; both sorted by path
+    out.sort((a, b) => {
+      if (a.type === b.type) return a.path.localeCompare(b.path);
+      return a.type === 'dir' ? -1 : 1;
+    });
+
     return out;
   }
 

@@ -253,6 +253,12 @@ importers:
 
   packages/file-syncer:
     dependencies:
+      '@auto-engineer/file-store':
+        specifier: ^0.3.2
+        version: link:../file-store
+      '@auto-engineer/flow':
+        specifier: workspace:*
+        version: link:../flow
       '@auto-engineer/message-bus':
         specifier: ^0.5.2
         version: link:../message-bus
