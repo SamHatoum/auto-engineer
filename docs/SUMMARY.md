@@ -1,7 +1,15 @@
 # Table of contents
 
-- [Introduction](README.md)
+* [Introduction](README.md)
+
+## Getting started
+
+* [Installation](getting-started/installation.md)
 
 ## Guides
 
-- [Creating your first task](guides/creating-your-first-task.md)
+* [Plugin](guides/creating-your-first-task.md)
+
+## Reference
+
+* [API](reference/api.md)
