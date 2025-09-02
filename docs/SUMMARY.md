@@ -1,37 +1,24 @@
 # Table of contents
 
-* [Introduction](README.md)
-  * [Overview](readme/overview.md)
-  * [Features](readme/features.md)
-  * [Roadmap](readme/roadmap.md)
+- [Introduction](README.md)
+  - [Overview](readme/overview.md)
+  - [Features](readme/features.md)
+  - [Roadmap](readme/roadmap.md)
 
-## Introduction
+- [Getting Started](getting-started/README.md)
+  - [Installation](getting-started/installation.md)
+  - [Quickstart](getting-started/quickstart.md)
+  - [Configuration Basics](getting-started/configuration-basics.md)
+  - [CLI Guide](getting-started/cli-guide.md)
 
-* [Overview](introduction/overview.md)
-* [Features](introduction/features.md)
-* [Roadmap](introduction/roadmap.md)
+- [Guides](guides/README.md)
+  - [Building a Flow](guides/building-a-flow.md)
+  - [Creating Your First Task](guides/creating-your-first-task.md)
 
-## Getting started
+- [Reference](reference/README.md)
+  - [API](reference/api.md)
 
-* [Installation](getting-started/installation.md)
-* [Quickstart](getting-started/quickstart.md)
-* [Configuration Basics](getting-started/configuration-basics.md)
-* [CLI Guide](getting-started/cli-guide.md)
-
-## Guides
-
-* [Building a Flow](guides/building-a-flow.md)
-
-## Reference
-
-* [API](reference/api.md)
-
-## Guides
-
-* [Plugin](guides-1/creating-your-first-task.md)
-
-## Contributing
-
-* [Dev Setup](contributing/dev-setup.md)
-* [Testing](contributing/testing.md)
-* [Release Process](contributing/release-process.md)
+- [Contributing](contributing/README.md)
+  - [Dev Setup](contributing/dev-setup.md)
+  - [Testing](contributing/testing.md)
+  - [Release Process](contributing/release-process.md)
