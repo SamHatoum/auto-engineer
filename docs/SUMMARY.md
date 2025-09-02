@@ -13,7 +13,6 @@
 
 - [Guides](guides/README.md)
   - [Building a Flow](guides/building-a-flow.md)
-  - [Creating Your First Task](guides/creating-your-first-task.md)
 
 - [Reference](reference/README.md)
   - [API](reference/api.md)
