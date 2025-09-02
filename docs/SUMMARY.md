@@ -5,12 +5,15 @@
   - [Features](readme/features.md)
   - [Roadmap](readme/roadmap.md)
 
-- [Getting started]()
-  - [Installation](getting-started/installation.md)
-  - [Quickstart](getting-started/quickstart.md)
+## Getting started
 
-- [Guides]()
-  - [Plugin](guides/creating-your-first-task.md)
+- [Installation](getting-started/installation.md)
+- [Quickstart](getting-started/quickstart.md)
 
-- [Reference]()
-  - [API](reference/api.md)
+## Guides
+
+- [Plugin](guides/creating-your-first-task.md)
+
+## Reference
+
+- [API](reference/api.md)
