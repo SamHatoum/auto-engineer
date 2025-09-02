@@ -20,8 +20,22 @@
 
 ## Guides
 
-* [Plugin](guides/creating-your-first-task.md)
+* [Building a Flow](guides/building-a-flow.md)
 
 ## Reference
 
 * [API](reference/api.md)
+
+## Guides
+
+* [Plugin](guides-1/creating-your-first-task.md)
+
+***
+
+* [Changelog](changelog.md)
+
+## Contributing
+
+* [Dev Setup](contributing/dev-setup.md)
+* [Testing](contributing/testing.md)
+* [Release Process](contributing/release-process.md)
