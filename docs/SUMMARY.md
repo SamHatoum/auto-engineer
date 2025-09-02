@@ -35,7 +35,3 @@
 * [Dev Setup](contributing/dev-setup.md)
 * [Testing](contributing/testing.md)
 * [Release Process](contributing/release-process.md)
-
-***
-
-* [Changelog](changelog.md)
