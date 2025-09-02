@@ -1,5 +1,3 @@
-# Introduction
+# Auto Engineer Documentation
 
-## What is Auto?
-
-Put your SDLC on Auto, and build production-grade apps with humans and agents.
+Auto Engineer puts your SDLC on auto, helping you build production-grade apps with humans and agents.
