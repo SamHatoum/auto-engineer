@@ -1,4 +1,4 @@
-export { CLI_MANIFEST } from './cli-manifest';
+export { CLI_MANIFEST, COMMANDS } from './cli-manifest';
 
 export {
   commandHandler as implementServerCommandHandler,

@@ -6,10 +6,10 @@
   "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js",
-      "require": "./dist/src/index.js",
-      "default": "./dist/src/index.js"
+      "types": "./dist/src/dsl-exports.d.ts",
+      "import": "./dist/src/dsl-exports.js",
+      "require": "./dist/src/dsl-exports.js",
+      "default": "./dist/src/dsl-exports.js"
     },
     "./manifest-types": {
       "types": "./dist/src/manifest-types.d.ts",
@@ -35,7 +35,7 @@
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/bin/auto.js && cp -r src/server/*.html src/server/*.svg dist/src/server/ 2>/dev/null || true",
     "build:tsx": "echo 'Using tsx runtime, no build needed'",
-    "dev": "tsc --watch",
+    "dev": "node scripts/watch.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --max-warnings 0 --config ../../eslint.config.ts",

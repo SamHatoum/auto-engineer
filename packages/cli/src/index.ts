@@ -64,12 +64,32 @@ const checkNodeVersion = () => {
 
 const setupSignalHandlers = () => {
   process.on('SIGINT', () => {
-    console.log('\n' + chalk.yellow('Operation cancelled by user'));
+    if (serverInstance !== null && serverInstance !== undefined) {
+      console.log('\n' + chalk.yellow('Shutting down server...'));
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        void serverInstance.stop();
+      } catch (error) {
+        console.error('Error stopping server:', error);
+      }
+    } else {
+      console.log('\n' + chalk.yellow('Operation cancelled by user'));
+    }
     process.exit(0);
   });
 
   process.on('SIGTERM', () => {
-    console.log('\n' + chalk.yellow('Process terminated'));
+    if (serverInstance !== null && serverInstance !== undefined) {
+      console.log('\n' + chalk.yellow('Shutting down server...'));
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        void serverInstance.stop();
+      } catch (error) {
+        console.error('Error stopping server:', error);
+      }
+    } else {
+      console.log('\n' + chalk.yellow('Process terminated'));
+    }
     process.exit(0);
   });
 
@@ -277,11 +297,17 @@ export default {
 
       cmd.action(async (...args: unknown[]) => {
         try {
-          // Extract arguments and options
-          // Commander passes: [...args, command, options]
-          // For variadic, all extra args are collected into an array
-          const cmdArgs = args.slice(0, -2); // Last two are command and options
-          const options = args[args.length - 1] as Record<string, unknown>;
+          // In Commander 12, the last argument is the command object itself
+          // Options are properties on the command object
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+          const cmdObject = args[args.length - 1] as any;
+          const cmdArgs = args.slice(0, -1); // Remove command object
+
+          // Extract options from the command object
+          const options: Record<string, unknown> = {};
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+          const opts = cmdObject.opts();
+          Object.assign(options, opts);
 
           // Check if --version flag was passed
           if (options.version === true) {
@@ -300,6 +326,7 @@ export default {
           if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
             console.error('DEBUG cli: Raw args:', args);
             console.error('DEBUG cli: Command args:', cmdArgs);
+            console.error('DEBUG cli: Options:', options);
           }
 
           // Filter out empty strings but keep arrays (for variadic args)
@@ -434,7 +461,16 @@ const handleProgramError = (error: unknown) => {
   }
 };
 
+let serverStarted = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let serverInstance: any = null; // Store server instance globally
+
 const startMessageBusServer = async (): Promise<void> => {
+  if (serverStarted) {
+    return;
+  }
+  serverStarted = true;
+
   const { MessageBusServer } = await import('./server/server');
   const { loadMessageBusConfig } = await import('./server/config-loader');
 
@@ -489,15 +525,10 @@ const startMessageBusServer = async (): Promise<void> => {
     }
   }
 
-  await server.start();
+  // Store server instance globally for cleanup
+  serverInstance = server;
 
-  // Keep the process running
-  process.on('SIGINT', () => {
-    console.log('\nShutting down server...');
-    void server.stop().then(() => {
-      process.exit(0);
-    });
-  });
+  await server.start();
 };
 
 const main = async () => {
@@ -527,8 +558,11 @@ const main = async () => {
   }
 };
 
-main().catch((error: unknown) => {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  console.error(chalk.red('Fatal error:'), errorMessage);
-  process.exit(1);
-});
+// Only run main() if this is the entry point
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('Fatal error:'), errorMessage);
+    process.exit(1);
+  });
+}

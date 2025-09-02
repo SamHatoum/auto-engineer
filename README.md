@@ -21,6 +21,10 @@ Stay up to date by watching 👀 and giving us a star ⭐ - join the 💬 Discor
 
 ## 🚀 Quick Start
 
+```bash
+npx create-auto-app@latest
+```
+
 ### Prerequisites
 
 - Node.js >= 20.0.0
@@ -77,28 +81,30 @@ export default {
 
 ```bash
 # With plugins configured, create a new app
-auto create:example shopping-assistant
+auto create:example --name=shopping-assistant
 
 # Navigate to the created project
 cd shopping-assistant
 pnpm install
 
 # Export the flow schemas
-auto export:schema ./.context ./flows
+auto export:schema --output-dir=./.context --directory=./flows
 
 # Generate and implement the server
-auto generate:server .context/schema.json .
-auto implement:server ./server
+auto generate:server --schema-path=.context/schema.json --destination=.
+auto implement:server --server-directory=./server
 
 # Run server validation
-auto check:types ./server
-auto check:tests ./server
-auto check:lint ./server --fix
+auto check:types --target-directory=./server
+auto check:tests --target-directory=./server
+auto check:lint --target-directory=./server --fix
 
 # Generate frontend (requires additional plugins)
-auto generate:ia ./.context ./flows/*.flow.ts
-auto generate:client ./shadcn-starter ./client ./auto-ia.json ./schema.graphql ./figma-vars.json
-auto implement:client ./client ./.context ./design-principles.md ./design-system.md
+auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts
+auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
+  --ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json
+auto implement:client --project-dir=./client --ia-scheme-dir=./.context \
+  --design-system-path=./design-system.md
 
 # Start the application
 pnpm start
@@ -110,17 +116,19 @@ Auto Engineer uses a modular plugin architecture. Each plugin provides specific 
 
 ### Core Plugins
 
-| Plugin                      | Package                                           | Commands                                   | Description                         |
-| --------------------------- | ------------------------------------------------- | ------------------------------------------ | ----------------------------------- |
-| **Flow**                    | `@auto-engineer/flow`                             | `create:example`, `export:schema`          | Flow modeling DSL and schema export |
-| **Emmett Generator**        | `@auto-engineer/server-generator-apollo-emmett`   | `generate:server`                          | Server code generation from schemas |
-| **Server Implementer**      | `@auto-engineer/server-implementer`               | `implement:server`, `implement:slice`      | AI-powered server implementation    |
-| **React GraphQL Generator** | `@auto-engineer/frontend-generator-react-graphql` | `generate:client`, `copy:example`          | React client scaffolding            |
-| **Frontend Implementer**    | `@auto-engineer/frontend-implementer`             | `implement:client`                         | AI-powered client implementation    |
-| **Information Architect**   | `@auto-engineer/information-architect`            | `generate:ia`                              | Information architecture generation |
-| **Design System Importer**  | `@auto-engineer/design-system-importer`           | `import:design-system`                     | Figma design system import          |
-| **Server Checks**           | `@auto-engineer/server-checks`                    | `check:types`, `check:lint`, `check:tests` | Server validation suite             |
-| **Frontend Checks**         | `@auto-engineer/frontend-checks`                  | `check:client`                             | Frontend validation suite           |
+| Plugin                      | Package                                           | Commands                                   | Description                          |
+| --------------------------- | ------------------------------------------------- | ------------------------------------------ | ------------------------------------ |
+| **Flow**                    | `@auto-engineer/flow`                             | `create:example`, `export:schema`          | Flow modeling DSL and schema export  |
+| **Emmett Generator**        | `@auto-engineer/server-generator-apollo-emmett`   | `generate:server`                          | Server code generation from schemas  |
+| **Server Implementer**      | `@auto-engineer/server-implementer`               | `implement:server`, `implement:slice`      | AI-powered server implementation     |
+| **React GraphQL Generator** | `@auto-engineer/frontend-generator-react-graphql` | `generate:client`, `copy:example`          | React client scaffolding             |
+| **Frontend Implementer**    | `@auto-engineer/frontend-implementer`             | `implement:client`                         | AI-powered client implementation     |
+| **Information Architect**   | `@auto-engineer/information-architect`            | `generate:ia`                              | Information architecture generation  |
+| **Design System Importer**  | `@auto-engineer/design-system-importer`           | `import:design-system`                     | Figma design system import           |
+| **Server Checks**           | `@auto-engineer/server-checks`                    | `check:types`, `check:lint`, `check:tests` | Server validation suite              |
+| **Frontend Checks**         | `@auto-engineer/frontend-checks`                  | `check:client`                             | Frontend validation suite            |
+| **File Syncer**             | `@auto-engineer/file-syncer`                      | N/A (internal use)                         | File watching and synchronization    |
+| **Create Auto App**         | `@auto-engineer/create-auto-app`                  | `create:app`                               | Bootstrap new Auto Engineer projects |
 
 ### Installing Plugins
 
@@ -161,6 +169,34 @@ export default {
 
 **Note:** Each package can expose multiple commands. The alias resolution maps a specific command alias to the package that should handle it. For example, if both `package-a` and `package-b` provide a `check:types` command, you specify which package wins for that specific command alias.
 
+## 🆕 Recent Updates
+
+### Message Bus Server & Dashboard (v0.7.8+)
+
+- Built-in event-driven message bus server with web dashboard
+- Real-time command and event monitoring at http://localhost:5555
+- WebSocket support for live updates
+- DSL functions for event handling and orchestration in `auto.config.ts`
+
+### Unified Command Handler Pattern
+
+- All command handlers now use a single `defineCommandHandler` function
+- Type-safe command definitions with automatic CLI manifest generation
+- Named parameters for all CLI commands (e.g., `--input-path=value`)
+- Integrated help and examples in command definitions
+
+### Enhanced File Syncing
+
+- Automatic file watching and syncing for development workflows
+- Support for TypeScript declaration files (.d.ts)
+- Flow file synchronization with related dependencies
+
+### Browser Compatibility
+
+- Flow package now works in browser environments
+- Stub implementations for Node.js-specific modules
+- Support for browser-based flow modeling tools
+
 ## 🎯 How It Works
 
 <img width="100%" height="100%" alt="Screenshot 2025-07-23 at 9 20 03 PM" src="https://github.com/user-attachments/assets/50041682-2ec1-4148-a6d1-d51fe0680385" />
@@ -180,28 +216,35 @@ Commands are provided by installed plugins. Run `auto --help` to see available c
 
 ### Common Commands
 
+All commands now use named parameters for clarity and consistency:
+
 **Flow Development**
 
-- `create:example <name>` - Create an example project
-- `export:schema <context> <flows>` - Export flow schemas
+- `create:example --name=<project-name>` - Create an example project
+- `export:schema --output-dir=<dir> --directory=<flows-dir>` - Export flow schemas
 
 **Server Generation**
 
-- `generate:server <schema> <dest>` - Generate server from schema
-- `implement:server <server-dir>` - AI implements server
+- `generate:server --schema-path=<schema> --destination=<dest>` - Generate server from schema
+- `implement:server --server-directory=<dir>` - AI implements server
+- `implement:slice --server-directory=<dir> --slice=<name>` - Implement specific slice
 
 **Frontend Generation**
 
-- `generate:ia <context> <flows...>` - Generate Information Architecture
-- `generate:client <starter> <client> <ia> <gql> [vars]` - Generate React client
-- `implement:client <client> <context> <principles> <design>` - AI implements client
+- `generate:ia --output-dir=<dir> --flow-files=<patterns>` - Generate Information Architecture
+- `generate:client --starter-template=<template> --client-dir=<dir> --ia-schema=<file> --gql-schema=<file>` - Generate React client
+- `implement:client --project-dir=<dir> --ia-scheme-dir=<dir> --design-system-path=<file>` - AI implements client
 
 **Validation & Testing**
 
-- `check:types <directory>` - TypeScript type checking
-- `check:tests <directory>` - Run test suites
-- `check:lint <directory> [--fix]` - Linting with optional auto-fix
-- `check:client <client-dir>` - Full frontend validation
+- `check:types --target-directory=<dir> --scope=<project|changed>` - TypeScript type checking
+- `check:tests --target-directory=<dir> --scope=<project|changed>` - Run test suites
+- `check:lint --target-directory=<dir> --fix --scope=<project|changed>` - Linting with optional auto-fix
+- `check:client --client-directory=<dir> --skip-browser-checks` - Full frontend validation
+
+**Design System**
+
+- `import:design-system --figma-file-id=<id> --figma-access-token=<token> --output-dir=<dir>` - Import from Figma
 
 ## 🏗️ Architecture
 
@@ -229,7 +272,9 @@ auto-engineer/
 │   ├── frontend-checks/                   # Frontend validation
 │   ├── ai-gateway/                        # Unified AI provider interface
 │   ├── message-bus/                       # Event-driven messaging
-│   └── file-store/                        # File system operations
+│   ├── file-store/                        # File system operations
+│   ├── file-syncer/                       # File watching and synchronization
+│   └── create-auto-app/                   # Project bootstrapping
 ├── integrations/
 │   ├── ai-chat-completion/                # AI provider integrations
 │   ├── cart/                              # Cart service integration
@@ -238,6 +283,202 @@ auto-engineer/
     ├── cart-api/                          # Example cart API
     └── product-catalogue-api/             # Example product API
 ```
+
+## 🛠️ Local Development Setup
+
+### Prerequisites for Development
+
+- Node.js >= 20.0.0
+- pnpm >= 8.15.4
+- Git
+- At least one AI provider API key (see Quick Start section)
+
+### Setting Up the Development Environment
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/SamHatoum/auto-engineer.git
+   cd auto-engineer
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+3. **Build all packages**
+
+   ```bash
+   pnpm build
+   ```
+
+4. **Set up environment variables**
+   ```bash
+   # Create .env file in the root directory
+   echo "ANTHROPIC_API_KEY=your-key-here" > .env
+   # Add other API keys as needed
+   ```
+
+### Working with Local Packages in Development
+
+When developing locally, you'll want to use the local packages instead of published npm versions:
+
+1. **Use workspace protocol in example projects**
+
+   ```bash
+   # In any example project (e.g., examples/shopping-app)
+   cd examples/shopping-app
+
+   # Install packages using workspace protocol
+   pnpm add '@auto-engineer/cli@workspace:*' \
+            '@auto-engineer/flow@workspace:*' \
+            '@auto-engineer/server-checks@workspace:*' \
+            # ... add other packages as needed
+   ```
+
+2. **The workspace protocol ensures**:
+   - Local packages are used instead of npm registry versions
+   - Changes to packages are immediately reflected
+   - No need for npm link or manual linking
+
+### Running the Message Bus Server
+
+Auto Engineer includes a built-in message bus server with a web dashboard for monitoring commands and events:
+
+```bash
+# Start the server (runs on port 5555)
+pnpm auto
+
+# Or run with debug output
+DEBUG=auto-engineer:* pnpm auto
+
+# Access the dashboard at http://localhost:5555
+```
+
+The dashboard provides:
+
+- Real-time command execution monitoring
+- Event stream visualization
+- Command handler registry
+- WebSocket connection status
+- Dark/light theme support
+
+### Development Workflow
+
+1. **Make changes to packages**
+
+   ```bash
+   # Edit source files in packages/*/src/
+   ```
+
+2. **Build affected packages**
+
+   ```bash
+   # Build specific package
+   pnpm build --filter=@auto-engineer/cli
+
+   # Or build all packages
+   pnpm build
+   ```
+
+3. **Run tests**
+
+   ```bash
+   # Run all tests
+   pnpm test
+
+   # Run tests for specific package
+   pnpm test --filter=@auto-engineer/flow
+   ```
+
+4. **Lint and type check**
+
+   ```bash
+   # Run all checks
+   pnpm check
+
+   # Individual checks
+   pnpm lint
+   pnpm type-check
+   ```
+
+### Creating a New Plugin
+
+1. **Create package directory**
+
+   ```bash
+   mkdir packages/my-plugin
+   cd packages/my-plugin
+   ```
+
+2. **Initialize package.json**
+
+   ```json
+   {
+     "name": "@auto-engineer/my-plugin",
+     "version": "0.1.0",
+     "type": "module",
+     "exports": {
+       ".": "./dist/src/index.js"
+     },
+     "scripts": {
+       "build": "tsc && tsx ../../scripts/fix-esm-imports.ts"
+     }
+   }
+   ```
+
+3. **Implement command handlers using the unified pattern**
+
+   ```typescript
+   import { defineCommandHandler } from '@auto-engineer/message-bus';
+
+   export const commandHandler = defineCommandHandler({
+     name: 'MyCommand',
+     alias: 'my:command',
+     description: 'Does something useful',
+     category: 'My Plugin',
+     fields: {
+       inputPath: {
+         description: 'Path to input file',
+         required: true,
+       },
+     },
+     examples: ['$ auto my:command --input-path=./file.txt'],
+     handle: async (command) => {
+       // Implementation
+     },
+   });
+   ```
+
+### Troubleshooting
+
+**Port 5555 already in use**
+
+```bash
+# Find and kill the process
+lsof -i :5555 | grep LISTEN | awk '{print $2}' | xargs kill -9
+```
+
+**Module not found errors**
+
+```bash
+# Ensure all packages are built
+pnpm build
+
+# Clear build artifacts and rebuild
+pnpm clean
+pnpm install
+pnpm build
+```
+
+**Dashboard not showing command handlers**
+
+- Clear browser cache and refresh (Cmd+Shift+R)
+- Check browser console for JavaScript errors
+- Verify packages are properly built
+- Ensure auto.config.ts lists all required plugins
 
 ## 🤝 Contributing
 

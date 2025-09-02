@@ -13,7 +13,7 @@
   "scripts": {
     "copy-templates": "rm -rf templates/shopping-app && rsync -av --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' ../../examples/shopping-app/ templates/shopping-app/",
     "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
-    "dev": "tsx src/index.ts",
+    "dev": "tsc --watch",
     "prepublishOnly": "npm run build",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts --ignore-pattern 'templates/**'",

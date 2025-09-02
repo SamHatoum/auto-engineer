@@ -789,7 +789,7 @@ export class PluginLoader {
   }
 
   async executeCommand(commandAlias: string, data: unknown): Promise<void> {
-    debugBus('Executing command %s through message bus', commandAlias);
+    debugBus('Executing command %s', commandAlias);
 
     // Get the actual handler name from the alias
     const handlerName = this.aliasToHandlerName.get(commandAlias) ?? commandAlias;
@@ -802,6 +802,32 @@ export class PluginLoader {
       timestamp: new Date(),
       requestId: `cli-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     };
+
+    // Try to send to running server first
+    try {
+      const response = await fetch('http://localhost:5555/command', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(command),
+      });
+
+      if (response.ok) {
+        debugBus('Command sent to remote message bus server');
+        this.displayMessage(command);
+
+        // Get the response data
+        const result = await response.json();
+        debugBus('Server response:', result);
+        return;
+      }
+    } catch {
+      debugBus('No message bus server running on port 5555, executing locally');
+    }
+
+    // Fall back to local execution
+    debugBus('Executing command locally through message bus');
     this.displayMessage(command);
     await this.messageBus.sendCommand(command);
   }

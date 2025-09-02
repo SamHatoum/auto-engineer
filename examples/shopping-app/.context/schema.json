@@ -49,7 +49,7 @@
                     "exampleData": {
                       "sessionId": "shopper-123",
                       "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                      "timestamp": "2025-08-28T04:56:47.408Z"
+                      "timestamp": "2025-09-02T01:16:53.987Z"
                     }
                   }
                 ]
@@ -69,7 +69,7 @@
                     "exampleData": {
                       "sessionId": "session-abc",
                       "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                      "timestamp": "2025-08-28T04:56:47.408Z"
+                      "timestamp": "2025-09-02T01:16:53.987Z"
                     }
                   }
                 ],
@@ -357,7 +357,7 @@
                           "quantity": 1
                         }
                       ],
-                      "timestamp": "2025-08-28T04:56:47.409Z"
+                      "timestamp": "2025-09-02T01:16:53.988Z"
                     }
                   }
                 ]
@@ -369,54 +369,6 @@
     }
   ],
   "messages": [
-    {
-      "type": "state",
-      "name": "Products",
-      "fields": [
-        {
-          "name": "type",
-          "type": "unknown",
-          "required": true
-        },
-        {
-          "name": "data",
-          "type": "{products: Array<{productId: string, name: string, category: string, price: number, tags: Array<string>, imageUrl: string}>}",
-          "required": true
-        }
-      ],
-      "metadata": {
-        "version": 1
-      }
-    },
-    {
-      "type": "command",
-      "name": "DoChat",
-      "fields": [
-        {
-          "name": "sessionId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "prompt",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "systemPrompt",
-          "type": "string",
-          "required": false
-        },
-        {
-          "name": "schemaName",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "metadata": {
-        "version": 1
-      }
-    },
     {
       "type": "command",
       "name": "EnterShoppingCriteria",
@@ -496,6 +448,14 @@
         }
       ],
       "source": "internal",
+      "metadata": {
+        "version": 1
+      }
+    },
+    {
+      "type": "command",
+      "name": "DoChat",
+      "fields": [],
       "metadata": {
         "version": 1
       }

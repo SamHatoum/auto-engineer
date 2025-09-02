@@ -23,11 +23,19 @@ export interface AutoConfig {
   };
 }
 
+let configLoading = false;
+
 /**
  * Load and parse the auto.config.ts file
  */
 export async function loadAutoConfig(configPath: string): Promise<AutoConfig> {
+  if (configLoading) {
+    debug('Config already loading, returning empty config');
+    return { plugins: [] };
+  }
+
   try {
+    configLoading = true;
     debug('Loading config from:', configPath);
 
     // Use jiti to load TypeScript config
@@ -43,6 +51,8 @@ export async function loadAutoConfig(configPath: string): Promise<AutoConfig> {
   } catch (error) {
     console.error('Failed to load config:', error);
     throw error;
+  } finally {
+    configLoading = false;
   }
 }
 

@@ -10,6 +10,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
