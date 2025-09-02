@@ -8,23 +8,23 @@ Ensure you have completed the Installation steps, including installing Node.js, 
 
 ## Creating Your First App
 
-1. **Create a new example project**: \`\`\`bash auto create:example --name=shopping-assistant \`\`\`
+1. **Create a new example project**: `bash auto create:example --name=shopping-assistant `
 
-2. **Navigate to the project directory**: \`\`\`bash cd shopping-assistant \`\`\`
+2. **Navigate to the project directory**: `bash cd shopping-assistant `
 
-3. **Install dependencies**: \`\`\`bash pnpm install \`\`\`
+3. **Install dependencies**: `bash pnpm install `
 
-4. **Export flow schemas**: \`\`\`bash auto export:schema --output-dir=./.context --directory=./flows \`\`\`
+4. **Export flow schemas**: `bash auto export:schema --output-dir=./.context --directory=./flows `
 
-5. **Generate and implement the server**: \`\`\`bash auto generate:server --schema-path=.context/schema.json --destination=. auto implement:server --server-directory=./server \`\`\`
+5. **Generate and implement the server**: `bash auto generate:server --schema-path=.context/schema.json --destination=. auto implement:server --server-directory=./server `
 
-6. **Run server validation**: \`\`\`bash auto check:types --target-directory=./server auto check:tests --target-directory=./server auto check:lint --target-directory=./server --fix \`\`\`
+6. **Run server validation**: `bash auto check:types --target-directory=./server auto check:tests --target-directory=./server auto check:lint --target-directory=./server --fix `
 
-7. **Generate and implement the frontend** (requires additional plugins): \`\`\`bash auto generate:ia --output-dir=./.context --flow-files=./flows/\*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
-   --ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json auto implement:client --project-dir=./client --ia-scheme-dir=./.context \
-   --design-system-path=./design-system.md \`\`\`
+7. **Generate and implement the frontend** (requires additional plugins): `bash auto generate:ia --output-dir=./.context --flow-files=./flows/\*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
+--ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json auto implement:client --project-dir=./client --ia-scheme-dir=./.context \
+--design-system-path=./design-system.md `
 
-8. **Start the application**: \`\`\`bash pnpm start \`\`\`
+8. **Start the application**: `bash pnpm start `
 
 ## Next Steps
 

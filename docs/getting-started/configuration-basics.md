@@ -6,7 +6,7 @@ Auto Engineer uses a configuration file, `auto.config.ts`, to define plugins and
 
 In your project root, create an `auto.config.ts` file with the following structure:
 
-\`\`\`typescript export default { plugins: \[ '@auto-engineer/flow', '@auto-engineer/server-generator-apollo-emmett', '@auto-engineer/server-implementer', '@auto-engineer/frontend-generator-react-graphql', \], aliases: { // Optional: Override command aliases if conflicts arise // 'command:name': '@auto-engineer/package-name' }, }; \`\`\`
+`typescript export default { plugins: \[ '@auto-engineer/flow', '@auto-engineer/server-generator-apollo-emmett', '@auto-engineer/server-implementer', '@auto-engineer/frontend-generator-react-graphql', \], aliases: { // Optional: Override command aliases if conflicts arise // 'command:name': '@auto-engineer/package-name' }, }; `
 
 ### Key Configuration Options
 
@@ -17,7 +17,7 @@ In your project root, create an `auto.config.ts` file with the following structu
 
 If multiple plugins register the same command alias, Auto Engineer will display an error. To resolve this, add an alias override in the `aliases` section of `auto.config.ts`. For example:
 
-\`\`\`typescript export default { plugins: \[ '@auto-engineer/package-a', '@auto-engineer/package-b', \], aliases: { 'conflicting:command': '@auto-engineer/package-a', }, }; \`\`\`
+`typescript export default { plugins: \[ '@auto-engineer/package-a', '@auto-engineer/package-b', \], aliases: { 'conflicting:command': '@auto-engineer/package-a', }, }; `
 
 ## Next Steps
 
