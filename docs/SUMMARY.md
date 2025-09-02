@@ -30,12 +30,12 @@
 
 * [Plugin](guides-1/creating-your-first-task.md)
 
-***
-
-* [Changelog](changelog.md)
-
 ## Contributing
 
 * [Dev Setup](contributing/dev-setup.md)
 * [Testing](contributing/testing.md)
 * [Release Process](contributing/release-process.md)
+
+***
+
+* [Changelog](changelog.md)
