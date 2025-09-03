@@ -56,6 +56,6 @@ Start the message bus server to monitor commands and events: `bash pnpm auto ` A
 
 For more details on contributing, see the Contributing Guide.
 
-## Release Process
-
 ## Testing
+
+## Release Process
