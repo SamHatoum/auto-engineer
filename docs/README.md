@@ -1,35 +1,45 @@
 # Auto Engineer Documentation
 
-Auto Engineer puts your SDLC on auto, helping you build production-grade apps with humans and agents.
+Auto Engineer puts your SDLC on auto, helping you build **production-grade applications** with the power of **humans + AI-driven agents**.
 
 ## Overview
 
-Auto Engineer is a tool designed to automate the Software Development Life Cycle (SDLC) by enabling developers to build production-grade applications using a combination of human input and AI-driven agents. It leverages a plugin-based architecture to generate and implement code for both server and frontend components, streamlining the development process from high-level flow modeling to quality-checked production code.
+Auto Engineer is a developer tool designed to **automate the Software Development Life Cycle (SDLC)** by combining human input with **AI-powered agents**.
 
-### Key Features
+It enables developers to:
 
-- **Flow Modeling**: Define system behavior using a domain-specific language (DSL) for commands, queries, and reactions.
-- **AI-Driven Implementation**: Automate code generation and implementation with AI agents guided by schemas and tests.
-- **Plugin System**: Modular architecture allows developers to install only the plugins needed for their use case.
-- **Event-Driven Architecture**: Supports loosely coupled components communicating via events.
-- **Comprehensive Validation**: Includes type checking, linting, and AI-powered visual testing to ensure code quality.
+- Define **high-level system behavior** using models.
+- Automatically **generate, scaffold, and implement code**.
+- Build robust frontend and backend components faster.
+- Streamline the entire workflow from **design to production**.
 
-Auto Engineer is in early preview and is actively being tested with real-world clients and use cases. Developers can stay updated by joining the Discord community or starring the repository on GitHub.
+By leveraging a **plugin-based architecture**, Auto Engineer adapts to different projects, enabling you to install only the components you need.
+
+> ⚡ Currently in **early preview**. Join our [Discord](https://discord.gg/B8BKcKMRm8) or star the repo on [GitHub](https://github.com/SamHatoum/auto-engineer) to stay updated.
 
 ## Features
 
-Auto Engineer provides a set of tools to automate and streamline the Software Development Life Cycle (SDLC). Below are its core features:
+Auto Engineer provides a **comprehensive toolkit** for automating modern application development.
 
-- **Flow Modeling DSL**: Define application behavior using a type-safe, high-level flow model that specifies both frontend and server requirements.
-- **Information Architecture Generation**: Automatically generate information architecture schemas to guide application scaffolding.
-- **Deterministic Scaffolding**: Produce complete application scaffolds from flow models, including placeholders with implementation hints.
-- **AI-Powered Code Implementation**: Use AI agents to implement server and frontend code, guided by precise prompts and deterministic tests.
-- **Comprehensive Validation**: Run type checking, linting, test suites, and AI-powered visual testing to ensure production-ready code.
-- **Modular Plugin System**: Install only the plugins needed for specific functionality, such as server generation or frontend scaffolding.
-- **Event-Driven Message Bus**: Monitor commands and events in real-time via a web dashboard at `http://localhost:5555`.
-- **TypeScript Support**: Full TypeScript integration with strict typing for robust development.
-- **File Synchronization**: Automatic file watching and syncing for efficient development workflows.
+### Core Capabilities
 
-For a detailed explanation of how these features work together, see the Auto Engineer Pipeline.
+- **Flow Modeling DSL** – Define app behavior using a type-safe, high-level modeling language.
+- **AI-Powered Code Implementation** – Generate server and frontend code using intelligent AI agents.
+- **Deterministic Scaffolding** – Produce complete, predictable application scaffolds from your flow models.
+- **Information Architecture Generation** – Automatically create schemas and structure for your app.
+- **Event-Driven Architecture** – Build loosely coupled components communicating via events.
+- **Comprehensive Validation** – Includes type checking, linting, automated tests, and AI-powered visual validation.
+- **Modular Plugin System** – Install only what you need (e.g., server, frontend, integrations).
+- **Real-Time Monitoring** – Watch commands and events live via a web dashboard at `http://localhost:5555`.
+- **TypeScript First** – Fully integrated with strict typing for safer, more robust development.
+- **File Synchronization** – Automatically watch, sync, and regenerate files as you iterate.
+
+> 💡 For deep-dives into these features, see the **Guides** and **Core Concepts** sections.
 
 ## Roadmap
+
+Auto Engineer is evolving rapidly. Our near-term focus includes:
+
+... TBA
+
+Stay tuned for updates via the [changelog](changelog.md).
