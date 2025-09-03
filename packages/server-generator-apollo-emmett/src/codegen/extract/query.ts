@@ -10,9 +10,22 @@ export function buildQueryGwtMapping(slice: Slice): QueryGwtCondition[] {
     return [];
   }
 
-  const gwtSpecs = slice.server?.gwt ?? [];
+  const specs = slice.server?.specs;
+  const rules = specs?.rules;
+  const gwtSpecs =
+    Array.isArray(rules) && rules.length > 0
+      ? rules.flatMap((rule) =>
+          rule.examples.map((example) => ({
+            given: Array.isArray(example.when) ? example.when : [], // For query slices, when contains the given events
+            then: example.then,
+          })),
+        )
+      : [];
+
   return gwtSpecs.map((gwt) => ({
     given: gwt.given,
-    then: gwt.then,
+    then: gwt.then.filter(
+      (item): item is { stateRef: string; exampleData: Record<string, unknown> } => 'stateRef' in item,
+    ),
   }));
 }

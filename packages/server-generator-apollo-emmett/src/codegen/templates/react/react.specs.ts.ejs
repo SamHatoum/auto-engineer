@@ -1,5 +1,13 @@
 <%
-const gwtList = slice.server?.gwt ?? [];
+// Extract all examples from specs/rules structure
+const specs = slice.server?.specs;
+const gwtList = specs?.rules?.flatMap(rule => 
+  rule.examples.map(example => ({
+    given: example.given,
+    when: example.when,
+    then: example.then
+  }))
+) ?? [];
 const firstGwt = gwtList[0];
 const firstWhen = Array.isArray(firstGwt?.when) ? firstGwt.when[0] : firstGwt?.when;
 const firstThen = Array.isArray(firstGwt?.then) ? firstGwt.then[0] : firstGwt?.then;

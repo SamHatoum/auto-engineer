@@ -19,26 +19,35 @@ describe('mutation.resolver.ts.ejs', () => {
               },
               server: {
                 description: 'Handles listing creation',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: 'Modern Downtown Apartment',
-                        pricePerNight: 250,
-                        maxGuests: 4,
-                        amenities: ['wifi', 'kitchen'],
-                        available: true,
-                        tags: ['sea view', 'balcony'],
-                        rating: 4.8,
-                        metadata: { petsAllowed: true },
-                        listedAt: '2024-01-15T10:00:00Z',
-                      },
+                specs: {
+                  name: 'Create listing command',
+                  rules: [
+                    {
+                      description: 'Should create listing successfully',
+                      examples: [
+                        {
+                          description: 'User creates listing with valid data',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: 'Modern Downtown Apartment',
+                              pricePerNight: 250,
+                              maxGuests: 4,
+                              amenities: ['wifi', 'kitchen'],
+                              available: true,
+                              tags: ['sea view', 'balcony'],
+                              rating: 4.8,
+                              metadata: { petsAllowed: true },
+                              listedAt: '2024-01-15T10:00:00Z',
+                            },
+                          },
+                          then: [],
+                        },
+                      ],
                     },
-                    then: [],
-                  },
-                ],
+                  ],
+                },
               },
             },
           ],

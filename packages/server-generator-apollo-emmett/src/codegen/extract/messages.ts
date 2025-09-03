@@ -67,7 +67,18 @@ function extractMessagesForCommand(slice: Slice, allMessages: MessageDefinition[
     return EMPTY_EXTRACTED_MESSAGES;
   }
 
-  const gwtSpecs = slice.server?.gwt ?? [];
+  const specs = slice.server?.specs;
+  const rules = specs?.rules;
+  const gwtSpecs =
+    Array.isArray(rules) && rules.length > 0
+      ? rules.flatMap((rule) =>
+          rule.examples.map((example) => ({
+            given: example.given,
+            when: example.when,
+            then: example.then,
+          })),
+        )
+      : [];
   debugCommand('  Found %d GWT specs', gwtSpecs.length);
 
   const { commands, commandSchemasByName } = extractCommandsFromGwt(gwtSpecs, allMessages);
@@ -75,8 +86,11 @@ function extractMessagesForCommand(slice: Slice, allMessages: MessageDefinition[
   debugCommand('  Command schemas: %o', Object.keys(commandSchemasByName));
 
   const events: Message[] = gwtSpecs.flatMap((gwt): Message[] => {
-    const givenEvents = extractEventsFromGiven(gwt.given, allMessages);
-    const thenEvents = extractEventsFromThen(gwt.then, allMessages);
+    const givenEventsOnly = gwt.given?.filter((item): item is EventExample => 'eventRef' in item);
+    const givenEvents = extractEventsFromGiven(givenEventsOnly, allMessages);
+
+    const thenEventsOnly = gwt.then.filter((item): item is EventExample => 'eventRef' in item);
+    const thenEvents = extractEventsFromThen(thenEventsOnly, allMessages);
     debugCommand('    GWT: given=%d events, then=%d events', givenEvents.length, thenEvents.length);
     return [...givenEvents, ...thenEvents];
   });
@@ -101,13 +115,29 @@ function extractMessagesForQuery(slice: Slice, allMessages: MessageDefinition[])
     return EMPTY_EXTRACTED_MESSAGES;
   }
 
-  const gwtSpecs = slice.server?.gwt ?? [];
+  const specs = slice.server?.specs;
+  const rules = specs?.rules;
+  const gwtSpecs =
+    Array.isArray(rules) && rules.length > 0
+      ? rules.flatMap((rule) =>
+          rule.examples.map((example) => ({
+            given: example.given,
+            when: example.when,
+            then: example.then,
+          })),
+        )
+      : [];
   debugQuery('  Found %d GWT specs', gwtSpecs.length);
 
   const projectionIdField = extractProjectionIdField(slice);
   debugQuery('  Projection ID field: %s', projectionIdField ?? 'none');
 
-  const events: Message[] = gwtSpecs.flatMap((gwt) => extractEventsFromGiven(gwt.given, allMessages));
+  const events: Message[] = gwtSpecs.flatMap((gwt) => {
+    const eventsFromWhen = Array.isArray(gwt.when)
+      ? gwt.when.filter((item): item is EventExample => 'eventRef' in item)
+      : [];
+    return extractEventsFromGiven(eventsFromWhen, allMessages);
+  });
   debugQuery('  Extracted %d events from given', events.length);
 
   const states: Message[] = extractStatesFromTarget(slice, allMessages);
@@ -133,10 +163,22 @@ function extractMessagesForReact(slice: Slice, allMessages: MessageDefinition[])
     return EMPTY_EXTRACTED_MESSAGES;
   }
 
-  const gwtSpecs = slice.server?.gwt ?? [];
+  const specs = slice.server?.specs;
+  // Extract all examples from specs/rules structure
+  const rules = specs?.rules;
+  const gwtSpecs =
+    Array.isArray(rules) && rules.length > 0
+      ? rules.flatMap((rule) =>
+          rule.examples.map((example) => ({
+            given: example.given,
+            when: example.when,
+            then: example.then,
+          })),
+        )
+      : [];
   debugReact('  Found %d GWT specs', gwtSpecs.length);
 
-  const events = extractEventsFromWhen(gwtSpecs, allMessages);
+  const events = extractEventsFromWhen(gwtSpecs as ReactGwtSpec[], allMessages);
   debugReact('  Extracted %d events from when', events.length);
 
   const { commands, commandSchemasByName } = extractCommandsFromThen(gwtSpecs, allMessages);

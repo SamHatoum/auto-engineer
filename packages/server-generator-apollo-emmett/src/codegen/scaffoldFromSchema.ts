@@ -272,8 +272,19 @@ function findEventSource(flows: Flow[], eventType: string): { flowName: string; 
     for (const slice of flow.slices) {
       if (!['command', 'react'].includes(slice.type)) continue;
 
-      const gwt = slice.server?.gwt ?? [];
-      if (gwt.some((g) => g.then.some((t) => 'eventRef' in t && t.eventRef === eventType))) {
+      const specs = slice.server?.specs;
+      const rules = specs?.rules;
+      const gwtSpecs =
+        Array.isArray(rules) && rules.length > 0
+          ? rules.flatMap((rule) =>
+              rule.examples.map((example) => ({
+                given: example.given,
+                when: example.when,
+                then: example.then,
+              })),
+            )
+          : [];
+      if (gwtSpecs.some((g) => g.then.some((t) => 'eventRef' in t && t.eventRef === eventType))) {
         debugSlice('  Found event source in flow: %s, slice: %s', flow.name, slice.name);
         return { flowName: flow.name, sliceName: slice.name };
       }
@@ -304,8 +315,19 @@ function findCommandSource(flows: Flow[], commandType: string): { flowName: stri
     for (const slice of flow.slices) {
       if (slice.type !== 'command') continue;
 
-      const gwt = slice.server?.gwt ?? [];
-      if (gwt.some((g) => 'commandRef' in g.when && g.when.commandRef === commandType)) {
+      const specs = slice.server?.specs;
+      const rules = specs?.rules;
+      const gwtSpecs =
+        Array.isArray(rules) && rules.length > 0
+          ? rules.flatMap((rule) =>
+              rule.examples.map((example) => ({
+                given: example.given,
+                when: example.when,
+                then: example.then,
+              })),
+            )
+          : [];
+      if (gwtSpecs.some((g) => !Array.isArray(g.when) && 'commandRef' in g.when && g.when.commandRef === commandType)) {
         debugSlice('  Found command source in flow: %s, slice: %s', flow.name, slice.name);
         return { flowName: flow.name, sliceName: slice.name };
       }

@@ -19,31 +19,40 @@ describe('decide.ts.ejs', () => {
               },
               server: {
                 description: 'test',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: 'Some apartment',
-                        listedAt: '2024-01-15T10:00:00Z',
-                        rating: 4.8,
-                        metadata: { foo: 'bar' },
-                      },
-                    },
-                    then: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          listedAt: '2024-01-15T10:00:00Z',
-                          rating: 4.8,
-                          metadata: { foo: 'bar' },
+                specs: {
+                  name: 'Create listing command',
+                  rules: [
+                    {
+                      description: 'Should create listing with valid data',
+                      examples: [
+                        {
+                          description: 'User creates listing successfully',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: 'Some apartment',
+                              listedAt: '2024-01-15T10:00:00Z',
+                              rating: 4.8,
+                              metadata: { foo: 'bar' },
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                listedAt: '2024-01-15T10:00:00Z',
+                                rating: 4.8,
+                                metadata: { foo: 'bar' },
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                ],
+                      ],
+                    },
+                  ],
+                },
               },
             },
           ],
@@ -121,34 +130,43 @@ describe('decide.ts.ejs', () => {
               },
               server: {
                 description: 'test',
-                gwt: [
-                  {
-                    given: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          listedAt: '2024-01-15T10:00:00Z',
+                specs: {
+                  name: 'Remove listing command',
+                  rules: [
+                    {
+                      description: 'Should remove existing listing',
+                      examples: [
+                        {
+                          description: 'Existing listing can be removed',
+                          given: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                listedAt: '2024-01-15T10:00:00Z',
+                              },
+                            },
+                          ],
+                          when: {
+                            commandRef: 'RemoveListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingRemoved',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                removedAt: '2024-01-16T12:00:00Z',
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                    when: {
-                      commandRef: 'RemoveListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                      },
+                      ],
                     },
-                    then: [
-                      {
-                        eventRef: 'ListingRemoved',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          removedAt: '2024-01-16T12:00:00Z',
-                        },
-                      },
-                    ],
-                  },
-                ],
+                  ],
+                },
               },
             },
           ],
@@ -238,49 +256,59 @@ describe('decide.ts.ejs', () => {
               },
               server: {
                 description: 'test',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: 'Some Apartment',
-                        listedAt: '2024-01-15T10:00:00Z',
-                        rating: 4.8,
-                        metadata: { foo: 'bar' },
-                      },
-                    },
-                    then: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          listedAt: '2024-01-15T10:00:00Z',
-                          rating: 4.8,
-                          metadata: { foo: 'bar' },
+                specs: {
+                  name: 'Create listing command',
+                  rules: [
+                    {
+                      description: 'Should handle multiple scenarios including errors',
+                      examples: [
+                        {
+                          description: 'User creates listing successfully',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: 'Some Apartment',
+                              listedAt: '2024-01-15T10:00:00Z',
+                              rating: 4.8,
+                              metadata: { foo: 'bar' },
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                listedAt: '2024-01-15T10:00:00Z',
+                                rating: 4.8,
+                                metadata: { foo: 'bar' },
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: '',
-                        listedAt: '2024-01-15T10:00:00Z',
-                        rating: 4.8,
-                        metadata: {},
-                      },
+                        {
+                          description: 'User creates listing with empty title should fail',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: '',
+                              listedAt: '2024-01-15T10:00:00Z',
+                              rating: 4.8,
+                              metadata: {},
+                            },
+                          },
+                          then: [
+                            {
+                              errorType: 'ValidationError',
+                              message: 'Title must not be empty',
+                            },
+                          ],
+                        },
+                      ],
                     },
-                    then: [
-                      {
-                        errorType: 'ValidationError',
-                        message: 'Title must not be empty',
-                      },
-                    ],
-                  },
-                ],
+                  ],
+                },
               },
             },
           ],
@@ -411,26 +439,35 @@ describe('decide.ts.ejs', () => {
                     },
                   },
                 ],
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'SuggestItems',
-                      exampleData: {
-                        sessionId: 'session-123',
-                        prompt: 'What should I buy?',
-                      },
-                    },
-                    then: [
-                      {
-                        eventRef: 'ItemsSuggested',
-                        exampleData: {
-                          sessionId: 'session-123',
-                          items: [],
+                specs: {
+                  name: 'Suggest items command',
+                  rules: [
+                    {
+                      description: 'Should suggest items successfully',
+                      examples: [
+                        {
+                          description: 'User requests item suggestions',
+                          when: {
+                            commandRef: 'SuggestItems',
+                            exampleData: {
+                              sessionId: 'session-123',
+                              prompt: 'What should I buy?',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ItemsSuggested',
+                              exampleData: {
+                                sessionId: 'session-123',
+                                items: [],
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                ],
+                      ],
+                    },
+                  ],
+                },
               },
             },
           ],

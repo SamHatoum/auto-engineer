@@ -3,7 +3,55 @@ import { z } from 'zod';
 import { Flow, Message } from './index';
 import { Integration } from './types';
 import { globalIntegrationRegistry } from './integration-registry';
+import { TypeInfo } from './loader/ts-utils';
 import createDebug from 'debug';
+
+// resolve InferredType placeholders using semantic type analysis
+function resolveInferredType(
+  typeName: string,
+  exampleData: Record<string, unknown>,
+  flowTypeMap?: Map<string, TypeInfo>,
+  expectedMessageType?: 'command' | 'event' | 'state',
+): string {
+  // If not an inferred type, return as-is
+  if (typeName !== 'InferredType' || !flowTypeMap) {
+    return typeName;
+  }
+
+  // Strategy: Use the semantic information from TypeScript analysis
+  // to find the type that matches the expected message type
+
+  // First, try to find a type with explicit classification from type alias analysis
+  for (const [, typeInfo] of flowTypeMap) {
+    if (typeInfo.classification === expectedMessageType) {
+      return typeInfo.stringLiteral;
+    }
+  }
+
+  // If no explicit classification, analyze the data structure compatibility
+  const exampleDataFields = Object.keys(exampleData);
+
+  // Find the type whose data structure best matches the example data
+  for (const [, typeInfo] of flowTypeMap) {
+    if (typeInfo.dataFields && typeInfo.dataFields.length > 0) {
+      // Check how well the type's data fields match the example data
+      const matchingFields = typeInfo.dataFields.filter((field) => exampleDataFields.includes(field));
+      const matchRatio = matchingFields.length / Math.max(typeInfo.dataFields.length, exampleDataFields.length);
+
+      // If we have a good match, use this type
+      if (matchRatio > 0.5) {
+        return typeInfo.stringLiteral;
+      }
+    }
+  }
+
+  // Fallback: use the first available type
+  for (const [, typeInfo] of flowTypeMap) {
+    return typeInfo.stringLiteral;
+  }
+
+  return typeName;
+}
 
 const debugIntegrations = createDebug('flow:getFlows:integrations');
 if ('color' in debugIntegrations && typeof debugIntegrations === 'object') {
@@ -231,7 +279,50 @@ const inferObjectType = (value: Record<string, unknown>): string => {
   return `{${objType}}`;
 };
 
-export const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
+// get flow-specific types for a flow
+function getFlowSpecificTypes(
+  flow: Flow,
+  typesByFile?: Map<string, Map<string, TypeInfo>>,
+): Map<string, TypeInfo> | undefined {
+  // If we don't have file-based types, fall back to global typeMap
+  if (!typesByFile) {
+    return undefined;
+  }
+
+  // Try to find the source file for this flow
+  // Look for files that might contain this flow
+  for (const [filePath, fileTypes] of typesByFile) {
+    // Check if this file likely contains the flow based on naming patterns
+    const flowNameLower = flow.name.toLowerCase().replace(/\s+/g, '-');
+    const fileName = filePath.toLowerCase();
+
+    // Try multiple matching strategies
+    if (
+      fileName.includes(flowNameLower) ||
+      fileName.includes(flow.name.toLowerCase()) ||
+      fileName.includes(flow.name.toLowerCase().replace(/\s+/g, '')) || // "place order" -> "placeorder"
+      fileName.includes(flow.name.toLowerCase().replace(/\s+/g, '_'))
+    ) {
+      // "place order" -> "place_order"
+      return fileTypes;
+    }
+  }
+
+  // If no specific file found, return the first available file types as fallback
+  // This ensures we don't cross-contaminate between flows
+  const fileEntries = Array.from(typesByFile.entries());
+  if (fileEntries.length > 0) {
+    return fileEntries[0][1];
+  }
+
+  return undefined;
+}
+
+export const flowsToSchema = (
+  flows: Flow[],
+  typeMap?: Map<string, string>,
+  typesByFile?: Map<string, Map<string, TypeInfo>>,
+): z.infer<typeof SpecsSchema> => {
   // Extract messages and integrations from flows
   const messages = new Map<string, Message>();
   const integrations = new Map<
@@ -259,87 +350,116 @@ export const flowsToSchema = (flows: Flow[]): z.infer<typeof SpecsSchema> => {
   }
 
   flows.forEach((flow) => {
-    flow.slices.forEach((slice) => {
-      // Extract messages from GWT specs
-      if ('server' in slice && slice.server?.gwt !== undefined) {
-        slice.server.gwt.forEach((gwt) => {
-          // Process given
-          if ('given' in gwt && gwt.given) {
-            // eslint-disable-next-line complexity
-            gwt.given.forEach((item) => {
-              // Handle flow builder format (type + data)
-              if ('type' in item && '__messageCategory' in item) {
-                const messageCategory = item.__messageCategory;
-                const messageType =
-                  messageCategory === 'event' ? 'event' : messageCategory === 'command' ? 'command' : 'state';
-                const gwtMessage = createMessage(item.type as string, item.exampleData, messageType);
-                const existingMessage = messages.get(item.type as string);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(item.type as string, gwtMessage);
-                }
-              }
-              if ('eventRef' in item) {
-                const gwtMessage = createMessage(item.eventRef, item.exampleData, 'event');
-                const existingMessage = messages.get(item.eventRef);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(item.eventRef, gwtMessage);
-                }
-              }
-              if ('stateRef' in item) {
-                const gwtMessage = createMessage(item.stateRef as string, item.exampleData, 'state');
-                const existingMessage = messages.get(item.stateRef as string);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(item.stateRef as string, gwtMessage);
-                }
-              }
-            });
-          }
+    // Get flow-specific types, with fallback logic
+    const flowSpecificTypes = getFlowSpecificTypes(flow, typesByFile);
 
-          // Process when
-          if ('when' in gwt) {
-            if ('commandRef' in gwt.when) {
-              // Command slice
-              const gwtMessage = createMessage(gwt.when.commandRef, gwt.when.exampleData, 'command');
-              const existingMessage = messages.get(gwt.when.commandRef);
-              if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                messages.set(gwt.when.commandRef, gwtMessage);
-              }
-            } else if (Array.isArray(gwt.when)) {
-              // React slice
-              gwt.when.forEach((event) => {
-                const gwtMessage = createMessage(event.eventRef, event.exampleData, 'event');
-                const existingMessage = messages.get(event.eventRef);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(event.eventRef, gwtMessage);
+    // Helper function to resolve InferredType with proper fallback
+    const resolveType = (
+      typeName: string,
+      exampleData: Record<string, unknown>,
+      expectedMessageType?: 'command' | 'event' | 'state',
+    ): string => {
+      if (flowSpecificTypes) {
+        return resolveInferredType(typeName, exampleData, flowSpecificTypes, expectedMessageType);
+      } else if (typeMap) {
+        // Fallback to global typeMap - convert to TypeInfo format on the fly
+        const legacyMap = new Map<string, TypeInfo>();
+        for (const [key, value] of typeMap) {
+          legacyMap.set(key, { stringLiteral: value });
+        }
+        return resolveInferredType(typeName, exampleData, legacyMap, expectedMessageType);
+      } else {
+        return typeName;
+      }
+    };
+
+    flow.slices.forEach((slice) => {
+      // Extract messages from new specs structure
+      if ('server' in slice && slice.server?.specs !== undefined) {
+        const spec = slice.server.specs;
+        spec.rules.forEach((rule) => {
+          rule.examples.forEach((example) => {
+            // Process given
+            if (example.given) {
+              example.given.forEach((item) => {
+                if ('eventRef' in item) {
+                  const resolvedEventRef = resolveType(item.eventRef, item.exampleData, 'event');
+                  item.eventRef = resolvedEventRef;
+                  const message = createMessage(resolvedEventRef, item.exampleData, 'event');
+                  const existingMessage = messages.get(resolvedEventRef);
+                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                    messages.set(resolvedEventRef, message);
+                  }
+                }
+                if ('stateRef' in item) {
+                  const resolvedStateRef = resolveType(item.stateRef, item.exampleData, 'state');
+                  item.stateRef = resolvedStateRef;
+                  const message = createMessage(resolvedStateRef, item.exampleData, 'state');
+                  const existingMessage = messages.get(resolvedStateRef);
+                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                    messages.set(resolvedStateRef, message);
+                  }
                 }
               });
             }
-          }
 
-          // Process then
-          if ('then' in gwt && gwt.then !== undefined) {
-            gwt.then.forEach((item) => {
-              if ('eventRef' in item) {
-                const gwtMessage = createMessage(item.eventRef, item.exampleData, 'event');
-                const existingMessage = messages.get(item.eventRef);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(item.eventRef, gwtMessage);
-                }
-              } else if ('commandRef' in item) {
-                const gwtMessage = createMessage(item.commandRef, item.exampleData, 'command');
-                const existingMessage = messages.get(item.commandRef);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(item.commandRef, gwtMessage);
-                }
-              } else if ('stateRef' in item) {
-                const gwtMessage = createMessage(item.stateRef, item.exampleData, 'state');
-                const existingMessage = messages.get(item.stateRef);
-                if (!existingMessage || gwtMessage.fields.length > existingMessage.fields.length) {
-                  messages.set(item.stateRef, gwtMessage);
-                }
+            // Process when
+            if ('commandRef' in example.when) {
+              // Command slice - resolve InferredType if needed
+              const expectedType = slice.type === 'command' ? 'command' : 'event';
+              const resolvedCommandRef = resolveType(example.when.commandRef, example.when.exampleData, expectedType);
+              // Update the example with the resolved type
+              example.when.commandRef = resolvedCommandRef;
+              const messageType = slice.type === 'command' ? 'command' : 'event';
+              const message = createMessage(resolvedCommandRef, example.when.exampleData, messageType);
+              const existingMessage = messages.get(resolvedCommandRef);
+              if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                messages.set(resolvedCommandRef, message);
               }
-            });
-          }
+            } else if (Array.isArray(example.when)) {
+              // React slice or Query slice with array of events
+              example.when.forEach((event) => {
+                const resolvedEventRef = resolveType(event.eventRef, event.exampleData, 'event');
+                event.eventRef = resolvedEventRef;
+                const message = createMessage(resolvedEventRef, event.exampleData, 'event');
+                const existingMessage = messages.get(resolvedEventRef);
+                if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                  messages.set(resolvedEventRef, message);
+                }
+              });
+            }
+
+            // Process then
+            if (Array.isArray(example.then) && example.then.length > 0) {
+              example.then.forEach((item) => {
+                if ('eventRef' in item) {
+                  const resolvedEventRef = resolveType(item.eventRef, item.exampleData, 'event');
+                  item.eventRef = resolvedEventRef;
+                  const message = createMessage(resolvedEventRef, item.exampleData, 'event');
+                  const existingMessage = messages.get(resolvedEventRef);
+                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                    messages.set(resolvedEventRef, message);
+                  }
+                } else if ('commandRef' in item) {
+                  const resolvedCommandRef = resolveType(item.commandRef, item.exampleData, 'command');
+                  item.commandRef = resolvedCommandRef;
+                  const message = createMessage(resolvedCommandRef, item.exampleData, 'command');
+                  const existingMessage = messages.get(resolvedCommandRef);
+                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                    messages.set(resolvedCommandRef, message);
+                  }
+                } else if ('stateRef' in item) {
+                  const resolvedStateRef = resolveType(item.stateRef, item.exampleData, 'state');
+                  item.stateRef = resolvedStateRef;
+                  const message = createMessage(resolvedStateRef, item.exampleData, 'state');
+                  const existingMessage = messages.get(resolvedStateRef);
+                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
+                    messages.set(resolvedStateRef, message);
+                  }
+                }
+              });
+            }
+          });
         });
       }
 

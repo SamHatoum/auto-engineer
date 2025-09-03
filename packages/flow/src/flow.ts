@@ -10,6 +10,13 @@ import {
   pushSpec,
   recordShouldBlock,
   setSliceData,
+  recordRule,
+  recordExample,
+  recordGivenData,
+  recordAndGivenData,
+  recordWhenData,
+  recordThenData,
+  recordAndThenData,
 } from './flow-context';
 import type { DataSinkItem, DataSourceItem, DataItem } from './types';
 import createDebug from 'debug';
@@ -67,10 +74,101 @@ export const specs = (description: string, fn: () => void) => {
   fn();
 };
 
-export interface SliceTypes {
-  command: 'command';
-  query: 'query';
-  react: 'react';
+export const rule = (description: string, fn: () => void) => {
+  recordRule(description);
+  fn();
+};
+
+export const example = (description: string) => {
+  recordExample(description);
+  return createExampleBuilder();
+};
+
+// Type helpers to extract data and type names from Command/Event/State types
+type ExtractData<T> = T extends { data: infer D } ? D : T;
+
+interface TypedExampleBuilder {
+  given<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenBuilder<T>;
+  when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedWhenBuilder<W>;
+}
+
+interface TypedGivenBuilder<G> {
+  and<U>(data: ExtractData<U> | ExtractData<U>[]): TypedGivenBuilder<G | U>;
+  when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedGivenWhenBuilder<G, W>;
+}
+
+interface TypedWhenBuilder<W> {
+  then<T>(data: ExtractData<T> | ExtractData<T>[]): TypedThenBuilder<W, T>;
+}
+
+interface TypedGivenWhenBuilder<G, W> {
+  then<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenThenBuilder<G, W, T>;
+}
+
+interface TypedThenBuilder<W, T> {
+  and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedThenBuilder<W, T | A>;
+}
+
+interface TypedGivenThenBuilder<G, W, T> {
+  and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedGivenThenBuilder<G, W, T | A>;
+}
+
+function createThenBuilder<W, T>(): TypedThenBuilder<W, T> {
+  return {
+    and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedThenBuilder<W, T | A> {
+      const andItems = Array.isArray(data) ? data : [data];
+      recordAndThenData(andItems);
+      return createThenBuilder<W, T | A>();
+    },
+  };
+}
+
+function createGivenBuilder<G>(): TypedGivenBuilder<G> {
+  return {
+    and<U>(data: ExtractData<U> | ExtractData<U>[]): TypedGivenBuilder<G | U> {
+      const andItems = Array.isArray(data) ? data : [data];
+      recordAndGivenData(andItems);
+      return createGivenBuilder<G | U>();
+    },
+    when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedGivenWhenBuilder<G, W> {
+      const whenData = Array.isArray(data) ? data : [data];
+      recordWhenData(whenData.length === 1 ? whenData[0] : whenData);
+      return {
+        then<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenThenBuilder<G, W, T> {
+          const thenItems = Array.isArray(data) ? data : [data];
+          recordThenData(thenItems);
+          return {
+            and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedGivenThenBuilder<G, W, T | A> {
+              const andItems = Array.isArray(data) ? data : [data];
+              recordAndThenData(andItems);
+              return createThenBuilder<W, T | A>() as TypedGivenThenBuilder<G, W, T | A>;
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+function createExampleBuilder(): TypedExampleBuilder {
+  return {
+    given<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenBuilder<T> {
+      const items = Array.isArray(data) ? data : [data];
+      recordGivenData(items);
+      return createGivenBuilder<T>();
+    },
+    when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedWhenBuilder<W> {
+      const whenData = Array.isArray(data) ? data : [data];
+      recordWhenData(whenData.length === 1 ? whenData[0] : whenData);
+      return {
+        then<Z>(data: ExtractData<Z> | ExtractData<Z>[]): TypedThenBuilder<W, Z> {
+          const thenItems = Array.isArray(data) ? data : [data];
+          recordThenData(thenItems);
+          return createThenBuilder<W, Z>();
+        },
+      };
+    },
+  };
 }
 
 export const SliceType = {
@@ -97,12 +195,6 @@ export interface ReactDataArray {
   readonly length: number;
   readonly __reactDataMarker?: never;
   [index: number]: DataItem;
-}
-
-export interface DataArrayMap {
-  command: CommandDataArray;
-  query: QueryDataArray;
-  react: ReactDataArray;
 }
 
 export function data(items: DataItem[]): void {

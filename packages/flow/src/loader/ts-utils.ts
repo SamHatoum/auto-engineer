@@ -72,6 +72,111 @@ export function parseImports(ts: typeof import('typescript'), fileName: string, 
   return specs;
 }
 
+export interface TypeInfo {
+  stringLiteral: string;
+  classification?: 'command' | 'event' | 'state';
+  dataFields?: string[];
+}
+
+// Helper to process type alias declarations
+function processTypeAlias(
+  ts: typeof import('typescript'),
+  node: import('typescript').TypeAliasDeclaration,
+  typeMap: Map<string, TypeInfo>,
+) {
+  const typeName = node.name.text;
+
+  if (!ts.isTypeReferenceNode(node.type)) return;
+
+  const typeRef = node.type;
+  if (!ts.isIdentifier(typeRef.typeName)) return;
+
+  const referenceName = typeRef.typeName.text;
+  if (!['Command', 'Event', 'State'].includes(referenceName)) return;
+  if (!typeRef.typeArguments || typeRef.typeArguments.length === 0) return;
+
+  const firstArg = typeRef.typeArguments[0];
+  if (!ts.isLiteralTypeNode(firstArg) || !ts.isStringLiteral(firstArg.literal)) return;
+
+  const stringLiteral = firstArg.literal.text;
+  const classification = referenceName.toLowerCase() as 'command' | 'event' | 'state';
+  typeMap.set(typeName, { stringLiteral, classification });
+}
+
+// Helper to extract string literal from type property
+function extractTypeString(
+  ts: typeof import('typescript'),
+  member: import('typescript').PropertySignature,
+): string | undefined {
+  if (!member.type) return undefined;
+  if (!ts.isLiteralTypeNode(member.type)) return undefined;
+  if (!ts.isStringLiteral(member.type.literal)) return undefined;
+  return member.type.literal.text;
+}
+
+// Helper to extract data fields from interface
+function extractDataFields(ts: typeof import('typescript'), member: import('typescript').PropertySignature): string[] {
+  const dataFields: string[] = [];
+  if (!member.type || !ts.isTypeLiteralNode(member.type)) return dataFields;
+
+  for (const dataMember of member.type.members) {
+    if (ts.isPropertySignature(dataMember) && dataMember.name !== undefined && ts.isIdentifier(dataMember.name)) {
+      dataFields.push(dataMember.name.text);
+    }
+  }
+  return dataFields;
+}
+
+// Helper to process interface declarations
+function processInterface(
+  ts: typeof import('typescript'),
+  node: import('typescript').InterfaceDeclaration,
+  typeMap: Map<string, TypeInfo>,
+) {
+  const typeName = node.name.text;
+  let stringLiteral: string | undefined;
+  const dataFields: string[] = [];
+
+  for (const member of node.members) {
+    if (!ts.isPropertySignature(member)) continue;
+    if (member.name === undefined || !ts.isIdentifier(member.name)) continue;
+
+    const memberName = member.name.text;
+
+    if (memberName === 'type') {
+      stringLiteral = extractTypeString(ts, member);
+    } else if (memberName === 'data') {
+      dataFields.push(...extractDataFields(ts, member));
+    }
+  }
+
+  if (stringLiteral !== undefined) {
+    typeMap.set(typeName, { stringLiteral, dataFields });
+  }
+}
+
+export function parseTypeDefinitions(
+  ts: typeof import('typescript'),
+  fileName: string,
+  source: string,
+): Map<string, TypeInfo> {
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.ES2020, true, ts.ScriptKind.TSX);
+  const typeMap = new Map<string, TypeInfo>();
+
+  const visitNode = (node: import('typescript').Node) => {
+    if (ts.isTypeAliasDeclaration(node)) {
+      processTypeAlias(ts, node, typeMap);
+    } else if (ts.isInterfaceDeclaration(node)) {
+      processInterface(ts, node, typeMap);
+    }
+
+    ts.forEachChild(node, visitNode);
+  };
+
+  visitNode(sf);
+  return typeMap;
+}
+
 export function transpileToCjs(ts: typeof import('typescript'), fileName: string, source: string): string {
   const out = ts.transpileModule(source, {
     compilerOptions: {

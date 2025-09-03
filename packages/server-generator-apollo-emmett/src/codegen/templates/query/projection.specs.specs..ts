@@ -17,46 +17,56 @@ describe('projection.specs.ts.ejs', () => {
               client: { description: '', specs: [] },
               server: {
                 description: '',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: 'Sea View Flat',
-                        pricePerNight: 120,
-                        location: 'Brighton',
-                        maxGuests: 4,
-                      },
-                    },
-                    then: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          title: 'Sea View Flat',
-                          pricePerNight: 120,
-                          location: 'Brighton',
-                          maxGuests: 4,
+                specs: {
+                  name: 'CreateListing command',
+                  rules: [
+                    {
+                      description: 'Should handle listing operations',
+                      examples: [
+                        {
+                          description: 'User creates listing successfully',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: 'Sea View Flat',
+                              pricePerNight: 120,
+                              location: 'Brighton',
+                              maxGuests: 4,
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                title: 'Sea View Flat',
+                                pricePerNight: 120,
+                                location: 'Brighton',
+                                maxGuests: 4,
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                  {
-                    when: {
-                      commandRef: 'RemoveListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                      },
+                        {
+                          description: 'User removes listing successfully',
+                          when: {
+                            commandRef: 'RemoveListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingRemoved',
+                              exampleData: {},
+                            },
+                          ],
+                        },
+                      ],
                     },
-                    then: [
-                      {
-                        eventRef: 'ListingRemoved',
-                        exampleData: {},
-                      },
-                    ],
-                  },
-                ],
+                  ],
+                },
               },
             },
             {
@@ -79,50 +89,60 @@ describe('projection.specs.ts.ejs', () => {
                     },
                   },
                 ],
-                gwt: [
-                  {
-                    given: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          title: 'Sea View Flat',
-                          pricePerNight: 120,
-                          location: 'Brighton',
-                          maxGuests: 4,
+                specs: {
+                  name: 'Search listings query',
+                  rules: [
+                    {
+                      description: 'Should project listings correctly',
+                      examples: [
+                        {
+                          description: 'Listing created shows in search results',
+                          when: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                title: 'Sea View Flat',
+                                pricePerNight: 120,
+                                location: 'Brighton',
+                                maxGuests: 4,
+                              },
+                            },
+                          ],
+                          then: [
+                            {
+                              stateRef: 'AvailableListings',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                title: 'Sea View Flat',
+                                pricePerNight: 120,
+                                location: 'Brighton',
+                                maxGuests: 4,
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                    then: [
-                      {
-                        stateRef: 'AvailableListings',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          title: 'Sea View Flat',
-                          pricePerNight: 120,
-                          location: 'Brighton',
-                          maxGuests: 4,
+                        {
+                          description: 'Listing removed disappears from search results',
+                          when: [
+                            {
+                              eventRef: 'ListingRemoved',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                              },
+                            },
+                          ],
+                          then: [
+                            {
+                              stateRef: 'AvailableListings',
+                              exampleData: {},
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                  {
-                    given: [
-                      {
-                        eventRef: 'ListingRemoved',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                        },
-                      },
-                    ],
-                    then: [
-                      {
-                        stateRef: 'AvailableListings',
-                        exampleData: {},
-                      },
-                    ],
-                  },
-                ],
+                      ],
+                    },
+                  ],
+                },
               },
             },
           ],

@@ -169,6 +169,34 @@ const ErrorExampleSchema = z
   })
   .describe('Error outcome');
 
+const ExampleSchema = z
+  .object({
+    description: z.string().describe('Example description'),
+    given: z
+      .array(z.union([EventExampleSchema, StateExampleSchema]))
+      .optional()
+      .describe('Given conditions'),
+    when: z.union([CommandExampleSchema, z.array(EventExampleSchema)]).describe('When action or events occur'),
+    then: z
+      .array(z.union([EventExampleSchema, StateExampleSchema, CommandExampleSchema, ErrorExampleSchema]))
+      .describe('Then expected outcomes'),
+  })
+  .describe('BDD example with given-when-then structure');
+
+const RuleSchema = z
+  .object({
+    description: z.string().describe('Rule description'),
+    examples: z.array(ExampleSchema).describe('Examples demonstrating the rule'),
+  })
+  .describe('Business rule with examples');
+
+const SpecSchema = z
+  .object({
+    name: z.string().describe('Spec name/feature name'),
+    rules: z.array(RuleSchema).describe('Business rules for this spec'),
+  })
+  .describe('Specification with business rules');
+
 const CommandSliceSchema = BaseSliceSchema.extend({
   type: z.literal('command'),
   client: z.object({
@@ -179,13 +207,7 @@ const CommandSliceSchema = BaseSliceSchema.extend({
   server: z.object({
     description: z.string(),
     data: z.array(DataSinkSchema).optional().describe('Data sinks for command slices'),
-    gwt: z.array(
-      z.object({
-        given: z.array(EventExampleSchema).optional(),
-        when: CommandExampleSchema,
-        then: z.array(z.union([EventExampleSchema, ErrorExampleSchema])),
-      }),
-    ),
+    specs: SpecSchema.describe('Server-side specifications with rules and examples'),
   }),
 }).describe('Command slice handling user actions and business logic');
 
@@ -199,12 +221,7 @@ const QuerySliceSchema = BaseSliceSchema.extend({
   server: z.object({
     description: z.string(),
     data: z.array(DataSourceSchema).optional().describe('Data sources for query slices'),
-    gwt: z.array(
-      z.object({
-        given: z.array(EventExampleSchema).describe('Given events'),
-        then: z.array(StateExampleSchema).describe('Then update state'),
-      }),
-    ),
+    specs: SpecSchema.describe('Server-side specifications with rules and examples'),
   }),
 }).describe('Query slice for reading data and maintaining projections');
 
@@ -216,12 +233,7 @@ const ReactSliceSchema = BaseSliceSchema.extend({
       .array(z.union([DataSinkSchema, DataSourceSchema]))
       .optional()
       .describe('Data items for react slices (mix of sinks and sources)'),
-    gwt: z.array(
-      z.object({
-        when: z.array(EventExampleSchema).describe('When event(s) occur'),
-        then: z.array(CommandExampleSchema).describe('Then send command(s)'),
-      }),
-    ),
+    specs: SpecSchema.describe('Server-side specifications with rules and examples'),
   }),
 }).describe('React slice for automated responses to events');
 
@@ -367,4 +379,7 @@ export {
   ReactSliceSchema,
   SliceSchema,
   FlowSchema,
+  ExampleSchema,
+  RuleSchema,
+  SpecSchema,
 };

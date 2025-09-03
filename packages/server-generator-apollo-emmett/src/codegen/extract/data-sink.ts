@@ -1,45 +1,82 @@
 import { CommandExample, DataSink, Slice } from '@auto-engineer/flow';
-import { CommandGwtSpec, QueryGwtSpec, ReactGwtSpec } from './messages';
 
 function resolveStreamId(stream: string, exampleData: Record<string, unknown>): string {
   return stream.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(exampleData?.[key] ?? 'unknown'));
 }
 
-// eslint-disable-next-line complexity
-export function getStreamFromSink(slice: Slice): { streamPattern?: string; streamId?: string } {
-  let streamPattern: string | undefined;
-  let streamId: string | undefined;
-  const gwtSpecs =
-    slice.type === 'command'
-      ? (slice.server?.gwt as CommandGwtSpec[])
-      : slice.type === 'query'
-        ? (slice.server?.gwt as QueryGwtSpec[])
-        : slice.type === 'react'
-          ? (slice.server?.gwt as ReactGwtSpec[])
-          : [];
-  let exampleData: Record<string, unknown> = {};
+function extractExampleDataFromReact(firstSpec: { when: unknown }): Record<string, unknown> {
+  if (Array.isArray(firstSpec.when)) {
+    const firstWhen = firstSpec.when[0] as { exampleData?: Record<string, unknown> } | undefined;
+    return typeof firstWhen?.exampleData === 'object' && firstWhen.exampleData !== null ? firstWhen.exampleData : {};
+  }
+  return {};
+}
+
+function extractExampleDataFromCommand(firstSpec: { then: unknown }): Record<string, unknown> {
+  const then = firstSpec.then as (CommandExample | { errorType: string })[];
+  const firstExample = then.find((t): t is CommandExample => 'exampleData' in t);
+  return typeof firstExample?.exampleData === 'object' && firstExample.exampleData !== null
+    ? firstExample.exampleData
+    : {};
+}
+
+function extractExampleDataFromQuery(firstSpec: { when: unknown }): Record<string, unknown> {
+  if (Array.isArray(firstSpec.when)) {
+    const firstWhen = firstSpec.when[0] as { exampleData?: Record<string, unknown> } | undefined;
+    return typeof firstWhen?.exampleData === 'object' && firstWhen.exampleData !== null ? firstWhen.exampleData : {};
+  }
+  return {};
+}
+
+function extractExampleDataFromSpecs(
+  slice: Slice,
+  gwtSpecs: Array<{ given?: unknown; when: unknown; then: unknown }>,
+): Record<string, unknown> {
+  if (gwtSpecs.length === 0) {
+    return {};
+  }
+
+  const firstSpec = gwtSpecs[0];
   switch (slice.type) {
     case 'react':
-      exampleData = (gwtSpecs as ReactGwtSpec[])[0].when?.[0]?.exampleData ?? {};
-      break;
-    case 'command': {
-      const then = (gwtSpecs as CommandGwtSpec[])[0]?.then as (CommandExample | { errorType: string })[];
-      const firstExample = then.find((t): t is CommandExample => 'exampleData' in t);
-      exampleData = firstExample?.exampleData ?? {};
-      break;
-    }
+      return extractExampleDataFromReact(firstSpec);
+    case 'command':
+      return extractExampleDataFromCommand(firstSpec);
     case 'query':
-      exampleData = (gwtSpecs as QueryGwtSpec[])[0]?.given?.[0]?.exampleData ?? {};
-      break;
+      return extractExampleDataFromQuery(firstSpec);
+    default:
+      return {};
   }
-  const sink = (slice.server?.data ?? []).find((item) => (item as DataSink)?.destination?.type === 'stream') as
+}
+
+function findStreamSink(slice: Slice): DataSink | undefined {
+  return (slice.server?.data ?? []).find((item) => (item as DataSink)?.destination?.type === 'stream') as
     | DataSink
     | undefined;
+}
+
+export function getStreamFromSink(slice: Slice): { streamPattern?: string; streamId?: string } {
+  const specs = slice.server?.specs;
+  const rules = specs?.rules;
+  const gwtSpecs =
+    Array.isArray(rules) && rules.length > 0
+      ? rules.flatMap((rule) =>
+          rule.examples.map((example) => ({
+            given: example.given,
+            when: example.when,
+            then: example.then,
+          })),
+        )
+      : [];
+
+  const exampleData = extractExampleDataFromSpecs(slice, gwtSpecs);
+  const sink = findStreamSink(slice);
+
   if (sink && sink.destination.type === 'stream' && 'pattern' in sink.destination) {
-    streamPattern = sink.destination.pattern;
-    if (streamPattern != null) {
-      streamId = resolveStreamId(streamPattern, exampleData);
-    }
+    const streamPattern = sink.destination.pattern;
+    const streamId = streamPattern ? resolveStreamId(streamPattern, exampleData) : undefined;
+    return { streamPattern, streamId };
   }
-  return { streamPattern, streamId };
+
+  return {};
 }

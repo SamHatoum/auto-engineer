@@ -1,95 +1,32 @@
-import { recordGwtSpec, recordGiven, recordWhen, recordWhenEvents, recordThen } from './flow-context';
-
-function ensureMessageFormat(item: unknown): { type: string; data: Record<string, unknown> } {
-  if (typeof item !== 'object' || item === null) {
-    throw new Error('Invalid message format');
-  }
-  const obj = item as Record<string, unknown>;
-  if ('type' in obj && typeof obj.type === 'string' && 'data' in obj && typeof obj.data === 'object') {
-    return { type: obj.type, data: obj.data as Record<string, unknown> };
-  }
-  if ('__messageCategory' in obj && typeof obj.type === 'string') {
-    const { type, ...rest } = obj;
-    return {
-      type,
-      data: rest as Record<string, unknown>,
-    };
-  }
-  throw new Error('Message must have type and data properties');
-}
+// Legacy testing functions - deprecated, use new specs/rule/example API instead
+// This module is kept for backward compatibility but the functions are no-ops
 
 export const createFlowSpec = () => {
+  console.warn('createFlowSpec is deprecated. Use specs/rule/example API instead.');
   return {
-    given: (events: unknown[]) => {
-      recordGwtSpec();
-      const formattedEvents = events.map(ensureMessageFormat);
-      recordGiven(formattedEvents);
-
-      return {
-        when: (command: unknown) => {
-          const formattedCommand = ensureMessageFormat(command);
-          recordWhen(formattedCommand);
-
-          return {
-            then: (expectedEvents: unknown[]) => {
-              const formattedEvents = expectedEvents.map(ensureMessageFormat);
-              recordThen(...formattedEvents);
-            },
-            thenThrows: (_errorMatcher: (error: Error) => boolean) => {
-              // Handle error cases
-              recordThen({
-                type: 'Error',
-                data: { errorType: 'IllegalStateError', message: 'Error occurred' },
-              });
-            },
-          };
-        },
-        then: (expectedData: unknown | unknown[]) => {
-          // For query slices - given events, then state
-          const items = Array.isArray(expectedData) ? expectedData : [expectedData];
-          const formattedData = items.map(ensureMessageFormat);
-          recordThen(...formattedData);
-        },
-      };
-    },
-    when: (commandOrEvents: unknown | unknown[]) => {
-      recordGwtSpec();
-
-      if (Array.isArray(commandOrEvents)) {
-        // React slice - when events
-        const formattedEvents = commandOrEvents.map(ensureMessageFormat);
-        recordWhenEvents(formattedEvents);
-
-        return {
-          then: (expectedCommands: unknown[]) => {
-            const formattedCommands = expectedCommands.map(ensureMessageFormat);
-            recordThen(...formattedCommands);
-          },
-        };
-      } else {
-        // Command slice - when command
-        const formattedCommand = ensureMessageFormat(commandOrEvents);
-        recordWhen(formattedCommand);
-
-        return {
-          then: (expectedEvents: unknown[]) => {
-            const formattedEvents = expectedEvents.map(ensureMessageFormat);
-            recordThen(...formattedEvents);
-          },
-          thenThrows: (_errorMatcher: (error: Error) => boolean) => {
-            recordThen({
-              type: 'Error',
-              data: { errorType: 'IllegalStateError', message: 'Error occurred' },
-            });
-          },
-        };
-      }
-    },
+    given: (_events: unknown[]) => ({
+      when: (_command: unknown) => ({
+        then: (_expectedEvents: unknown[]) => {},
+        thenThrows: (_errorMatcher: (error: Error) => boolean) => {},
+      }),
+      then: (_expectedData: unknown | unknown[]) => {},
+    }),
+    when: (_commandOrEvents: unknown | unknown[]) => ({
+      then: (_expected: unknown[]) => {},
+      thenThrows: (_errorMatcher: (error: Error) => boolean) => {},
+    }),
   };
 };
 
-export const given = (events: unknown[]) => createFlowSpec().given(events);
-export const when = (commandOrEvents: unknown | unknown[]) => createFlowSpec().when(commandOrEvents);
+export const given = (_events: unknown[]) => {
+  console.warn('given is deprecated. Use specs/rule/example API instead.');
+  return createFlowSpec().given(_events);
+};
+
+export const when = (_commandOrEvents: unknown | unknown[]) => {
+  console.warn('when is deprecated. Use specs/rule/example API instead.');
+  return createFlowSpec().when(_commandOrEvents);
+};
 
 // GraphQL query testing helper
 export const gqlQuery = (query: string) => ({

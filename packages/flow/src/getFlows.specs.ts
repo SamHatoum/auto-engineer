@@ -49,15 +49,24 @@ describe('getFlows', (_mode) => {
       expect(createItemSlice.stream).toBe('item-${id}');
       if (createItemSlice.type === 'command') {
         expect(createItemSlice.client.specs).toContain('A form that allows users to add items');
-        expect(createItemSlice.server.gwt).toHaveLength(1);
-        const gwt = createItemSlice.server.gwt[0];
-        expect(gwt.when.commandRef).toBe('CreateItem');
-        expect(gwt.when.exampleData).toMatchObject({
-          itemId: 'item_123',
-          description: 'A new item',
-        });
-        expect(gwt.then).toHaveLength(1);
-        expect(gwt.then[0]).toMatchObject({
+        expect(createItemSlice.server.specs).toBeDefined();
+        const spec = createItemSlice.server.specs;
+        expect(spec.name).toBeDefined();
+        expect(spec.rules).toHaveLength(1);
+        const rule = spec.rules[0];
+        expect(rule.description).toBeDefined();
+        expect(rule.examples).toHaveLength(1);
+        const example = rule.examples[0];
+        expect(typeof example.when === 'object' && !Array.isArray(example.when)).toBe(true);
+        if (typeof example.when === 'object' && !Array.isArray(example.when)) {
+          expect(example.when.commandRef).toBe('CreateItem');
+          expect(example.when.exampleData).toMatchObject({
+            itemId: 'item_123',
+            description: 'A new item',
+          });
+        }
+        expect(example.then).toHaveLength(1);
+        expect(example.then[0]).toMatchObject({
           eventRef: 'ItemCreated',
           exampleData: {
             id: 'item_123',
@@ -82,9 +91,9 @@ describe('getFlows', (_mode) => {
       expect(data[0].target).toMatchObject({ type: 'State', name: 'items' });
       expect(data[0].origin).toMatchObject({ name: 'ItemsProjection', type: 'projection' });
 
-      const gwt = viewItemSlice?.server?.gwt;
-      if (!Array.isArray(gwt)) throw new Error('No GWT found in view items slice');
-      expect(gwt).toHaveLength(1);
+      const specs = viewItemSlice?.server?.specs;
+      if (specs == null || specs.name === '') throw new Error('No specs found in view items slice');
+      expect(specs).toBeDefined();
     }
 
     if (placeOrder) {
@@ -96,12 +105,19 @@ describe('getFlows', (_mode) => {
 
       if (submitOrderSlice.type === 'command') {
         expect(submitOrderSlice.client.specs).toContain('Order submission form');
-        expect(submitOrderSlice.server.gwt).toHaveLength(1);
-        const gwt = submitOrderSlice.server.gwt[0];
-        expect(gwt.when.commandRef).toBe('PlaceOrder');
-        expect(gwt.when.exampleData).toMatchObject({ productId: 'product_789', quantity: 3 });
-        expect(gwt.then).toHaveLength(1);
-        expect(gwt.then[0]).toMatchObject({
+        expect(submitOrderSlice.server.specs).toBeDefined();
+        const spec = submitOrderSlice.server.specs;
+        expect(spec.rules).toHaveLength(1);
+        const rule = spec.rules[0];
+        expect(rule.examples).toHaveLength(1);
+        const example = rule.examples[0];
+        expect(typeof example.when === 'object' && !Array.isArray(example.when)).toBe(true);
+        if (typeof example.when === 'object' && !Array.isArray(example.when)) {
+          expect(example.when.commandRef).toBe('PlaceOrder');
+          expect(example.when.exampleData).toMatchObject({ productId: 'product_789', quantity: 3 });
+        }
+        expect(example.then).toHaveLength(1);
+        expect(example.then[0]).toMatchObject({
           eventRef: 'OrderPlaced',
           exampleData: {
             orderId: 'order_001',
@@ -190,13 +206,18 @@ describe('getFlows', (_mode) => {
     reactSlices.forEach((slice) => {
       if (slice.type === 'react') {
         expect(slice.server).toBeDefined();
-        expect(slice.server.gwt).toBeDefined();
-        expect(Array.isArray(slice.server.gwt)).toBe(true);
-        slice.server.gwt.forEach((gwt) => {
-          expect(gwt.when).toBeDefined();
-          expect(Array.isArray(gwt.when)).toBe(true);
-          expect(gwt.then).toBeDefined();
-          expect(Array.isArray(gwt.then)).toBe(true);
+        expect(slice.server.specs).toBeDefined();
+        expect(typeof slice.server.specs === 'object' && !Array.isArray(slice.server.specs)).toBe(true);
+        const spec = slice.server.specs;
+        expect(spec.rules).toBeDefined();
+        expect(Array.isArray(spec.rules)).toBe(true);
+        spec.rules.forEach((rule) => {
+          rule.examples.forEach((example) => {
+            expect(example.when).toBeDefined();
+            expect(Array.isArray(example.when)).toBe(true);
+            expect(example.then).toBeDefined();
+            expect(Array.isArray(example.then)).toBe(true);
+          });
         });
       }
     });

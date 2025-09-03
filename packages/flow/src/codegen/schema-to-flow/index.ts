@@ -74,7 +74,7 @@ export async function schemaToFlow(
 
   // Generate flow statements (currently generates first flow only)
   if (flows.length > 0) {
-    statements.push(...buildFlowStatements(ts, flows[0] as Parameters<typeof buildFlowStatements>[1]));
+    statements.push(...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1]));
   }
 
   // Create source file and print

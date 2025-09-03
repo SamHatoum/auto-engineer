@@ -19,26 +19,35 @@ describe('commands.ts.ejs', () => {
               },
               server: {
                 description: 'test',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: 'nice apartment',
-                        pricePerNight: 250,
-                        maxGuests: 4,
-                        amenities: ['wifi', 'kitchen', 'parking'],
-                        available: true,
-                        tags: ['sea view', 'balcony'],
-                        rating: 4.8,
-                        metadata: { petsAllowed: true },
-                        listedAt: '2024-01-15T10:00:00Z',
-                      },
+                specs: {
+                  name: 'Create listing command',
+                  rules: [
+                    {
+                      description: 'Should accept valid listing data',
+                      examples: [
+                        {
+                          description: 'User creates listing with valid data',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: 'nice apartment',
+                              pricePerNight: 250,
+                              maxGuests: 4,
+                              amenities: ['wifi', 'kitchen', 'parking'],
+                              available: true,
+                              tags: ['sea view', 'balcony'],
+                              rating: 4.8,
+                              metadata: { petsAllowed: true },
+                              listedAt: '2024-01-15T10:00:00Z',
+                            },
+                          },
+                          then: [],
+                        },
+                      ],
                     },
-                    then: [],
-                  },
-                ],
+                  ],
+                },
               },
             },
           ],

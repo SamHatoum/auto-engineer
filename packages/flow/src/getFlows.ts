@@ -60,6 +60,8 @@ export const getFlows = async (opts: GetFlowsOptions) => {
     vfsFiles: exec.vfsFiles, // absolute posix paths of all VFS modules in the graph
     externals: exec.externals, // external specifiers used
     typings: exec.typings, // { pkgName: [abs d.ts paths] }
-    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows),
+    typeMap: exec.typeMap, // mapping from TypeScript type names to string literals
+    typesByFile: exec.typesByFile, // mapping from file path to type definitions in that file
+    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows, exec.typeMap, exec.typesByFile),
   };
 };

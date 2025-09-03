@@ -13,14 +13,14 @@
   "dependencies": {
     "@auto-engineer/cli": "workspace:^0.7.8",
     "@auto-engineer/design-system-importer": "workspace:^0.6.5",
-    "@auto-engineer/flow": "workspace:^0.1.7",
+    "@auto-engineer/flow": "workspace:^0.2.0",
     "@auto-engineer/frontend-checks": "workspace:^0.6.5",
     "@auto-engineer/frontend-generator-react-graphql": "workspace:^0.1.4",
     "@auto-engineer/frontend-implementer": "workspace:^0.1.4",
     "@auto-engineer/information-architect": "workspace:^0.6.5",
     "@auto-engineer/message-bus": "workspace:*",
     "@auto-engineer/server-checks": "workspace:^0.1.4",
-    "@auto-engineer/server-generator-apollo-emmett": "workspace:^0.1.4",
+    "@auto-engineer/server-generator-apollo-emmett": "workspace:^0.1.5",
     "@auto-engineer/server-implementer": "workspace:^0.6.5"
   },
   "devDependencies": {

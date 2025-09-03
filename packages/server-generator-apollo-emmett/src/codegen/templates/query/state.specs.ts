@@ -32,7 +32,7 @@ describe('state.ts.ejs', () => {
                     },
                   },
                 ],
-                gwt: [],
+                specs: { name: '', rules: [] },
               },
             },
           ],
