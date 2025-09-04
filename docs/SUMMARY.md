@@ -1,10 +1,10 @@
 # Table of contents
 
 - [Introduction](README.md)
-  - [Overview](README.md#overview)
-  - [Core Concepts](README.md#core-concepts)
-  - [Features](README.md#features)
-  - [Roadmap](README.md#roadmap)
+  - [Overview](./README.md#overview)
+  - [Core Concepts](./README.md#core-concepts)
+  - [Features](./README.md#features)
+  - [Roadmap](./README.md#roadmap)
 - [Getting Started](getting-started/README.md)
   - [Installation](getting-started/README.md#installation)
   - [Quickstart](getting-started/README.md#quickstart)
