@@ -6,59 +6,59 @@ import { globalIntegrationRegistry } from './integration-registry';
 import { TypeInfo } from './loader/ts-utils';
 import createDebug from 'debug';
 
-// resolve InferredType placeholders using semantic type analysis
+function calculateFieldScore(typeInfo: TypeInfo, sampleFields: Set<string>): number {
+  const fields = new Set(typeInfo.dataFields ?? []);
+  if (fields.size === 0 && sampleFields.size === 0) return 1;
+  const intersection = [...fields].filter((f) => sampleFields.has(f)).length;
+  const union = new Set([...fields, ...sampleFields]).size || 1;
+  return intersection / union;
+}
+
+function findBestTypeCandidate(candidates: TypeInfo[], sampleFields: Set<string>): TypeInfo | null {
+  let best: TypeInfo | null = null;
+  let bestScore = -1;
+
+  for (const candidate of candidates) {
+    const score = calculateFieldScore(candidate, sampleFields);
+    const isNewBest =
+      score > bestScore || (score === bestScore && best !== null && candidate.stringLiteral < best.stringLiteral);
+
+    if (isNewBest) {
+      best = candidate;
+      bestScore = score;
+    }
+  }
+
+  return bestScore >= 0.5 ? best : null;
+}
+
 function resolveInferredType(
   typeName: string,
   exampleData: Record<string, unknown>,
   flowTypeMap?: Map<string, TypeInfo>,
   expectedMessageType?: 'command' | 'event' | 'state',
 ): string {
-  // If not an inferred type, return as-is
-  if (typeName !== 'InferredType' || !flowTypeMap) {
-    return typeName;
-  }
+  if (typeName !== 'InferredType' || flowTypeMap === undefined) return typeName;
 
-  // Strategy: Use the semantic information from TypeScript analysis
-  // to find the type that matches the expected message type
+  const all = [...flowTypeMap.values()];
+  if (all.length === 0) return typeName;
 
-  // First, try to find a type with explicit classification from type alias analysis
-  for (const [, typeInfo] of flowTypeMap) {
-    if (typeInfo.classification === expectedMessageType) {
-      return typeInfo.stringLiteral;
-    }
-  }
+  const preferred = expectedMessageType ? all.filter((t) => t.classification === expectedMessageType) : all;
 
-  // If no explicit classification, analyze the data structure compatibility
-  const exampleDataFields = Object.keys(exampleData);
+  const candidates = preferred.length > 0 ? preferred : all;
+  const sampleFields = new Set(Object.keys(exampleData));
 
-  // Find the type whose data structure best matches the example data
-  for (const [, typeInfo] of flowTypeMap) {
-    if (typeInfo.dataFields && typeInfo.dataFields.length > 0) {
-      // Check how well the type's data fields match the example data
-      const matchingFields = typeInfo.dataFields.filter((field) => exampleDataFields.includes(field));
-      const matchRatio = matchingFields.length / Math.max(typeInfo.dataFields.length, exampleDataFields.length);
+  if (candidates.length === 1) return candidates[0].stringLiteral;
 
-      // If we have a good match, use this type
-      if (matchRatio > 0.5) {
-        return typeInfo.stringLiteral;
-      }
-    }
-  }
-
-  // Fallback: use the first available type
-  for (const [, typeInfo] of flowTypeMap) {
-    return typeInfo.stringLiteral;
-  }
-
-  return typeName;
+  const best = findBestTypeCandidate(candidates, sampleFields);
+  return best !== null ? best.stringLiteral : typeName;
 }
 
 const debugIntegrations = createDebug('flow:getFlows:integrations');
-if ('color' in debugIntegrations && typeof debugIntegrations === 'object') {
+if (typeof debugIntegrations === 'object' && debugIntegrations !== null && 'color' in debugIntegrations) {
   (debugIntegrations as { color: string }).color = '6';
-} // cyan
+}
 
-// Helper function to extract Zod schema type information
 const extractZodType = (schema: z.ZodTypeAny): string => {
   const def = schema._def as { typeName?: string };
   const typeName = def.typeName;
@@ -95,7 +95,6 @@ const extractZodType = (schema: z.ZodTypeAny): string => {
   }
 };
 
-// Convert Zod schema to Message fields
 const zodSchemaToFields = (schema: z.ZodTypeAny): Message['fields'] => {
   const def = schema._def as { typeName?: string };
   if (def.typeName !== 'ZodObject') {
@@ -117,49 +116,39 @@ const zodSchemaToFields = (schema: z.ZodTypeAny): Message['fields'] => {
   });
 };
 
-// Extract messages from integration schemas
-// eslint-disable-next-line complexity
-const extractMessagesFromIntegrations = (integrations: Integration[]): Message[] => {
+const extractSchemaType = (
+  integration: Integration,
+  schemaType: 'Commands' | 'Queries' | 'Reactions',
+  messageType: 'command' | 'state' | 'event',
+): Message[] => {
   const messages: Message[] = [];
+  const schema = integration[schemaType]?.schema;
 
-  for (const integration of integrations) {
-    debugIntegrations('Processing integration for message extraction: %s', integration.name);
-
-    // Extract command schemas
-    if (integration.Commands?.schema) {
-      debugIntegrations(
-        `[extractMessagesFromIntegrations] Found Commands.schema:`,
-        Object.keys(integration.Commands.schema),
-      );
-      for (const [name, schema] of Object.entries(integration.Commands.schema)) {
-        if (schema) {
-          const fields = zodSchemaToFields(schema);
-          debugIntegrations(
-            `[extractMessagesFromIntegrations] Creating command message '${name}' with fields:`,
+  if (schema) {
+    debugIntegrations(`[extractMessagesFromIntegrations] Found ${schemaType}.schema:`, Object.keys(schema));
+    for (const [name, schemaItem] of Object.entries(schema)) {
+      if (schemaItem) {
+        const fields = zodSchemaToFields(schemaItem);
+        debugIntegrations(
+          `[extractMessagesFromIntegrations] Creating ${messageType} message '${name}' with fields:`,
+          fields,
+        );
+        if (messageType === 'event') {
+          messages.push({
+            type: 'event',
+            name,
             fields,
-          );
+            source: 'external',
+            metadata: { version: 1 },
+          });
+        } else if (messageType === 'command') {
           messages.push({
             type: 'command',
             name,
             fields,
             metadata: { version: 1 },
           });
-        }
-      }
-    } else {
-      debugIntegrations(`[extractMessagesFromIntegrations] No Commands.schema found for ${integration.name}`);
-    }
-
-    // Extract query schemas (these become state messages)
-    if (integration.Queries?.schema) {
-      debugIntegrations(
-        `[extractMessagesFromIntegrations] Found Queries.schema:`,
-        Object.keys(integration.Queries.schema),
-      );
-      for (const [name, schema] of Object.entries(integration.Queries.schema)) {
-        if (schema) {
-          const fields = zodSchemaToFields(schema);
-          debugIntegrations(`[extractMessagesFromIntegrations] Creating state message '${name}' with fields:`, fields);
+        } else {
           messages.push({
             type: 'state',
             name,
@@ -168,32 +157,23 @@ const extractMessagesFromIntegrations = (integrations: Integration[]): Message[]
           });
         }
       }
-    } else {
-      debugIntegrations(`[extractMessagesFromIntegrations] No Queries.schema found for ${integration.name}`);
     }
+  } else {
+    debugIntegrations(`[extractMessagesFromIntegrations] No ${schemaType}.schema found for ${integration.name}`);
+  }
 
-    // Extract reaction schemas (these become event messages)
-    if (integration.Reactions?.schema) {
-      debugIntegrations(
-        `[extractMessagesFromIntegrations] Found Reactions.schema:`,
-        Object.keys(integration.Reactions.schema),
-      );
-      for (const [name, schema] of Object.entries(integration.Reactions.schema)) {
-        if (schema) {
-          const fields = zodSchemaToFields(schema);
-          debugIntegrations(`[extractMessagesFromIntegrations] Creating event message '${name}' with fields:`, fields);
-          messages.push({
-            type: 'event',
-            name,
-            fields,
-            source: 'external',
-            metadata: { version: 1 },
-          });
-        }
-      }
-    } else {
-      debugIntegrations(`[extractMessagesFromIntegrations] No Reactions.schema found for ${integration.name}`);
-    }
+  return messages;
+};
+
+const extractMessagesFromIntegrations = (integrations: Integration[]): Message[] => {
+  const messages: Message[] = [];
+
+  for (const integration of integrations) {
+    debugIntegrations('Processing integration for message extraction: %s', integration.name);
+
+    messages.push(...extractSchemaType(integration, 'Commands', 'command'));
+    messages.push(...extractSchemaType(integration, 'Queries', 'state'));
+    messages.push(...extractSchemaType(integration, 'Reactions', 'event'));
   }
 
   return messages;
@@ -279,43 +259,130 @@ const inferObjectType = (value: Record<string, unknown>): string => {
   return `{${objType}}`;
 };
 
-// get flow-specific types for a flow
-function getFlowSpecificTypes(
-  flow: Flow,
-  typesByFile?: Map<string, Map<string, TypeInfo>>,
-): Map<string, TypeInfo> | undefined {
-  // If we don't have file-based types, fall back to global typeMap
-  if (!typesByFile) {
-    return undefined;
+function mapKindToMessageType(k: 'command' | 'query' | 'reaction'): 'command' | 'event' | 'state' {
+  if (k === 'command') return 'command';
+  if (k === 'query') return 'state';
+  return 'event';
+}
+
+function addIntegrationToMap(
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+  system: string,
+): void {
+  if (!integrations.has(system)) {
+    integrations.set(system, {
+      name: system,
+      description: `${system} integration`,
+      source: `@auto-engineer/${system.toLowerCase()}-integration`,
+    });
   }
+}
 
-  // Try to find the source file for this flow
-  // Look for files that might contain this flow
-  for (const [filePath, fileTypes] of typesByFile) {
-    // Check if this file likely contains the flow based on naming patterns
-    const flowNameLower = flow.name.toLowerCase().replace(/\s+/g, '-');
-    const fileName = filePath.toLowerCase();
-
-    // Try multiple matching strategies
-    if (
-      fileName.includes(flowNameLower) ||
-      fileName.includes(flow.name.toLowerCase()) ||
-      fileName.includes(flow.name.toLowerCase().replace(/\s+/g, '')) || // "place order" -> "placeorder"
-      fileName.includes(flow.name.toLowerCase().replace(/\s+/g, '_'))
-    ) {
-      // "place order" -> "place_order"
-      return fileTypes;
+function processDestinationMessage(
+  message: unknown,
+  messages: Map<string, Message>,
+  createMessage: (name: string, data: Record<string, unknown>, messageType: 'command' | 'event' | 'state') => Message,
+): void {
+  if (typeof message === 'object' && message !== null && 'name' in message && 'type' in message) {
+    const typedMessage = message as { name: unknown; type: unknown };
+    if (typeof typedMessage.name === 'string' && typeof typedMessage.type === 'string') {
+      const messageType = typedMessage.type as 'command' | 'query' | 'reaction';
+      const mappedType = mapKindToMessageType(messageType);
+      if (!messages.has(typedMessage.name)) {
+        messages.set(typedMessage.name, createMessage(typedMessage.name, {}, mappedType));
+      }
     }
   }
+}
 
-  // If no specific file found, return the first available file types as fallback
-  // This ensures we don't cross-contaminate between flows
-  const fileEntries = Array.from(typesByFile.entries());
-  if (fileEntries.length > 0) {
-    return fileEntries[0][1];
+function hasDestination(d: unknown): d is { destination: unknown } {
+  return typeof d === 'object' && d !== null && 'destination' in d;
+}
+
+function hasOrigin(d: unknown): d is { origin: unknown } {
+  return typeof d === 'object' && d !== null && 'origin' in d;
+}
+
+function hasWithState(d: unknown): d is { _withState: unknown } {
+  return typeof d === 'object' && d !== null && '_withState' in d;
+}
+
+function isValidIntegration(
+  integration: unknown,
+): integration is { type: 'integration'; systems: string[]; message?: unknown } {
+  return (
+    typeof integration === 'object' &&
+    integration !== null &&
+    'type' in integration &&
+    integration.type === 'integration' &&
+    'systems' in integration &&
+    Array.isArray(integration.systems)
+  );
+}
+
+function processDestination(
+  d: { destination: unknown },
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+  messages: Map<string, Message>,
+  createMessage: (name: string, data: Record<string, unknown>, messageType: 'command' | 'event' | 'state') => Message,
+): void {
+  if (isValidIntegration(d.destination)) {
+    d.destination.systems.forEach((system: string) => {
+      addIntegrationToMap(integrations, system);
+      if (
+        typeof d.destination === 'object' &&
+        d.destination !== null &&
+        'message' in d.destination &&
+        d.destination.message !== null
+      ) {
+        processDestinationMessage(d.destination.message, messages, createMessage);
+      }
+    });
+  }
+}
+
+function processOrigin(
+  d: { origin: unknown },
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+): void {
+  if (isValidIntegration(d.origin)) {
+    d.origin.systems.forEach((system: string) => {
+      addIntegrationToMap(integrations, system);
+    });
+  }
+}
+
+function processWithStateOrigin(
+  d: { _withState: unknown },
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+): void {
+  if (typeof d._withState === 'object' && d._withState !== null && 'origin' in d._withState) {
+    const withState = d._withState as { origin: unknown };
+    if (isValidIntegration(withState.origin)) {
+      withState.origin.systems.forEach((system: string) => {
+        addIntegrationToMap(integrations, system);
+      });
+    }
+  }
+}
+
+function processDataItemIntegrations(
+  d: unknown,
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+  messages: Map<string, Message>,
+  createMessage: (name: string, data: Record<string, unknown>, messageType: 'command' | 'event' | 'state') => Message,
+): void {
+  if (hasDestination(d)) {
+    processDestination(d, integrations, messages, createMessage);
   }
 
-  return undefined;
+  if (hasOrigin(d)) {
+    processOrigin(d, integrations);
+  }
+
+  if (hasWithState(d)) {
+    processWithStateOrigin(d, integrations);
+  }
 }
 
 export const flowsToSchema = (
@@ -323,7 +390,6 @@ export const flowsToSchema = (
   typeMap?: Map<string, string>,
   typesByFile?: Map<string, Map<string, TypeInfo>>,
 ): z.infer<typeof SpecsSchema> => {
-  // Extract messages and integrations from flows
   const messages = new Map<string, Message>();
   const integrations = new Map<
     string,
@@ -334,128 +400,141 @@ export const flowsToSchema = (
     }
   >();
 
-  // Add messages from integration schemas
+  // Pull messages defined by registered integrations first
   const registeredIntegrations = globalIntegrationRegistry.getAll();
-  debugIntegrations(
-    `[flowsToSchema] Found ${registeredIntegrations.length} registered integrations:`,
-    registeredIntegrations.map((i) => i.name),
-  );
   const integrationMessages = extractMessagesFromIntegrations(registeredIntegrations);
-  debugIntegrations(`[flowsToSchema] Extracted ${integrationMessages.length} messages from integrations`);
   for (const msg of integrationMessages) {
-    if (!messages.has(msg.name)) {
-      messages.set(msg.name, msg);
-      debugIntegrations(`[flowsToSchema] Added integration message: ${msg.name} (${msg.type})`);
-    }
+    if (!messages.has(msg.name)) messages.set(msg.name, msg);
   }
 
-  flows.forEach((flow) => {
-    // Get flow-specific types, with fallback logic
-    const flowSpecificTypes = getFlowSpecificTypes(flow, typesByFile);
+  // Build a union of all discovered types (global fallback across files)
+  const unionTypes: Map<string, TypeInfo> | undefined = (() => {
+    if (!typesByFile) return undefined;
+    const u = new Map<string, TypeInfo>();
+    for (const [, m] of typesByFile) for (const [k, v] of m) u.set(k, v);
+    return u.size ? u : undefined;
+  })();
 
-    // Helper function to resolve InferredType with proper fallback
-    const resolveType = (
-      typeName: string,
-      exampleData: Record<string, unknown>,
-      expectedMessageType?: 'command' | 'event' | 'state',
-    ): string => {
-      if (flowSpecificTypes) {
-        return resolveInferredType(typeName, exampleData, flowSpecificTypes, expectedMessageType);
-      } else if (typeMap) {
-        // Fallback to global typeMap - convert to TypeInfo format on the fly
-        const legacyMap = new Map<string, TypeInfo>();
-        for (const [key, value] of typeMap) {
-          legacyMap.set(key, { stringLiteral: value });
-        }
-        return resolveInferredType(typeName, exampleData, legacyMap, expectedMessageType);
-      } else {
-        return typeName;
+  // check if filename matches flow patterns
+  const matchesFlowPattern = (fileName: string, flowName: string): boolean => {
+    const flowNameLower = flowName.toLowerCase();
+    const patterns = [
+      flowNameLower.replace(/\s+/g, '-'),
+      flowNameLower.replace(/\s+/g, ''),
+      flowNameLower.replace(/\s+/g, '_'),
+      flowNameLower,
+    ];
+
+    return patterns.some((pattern) => fileName.includes(pattern));
+  };
+
+  // pick the best map for a given flow
+  const getFlowSpecificTypes = (flow: Flow): Map<string, TypeInfo> | undefined => {
+    if (!typesByFile) return undefined;
+
+    // 1) Exact source file (recorded by startFlow via runtime)
+    const sf = (flow as Record<string, unknown>).sourceFile as string | undefined;
+    if (typeof sf === 'string') {
+      const exact = typesByFile.get(sf) || typesByFile.get(sf.replace(/\\/g, '/'));
+      if (exact && exact.size > 0) return exact;
+    }
+
+    // 2) Heuristic by filename
+    for (const [filePath, fileTypes] of typesByFile) {
+      const fileName = filePath.toLowerCase();
+      if (matchesFlowPattern(fileName, flow.name)) {
+        return fileTypes;
       }
+    }
+
+    // 3) No per-flow map: the caller will fall back to union/global
+    return undefined;
+  };
+
+  flows.forEach((flow) => {
+    const flowSpecificTypes = getFlowSpecificTypes(flow);
+
+    const resolveType = (
+      t: string,
+      data: Record<string, unknown>,
+      expected?: 'command' | 'event' | 'state',
+    ): string => {
+      if (flowSpecificTypes) return resolveInferredType(t, data, flowSpecificTypes, expected);
+      if (unionTypes) return resolveInferredType(t, data, unionTypes, expected);
+      if (typeMap) {
+        const legacy = new Map<string, TypeInfo>();
+        for (const [k, v] of typeMap) legacy.set(k, { stringLiteral: v });
+        return resolveInferredType(t, data, legacy, expected);
+      }
+      return t;
     };
 
     flow.slices.forEach((slice) => {
-      // Extract messages from new specs structure
+      // Extract messages from server specs (Given/When/Then)
       if ('server' in slice && slice.server?.specs !== undefined) {
         const spec = slice.server.specs;
         spec.rules.forEach((rule) => {
           rule.examples.forEach((example) => {
-            // Process given
+            // given
             if (example.given) {
-              example.given.forEach((item) => {
-                if ('eventRef' in item) {
-                  const resolvedEventRef = resolveType(item.eventRef, item.exampleData, 'event');
-                  item.eventRef = resolvedEventRef;
-                  const message = createMessage(resolvedEventRef, item.exampleData, 'event');
-                  const existingMessage = messages.get(resolvedEventRef);
-                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                    messages.set(resolvedEventRef, message);
-                  }
+              example.given.forEach((g) => {
+                if ('eventRef' in g) {
+                  const r = resolveType(g.eventRef, g.exampleData, 'event');
+                  g.eventRef = r;
+                  const msg = createMessage(r, g.exampleData, 'event');
+                  const existing = messages.get(r);
+                  if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
                 }
-                if ('stateRef' in item) {
-                  const resolvedStateRef = resolveType(item.stateRef, item.exampleData, 'state');
-                  item.stateRef = resolvedStateRef;
-                  const message = createMessage(resolvedStateRef, item.exampleData, 'state');
-                  const existingMessage = messages.get(resolvedStateRef);
-                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                    messages.set(resolvedStateRef, message);
-                  }
+                if ('stateRef' in g) {
+                  const r = resolveType(g.stateRef, g.exampleData, 'state');
+                  g.stateRef = r;
+                  const msg = createMessage(r, g.exampleData, 'state');
+                  const existing = messages.get(r);
+                  if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
                 }
               });
             }
 
-            // Process when
+            // when
             if ('commandRef' in example.when) {
-              // Command slice - resolve InferredType if needed
-              const expectedType = slice.type === 'command' ? 'command' : 'event';
-              const resolvedCommandRef = resolveType(example.when.commandRef, example.when.exampleData, expectedType);
-              // Update the example with the resolved type
-              example.when.commandRef = resolvedCommandRef;
+              const expected = slice.type === 'command' ? 'command' : 'event';
+              const r = resolveType(example.when.commandRef, example.when.exampleData, expected);
+              example.when.commandRef = r;
               const messageType = slice.type === 'command' ? 'command' : 'event';
-              const message = createMessage(resolvedCommandRef, example.when.exampleData, messageType);
-              const existingMessage = messages.get(resolvedCommandRef);
-              if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                messages.set(resolvedCommandRef, message);
-              }
+              const msg = createMessage(r, example.when.exampleData, messageType);
+              const existing = messages.get(r);
+              if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
             } else if (Array.isArray(example.when)) {
-              // React slice or Query slice with array of events
-              example.when.forEach((event) => {
-                const resolvedEventRef = resolveType(event.eventRef, event.exampleData, 'event');
-                event.eventRef = resolvedEventRef;
-                const message = createMessage(resolvedEventRef, event.exampleData, 'event');
-                const existingMessage = messages.get(resolvedEventRef);
-                if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                  messages.set(resolvedEventRef, message);
-                }
+              example.when.forEach((ev) => {
+                const r = resolveType(ev.eventRef, ev.exampleData, 'event');
+                ev.eventRef = r;
+                const msg = createMessage(r, ev.exampleData, 'event');
+                const existing = messages.get(r);
+                if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
               });
             }
 
-            // Process then
+            // then
             if (Array.isArray(example.then) && example.then.length > 0) {
-              example.then.forEach((item) => {
-                if ('eventRef' in item) {
-                  const resolvedEventRef = resolveType(item.eventRef, item.exampleData, 'event');
-                  item.eventRef = resolvedEventRef;
-                  const message = createMessage(resolvedEventRef, item.exampleData, 'event');
-                  const existingMessage = messages.get(resolvedEventRef);
-                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                    messages.set(resolvedEventRef, message);
-                  }
-                } else if ('commandRef' in item) {
-                  const resolvedCommandRef = resolveType(item.commandRef, item.exampleData, 'command');
-                  item.commandRef = resolvedCommandRef;
-                  const message = createMessage(resolvedCommandRef, item.exampleData, 'command');
-                  const existingMessage = messages.get(resolvedCommandRef);
-                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                    messages.set(resolvedCommandRef, message);
-                  }
-                } else if ('stateRef' in item) {
-                  const resolvedStateRef = resolveType(item.stateRef, item.exampleData, 'state');
-                  item.stateRef = resolvedStateRef;
-                  const message = createMessage(resolvedStateRef, item.exampleData, 'state');
-                  const existingMessage = messages.get(resolvedStateRef);
-                  if (!existingMessage || message.fields.length > existingMessage.fields.length) {
-                    messages.set(resolvedStateRef, message);
-                  }
+              example.then.forEach((t) => {
+                if ('eventRef' in t) {
+                  const r = resolveType(t.eventRef, t.exampleData, 'event');
+                  t.eventRef = r;
+                  const msg = createMessage(r, t.exampleData, 'event');
+                  const existing = messages.get(r);
+                  if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
+                } else if ('commandRef' in t) {
+                  const r = resolveType(t.commandRef, t.exampleData, 'command');
+                  t.commandRef = r;
+                  const msg = createMessage(r, t.exampleData, 'command');
+                  const existing = messages.get(r);
+                  if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
+                } else if ('stateRef' in t) {
+                  const r = resolveType(t.stateRef, t.exampleData, 'state');
+                  t.stateRef = r;
+                  const msg = createMessage(r, t.exampleData, 'state');
+                  const existing = messages.get(r);
+                  if (!existing || msg.fields.length > existing.fields.length) messages.set(r, msg);
                 }
               });
             }
@@ -463,69 +542,13 @@ export const flowsToSchema = (
         });
       }
 
-      // Extract integrations from data
+      // Integrations: from data & via
       if ('server' in slice && slice.server?.data !== undefined) {
-        slice.server.data.forEach((dataItem) => {
-          if ('destination' in dataItem && dataItem.destination.type === 'integration') {
-            dataItem.destination.systems.forEach((system: string) => {
-              if (!integrations.has(system)) {
-                integrations.set(system, {
-                  name: system,
-                  description: `${system} integration`,
-                  source: `@auto-engineer/${system.toLowerCase()}-integration`,
-                });
-              }
-              if (
-                'destination' in dataItem &&
-                dataItem.destination.type === 'integration' &&
-                'message' in dataItem.destination &&
-                dataItem.destination.message
-              ) {
-                const mapIntegrationTypeToMessageType = (
-                  t: 'command' | 'query' | 'reaction',
-                ): 'command' | 'event' | 'state' => {
-                  switch (t) {
-                    case 'command':
-                      return 'command';
-                    case 'query':
-                      return 'state';
-                    case 'reaction':
-                      return 'event';
-                  }
-                };
-                const msg = dataItem.destination.message;
-                if (!messages.has(msg.name)) {
-                  messages.set(msg.name, createMessage(msg.name, {}, mapIntegrationTypeToMessageType(msg.type)));
-                }
-              }
-            });
-          }
-          if ('origin' in dataItem && dataItem.origin?.type === 'integration') {
-            dataItem.origin.systems.forEach((system: string) => {
-              if (!integrations.has(system)) {
-                integrations.set(system, {
-                  name: system,
-                  description: `${system} integration`,
-                  source: `@auto-engineer/${system.toLowerCase()}-integration`,
-                });
-              }
-            });
-          }
-          if ('_withState' in dataItem && dataItem._withState?.origin?.type === 'integration') {
-            dataItem._withState.origin.systems.forEach((system: string) => {
-              if (!integrations.has(system)) {
-                integrations.set(system, {
-                  name: system,
-                  description: `${system} integration`,
-                  source: `@auto-engineer/${system.toLowerCase()}-integration`,
-                });
-              }
-            });
-          }
+        slice.server.data.forEach((d) => {
+          processDataItemIntegrations(d, integrations, messages, createMessage);
         });
       }
 
-      // Extract integrations from via
       if ('via' in slice && slice.via) {
         slice.via.forEach((integrationName) => {
           if (!integrations.has(integrationName)) {
@@ -540,7 +563,7 @@ export const flowsToSchema = (
     });
   });
 
-  // Add integrations from registry
+  // Ensure all registered integrations are listed
   for (const integration of registeredIntegrations) {
     if (!integrations.has(integration.name)) {
       integrations.set(integration.name, {
@@ -551,10 +574,9 @@ export const flowsToSchema = (
     }
   }
 
-  // Return the properly typed schema
   return {
     variant: 'specs' as const,
-    flows: flows,
+    flows,
     messages: Array.from(messages.values()),
     integrations: Array.from(integrations.values()),
   };

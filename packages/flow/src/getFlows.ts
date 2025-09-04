@@ -29,7 +29,6 @@ export interface GetFlowsOptions {
 
 async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Promise<string[]> {
   const entries = await vfs.listTree(root);
-  console.log('discovered files', entries);
   const files = entries
     .filter((e) => e.type === 'file')
     .map((e) => toPosix(e.path))

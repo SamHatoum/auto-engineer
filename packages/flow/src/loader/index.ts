@@ -46,11 +46,10 @@ export async function executeAST(
       autoMapped[spec] = interopDefault(mod); // <<< IMPORTANT
       debug('auto-mapped external: %s', spec);
     } catch {
-      // leave unmapped; fine in browser or if user expects it
+      /* ignore */
     }
   }
 
-  // if we mapped anything, rebuild so they become 'mapped' in the resolver
   let final: BuildGraphResult;
   if (Object.keys(autoMapped).length > 0) {
     enhanced = { ...enhanced, ...autoMapped };
@@ -59,7 +58,6 @@ export async function executeAST(
     final = first;
   }
 
-  // execute (flows register on eval)
   runGraph(entryFiles, final.graph);
 
   const flowsCount = registry.getAllFlows().length;

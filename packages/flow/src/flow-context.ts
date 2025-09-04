@@ -13,10 +13,12 @@ interface FlowContext {
 let context: FlowContext | null = null;
 
 export function startFlow(name: string, id?: string): Flow {
+  const sourceFile = (globalThis as Record<string, unknown>).__aeCurrentModulePath as string | undefined;
   const flow: Flow = {
     name,
     id,
     slices: [],
+    ...(typeof sourceFile === 'string' ? { sourceFile } : {}),
   };
   context = {
     flow,
@@ -115,7 +117,7 @@ export function pushSpec(description: string): void {
 }
 
 export function recordShouldBlock(description?: string): void {
-  if (description != null && context?.currentSpecTarget === 'client') {
+  if (typeof description === 'string' && context?.currentSpecTarget === 'client') {
     const slice = getCurrentSlice();
     if (slice && (slice.type === 'command' || slice.type === 'query')) {
       slice.client.specs.push(description);
@@ -132,7 +134,6 @@ export function setQueryRequest(request: string): void {
 export function setSliceData(data: DataItem[]): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
-  // Separate sinks and sources
   const sinks = data.filter((item): item is DataSinkItem => item.__type === 'sink');
   const sources = data.filter((item): item is DataSourceItem => item.__type === 'source');
 
@@ -197,8 +198,13 @@ export function recordGivenData(data: unknown[]): void {
   if (!slice) throw new Error('No active slice');
 
   const example = slice.server.specs.rules[context.currentRuleIndex].examples[context.currentExampleIndex];
-  const events = data.map((item) => convertToEventExample(item));
-  example.given = events;
+
+  const items =
+    slice.type === 'query'
+      ? data.map((item) => convertToStateExample(item))
+      : data.map((item) => convertToEventExample(item));
+
+  example.given = items as typeof example.given;
 }
 
 export function recordAndGivenData(data: unknown[]): void {
@@ -214,11 +220,16 @@ export function recordAndGivenData(data: unknown[]): void {
   if (!slice) throw new Error('No active slice');
 
   const example = slice.server.specs.rules[context.currentRuleIndex].examples[context.currentExampleIndex];
-  const events = data.map((item) => convertToEventExample(item));
+
+  const items =
+    slice.type === 'query'
+      ? data.map((item) => convertToStateExample(item))
+      : data.map((item) => convertToEventExample(item));
+
   if (example.given) {
-    example.given.push(...events);
+    example.given.push(...(items as NonNullable<typeof example.given>));
   } else {
-    example.given = events;
+    example.given = items as NonNullable<typeof example.given>;
   }
 }
 
@@ -278,6 +289,14 @@ export function recordAndThenData(data: unknown[]): void {
   const example = slice.server.specs.rules[context.currentRuleIndex].examples[context.currentExampleIndex];
   const outcomes = data.map((item) => convertToOutcomeExample(item, slice.type));
   example.then.push(...(outcomes as typeof example.then));
+}
+
+function convertToStateExample(item: unknown): { stateRef: string; exampleData: Record<string, unknown> } {
+  const message = ensureMessageFormat(item);
+  return {
+    stateRef: message.type,
+    exampleData: message.data,
+  };
 }
 
 function convertToEventExample(item: unknown): { eventRef: string; exampleData: Record<string, unknown> } {

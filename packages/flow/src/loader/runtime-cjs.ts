@@ -97,7 +97,6 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
       const r = mod.resolved.get(spec);
 
       if (!r) {
-        // Not seen during build – in Node try real require, in browser return stub.
         if (isNode()) return nodeRequire(spec);
         return getUniversalStub(spec);
       }
@@ -116,7 +115,6 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
           );
         }
       }
-      // Browser: return a universal stub so schema generation can proceed without JS for externals
       return getUniversalStub(r.spec);
     };
 
@@ -130,7 +128,15 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
         __dirname: string,
       ) => void;
 
-      fn(requireVfs, module, module.exports, __filename, __dirname);
+      // Expose current module path so startFlow() can capture it
+      const prev = (globalThis as Record<string, unknown>).__aeCurrentModulePath;
+      try {
+        (globalThis as Record<string, unknown>).__aeCurrentModulePath = path;
+        fn(requireVfs, module, module.exports, __filename, __dirname);
+      } finally {
+        (globalThis as Record<string, unknown>).__aeCurrentModulePath = prev;
+      }
+
       exportsCache.set(path, module.exports);
       registerIntegrationsFrom(module.exports);
       return module.exports;

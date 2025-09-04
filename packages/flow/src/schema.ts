@@ -245,6 +245,7 @@ const FlowSchema = z
     id: z.string().optional().describe('Optional unique identifier for the flow'),
     description: z.string().optional(),
     slices: z.array(SliceSchema),
+    sourceFile: z.string().optional(),
   })
   .describe('Business flow containing related slices');
 

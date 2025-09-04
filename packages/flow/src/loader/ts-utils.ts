@@ -78,7 +78,19 @@ export interface TypeInfo {
   dataFields?: string[];
 }
 
-// Helper to process type alias declarations
+function extractDataFieldsFromTypeLiteral(
+  ts: typeof import('typescript'),
+  secondArg: import('typescript').TypeLiteralNode,
+): string[] | undefined {
+  const fields: string[] = [];
+  for (const m of secondArg.members) {
+    if (ts.isPropertySignature(m) && m.name !== undefined && ts.isIdentifier(m.name)) {
+      fields.push(m.name.text);
+    }
+  }
+  return fields.length > 0 ? fields : undefined;
+}
+
 function processTypeAlias(
   ts: typeof import('typescript'),
   node: import('typescript').TypeAliasDeclaration,
@@ -89,18 +101,40 @@ function processTypeAlias(
   if (!ts.isTypeReferenceNode(node.type)) return;
 
   const typeRef = node.type;
-  if (!ts.isIdentifier(typeRef.typeName)) return;
 
-  const referenceName = typeRef.typeName.text;
-  if (!['Command', 'Event', 'State'].includes(referenceName)) return;
-  if (!typeRef.typeArguments || typeRef.typeArguments.length === 0) return;
+  const getBaseName = (tn: import('typescript').EntityName): string | undefined => {
+    if (ts.isIdentifier(tn)) return tn.text;
+    if (ts.isQualifiedName(tn)) return tn.right.text;
+    return undefined;
+  };
 
-  const firstArg = typeRef.typeArguments[0];
+  const baseName = getBaseName(typeRef.typeName);
+  if (typeof baseName !== 'string') return;
+
+  if (!['Command', 'Event', 'State'].includes(baseName)) return;
+
+  const typeArgs = typeRef.typeArguments ?? [];
+  if (typeArgs.length === 0) return;
+
+  const firstArg = typeArgs[0];
   if (!ts.isLiteralTypeNode(firstArg) || !ts.isStringLiteral(firstArg.literal)) return;
 
   const stringLiteral = firstArg.literal.text;
-  const classification = referenceName.toLowerCase() as 'command' | 'event' | 'state';
-  typeMap.set(typeName, { stringLiteral, classification });
+  const classification = baseName.toLowerCase() as 'command' | 'event' | 'state';
+
+  // Try to extract the data fields from the 2nd generic arg (if present)
+  let dataFields: string[] | undefined;
+  if (typeArgs.length >= 2) {
+    const secondArg = typeArgs[1];
+
+    // Inline type literal: Command<'X', { a: string; b: number }>
+    if (ts.isTypeLiteralNode(secondArg)) {
+      dataFields = extractDataFieldsFromTypeLiteral(ts, secondArg);
+    }
+    // If it's a reference to another interface/type, skip deep resolution here,
+  }
+
+  typeMap.set(typeName, { stringLiteral, classification, dataFields });
 }
 
 // Helper to extract string literal from type property
