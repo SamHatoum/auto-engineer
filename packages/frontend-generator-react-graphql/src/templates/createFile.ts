@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import ejs from 'ejs';
-import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI } from '@auto-engineer/ai-gateway';
 import { flattenFigmaVariables, VariableCollection } from '../figma-helpers';
 
 export type TemplateProps = Record<string, unknown>;
@@ -68,7 +68,7 @@ export const templatePropsAIMapper: Mapper<{ prompt: string }> = async (variable
   const prompt =
     `I have these figma variables: ${JSON.stringify(figmaVariables)} \n\nSYSTEM INSTRUCTIONS: \n${BASE_SYSTEM_INSTRUCTIONS} \n` +
     options.prompt;
-  const aiResponse = await generateTextWithAI(prompt, AIProvider.OpenAI, { maxTokens: 4000 });
+  const aiResponse = await generateTextWithAI(prompt, { maxTokens: 4000 });
   const props = JSON.parse(aiResponse) as TemplateProps;
   return props;
 };

@@ -1,21 +1,11 @@
 import path from 'path';
 import fg from 'fast-glob';
-import { generateTextWithAI, getAvailableProviders } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI } from '@auto-engineer/ai-gateway';
 import { readFile, writeFile, access } from 'fs/promises';
 import { execa } from 'execa';
 import { SYSTEM_PROMPT } from '../prompts/systemPrompt';
 import { extractCodeBlock } from '../utils/extractCodeBlock';
 import { runTests } from './runTests';
-
-const availableProviders = getAvailableProviders();
-const AI_PROVIDER = availableProviders[0];
-
-if (availableProviders.length === 0) {
-  console.error(
-    '❌ No AI providers configured. Please set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or XAI_API_KEY',
-  );
-  process.exit(1);
-}
 
 type TestAndTypecheckResult = {
   success: boolean;
@@ -72,7 +62,7 @@ async function retryFailedFiles(sliceDir: string, flow: string, initialResult: T
       const fileName = path.basename(filePath);
       const retryPrompt = buildRetryPrompt(fileName, contextFiles, result.testErrors, result.typecheckErrors);
       console.log(`🔧 Retrying typecheck error in ${fileName} in flow ${flow}...`);
-      const aiOutput = await generateTextWithAI(retryPrompt, AI_PROVIDER);
+      const aiOutput = await generateTextWithAI(retryPrompt);
       const cleanedCode = extractCodeBlock(aiOutput);
       await writeFile(path.join(sliceDir, fileName), cleanedCode, 'utf-8');
       console.log(`♻️ Updated ${fileName} to fix typecheck errors`);
@@ -173,7 +163,7 @@ async function implementFileFromAI(sliceDir: string, targetFile: string, context
   const filePath = path.join(sliceDir, targetFile);
   const prompt = buildInitialPrompt(targetFile, contextFiles);
   console.log(`🔮 Analysing and Implementing ${targetFile}`);
-  const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
+  const aiOutput = await generateTextWithAI(prompt);
   //console.log('AI output:', aiOutput);
   const cleanedCode = extractCodeBlock(aiOutput);
   await writeFile(filePath, cleanedCode, 'utf-8');
@@ -228,7 +218,7 @@ No commentary or markdown outside the code block.
 `.trim();
 
     console.log('🔮 Asking AI to suggest a fix for test failures...');
-    const aiOutput = await generateTextWithAI(smartPrompt, AI_PROVIDER);
+    const aiOutput = await generateTextWithAI(smartPrompt);
     const cleaned = extractCodeBlock(aiOutput);
     const match = cleaned.match(/^\/\/ File: (.+?)\n([\s\S]*)/m);
     if (!match) {

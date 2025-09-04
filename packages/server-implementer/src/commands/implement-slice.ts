@@ -1,5 +1,5 @@
 import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
-import { generateTextWithAI, getAvailableProviders } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI } from '@auto-engineer/ai-gateway';
 import path from 'path';
 import { existsSync } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
@@ -196,15 +196,6 @@ async function implementSlice(
   slicePath: string,
   context?: { previousOutputs?: string; attemptNumber?: number },
 ): Promise<{ success: boolean; filesImplemented: string[]; error?: string }> {
-  const availableProviders = getAvailableProviders();
-
-  if (availableProviders.length === 0) {
-    throw new Error(
-      'No AI providers configured. Please set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or XAI_API_KEY',
-    );
-  }
-
-  const AI_PROVIDER = availableProviders[0];
   const sliceName = path.basename(slicePath);
 
   debugProcess(`Implementing slice: ${sliceName}`);
@@ -235,7 +226,7 @@ async function implementSlice(
       }
 
       // Generate implementation with AI
-      const aiOutput = await generateTextWithAI(prompt, AI_PROVIDER);
+      const aiOutput = await generateTextWithAI(prompt);
       const cleanedCode = extractCodeBlock(aiOutput);
 
       // Write the implemented file
@@ -258,7 +249,7 @@ async function implementSlice(
 }
 
 function logCommandDebugInfo(command: ImplementSliceCommand, resolvedSlicePath?: string): void {
-  const rawData = command.data as any;
+  const rawData = command.data as ImplementSliceCommand['data'] & { path?: string };
   const slicePath = rawData.slicePath ?? rawData.path;
   const { context } = command.data;
   debug('Handling ImplementSliceCommand');
@@ -276,7 +267,7 @@ function createFailedEvent(
   error: string,
   resolvedSlicePath?: string,
 ): SliceImplementationFailedEvent {
-  const rawData = command.data as any;
+  const rawData = command.data as ImplementSliceCommand['data'] & { path?: string };
   const slicePath = resolvedSlicePath ?? rawData.slicePath ?? rawData.path;
   return {
     type: 'SliceImplementationFailed',
@@ -295,7 +286,7 @@ function createSuccessEvent(
   filesImplemented: string[],
   resolvedSlicePath?: string,
 ): SliceImplementedEvent {
-  const rawData = command.data as any;
+  const rawData = command.data as ImplementSliceCommand['data'] & { path?: string };
   const slicePath = resolvedSlicePath ?? rawData.slicePath ?? rawData.path;
   return {
     type: 'SliceImplemented',
@@ -320,11 +311,11 @@ export async function handleImplementSliceCommand(
   command: ImplementSliceCommand,
 ): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> {
   // Handle both 'slicePath' and 'path' parameters for backward compatibility
-  const rawData = command.data as any;
+  const rawData = command.data as ImplementSliceCommand['data'] & { path?: string };
   const slicePath = rawData.slicePath ?? rawData.path;
   const { context } = command.data;
 
-  if (!slicePath) {
+  if (slicePath === undefined || slicePath === null || slicePath === '') {
     debugHandler('ERROR: No slice path provided. Expected slicePath or path parameter');
     return createFailedEvent(command, 'No slice path provided. Expected slicePath parameter');
   }

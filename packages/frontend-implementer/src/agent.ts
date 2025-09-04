@@ -1,4 +1,4 @@
-import { AIProvider, generateTextWithAI } from '@auto-engineer/ai-gateway';
+import { generateTextWithAI } from '@auto-engineer/ai-gateway';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as ts from 'typescript';
@@ -97,7 +97,7 @@ async function getAtomsWithProps(
   return atoms;
 }
 
-const provider = AIProvider.Anthropic;
+const provider = undefined;
 
 function extractJsonArray(text: string): string {
   debugAI('Extracting JSON array from text of length: %d', text.length);
@@ -119,7 +119,7 @@ async function callAI(prompt: string, options?: { temperature?: number; maxToken
   const temperature = options?.temperature ?? 0.2;
   const maxTokens = options?.maxTokens ?? 4000;
   debugAI('Calling AI with prompt length: %d, temperature: %f, maxTokens: %d', prompt.length, temperature, maxTokens);
-  const result = await generateTextWithAI(prompt, provider, { temperature, maxTokens });
+  const result = await generateTextWithAI(prompt, { provider, temperature, maxTokens });
   debugAI('AI response received, length: %d', result.length);
   return result.trim();
 }
@@ -695,7 +695,7 @@ async function checkVisualErrors(baseUrl: string, routes: string[], theme: strin
       IMPORTANT: return something only if you found valid errors, I don't want to show only the route name from the above request.
       `,
       screenshot.screenshot,
-      AIProvider.OpenAI,
+      undefined,
     );
     if (error) {
       debugScreenshots('Visual errors found on route %s', screenshot.route);

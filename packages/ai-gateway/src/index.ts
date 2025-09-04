@@ -145,6 +145,7 @@ export enum AIProvider {
 }
 
 export interface AIOptions {
+  provider?: AIProvider;
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -167,7 +168,33 @@ const defaultOptions: AIOptions = {
   maxTokens: 1000,
 };
 
+function getDefaultAIProvider(): AIProvider {
+  const envProvider = process.env.DEFAULT_AI_PROVIDER?.toLowerCase();
+  switch (envProvider) {
+    case 'openai':
+      return AIProvider.OpenAI;
+    case 'anthropic':
+      return AIProvider.Anthropic;
+    case 'google':
+      return AIProvider.Google;
+    case 'xai':
+      return AIProvider.XAI;
+    default: {
+      // Fallback to the first available provider
+      const available = getAvailableProviders();
+      return available.length > 0 ? available[0] : AIProvider.OpenAI;
+    }
+  }
+}
+
 function getDefaultModel(provider: AIProvider): string {
+  // Check if DEFAULT_AI_MODEL is set in environment
+  const envModel = process.env.DEFAULT_AI_MODEL;
+  if (envModel !== undefined && envModel !== null && envModel.trim().length > 0) {
+    debugConfig('Using DEFAULT_AI_MODEL from environment: %s for provider %s', envModel, provider);
+    return envModel.trim();
+  }
+
   const model = (() => {
     switch (provider) {
       case AIProvider.OpenAI:
@@ -205,25 +232,22 @@ function getModel(provider: AIProvider, model?: string) {
   }
 }
 
-export async function generateTextWithAI(
-  prompt: string,
-  provider: AIProvider,
-  options: AIOptions = {},
-): Promise<string> {
-  debugAPI('generateTextWithAI called - provider: %s, promptLength: %d', provider, prompt.length);
+export async function generateTextWithAI(prompt: string, options: AIOptions = {}): Promise<string> {
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
+  debugAPI('generateTextWithAI called - provider: %s, promptLength: %d', resolvedProvider, prompt.length);
   const finalOptions = { ...defaultOptions, ...options };
-  const model = finalOptions.model ?? getDefaultModel(provider);
-  const modelInstance = getModel(provider, model);
+  const model = finalOptions.model ?? getDefaultModel(resolvedProvider);
+  const modelInstance = getModel(resolvedProvider, model);
 
   if (finalOptions.includeTools === true) {
     debugTools('Tools requested, starting MCP server');
     await startServer();
-    const result = await generateTextWithToolsAI(prompt, provider, options);
+    const result = await generateTextWithToolsAI(prompt, options);
     return result.text;
   }
 
   try {
-    debugAPI('Making API call to %s with model %s', provider, model);
+    debugAPI('Making API call to %s with model %s', resolvedProvider, model);
     debugAPI('Request params - temperature: %d, maxTokens: %d', finalOptions.temperature, finalOptions.maxTokens);
 
     const result = await generateText({
@@ -236,22 +260,19 @@ export async function generateTextWithAI(
     debugAPI('API call successful - response length: %d, usage: %o', result.text.length, result.usage);
     return result.text;
   } catch (error) {
-    extractAndLogError(error, provider, 'generateTextWithAI');
+    extractAndLogError(error, resolvedProvider, 'generateTextWithAI');
     throw error;
   }
 }
 
-export async function* streamTextWithAI(
-  prompt: string,
-  provider: AIProvider,
-  options: AIOptions = {},
-): AsyncGenerator<string> {
-  debugStream('streamTextWithAI called - provider: %s, promptLength: %d', provider, prompt.length);
+export async function* streamTextWithAI(prompt: string, options: AIOptions = {}): AsyncGenerator<string> {
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
+  debugStream('streamTextWithAI called - provider: %s, promptLength: %d', resolvedProvider, prompt.length);
   const finalOptions = { ...defaultOptions, ...options };
-  const model = getModel(provider, finalOptions.model);
+  const model = getModel(resolvedProvider, finalOptions.model);
 
   try {
-    debugStream('Starting stream from %s', provider);
+    debugStream('Starting stream from %s', resolvedProvider);
     const stream = await streamText({
       model,
       prompt,
@@ -269,7 +290,7 @@ export async function* streamTextWithAI(
     }
     debugStream('Stream completed - total chunks: %d, total length: %d', totalChunks, totalLength);
   } catch (error) {
-    extractAndLogError(error, provider, 'streamTextWithAI');
+    extractAndLogError(error, resolvedProvider, 'streamTextWithAI');
     throw error;
   }
 }
@@ -279,16 +300,13 @@ export async function* streamTextWithAI(
  * Optionally calls a stream callback for each token if provided.
  * Always returns the complete collected response.
  */
-export async function generateTextStreamingWithAI(
-  prompt: string,
-  provider: AIProvider,
-  options: AIOptions = {},
-): Promise<string> {
-  debugStream('generateTextStreamingWithAI called - provider: %s', provider);
+export async function generateTextStreamingWithAI(prompt: string, options: AIOptions = {}): Promise<string> {
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
+  debugStream('generateTextStreamingWithAI called - provider: %s', resolvedProvider);
   const finalOptions = { ...defaultOptions, ...options };
   let collectedResult = '';
 
-  const stream = streamTextWithAI(prompt, provider, finalOptions);
+  const stream = streamTextWithAI(prompt, finalOptions);
 
   let tokenCount = 0;
   for await (const token of stream) {
@@ -386,13 +404,13 @@ async function executeToolConversation(
 
 export async function generateTextWithToolsAI(
   prompt: string,
-  provider: AIProvider,
   options: AIOptions = {},
 ): Promise<{ text: string; toolCalls?: unknown[] }> {
-  debugTools('generateTextWithToolsAI called - provider: %s', provider);
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
+  debugTools('generateTextWithToolsAI called - provider: %s', resolvedProvider);
   const finalOptions = { ...defaultOptions, ...options };
-  const model = finalOptions.model ?? getDefaultModel(provider);
-  const modelInstance = getModel(provider, model);
+  const model = finalOptions.model ?? getDefaultModel(resolvedProvider);
+  const modelInstance = getModel(resolvedProvider, model);
 
   const registeredTools = finalOptions.includeTools === true ? getRegisteredToolsForAI() : {};
   debugTools('Registered tools: %o', Object.keys(registeredTools));
@@ -408,7 +426,7 @@ export async function generateTextWithToolsAI(
     registeredTools,
     hasTools,
     finalOptions,
-    provider,
+    resolvedProvider,
   );
 
   return {
@@ -450,26 +468,26 @@ async function executeToolCalls(
 export async function generateTextWithImageAI(
   text: string,
   imageBase64: string,
-  provider: AIProvider,
   options: AIOptions = {},
 ): Promise<string> {
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
   debugAPI(
     'generateTextWithImageAI called - provider: %s, textLength: %d, imageSize: %d',
-    provider,
+    resolvedProvider,
     text.length,
     imageBase64.length,
   );
   const finalOptions = { ...defaultOptions, ...options };
-  const model = finalOptions.model ?? getDefaultModel(provider);
-  const modelInstance = getModel(provider, model);
+  const model = finalOptions.model ?? getDefaultModel(resolvedProvider);
+  const modelInstance = getModel(resolvedProvider, model);
 
-  if (provider !== AIProvider.OpenAI && provider !== AIProvider.XAI) {
-    debugError('Provider %s does not support image inputs', provider);
-    throw new Error(`Provider ${provider} does not support image inputs`);
+  if (resolvedProvider !== AIProvider.OpenAI && resolvedProvider !== AIProvider.XAI) {
+    debugError('Provider %s does not support image inputs', resolvedProvider);
+    throw new Error(`Provider ${resolvedProvider} does not support image inputs`);
   }
 
   try {
-    debugAPI('Sending image+text to %s', provider);
+    debugAPI('Sending image+text to %s', resolvedProvider);
     const result = await generateText({
       model: modelInstance,
       messages: [
@@ -488,7 +506,7 @@ export async function generateTextWithImageAI(
     debugAPI('Image API call successful - response length: %d', result.text.length);
     return result.text;
   } catch (error) {
-    extractAndLogError(error, provider, 'generateTextWithImageAI');
+    extractAndLogError(error, resolvedProvider, 'generateTextWithImageAI');
     throw error;
   }
 }
@@ -626,12 +644,13 @@ async function attemptStructuredGeneration<T>(
   throw lastError;
 }
 
-export async function generateStructuredDataWithAI<T>(
-  prompt: string,
-  provider: AIProvider,
-  options: StructuredAIOptions<T>,
-): Promise<T> {
-  debugAPI('generateStructuredDataWithAI called - provider: %s, schema: %s', provider, options.schemaName ?? 'unnamed');
+export async function generateStructuredDataWithAI<T>(prompt: string, options: StructuredAIOptions<T>): Promise<T> {
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
+  debugAPI(
+    'generateStructuredDataWithAI called - provider: %s, schema: %s',
+    resolvedProvider,
+    options.schemaName ?? 'unnamed',
+  );
 
   if (options.includeTools === true) {
     debugTools('Tools requested, starting MCP server');
@@ -641,17 +660,14 @@ export async function generateStructuredDataWithAI<T>(
   debugTools('Registered tools for structured data: %o', Object.keys(registeredTools));
   const hasTools = Object.keys(registeredTools).length > 0;
 
-  return attemptStructuredGeneration(prompt, provider, options, registeredTools, hasTools);
+  return attemptStructuredGeneration(prompt, resolvedProvider, options, registeredTools, hasTools);
 }
 
-export async function streamStructuredDataWithAI<T>(
-  prompt: string,
-  provider: AIProvider,
-  options: StreamStructuredAIOptions<T>,
-): Promise<T> {
+export async function streamStructuredDataWithAI<T>(prompt: string, options: StreamStructuredAIOptions<T>): Promise<T> {
+  const resolvedProvider = options.provider ?? getDefaultAIProvider();
   debugStream(
     'streamStructuredDataWithAI called - provider: %s, schema: %s',
-    provider,
+    resolvedProvider,
     options.schemaName ?? 'unnamed',
   );
   const maxSchemaRetries = 3;
@@ -660,7 +676,7 @@ export async function streamStructuredDataWithAI<T>(
   for (let attempt = 0; attempt < maxSchemaRetries; attempt++) {
     try {
       debugValidation('Stream structured data attempt %d/%d', attempt + 1, maxSchemaRetries);
-      const model = getModel(provider, options.model);
+      const model = getModel(resolvedProvider, options.model);
 
       const enhancedPrompt = attempt > 0 && lastError ? getEnhancedPrompt(prompt, lastError) : prompt;
 

@@ -15,9 +15,9 @@ function isJsonString(str: string): boolean {
 }
 
 export class InformationArchitectAgent {
-  private provider: AIProvider;
+  private provider?: AIProvider;
 
-  constructor(provider: AIProvider = AIProvider.Anthropic) {
+  constructor(provider?: AIProvider) {
     this.provider = provider;
   }
 
@@ -29,7 +29,11 @@ export class InformationArchitectAgent {
   ): Promise<AIAgentOutput> {
     const prompt = this.constructPrompt(flows, uxSchema, existingSchema, atoms);
     try {
-      const response = await generateTextWithAI(prompt, this.provider, { temperature: 0.7, maxTokens: 4096 });
+      const response = await generateTextWithAI(prompt, {
+        provider: this.provider,
+        temperature: 0.7,
+        maxTokens: 4096,
+      });
       if (!response) {
         throw new Error('No response from AI agent');
       }

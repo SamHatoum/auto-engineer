@@ -69,7 +69,7 @@ export async function importDesignSystemComponentsFromFigma(
   // - add more content to the "Description:" part of the component.
   // - add "Hierarchy:" part under the component, returning the parts a component is build of. like [Button, Input]
   // `,
-  //   AIProvider.OpenAI,
+  //   undefined,
   //   { temperature: 0.2, maxTokens: 8000 },
   // );
   // await fs.mkdir(outputDir, { recursive: true });
