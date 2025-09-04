@@ -30,7 +30,22 @@
 [//]: # '  - [Todo App](examples/todo-app.md)'
 
 - [Packages](reference/packages/README.md)
+  - [AI Gateway]()
+  - [CLI](../packages/cli/README.md)
+  - [Create Auto App]()
   - [Design System Importer](../packages/design-system-importer/README.md)
+  - [Emmett Generator]()
+  - [File Store]()
+  - [File Syncer]()
+  - [Flow](../packages/flow/README.md)
+  - [Frontend Checks](../packages/frontend-checks/README.md)
+  - [Frontend Generator (React & Graphql)](../packages/frontend-generator-react-graphql/README.md)
+  - [Frontend Implementer](../packages/frontend-implementer/README.md)
+  - [Information Architect](../packages/information-architect/README.md)
+  - [Message Bus]()
+  - [Server Checks](../packages/server-checks/README.md)
+  - [Server Generator (Apollo & Emmett)](../packages/server-generator-apollo-emmett/README.md)
+  - [Server Implementer](../packages/server-implementer/README.md)
 
 [//]: # '- [Reference](reference/README.md)'
 [//]: # '  - [API](reference/api.md)'
