@@ -46,4 +46,4 @@ Auto Engineer is evolving rapidly. Our near-term focus includes:
 
 ... TBA
 
-Stay tuned for updates via the [changelog](changelog.md).
+Stay tuned for updates via the [changelog](../CHANGELOG.md).

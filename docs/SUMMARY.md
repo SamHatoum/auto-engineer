@@ -62,4 +62,4 @@
   - [Dev Setup](contributing/README.md#development-setup)
   - [Testing](contributing/README.md#testing)
   - [Release Process](contributing/README.md#release-process)
-- [Changelog](changelog.md)
+- [Changelog](../CHANGELOG.md)
