@@ -123,7 +123,7 @@ flow('Seasonal Assistant', () => {
       });
     });
 
-  reactSlice('creates a chat session ').server(() => {
+  reactSlice('creates a chat session').server(() => {
     specs('When shopping criteria are entered, request wishlist creation', () => {
       rule('Shopping criteria should trigger item suggestion', () => {
         example('Criteria entered triggers wishlist creation')
@@ -146,7 +146,7 @@ flow('Seasonal Assistant', () => {
     });
   });
 
-  commandSlice('selects items relevant to the shopping criteria ').server(() => {
+  commandSlice('selects items relevant to the shopping criteria').server(() => {
     data([
       sink()
         .command('SuggestShoppingItems')

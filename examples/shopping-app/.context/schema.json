@@ -55,7 +55,7 @@
                           "exampleData": {
                             "sessionId": "shopper-123",
                             "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                            "timestamp": "2025-09-04T19:20:52.450Z"
+                            "timestamp": "2025-09-04T21:20:20.309Z"
                           }
                         }
                       ]
@@ -67,7 +67,7 @@
           }
         },
         {
-          "name": "creates a chat session ",
+          "name": "creates a chat session",
           "type": "react",
           "server": {
             "specs": {
@@ -84,7 +84,7 @@
                           "exampleData": {
                             "sessionId": "session-abc",
                             "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                            "timestamp": "2025-09-04T19:20:52.450Z"
+                            "timestamp": "2025-09-04T21:20:20.309Z"
                           }
                         }
                       ],
@@ -105,7 +105,7 @@
           }
         },
         {
-          "name": "selects items relevant to the shopping criteria ",
+          "name": "selects items relevant to the shopping criteria",
           "type": "command",
           "client": {
             "description": "",
@@ -438,7 +438,7 @@
                                 "quantity": 1
                               }
                             ],
-                            "timestamp": "2025-09-04T19:20:52.451Z"
+                            "timestamp": "2025-09-04T21:20:20.310Z"
                           }
                         }
                       ]

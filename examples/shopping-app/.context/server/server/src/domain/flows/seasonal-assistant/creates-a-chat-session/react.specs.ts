@@ -4,7 +4,7 @@ import { getInMemoryEventStore, type InMemoryEventStore, type CommandSender } fr
 import { type ReactorContext, ReactorSpecification } from '../../../shared';
 import { react } from './react';
 import type { ShoppingCriteriaEntered } from '../enters-shopping-criteria-into-assistant/events';
-import type { SuggestShoppingItems } from '../selects-items-relevant-to-the-shopping-criteria-/commands';
+import type { SuggestShoppingItems } from '../selects-items-relevant-to-the-shopping-criteria/commands';
 
 describe('SeasonalAssistant | CreatesAChatSession', () => {
   let eventStore: InMemoryEventStore;
@@ -34,7 +34,7 @@ describe('SeasonalAssistant | CreatesAChatSession', () => {
           sessionId: 'session-abc',
           criteria:
             'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-          timestamp: new Date('2025-09-04T20:53:48.700Z'),
+          timestamp: new Date('2025-09-04T21:20:20.309Z'),
         },
       })
 

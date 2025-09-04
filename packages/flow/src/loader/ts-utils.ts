@@ -138,26 +138,11 @@ function processTypeAlias(
     if (ts.isTypeLiteralNode(secondArg)) {
       dataFields = extractDataFieldsFromTypeLiteral(ts, secondArg);
     }
-    // If it's a reference to another interface/type, skip deep resolution here,
   }
-
-  // For State types, add the 'type' field to dataFields if it's not already there
-  // if (classification === 'state' && dataFields) {
-  //   const hasTypeField = dataFields.some(field => field.name === 'type');
-  //   if (!hasTypeField) {
-  //     // Add the type field with the literal value
-  //     dataFields.unshift({
-  //       name: 'type',
-  //       type: `"${stringLiteral}"`, // Use the literal type
-  //       required: true,
-  //     });
-  //   }
-  // }
 
   typeMap.set(typeName, { stringLiteral, classification, dataFields });
 }
 
-// Helper to extract string literal from type property
 function extractTypeString(
   ts: typeof import('typescript'),
   member: import('typescript').PropertySignature,
@@ -168,7 +153,6 @@ function extractTypeString(
   return member.type.literal.text;
 }
 
-// Helper to extract type reference
 function extractTypeReference(
   ts: typeof import('typescript'),
   typeRef: import('typescript').TypeReferenceNode,
@@ -181,7 +165,6 @@ function extractTypeReference(
   return 'unknown';
 }
 
-// Helper to extract properties from a type literal
 function extractTypeLiteralProperties(
   ts: typeof import('typescript'),
   typeLiteral: import('typescript').TypeLiteralNode,
@@ -245,7 +228,6 @@ function extractTypeFromNode(ts: typeof import('typescript'), typeNode?: import(
   }
 }
 
-// Helper to extract data fields from interface
 function extractDataFields(
   ts: typeof import('typescript'),
   member: import('typescript').PropertySignature,

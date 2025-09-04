@@ -4,7 +4,7 @@ import { decide } from './decide';
 import { evolve } from './evolve';
 import { initialState } from './state';
 
-describe('Seasonal Assistant | selects items relevant to the shopping criteria ', () => {
+describe('Seasonal Assistant | selects items relevant to the shopping criteria', () => {
   const given = DeciderSpecification.for({
     decide,
     evolve,

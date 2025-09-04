@@ -23,7 +23,6 @@ export const decide = (command: SuggestShoppingItems, state: State, products?: P
        *
        * Integration result shape (Products):
        * products?.data = {
-       *   type: "Products";
        *   products: Array<{
        *     productId: string; name;
        *   }>;

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { SpecsSchema } from './schema';
 import { registry } from './flow-registry';
 import type { Flow } from './index';
-import { flowsToSchema } from './flow-to-schema';
+import { flowsToSchema } from './transformers/flow-to-schema';
 import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
 
