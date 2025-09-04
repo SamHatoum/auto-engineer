@@ -1,7 +1,6 @@
 {
   "name": "auto-engineer",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.8.1",
   "type": "module",
   "scripts": {
     "build": "turbo run build",
@@ -11,7 +10,7 @@
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore --log-level warn",
     "check": "turbo run lint format type-check test",
     "clean": "tsx scripts/clean.ts",
     "reset": "pnpm clean && pnpm install && pnpm build",
@@ -59,9 +58,9 @@
     "@types/react-dom": "^18.3.7"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.4.0",
+    "@auto-engineer/ai-gateway": "workspace:*",
     "@auto-engineer/design-system-importer": "link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer",
-    "@auto-engineer/flow": "^0.1.1",
+    "@auto-engineer/flow": "workspace:*",
     "axios": "^1.10.0",
     "debug": "^4.4.1",
     "dotenv": "^16.4.5"

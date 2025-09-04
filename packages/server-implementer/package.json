@@ -1,6 +1,5 @@
 {
   "name": "@auto-engineer/server-implementer",
-  "version": "0.7.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,12 +12,12 @@
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "link:dev": "pnpm build && pnpm link --global",
     "unlink:dev": "pnpm unlink --global",
     "prepublishOnly": "npm run build"
@@ -35,7 +34,7 @@
     "vite": "^5.4.1"
   },
   "devDependencies": {
-    "@auto-engineer/cli": "^0.8.0",
+    "@auto-engineer/cli": "workspace:*",
     "@types/fs-extra": "^11.0.4",
     "dotenv": "^16.6.1",
     "execa": "^9.6.0",

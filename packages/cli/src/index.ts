@@ -465,28 +465,6 @@ let serverStarted = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let serverInstance: any = null; // Store server instance globally
 
-// Helper function to set command metadata on the server
-const setServerCommandMetadata = (
-  pluginLoader: PluginLoader,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  server: any,
-  commandHandlers: Record<string, unknown>,
-): void => {
-  const commands = pluginLoader.getCommands();
-  for (const [alias, command] of commands.entries()) {
-    if (commandHandlers[alias] !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      server.setCommandMetadata(alias, {
-        alias,
-        description: command.description,
-        package: command.package,
-        version: command.version,
-        category: command.category,
-      });
-    }
-  }
-};
-
 const startMessageBusServer = async (): Promise<void> => {
   if (serverStarted) {
     return;

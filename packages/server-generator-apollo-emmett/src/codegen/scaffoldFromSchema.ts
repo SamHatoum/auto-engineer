@@ -339,7 +339,7 @@ async function generateFilesForSlice(
   debugSlice('    Commands: %d', extracted.commands.length);
   debugSlice('    Events: %d', extracted.events.length);
   debugSlice('    States: %d', extracted.states.length);
-  console.log(
+  debugSlice(
     '💡 Events for slice',
     slice.name,
     extracted.events.map((e) => e.type),

@@ -1,6 +1,5 @@
 {
   "name": "@auto-engineer/information-architect",
-  "version": "0.7.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,13 +12,13 @@
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp src/auto-ux-schema.json dist/",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
     "generate-ia-schema": "tsx src/generate-ia-schema.ts",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "link:dev": "pnpm build && pnpm link --global",
     "unlink:dev": "pnpm unlink --global",
     "prepublishOnly": "npm run build"
@@ -33,6 +32,6 @@
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {
-    "@auto-engineer/cli": "^0.8.0"
+    "@auto-engineer/cli": "workspace:*"
   }
 }
