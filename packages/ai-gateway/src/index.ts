@@ -4,6 +4,9 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
+import { DEFAULT_MODELS, AIProvider } from './constants';
+
+export { AIProvider } from './constants';
 import { z } from 'zod';
 import { getRegisteredToolsForAI } from './mcp-server';
 import { startServer } from './mcp-server';
@@ -137,13 +140,6 @@ interface AIToolValidationError extends Error {
   [key: string]: unknown;
 }
 
-export enum AIProvider {
-  OpenAI = 'openai',
-  Anthropic = 'anthropic',
-  Google = 'google',
-  XAI = 'xai',
-}
-
 export interface AIOptions {
   provider?: AIProvider;
   model?: string;
@@ -168,7 +164,7 @@ const defaultOptions: AIOptions = {
   maxTokens: 1000,
 };
 
-function getDefaultAIProvider(): AIProvider {
+export function getDefaultAIProvider(): AIProvider {
   const envProvider = process.env.DEFAULT_AI_PROVIDER?.toLowerCase();
   switch (envProvider) {
     case 'openai':
@@ -182,12 +178,12 @@ function getDefaultAIProvider(): AIProvider {
     default: {
       // Fallback to the first available provider
       const available = getAvailableProviders();
-      return available.length > 0 ? available[0] : AIProvider.OpenAI;
+      return available.length > 0 ? available[0] : AIProvider.Anthropic;
     }
   }
 }
 
-function getDefaultModel(provider: AIProvider): string {
+export function getDefaultModel(provider: AIProvider): string {
   // Check if DEFAULT_AI_MODEL is set in environment
   const envModel = process.env.DEFAULT_AI_MODEL;
   if (envModel !== undefined && envModel !== null && envModel.trim().length > 0) {
@@ -195,21 +191,11 @@ function getDefaultModel(provider: AIProvider): string {
     return envModel.trim();
   }
 
-  const model = (() => {
-    switch (provider) {
-      case AIProvider.OpenAI:
-        return 'gpt-4o-mini'; // maybe 5
-      case AIProvider.Anthropic:
-        return 'claude-sonnet-4-20250514'; // 4
-      case AIProvider.Google:
-        return 'gemini-2.5-pro';
-      case AIProvider.XAI:
-        return 'grok-4';
-      default:
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        throw new Error(`Unknown provider: ${provider}`);
-    }
-  })();
+  const model =
+    DEFAULT_MODELS[provider] ??
+    (() => {
+      throw new Error(`Unknown provider: ${provider}`);
+    })();
   debugConfig('Selected default model %s for provider %s', model, provider);
   return model;
 }
@@ -514,8 +500,8 @@ export async function generateTextWithImageAI(
 export function getAvailableProviders(): AIProvider[] {
   const config = configureAIProvider();
   const providers: AIProvider[] = [];
-  if (config.openai != null) providers.push(AIProvider.OpenAI);
   if (config.anthropic != null) providers.push(AIProvider.Anthropic);
+  if (config.openai != null) providers.push(AIProvider.OpenAI);
   if (config.google != null) providers.push(AIProvider.Google);
   if (config.xai != null) providers.push(AIProvider.XAI);
   debugConfig('Available providers: %o', providers);
