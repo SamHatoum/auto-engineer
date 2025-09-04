@@ -1,5 +1,11 @@
 # create-auto-app
 
+## 0.3.0
+
+### Minor Changes
+
+- add command details in dashboard
+
 ## 0.2.3
 
 ### Patch Changes

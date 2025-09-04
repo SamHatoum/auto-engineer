@@ -1,5 +1,18 @@
 # @auto-engineer/file-syncer
 
+## 0.5.0
+
+### Minor Changes
+
+- add command details in dashboard
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.4.0
+  - @auto-engineer/flow@0.2.0
+  - @auto-engineer/message-bus@0.6.0
+
 ## 0.4.3
 
 ### Patch Changes

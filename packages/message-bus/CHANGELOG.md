@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.6.0
+
+### Minor Changes
+
+- add command details in dashboard
+
 ## 0.5.5
 
 ### Patch Changes

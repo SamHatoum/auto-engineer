@@ -1,5 +1,16 @@
 # @auto-engineer/cli
 
+## 0.8.0
+
+### Minor Changes
+
+- add command details in dashboard
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/message-bus@0.6.0
+
 ## 0.7.6
 
 ### Patch Changes
