@@ -20,8 +20,8 @@ importers:
         specifier: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
         version: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
       '@auto-engineer/flow':
-        specifier: ^0.1.1
-        version: 0.1.7(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
+        specifier: ^0.3.0
+        version: link:packages/flow
       axios:
         specifier: ^1.10.0
         version: 1.11.0(debug@4.4.1)
@@ -327,7 +327,7 @@ importers:
         specifier: ^0.4.0
         version: link:../file-store
       '@auto-engineer/flow':
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../flow
       '@auto-engineer/message-bus':
         specifier: ^0.6.0
@@ -532,7 +532,7 @@ importers:
   packages/server-generator-apollo-emmett:
     dependencies:
       '@auto-engineer/flow':
-        specifier: ^0.2.0
+        specifier: ^0.3.0
         version: link:../flow
       '@auto-engineer/message-bus':
         specifier: ^0.6.0
@@ -777,15 +777,6 @@ packages:
 
   '@auto-engineer/ai-gateway@0.4.5':
     resolution: {integrity: sha512-6oFGMAXR8FBmKh61WvQMZUTTExmsfkJyUrbDNRiqlecsevJ/hv2ZreqZKAJNE5JOHao9xzUmTJe8SPsPtZAQoA==}
-
-  '@auto-engineer/file-store@0.3.3':
-    resolution: {integrity: sha512-PzOmyh13Daw3WjA4E7fehQL9k5O2MZdg1ytJF/9AYGLyqgXtWXg6smA8PlDqgTyldCDtaJCMuSsBi2RDVMNUnA==}
-
-  '@auto-engineer/flow@0.1.7':
-    resolution: {integrity: sha512-Es2tZhrQ2m7Tr7lirFgfcQz4UiJ3KdQ+SJBv6LTRJQ516zI2gylngccfVoa2Ug+MeI2XlcMBVLsKcGtPBFpZGw==}
-
-  '@auto-engineer/message-bus@0.5.5':
-    resolution: {integrity: sha512-dcbBKif/OSAqPbEtJWj1kznzPDZcvhJkcQ1ICLFxo1bk0aylRgSEboZFsESK2xBs5HEsXI+BPq+jF1YLFnnxkQ==}
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -5384,32 +5375,6 @@ snapshots:
     transitivePeerDependencies:
       - react
       - supports-color
-
-  '@auto-engineer/file-store@0.3.3': {}
-
-  '@auto-engineer/flow@0.1.7(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
-    dependencies:
-      '@auto-engineer/file-store': 0.3.3
-      '@auto-engineer/message-bus': 0.5.5
-      '@event-driven-io/emmett': 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
-      debug: 4.4.1
-      fast-glob: 3.3.3
-      graphql: 16.11.0
-      graphql-tag: 2.12.6(graphql@16.11.0)
-      typescript: 5.9.2
-      zod: 3.25.76
-      zod-to-json-schema: 3.24.6(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@types/async-retry'
-      - '@types/uuid'
-      - async-retry
-      - commander
-      - supports-color
-      - ts-node
-      - uuid
-      - web-streams-polyfill
-
-  '@auto-engineer/message-bus@0.5.5': {}
 
   '@babel/code-frame@7.27.1':
     dependencies:

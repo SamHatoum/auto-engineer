@@ -15,16 +15,7 @@ const main = async () => {
     // Import getFlows from the project's node_modules to ensure we use the same module context
     const getFileStore = getFs as () => Promise<IExtendedFileStore>;
     const fs: IExtendedFileStore = await getFileStore();
-    const projectFlowPath = fs.join(
-      directory,
-      'node_modules',
-      '@auto-engineer',
-      'flow',
-      'dist',
-      'src',
-      'loader',
-      'getFlows.js',
-    );
+    const projectFlowPath = fs.join(directory, 'node_modules', '@auto-engineer', 'flow', 'dist', 'src', 'getFlows.js');
     debug('Importing getFlows from: %s', projectFlowPath);
 
     const { pathToFileURL } = await import('url');

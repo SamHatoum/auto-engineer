@@ -1,5 +1,11 @@
 # @auto-engineer/flow
 
+## 0.3.0
+
+### Minor Changes
+
+- migrates flow dsl to support new hierarchical specs → rules → examples
+
 ## 0.2.0
 
 ### Minor Changes

@@ -176,7 +176,9 @@ const ExampleSchema = z
       .array(z.union([EventExampleSchema, StateExampleSchema]))
       .optional()
       .describe('Given conditions'),
-    when: z.union([CommandExampleSchema, z.array(EventExampleSchema)]).describe('When action or events occur'),
+    when: z
+      .union([CommandExampleSchema, EventExampleSchema, z.array(EventExampleSchema)])
+      .describe('When action or events occur'),
     then: z
       .array(z.union([EventExampleSchema, StateExampleSchema, CommandExampleSchema, ErrorExampleSchema]))
       .describe('Then expected outcomes'),

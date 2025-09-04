@@ -5,7 +5,7 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@auto-engineer/flow": "^0.1.1",
+    "@auto-engineer/flow": "^0.3.0",
     "@auto-engineer/ai-gateway": "^0.6.1"
   },
   "scripts": {

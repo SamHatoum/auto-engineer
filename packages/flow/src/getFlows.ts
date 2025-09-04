@@ -61,6 +61,6 @@ export const getFlows = async (opts: GetFlowsOptions) => {
     typings: exec.typings, // { pkgName: [abs d.ts paths] }
     typeMap: exec.typeMap, // mapping from TypeScript type names to string literals
     typesByFile: exec.typesByFile, // mapping from file path to type definitions in that file
-    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows, exec.typeMap, exec.typesByFile),
+    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows, exec.typesByFile),
   };
 };

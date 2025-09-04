@@ -16,7 +16,7 @@ import {
   type State,
 } from '@auto-engineer/flow';
 
-import { AI, ProductCatalog, type DoChat, type ChatCompleted, type Products } from '../server/src/integrations';
+import { AI, ProductCatalog, type Products } from '../server/src/integrations';
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',

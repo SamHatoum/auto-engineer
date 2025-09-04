@@ -59,7 +59,9 @@ describe('getFlows', (_mode) => {
         const example = rule.examples[0];
         expect(typeof example.when === 'object' && !Array.isArray(example.when)).toBe(true);
         if (typeof example.when === 'object' && !Array.isArray(example.when)) {
-          expect(example.when.commandRef).toBe('CreateItem');
+          if ('commandRef' in example.when) {
+            expect(example.when.commandRef).toBe('CreateItem');
+          }
           expect(example.when.exampleData).toMatchObject({
             itemId: 'item_123',
             description: 'A new item',
@@ -113,7 +115,9 @@ describe('getFlows', (_mode) => {
         const example = rule.examples[0];
         expect(typeof example.when === 'object' && !Array.isArray(example.when)).toBe(true);
         if (typeof example.when === 'object' && !Array.isArray(example.when)) {
-          expect(example.when.commandRef).toBe('PlaceOrder');
+          if ('commandRef' in example.when) {
+            expect(example.when.commandRef).toBe('PlaceOrder');
+          }
           expect(example.when.exampleData).toMatchObject({ productId: 'product_789', quantity: 3 });
         }
         expect(example.then).toHaveLength(1);

@@ -1,6 +1,6 @@
 {
   "name": "@auto-engineer/server-generator-apollo-emmett",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,7 +25,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/flow": "^0.2.0",
+    "@auto-engineer/flow": "^0.3.0",
     "@auto-engineer/message-bus": "^0.6.0",
     "@event-driven-io/emmett": "^0.38.2",
     "apollo-server": "^3.13.0",
