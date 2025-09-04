@@ -112,13 +112,12 @@ export type Example = z.infer<typeof ExampleSchema>;
 export type Rule = z.infer<typeof RuleSchema>;
 export type Spec = z.infer<typeof SpecSchema>;
 
-// CLI Manifest
-export { CLI_MANIFEST } from './cli-manifest';
-
-// Commands
 export {
   commandHandler as exportSchemaCommandHandler,
   type ExportSchemaCommand,
   type SchemaExportedEvent,
   type SchemaExportFailedEvent,
 } from './commands/export-schema';
+
+import { commandHandler as exportSchemaHandler } from './commands/export-schema';
+export const COMMANDS = [exportSchemaHandler];

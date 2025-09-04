@@ -99,37 +99,37 @@ importers:
   examples/shopping-app:
     dependencies:
       '@auto-engineer/cli':
-        specifier: workspace:^0.7.8
+        specifier: workspace:*
         version: link:../../packages/cli
       '@auto-engineer/design-system-importer':
-        specifier: workspace:^0.6.5
+        specifier: workspace:*
         version: link:../../packages/design-system-importer
       '@auto-engineer/flow':
-        specifier: workspace:^0.2.0
+        specifier: workspace:*
         version: link:../../packages/flow
       '@auto-engineer/frontend-checks':
-        specifier: workspace:^0.6.5
+        specifier: workspace:*
         version: link:../../packages/frontend-checks
       '@auto-engineer/frontend-generator-react-graphql':
-        specifier: workspace:^0.1.4
+        specifier: workspace:*
         version: link:../../packages/frontend-generator-react-graphql
       '@auto-engineer/frontend-implementer':
-        specifier: workspace:^0.1.4
+        specifier: workspace:*
         version: link:../../packages/frontend-implementer
       '@auto-engineer/information-architect':
-        specifier: workspace:^0.6.5
+        specifier: workspace:*
         version: link:../../packages/information-architect
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../../packages/message-bus
       '@auto-engineer/server-checks':
-        specifier: workspace:^0.1.4
+        specifier: workspace:*
         version: link:../../packages/server-checks
       '@auto-engineer/server-generator-apollo-emmett':
-        specifier: workspace:^0.1.5
+        specifier: workspace:*
         version: link:../../packages/server-generator-apollo-emmett
       '@auto-engineer/server-implementer':
-        specifier: workspace:^0.6.5
+        specifier: workspace:*
         version: link:../../packages/server-implementer
     devDependencies:
       chokidar:
@@ -178,7 +178,7 @@ importers:
   packages/cli:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       chalk:
         specifier: ^5.3.0
@@ -259,6 +259,9 @@ importers:
       '@types/marked-terminal':
         specifier: ^6.1.1
         version: 6.1.1
+      get-port:
+        specifier: ^7.1.0
+        version: 7.1.0
       tsx:
         specifier: ^4.20.3
         version: 4.20.5
@@ -303,7 +306,7 @@ importers:
   packages/design-system-importer:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       figma-api:
         specifier: 2.0.2-beta
@@ -313,7 +316,7 @@ importers:
         version: 3.14.0
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
 
   packages/file-store: {}
@@ -321,13 +324,13 @@ importers:
   packages/file-syncer:
     dependencies:
       '@auto-engineer/file-store':
-        specifier: ^0.3.2
+        specifier: ^0.4.0
         version: link:../file-store
       '@auto-engineer/flow':
         specifier: ^0.2.0
         version: link:../flow
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       chokidar:
         specifier: ^3.6.0
@@ -349,10 +352,10 @@ importers:
   packages/flow:
     dependencies:
       '@auto-engineer/file-store':
-        specifier: ^0.3.3
+        specifier: ^0.4.0
         version: link:../file-store
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
@@ -380,7 +383,7 @@ importers:
         version: 3.24.6(zod@3.25.76)
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
       '@types/node':
         specifier: ^20.0.0
@@ -395,7 +398,7 @@ importers:
   packages/frontend-checks:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       debug:
         specifier: ^4.4.1
@@ -411,16 +414,16 @@ importers:
         version: 5.9.2
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
 
   packages/frontend-generator-react-graphql:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.6.3
+        specifier: ^0.7.0
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       debug:
         specifier: ^4.4.1
@@ -436,7 +439,7 @@ importers:
         version: 4.104.0(ws@8.18.3)(zod@3.25.76)
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
       '@types/ejs':
         specifier: ^3.1.5
@@ -445,10 +448,10 @@ importers:
   packages/frontend-implementer:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.6.3
+        specifier: ^0.7.0
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0
@@ -470,7 +473,7 @@ importers:
         version: 3.25.76
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
       playwright:
         specifier: ^1.54.1
@@ -479,17 +482,17 @@ importers:
   packages/information-architect:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.6.3
+        specifier: ^0.7.0
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
 
   packages/message-bus:
@@ -510,7 +513,7 @@ importers:
   packages/server-checks:
     dependencies:
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       debug:
         specifier: ^4.4.1
@@ -523,7 +526,7 @@ importers:
         version: 3.3.3
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
 
   packages/server-generator-apollo-emmett:
@@ -532,7 +535,7 @@ importers:
         specifier: ^0.2.0
         version: link:../flow
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.2
@@ -587,7 +590,7 @@ importers:
         version: 4.2.0
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
       '@types/ejs':
         specifier: ^3.1.5
@@ -599,10 +602,10 @@ importers:
   packages/server-implementer:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: ^0.6.3
+        specifier: ^0.7.0
         version: link:../ai-gateway
       '@auto-engineer/message-bus':
-        specifier: ^0.5.5
+        specifier: ^0.6.0
         version: link:../message-bus
       '@modelcontextprotocol/sdk':
         specifier: ^1.3.0
@@ -618,7 +621,7 @@ importers:
         version: 5.4.19(@types/node@22.18.0)
     devDependencies:
       '@auto-engineer/cli':
-        specifier: ^0.7.6
+        specifier: ^0.8.0
         version: link:../cli
       '@types/fs-extra':
         specifier: ^11.0.4
@@ -775,8 +778,14 @@ packages:
   '@auto-engineer/ai-gateway@0.4.5':
     resolution: {integrity: sha512-6oFGMAXR8FBmKh61WvQMZUTTExmsfkJyUrbDNRiqlecsevJ/hv2ZreqZKAJNE5JOHao9xzUmTJe8SPsPtZAQoA==}
 
+  '@auto-engineer/file-store@0.3.3':
+    resolution: {integrity: sha512-PzOmyh13Daw3WjA4E7fehQL9k5O2MZdg1ytJF/9AYGLyqgXtWXg6smA8PlDqgTyldCDtaJCMuSsBi2RDVMNUnA==}
+
   '@auto-engineer/flow@0.1.7':
     resolution: {integrity: sha512-Es2tZhrQ2m7Tr7lirFgfcQz4UiJ3KdQ+SJBv6LTRJQ516zI2gylngccfVoa2Ug+MeI2XlcMBVLsKcGtPBFpZGw==}
+
+  '@auto-engineer/message-bus@0.5.5':
+    resolution: {integrity: sha512-dcbBKif/OSAqPbEtJWj1kznzPDZcvhJkcQ1ICLFxo1bk0aylRgSEboZFsESK2xBs5HEsXI+BPq+jF1YLFnnxkQ==}
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -3121,6 +3130,10 @@ packages:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
     engines: {node: '>= 0.4'}
 
+  get-port@7.1.0:
+    resolution: {integrity: sha512-QB9NKEeDg3xxVwCCwJQ9+xycaz6pBB6iQ76wiWMl1927n0Kir6alPiP+yuiICLLU4jpMe08dXfpebuQppFA2zw==}
+    engines: {node: '>=16'}
+
   get-proto@1.0.1:
     resolution: {integrity: sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==}
     engines: {node: '>= 0.4'}
@@ -5372,10 +5385,12 @@ snapshots:
       - react
       - supports-color
 
+  '@auto-engineer/file-store@0.3.3': {}
+
   '@auto-engineer/flow@0.1.7(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
     dependencies:
-      '@auto-engineer/file-store': link:packages/file-store
-      '@auto-engineer/message-bus': link:packages/message-bus
+      '@auto-engineer/file-store': 0.3.3
+      '@auto-engineer/message-bus': 0.5.5
       '@event-driven-io/emmett': 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
       debug: 4.4.1
       fast-glob: 3.3.3
@@ -5393,6 +5408,8 @@ snapshots:
       - ts-node
       - uuid
       - web-streams-polyfill
+
+  '@auto-engineer/message-bus@0.5.5': {}
 
   '@babel/code-frame@7.27.1':
     dependencies:
@@ -8035,6 +8052,8 @@ snapshots:
       has-symbols: 1.1.0
       hasown: 2.0.2
       math-intrinsics: 1.1.0
+
+  get-port@7.1.0: {}
 
   get-proto@1.0.1:
     dependencies:

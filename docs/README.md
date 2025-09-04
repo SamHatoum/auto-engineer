@@ -17,6 +17,10 @@ By leveraging a **plugin-based architecture**, Auto Engineer adapts to different
 
 > ⚡ Currently in **early preview**. Join our [Discord](https://discord.gg/B8BKcKMRm8) or star the repo on [GitHub](https://github.com/SamHatoum/auto-engineer) to stay updated.
 
+## Core Concepts
+
+- ...
+
 ## Features
 
 Auto Engineer provides a **comprehensive toolkit** for automating modern application development.

@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.7.0
+
+### Minor Changes
+
+- add command details in dashboard
+
 ## 0.6.3
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @auto-engineer/design-system-importer
 
+## 0.7.0
+
+### Minor Changes
+
+- add command details in dashboard
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/message-bus@0.6.0
+
 ## 0.6.5
 
 ### Patch Changes

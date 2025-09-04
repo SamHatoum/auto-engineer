@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.4.0
+
+### Minor Changes
+
+- add command details in dashboard
+
 ## 0.3.3
 
 ### Patch Changes

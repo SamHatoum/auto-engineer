@@ -49,7 +49,7 @@
                     "exampleData": {
                       "sessionId": "shopper-123",
                       "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                      "timestamp": "2025-09-02T01:16:53.987Z"
+                      "timestamp": "2025-09-04T06:26:22.879Z"
                     }
                   }
                 ]
@@ -69,7 +69,7 @@
                     "exampleData": {
                       "sessionId": "session-abc",
                       "criteria": "I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.",
-                      "timestamp": "2025-09-02T01:16:53.987Z"
+                      "timestamp": "2025-09-04T06:26:22.879Z"
                     }
                   }
                 ],
@@ -357,7 +357,7 @@
                           "quantity": 1
                         }
                       ],
-                      "timestamp": "2025-09-02T01:16:53.988Z"
+                      "timestamp": "2025-09-04T06:26:22.879Z"
                     }
                   }
                 ]

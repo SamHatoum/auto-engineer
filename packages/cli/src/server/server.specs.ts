@@ -2,13 +2,16 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MessageBusServer } from './server';
 import { on, dispatch, fold, getRegistrations } from '../dsl';
 import type { Command, Event } from '@auto-engineer/message-bus';
+import getPort from 'get-port';
 
-describe('Message Bus Server Integration', () => {
+describe('Message Bus Server Integration', async () => {
   let server: MessageBusServer;
+
+  const port = await getPort();
 
   beforeEach(() => {
     server = new MessageBusServer({
-      port: 5555, // Use different port for tests
+      port, // Use different port for tests
       enableFileSync: false, // Disable file sync for tests
     });
   });
@@ -23,7 +26,7 @@ describe('Message Bus Server Integration', () => {
     await server.start();
 
     // Check health endpoint
-    const response = await fetch('http://localhost:5555/health');
+    const response = await fetch(`http://localhost:${port}/health`);
     expect(response.status).toBe(200);
 
     const health = await response.json();
@@ -52,7 +55,7 @@ describe('Message Bus Server Integration', () => {
       data: { test: 'value' },
     };
 
-    const response = await fetch('http://localhost:5555/command', {
+    const response = await fetch(`http://localhost:${port}/command`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(command),
@@ -124,7 +127,7 @@ describe('Message Bus Server Integration', () => {
     });
 
     // Check state via HTTP
-    const response = await fetch('http://localhost:5555/state');
+    const response = await fetch(`http://localhost:${port}/state`);
     const state = await response.json();
 
     expect(state.count).toBe(8);
@@ -172,7 +175,7 @@ describe('Message Bus Server Integration', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Check state was updated
-    const response = await fetch('http://localhost:5555/state');
+    const response = await fetch(`http://localhost:${port}/state`);
     const state = await response.json();
 
     expect(state.orders).toHaveLength(1);
@@ -183,7 +186,7 @@ describe('Message Bus Server Integration', () => {
     await server.start();
 
     // Send invalid command (missing data)
-    const response = await fetch('http://localhost:5555/command', {
+    const response = await fetch(`http://localhost:${port}/command`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'TestCommand' }),

@@ -152,7 +152,7 @@ export class FrontendScaffoldBuilder {
   //           "tokensDark": { ... }
   //         }
   //       `,
-  //         AIProvider.OpenAI,
+  //         undefined,
   //         { maxTokens: 4000 },
   //       );
   //

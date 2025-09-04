@@ -34,7 +34,7 @@ describe('SeasonalAssistant | CreatesAChatSession', () => {
           sessionId: 'session-abc',
           criteria:
             'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-          timestamp: new Date('2025-09-02T00:39:41.677Z'),
+          timestamp: new Date('2025-09-04T06:26:22.879Z'),
         },
       })
 

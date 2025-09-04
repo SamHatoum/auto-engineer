@@ -4,7 +4,13 @@
 
 ### Minor Changes
 
-- migrates flow dsl to support new hierarchical specs → rules → examples
+- add command details in dashboard
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/file-store@0.4.0
+  - @auto-engineer/message-bus@0.6.0
 
 ## 0.1.7
 

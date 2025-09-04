@@ -1,14 +1,14 @@
-export { CLI_MANIFEST, COMMANDS } from './cli-manifest';
+import { commandHandler as implementServerHandler } from './commands/implement-server';
+import { commandHandler as implementSliceHandler } from './commands/implement-slice';
 
+export const COMMANDS = [implementServerHandler, implementSliceHandler];
+export { implementServerHandler, implementSliceHandler };
 export {
-  commandHandler as implementServerCommandHandler,
   type ImplementServerCommand,
   type ServerImplementedEvent,
   type ServerImplementationFailedEvent,
 } from './commands/implement-server';
-
 export {
-  commandHandler as implementSliceCommandHandler,
   handleImplementSliceCommand,
   type ImplementSliceCommand,
   type SliceImplementedEvent,

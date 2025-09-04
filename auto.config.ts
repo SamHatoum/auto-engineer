@@ -5,10 +5,12 @@ export default {
   plugins: [
     '@auto-engineer/flow',
     '@auto-engineer/server-generator-apollo-emmett',
+    '@auto-engineer/design-system-importer',
     '@auto-engineer/frontend-checks',
     '@auto-engineer/frontend-implementer',
     '@auto-engineer/information-architect',
     '@auto-engineer/frontend-generator-react-graphql',
+    '@auto-engineer/server-checks',
     '@auto-engineer/server-implementer',
   ],
 

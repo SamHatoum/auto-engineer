@@ -77,6 +77,7 @@ export function createMessageBus() {
       }
     } catch (error) {
       debugCommand('ERROR: Handler failed for command %s: %O', command.type, error);
+      debugCommand('ERROR: Failed command data: %O', command.data);
       throw new Error(`Command handling failed: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   }
@@ -117,6 +118,11 @@ export function createMessageBus() {
     debugEvent('  Correlation ID: %s', event.correlationId ?? 'none');
     debugEvent('  Timestamp: %s', event.timestamp || 'none');
     debugEvent('  Data keys: %o', Object.keys(event.data));
+
+    // Log full event data for error events or when debugging is enabled
+    if (event.type.includes('Failed') || event.type.includes('Error')) {
+      debugEvent('  Event data (error event): %O', event.data);
+    }
 
     // Get both specific handlers and all-event handlers
     const specificHandlers = state.eventHandlers[event.type] ?? [];
