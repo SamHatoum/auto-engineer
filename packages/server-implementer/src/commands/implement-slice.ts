@@ -257,10 +257,12 @@ async function implementSlice(
   }
 }
 
-function logCommandDebugInfo(command: ImplementSliceCommand): void {
-  const { slicePath, context } = command.data;
+function logCommandDebugInfo(command: ImplementSliceCommand, resolvedSlicePath?: string): void {
+  const rawData = command.data as any;
+  const slicePath = rawData.slicePath ?? rawData.path;
+  const { context } = command.data;
   debug('Handling ImplementSliceCommand');
-  debug('  Slice path: %s', slicePath);
+  debug('  Slice path: %s', resolvedSlicePath ?? slicePath);
   debug('  Context provided: %s', context ? 'yes' : 'no');
   if (context) {
     debug('  Attempt number: %d', context.attemptNumber ?? 1);
@@ -269,11 +271,17 @@ function logCommandDebugInfo(command: ImplementSliceCommand): void {
   debug('  Correlation ID: %s', command.correlationId ?? 'none');
 }
 
-function createFailedEvent(command: ImplementSliceCommand, error: string): SliceImplementationFailedEvent {
+function createFailedEvent(
+  command: ImplementSliceCommand,
+  error: string,
+  resolvedSlicePath?: string,
+): SliceImplementationFailedEvent {
+  const rawData = command.data as any;
+  const slicePath = resolvedSlicePath ?? rawData.slicePath ?? rawData.path;
   return {
     type: 'SliceImplementationFailed',
     data: {
-      slicePath: command.data.slicePath,
+      slicePath,
       error,
     },
     timestamp: new Date(),
@@ -282,11 +290,17 @@ function createFailedEvent(command: ImplementSliceCommand, error: string): Slice
   };
 }
 
-function createSuccessEvent(command: ImplementSliceCommand, filesImplemented: string[]): SliceImplementedEvent {
+function createSuccessEvent(
+  command: ImplementSliceCommand,
+  filesImplemented: string[],
+  resolvedSlicePath?: string,
+): SliceImplementedEvent {
+  const rawData = command.data as any;
+  const slicePath = resolvedSlicePath ?? rawData.slicePath ?? rawData.path;
   return {
     type: 'SliceImplemented',
     data: {
-      slicePath: command.data.slicePath,
+      slicePath,
       filesImplemented,
     },
     timestamp: new Date(),
@@ -305,9 +319,17 @@ function logRetryContext(context: { previousOutputs?: string; attemptNumber?: nu
 export async function handleImplementSliceCommand(
   command: ImplementSliceCommand,
 ): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> {
-  const { slicePath, context } = command.data;
+  // Handle both 'slicePath' and 'path' parameters for backward compatibility
+  const rawData = command.data as any;
+  const slicePath = rawData.slicePath ?? rawData.path;
+  const { context } = command.data;
 
-  logCommandDebugInfo(command);
+  if (!slicePath) {
+    debugHandler('ERROR: No slice path provided. Expected slicePath or path parameter');
+    return createFailedEvent(command, 'No slice path provided. Expected slicePath parameter');
+  }
+
+  logCommandDebugInfo(command, slicePath);
 
   try {
     const sliceRoot = path.resolve(slicePath);
@@ -316,7 +338,7 @@ export async function handleImplementSliceCommand(
 
     if (!existsSync(sliceRoot)) {
       debugHandler('ERROR: Slice directory not found at %s', sliceRoot);
-      return createFailedEvent(command, `Slice directory not found at: ${sliceRoot}`);
+      return createFailedEvent(command, `Slice directory not found at: ${sliceRoot}`, sliceRoot);
     }
 
     debugProcess('Starting slice implementation for: %s', sliceRoot);
@@ -325,7 +347,7 @@ export async function handleImplementSliceCommand(
     const result = await implementSlice(sliceRoot, context);
 
     if (!result.success) {
-      return createFailedEvent(command, result.error ?? 'Implementation failed');
+      return createFailedEvent(command, result.error ?? 'Implementation failed', sliceRoot);
     }
 
     debugResult('Process succeeded');
@@ -333,11 +355,11 @@ export async function handleImplementSliceCommand(
     debugResult('Files: %s', result.filesImplemented.join(', '));
     debugResult('Returning success event: SliceImplemented');
 
-    return createSuccessEvent(command, result.filesImplemented);
+    return createSuccessEvent(command, result.filesImplemented, sliceRoot);
   } catch (error) {
     debug('ERROR: Exception caught: %O', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return createFailedEvent(command, errorMessage);
+    return createFailedEvent(command, errorMessage, slicePath);
   }
 }
 
