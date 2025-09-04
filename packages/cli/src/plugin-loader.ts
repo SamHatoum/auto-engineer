@@ -41,6 +41,7 @@ export interface PluginConfig {
 
 export class PluginLoader {
   private commands = new Map<string, CliCommand>();
+  private unifiedHandlers = new Map<string, UnifiedCommandHandler<Command>>(); // Store original handlers
   private conflicts = new Map<string, string[]>(); // alias -> [package1, package2, ...]
   private loadedPlugins = new Set<string>(); // Track successfully loaded plugins
   private messageBus: MessageBus;
@@ -175,7 +176,67 @@ export class PluginLoader {
     }
   }
 
-  private convertUnifiedToCliCommand(handler: UnifiedCommandHandler<Command>, packageName: string): CliCommand {
+  private async loadPackageMetadata(
+    packageName: string,
+  ): Promise<{ name: string; version?: string; description?: string } | null> {
+    try {
+      // Try loading package.json from workspace packages (for monorepo)
+      const workspacePackageJsonPath = path.join(
+        process.cwd(),
+        'packages',
+        packageName.replace('@auto-engineer/', ''),
+        'package.json',
+      );
+
+      if (fs.existsSync(workspacePackageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(workspacePackageJsonPath, 'utf-8')) as Record<string, unknown>;
+        return {
+          name: packageJson.name as string,
+          version: packageJson.version as string,
+          description: packageJson.description as string,
+        };
+      }
+
+      // Try loading from dist directory (published packages)
+      const distPackageJsonPath = path.join(
+        process.cwd(),
+        'packages',
+        packageName.replace('@auto-engineer/', ''),
+        'dist',
+        'package.json',
+      );
+
+      if (fs.existsSync(distPackageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(distPackageJsonPath, 'utf-8')) as Record<string, unknown>;
+        return {
+          name: packageJson.name as string,
+          version: packageJson.version as string,
+          description: packageJson.description as string,
+        };
+      }
+
+      // Try loading from node_modules
+      const nodeModulesPath = path.join(process.cwd(), 'node_modules', packageName, 'package.json');
+      if (fs.existsSync(nodeModulesPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(nodeModulesPath, 'utf-8')) as Record<string, unknown>;
+        return {
+          name: packageJson.name as string,
+          version: packageJson.version as string,
+          description: packageJson.description as string,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      debugPlugins('Failed to load package metadata for %s: %O', packageName, error);
+      return null;
+    }
+  }
+
+  private async convertUnifiedToCliCommand(
+    handler: UnifiedCommandHandler<Command>,
+    packageName: string,
+  ): Promise<CliCommand> {
     // All fields become options (no positional args anymore)
     const options: Array<{ name: string; description: string }> = [];
 
@@ -200,11 +261,17 @@ export class PluginLoader {
     // Generate usage string without positional args
     const usage = handler.alias;
 
+    // Load package metadata from package.json instead of using hardcoded values
+    const packageMetadata = await this.loadPackageMetadata(packageName);
+    const resolvedPackageName = packageMetadata?.name ?? packageName;
+    const packageVersion = packageMetadata?.version;
+
     return {
       handler: () => Promise.resolve({ default: handler }),
       description: handler.description,
-      package: packageName,
-      category: handler.category ?? packageName,
+      package: resolvedPackageName,
+      version: packageVersion,
+      category: handler.category ?? resolvedPackageName,
       usage,
       examples: handler.examples,
       args: undefined, // No positional args
@@ -212,20 +279,132 @@ export class PluginLoader {
     };
   }
 
+  private async detectCommandsByConvention(packageName: string): Promise<UnifiedCommandHandler<Command>[]> {
+    debugPlugins('Attempting convention-based command detection for %s', packageName);
+    const commands: UnifiedCommandHandler<Command>[] = [];
+
+    try {
+      // Determine the commands directory path
+      let commandsDir: string;
+      const workspaceDistPath = path.join(
+        process.cwd(),
+        'packages',
+        packageName.replace('@auto-engineer/', ''),
+        'dist',
+        'commands',
+      );
+
+      const nodeModulesDistPath = path.join(process.cwd(), 'node_modules', packageName, 'dist', 'commands');
+      const nodeModulesSrcDistPath = path.join(process.cwd(), 'node_modules', packageName, 'dist', 'src', 'commands');
+
+      if (fs.existsSync(workspaceDistPath)) {
+        commandsDir = workspaceDistPath;
+        debugPlugins('Found commands directory in workspace: %s', commandsDir);
+      } else if (fs.existsSync(nodeModulesDistPath)) {
+        commandsDir = nodeModulesDistPath;
+        debugPlugins('Found commands directory in node_modules dist: %s', commandsDir);
+      } else if (fs.existsSync(nodeModulesSrcDistPath)) {
+        commandsDir = nodeModulesSrcDistPath;
+        debugPlugins('Found commands directory in node_modules dist/src: %s', commandsDir);
+      } else {
+        debugPlugins('No commands directory found for %s', packageName);
+        return commands;
+      }
+
+      // Find all .js files in commands directory
+      const commandFiles = fs.readdirSync(commandsDir).filter((file) => file.endsWith('.js'));
+      debugPlugins('Found %d command files in %s: %o', commandFiles.length, commandsDir, commandFiles);
+
+      // Load each command file and extract handlers
+      for (const filename of commandFiles) {
+        const filePath = path.join(commandsDir, filename);
+        const fileUrl = pathToFileURL(filePath).href;
+
+        try {
+          debugPlugins('Loading command file: %s', fileUrl);
+          const module = (await import(fileUrl)) as Record<string, unknown>;
+
+          // Look for exports that are command handlers
+          const handler = this.extractCommandHandler(module, filename, packageName);
+          if (handler) {
+            commands.push(handler);
+            debugPlugins('Found command handler in %s: %s', filename, handler.alias);
+          }
+        } catch (error) {
+          debugPlugins('Failed to load command file %s: %O', filename, error);
+        }
+      }
+
+      debugPlugins('Convention-based detection found %d commands in %s', commands.length, packageName);
+      return commands;
+    } catch (error) {
+      debugPlugins('Error during convention-based detection for %s: %O', packageName, error);
+      return commands;
+    }
+  }
+
+  private extractCommandHandler(
+    module: Record<string, unknown>,
+    filename: string,
+    packageName: string,
+  ): UnifiedCommandHandler<Command> | null {
+    // Look for default export first
+    if (this.isValidHandler(module.default)) {
+      return module.default as UnifiedCommandHandler<Command>;
+    }
+
+    // Look for commandHandler export
+    if (this.isValidHandler(module.commandHandler)) {
+      return module.commandHandler as UnifiedCommandHandler<Command>;
+    }
+
+    // Look for handler export
+    if (this.isValidHandler(module.handler)) {
+      return module.handler as UnifiedCommandHandler<Command>;
+    }
+
+    // Look for any export that looks like a command handler
+    for (const [key, value] of Object.entries(module)) {
+      if (this.isValidHandler(value)) {
+        debugPlugins('Found command handler via named export %s in %s', key, filename);
+        return value as UnifiedCommandHandler<Command>;
+      }
+    }
+
+    debugPlugins('No valid command handler found in %s from %s', filename, packageName);
+    return null;
+  }
+
   private async processUnifiedCommands(
     packageName: string,
     commands: UnifiedCommandHandler<Command>[],
     aliasMap: Map<string, { packageName: string; command: unknown }[]>,
   ): Promise<void> {
-    debugPlugins('Found COMMANDS export (new format) in %s', packageName);
+    debugPlugins('Processing %d unified commands from %s', commands.length, packageName);
     this.loadedPlugins.add(packageName);
 
     for (const unifiedHandler of commands) {
       const alias = unifiedHandler.alias;
       debugPlugins('Processing unified command %s from %s', alias, packageName);
 
-      // Convert unified handler to CLI command format
-      const cliCommand = this.convertUnifiedToCliCommand(unifiedHandler, packageName);
+      // Load package metadata from package.json and update handler
+      const packageMetadata = await this.loadPackageMetadata(packageName);
+      const enrichedHandler = {
+        ...unifiedHandler,
+        package: packageMetadata
+          ? {
+              name: packageMetadata.name,
+              version: packageMetadata.version,
+              description: packageMetadata.description,
+            }
+          : undefined,
+      };
+
+      // Store the enriched unified handler
+      this.unifiedHandlers.set(alias, enrichedHandler);
+
+      // Convert unified handler to CLI command format (now async)
+      const cliCommand = await this.convertUnifiedToCliCommand(enrichedHandler, packageName);
 
       if (!aliasMap.has(alias)) {
         aliasMap.set(alias, []);
@@ -247,13 +426,20 @@ export class PluginLoader {
         COMMANDS?: UnifiedCommandHandler<Command>[];
       };
 
-      // Check for unified command format
-      if (!pkg.COMMANDS) {
-        debugPlugins('Package %s does not export COMMANDS, skipping', packageName);
+      // Check for unified command format first (backward compatibility)
+      if (pkg.COMMANDS) {
+        await this.processUnifiedCommands(packageName, pkg.COMMANDS, aliasMap);
         return;
       }
 
-      await this.processUnifiedCommands(packageName, pkg.COMMANDS, aliasMap);
+      // Try convention-based command detection
+      const detectedCommands = await this.detectCommandsByConvention(packageName);
+      if (detectedCommands.length > 0) {
+        await this.processUnifiedCommands(packageName, detectedCommands, aliasMap);
+        return;
+      }
+
+      debugPlugins('Package %s has no commands (no COMMANDS export or commands/ directory)', packageName);
     } catch (error) {
       debugPlugins('Failed to load plugin %s: %O', packageName, error);
       // Only show plugin loading errors when debugging
@@ -811,6 +997,14 @@ export class PluginLoader {
 
   getCommands(): Map<string, CliCommand> {
     return this.commands;
+  }
+
+  /**
+   * Get the unified command handlers with package metadata from package.json
+   * This is used by the message bus server for command registration
+   */
+  getUnifiedHandlers(): Map<string, UnifiedCommandHandler<Command>> {
+    return this.unifiedHandlers;
   }
 
   getConflicts(): Map<string, string[]> {

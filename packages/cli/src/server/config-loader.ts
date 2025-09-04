@@ -91,6 +91,29 @@ export async function loadMessageBusConfig(configPath: string, server: MessageBu
 
   const config = await loadAutoConfig(configPath);
 
+  // Load plugins if configured to get command metadata
+  if (config.plugins && config.plugins.length > 0) {
+    try {
+      debug('Loading plugins for metadata:', config.plugins);
+      const { PluginLoader } = await import('../plugin-loader');
+      const pluginLoader = new PluginLoader();
+      await pluginLoader.loadPlugins(configPath);
+
+      // Register unified command handlers from plugin loader
+      const unifiedHandlers = pluginLoader.getUnifiedHandlers();
+      const commandHandlers = Array.from(unifiedHandlers.values());
+
+      if (commandHandlers.length > 0) {
+        debug('Registering %d unified command handlers from plugins', commandHandlers.length);
+        server.registerCommandHandlers(commandHandlers);
+      }
+
+      debug('Loaded %d unified handlers from plugins', unifiedHandlers.size);
+    } catch (error) {
+      debug('Failed to load plugin metadata:', error);
+    }
+  }
+
   // Check if any DSL functions were called during config load
   const topLevelRegistrations = getRegistrations();
   if (topLevelRegistrations.length > 0) {

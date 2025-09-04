@@ -567,12 +567,10 @@
         
         .handler-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--border);
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 12px;
             color: var(--text-secondary);
             transition: all 0.15s ease;
             position: relative;
@@ -613,6 +611,7 @@
             height: 8px;
             border-radius: 2px;
             flex-shrink: 0;
+            margin-top: 2px;
         }
         
         .handler-type-indicator.command {
@@ -627,11 +626,26 @@
             background: #5ec72d; /* Green from logo */
         }
         
-        .handler-name {
+        .handler-content {
             flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .handler-name {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        
+        .handler-package {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            line-height: 1.2;
+            font-weight: 400;
         }
         
         .empty {
@@ -867,7 +881,6 @@
             max-height: 100px;
             overflow-y: auto;
             transition: background-color 0.3s ease;
-        }
         }
         
         @keyframes pulse {
@@ -1278,6 +1291,7 @@
                 const eventHandlers = data.eventHandlers || [];
                 const folds = data.folds || [];
                 const commandHandlers = data.commandHandlers || [];
+                const commandsWithMetadata = data.commandsWithMetadata || [];
                 
                 // Update count in sidebar (only commands now)
                 document.getElementById('totalHandlersCount').textContent = commandHandlers.length;
@@ -1290,17 +1304,31 @@
                 } else {
                     let html = '';
                     
-                    // Only show Command Handlers
-                    if (commandHandlers.length > 0) {
-                        html += '<div class="handler-group">';
-                        commandHandlers.forEach(handler => {
-                            html += `<div class="handler-item" onclick="selectCommand('${handler}')" data-command="${handler}">
-                                <div class="handler-type-indicator command"></div>
-                                <span class="handler-name">${handler}</span>
-                            </div>`;
-                        });
-                        html += '</div>';
-                    }
+                    // Show commands with metadata (required)
+                    html += '<div class="handler-group">';
+                    commandsWithMetadata.forEach(cmd => {
+                        const packageInfo = cmd.package && cmd.package !== 'unknown' ? cmd.package : '';
+                        const versionInfo = cmd.version ? `v${cmd.version}` : '';
+                        const tooltip = packageInfo ? `${packageInfo} ${versionInfo}`.trim() : cmd.name;
+                        
+                        // Split package name at '/' to display on separate lines
+                        let packageDisplay = '';
+                        if (packageInfo && packageInfo.includes('/')) {
+                            const parts = packageInfo.split('/');
+                            packageDisplay = `${parts[0]}/<br/>${parts[1]}`;
+                        } else {
+                            packageDisplay = packageInfo;
+                        }
+                        
+                        html += `<div class="handler-item" onclick="selectCommand('${cmd.name}')" data-command="${cmd.name}" title="${tooltip}">
+                            <div class="handler-type-indicator command"></div>
+                            <div class="handler-content">
+                                <div class="handler-name">${cmd.alias}</div>
+                                <div class="handler-package">${packageDisplay}</div>
+                            </div>
+                        </div>`;
+                    });
+                    html += '</div>';
                     
                     handlersListEl.innerHTML = html;
                 }

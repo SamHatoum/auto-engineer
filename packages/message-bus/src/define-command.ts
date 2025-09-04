@@ -11,11 +11,19 @@ export interface FieldDefinition<T> {
   flag?: boolean;
 }
 
+// Package metadata interface
+export interface PackageMetadata {
+  name: string;
+  version?: string;
+  description?: string;
+}
+
 // The unified command handler definition
 export interface UnifiedCommandHandler<C extends Command<string, Record<string, unknown>>> extends CommandHandler {
   alias: string;
   description: string;
   category?: string;
+  package?: PackageMetadata; // Made optional since plugin loader will extract from package.json
   fields: {
     [K in keyof CommandData<C>]: FieldDefinition<CommandData<C>[K]>;
   };
@@ -34,6 +42,7 @@ export function defineCommandHandler<C extends Command<string, Record<string, un
   alias: string;
   description: string;
   category?: string;
+  package?: PackageMetadata; // Made optional since plugin loader will extract from package.json
   fields: {
     [K in keyof CommandData<C>]: FieldDefinition<CommandData<C>[K]>;
   };

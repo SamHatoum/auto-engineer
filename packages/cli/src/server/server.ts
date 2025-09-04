@@ -2,7 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { createMessageBus, type MessageBus, type Command, type Event } from '@auto-engineer/message-bus';
+import {
+  createMessageBus,
+  type MessageBus,
+  type Command,
+  type Event,
+  type UnifiedCommandHandler,
+} from '@auto-engineer/message-bus';
 import createDebug from 'debug';
 import { StateManager, type FoldFunction } from './state-manager';
 import { FileSyncer } from './file-syncer';
@@ -34,6 +40,10 @@ export class MessageBusServer {
   private eventHandlers: Map<string, Array<(event: Event) => void>> = new Map();
   private foldRegistry: Map<string, FoldFunction<Record<string, unknown>>> = new Map();
   private commandHandlerNames: string[] = [];
+  private commandMetadata: Map<
+    string,
+    { alias: string; description: string; package: string; version?: string; category?: string }
+  > = new Map();
   private eventHistory: Array<{ event: Event; timestamp: string }> = [];
   private maxEventHistory = 1000; // Limit to prevent memory issues
 
@@ -136,10 +146,30 @@ export class MessageBusServer {
 
     // Get registry information
     this.app.get('/registry', (_req, res) => {
+      // Sort commands alphabetically by alias
+      const sortedCommands = this.commandHandlerNames
+        .map((name) => ({
+          name,
+          metadata: this.commandMetadata.get(name),
+        }))
+        .sort((a, b) => {
+          const aliasA = a.metadata?.alias ?? a.name;
+          const aliasB = b.metadata?.alias ?? b.name;
+          return aliasA.localeCompare(aliasB);
+        });
+
       res.json({
         eventHandlers: Array.from(this.eventHandlers.keys()),
         folds: Array.from(this.foldRegistry.keys()),
-        commandHandlers: this.commandHandlerNames,
+        commandHandlers: sortedCommands.map((cmd) => cmd.name),
+        commandsWithMetadata: sortedCommands.map((cmd) => ({
+          name: cmd.name,
+          alias: cmd.metadata?.alias ?? cmd.name,
+          description: cmd.metadata?.description ?? 'No description',
+          package: cmd.metadata?.package ?? 'unknown',
+          version: cmd.metadata?.version,
+          category: cmd.metadata?.category,
+        })),
       });
     });
 
@@ -366,6 +396,17 @@ export class MessageBusServer {
   }
 
   /**
+   * Set command metadata for dashboard display
+   */
+  setCommandMetadata(
+    commandName: string,
+    metadata: { alias: string; description: string; package: string; version?: string; category?: string },
+  ): void {
+    this.commandMetadata.set(commandName, metadata);
+    debugBus('Set metadata for command:', commandName, metadata);
+  }
+
+  /**
    * Register command handlers directly with the message bus
    */
   registerCommandHandlers(handlers: unknown[]): void {
@@ -373,23 +414,44 @@ export class MessageBusServer {
     debugBus('Current commandHandlerNames:', this.commandHandlerNames);
 
     for (const handler of handlers) {
-      if (
-        handler !== null &&
-        handler !== undefined &&
-        typeof handler === 'object' &&
-        'name' in handler &&
-        'handle' in handler
-      ) {
-        const cmdHandler = handler as { name: string; handle: (cmd: Command) => Promise<Event | Event[] | void> };
-        debugBus('Registering command handler:', cmdHandler.name);
-        this.messageBus.registerCommandHandler(cmdHandler);
-        this.commandHandlerNames.push(cmdHandler.name);
-      } else {
-        debugBus('Skipping invalid handler:', handler);
-      }
+      this.processCommandHandler(handler);
     }
 
     debugBus('After registration, commandHandlerNames:', this.commandHandlerNames);
+  }
+
+  private processCommandHandler(handler: unknown): void {
+    if (
+      handler !== null &&
+      handler !== undefined &&
+      typeof handler === 'object' &&
+      'name' in handler &&
+      'handle' in handler
+    ) {
+      const cmdHandler = handler as { name: string; handle: (cmd: Command) => Promise<Event | Event[] | void> };
+      debugBus('Registering command handler:', cmdHandler.name);
+      this.messageBus.registerCommandHandler(cmdHandler);
+      this.commandHandlerNames.push(cmdHandler.name);
+
+      this.extractUnifiedHandlerMetadata(handler, cmdHandler.name);
+    } else {
+      debugBus('Skipping invalid handler:', handler);
+    }
+  }
+
+  private extractUnifiedHandlerMetadata(handler: unknown, commandName: string): void {
+    if (typeof handler === 'object' && handler !== null && 'alias' in handler && 'description' in handler) {
+      const unifiedHandler = handler as UnifiedCommandHandler<Command<string, Record<string, unknown>>>;
+      debugBus('Extracting metadata from UnifiedCommandHandler:', commandName);
+
+      this.setCommandMetadata(commandName, {
+        alias: unifiedHandler.alias,
+        description: unifiedHandler.description,
+        package: unifiedHandler.package?.name ?? 'unknown',
+        version: unifiedHandler.package?.version,
+        category: unifiedHandler.category,
+      });
+    }
   }
 
   /**
