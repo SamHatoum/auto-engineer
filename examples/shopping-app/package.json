@@ -1,5 +1,6 @@
 {
   "name": "shopping-assistant",
+  "private": true,
   "type": "module",
   "scripts": {
     "auto": "auto",
