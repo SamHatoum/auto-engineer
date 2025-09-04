@@ -28,8 +28,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.7.0",
-    "@auto-engineer/message-bus": "^0.6.0",
+    "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {

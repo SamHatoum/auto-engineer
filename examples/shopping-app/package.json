@@ -25,6 +25,7 @@
     "@auto-engineer/server-implementer": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^24.3.1",
     "chokidar": "^3.6.0",
     "dotenv": "^16.4.5",
     "dotenv-cli": "^9.0.0",

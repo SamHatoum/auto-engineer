@@ -34,8 +34,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "^0.7.0",
-    "@auto-engineer/message-bus": "^0.6.0",
+    "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "debug": "^4.4.1",
     "ejs": "^3.1.10",
     "graphql": "^16.11.0",

@@ -416,7 +416,6 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
     await fs.writeFile(outputPath, contents, 'utf8');
     writtenCount++;
     debugPlan('    File written successfully (%d/%d)', writtenCount, plans.length);
-    console.log(`✅ Created: ${outputPath}`);
   }
 
   debugPlan('All %d files written successfully', writtenCount);

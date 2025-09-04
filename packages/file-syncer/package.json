@@ -28,9 +28,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.6.0",
-    "@auto-engineer/file-store": "^0.4.0",
-    "@auto-engineer/flow": "^0.2.0",
+    "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/file-store": "workspace:*",
+    "@auto-engineer/flow": "workspace:*",
     "chokidar": "^3.6.0",
     "socket.io": "^4.7.5"
   },
