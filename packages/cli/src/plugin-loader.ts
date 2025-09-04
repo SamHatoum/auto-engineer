@@ -7,7 +7,6 @@ import { stringify } from 'yaml';
 import chalk from 'chalk';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
 import type { CommandHandler, Command, Event, UnifiedCommandHandler } from '@auto-engineer/message-bus';
-import type { CliManifest } from './manifest-types';
 
 const debug = createDebug('cli:plugin-loader');
 const debugConfig = createDebug('cli:plugin-loader:config');
@@ -139,24 +138,39 @@ export class PluginLoader {
 
   private async loadPlugin(packageName: string): Promise<unknown> {
     try {
-      const packagePath = path.join(process.cwd(), 'node_modules', packageName, 'dist', 'src', 'cli-manifest.js');
-      if (fs.existsSync(packagePath)) {
-        const packageUrl = pathToFileURL(packagePath).href;
-        debugPlugins('Trying to load plugin from cwd: %s', packageUrl);
+      // First, try loading from workspace packages (for monorepo)
+      const workspaceDistPath = path.join(
+        process.cwd(),
+        'packages',
+        packageName.replace('@auto-engineer/', ''),
+        'dist',
+        'index.js',
+      );
+      if (fs.existsSync(workspaceDistPath)) {
+        const packageUrl = pathToFileURL(workspaceDistPath).href;
+        debugPlugins('Loading plugin from workspace: %s', packageUrl);
         return await import(packageUrl);
       }
 
-      // Try the shorter path for packages that might have different structure
-      const altPath = path.join(process.cwd(), 'node_modules', packageName, 'dist', 'cli-manifest.js');
-      if (fs.existsSync(altPath)) {
-        const packageUrl = pathToFileURL(altPath).href;
-        debugPlugins('Trying to load plugin from cwd (alt path): %s', packageUrl);
+      // Try loading from node_modules dist/index.js (most packages)
+      const distIndexPath = path.join(process.cwd(), 'node_modules', packageName, 'dist', 'index.js');
+      if (fs.existsSync(distIndexPath)) {
+        const packageUrl = pathToFileURL(distIndexPath).href;
+        debugPlugins('Loading plugin from node_modules dist/index.js: %s', packageUrl);
         return await import(packageUrl);
       }
 
-      throw new Error('Package not found in node_modules');
+      // Try dist/src/index.js (some packages have src in dist)
+      const distSrcIndexPath = path.join(process.cwd(), 'node_modules', packageName, 'dist', 'src', 'index.js');
+      if (fs.existsSync(distSrcIndexPath)) {
+        const packageUrl = pathToFileURL(distSrcIndexPath).href;
+        debugPlugins('Loading plugin from node_modules dist/src/index.js: %s', packageUrl);
+        return await import(packageUrl);
+      }
+
+      throw new Error('Package index file not found');
     } catch (e) {
-      debugPlugins('Failed to load from cwd, trying default import: %s', e);
+      debugPlugins('Failed to load from file system, trying default import: %s', e);
       return this.importPlugin ? await this.importPlugin(packageName) : await import(packageName);
     }
   }
@@ -223,36 +237,6 @@ export class PluginLoader {
     }
   }
 
-  private async processManifestCommands(
-    packageName: string,
-    manifest: CliManifest,
-    aliasMap: Map<string, { packageName: string; command: unknown }[]>,
-  ): Promise<void> {
-    debugPlugins('Found CLI_MANIFEST (old format) in %s', packageName);
-    this.loadedPlugins.add(packageName);
-
-    // Process each command in the manifest
-    for (const [alias, command] of Object.entries(manifest.commands)) {
-      debugPlugins('Processing command %s from %s', alias, packageName);
-
-      // Add the category and version from the manifest to each command
-      const commandWithCategory = {
-        ...command,
-        category: manifest.category ?? packageName,
-        version: manifest.version,
-      };
-
-      // Track all packages that want this alias
-      if (!aliasMap.has(alias)) {
-        aliasMap.set(alias, []);
-      }
-      aliasMap.get(alias)!.push({
-        packageName,
-        command: commandWithCategory,
-      });
-    }
-  }
-
   private async processPlugin(
     packageName: string,
     aliasMap: Map<string, { packageName: string; command: unknown }[]>,
@@ -260,23 +244,16 @@ export class PluginLoader {
     debugPlugins('Loading plugin: %s', packageName);
     try {
       const pkg = (await this.loadPlugin(packageName)) as {
-        CLI_MANIFEST?: CliManifest;
         COMMANDS?: UnifiedCommandHandler<Command>[];
       };
 
-      // Check for new unified command format first
-      if (pkg.COMMANDS) {
-        await this.processUnifiedCommands(packageName, pkg.COMMANDS, aliasMap);
+      // Check for unified command format
+      if (!pkg.COMMANDS) {
+        debugPlugins('Package %s does not export COMMANDS, skipping', packageName);
         return;
       }
 
-      // Fall back to old CLI_MANIFEST format
-      if (!pkg.CLI_MANIFEST) {
-        debugPlugins('Package %s does not export CLI_MANIFEST or COMMANDS, skipping', packageName);
-        return;
-      }
-
-      await this.processManifestCommands(packageName, pkg.CLI_MANIFEST, aliasMap);
+      await this.processUnifiedCommands(packageName, pkg.COMMANDS, aliasMap);
     } catch (error) {
       debugPlugins('Failed to load plugin %s: %O', packageName, error);
       // Only show plugin loading errors when debugging

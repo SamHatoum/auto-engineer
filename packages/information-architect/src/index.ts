@@ -151,5 +151,6 @@ export async function processFlowsWithAI(
   return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms);
 }
 
-export * from './commands/generate-ia';
-export { CLI_MANIFEST } from './cli-manifest';
+import { commandHandler as generateIAHandler } from './commands/generate-ia';
+export const COMMANDS = [generateIAHandler];
+export { type GenerateIACommand, type IAGeneratedEvent, type IAGenerationFailedEvent } from './commands/generate-ia';

@@ -74,7 +74,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   debug('Module imported');
 }
 
-export { CLI_MANIFEST } from './cli-manifest';
+import { commandHandler as generateClientHandler } from './commands/generate-client';
+import { commandHandler as copyExampleHandler } from './commands/copy-example';
+
+export const COMMANDS = [generateClientHandler, copyExampleHandler];
 export {
   commandHandler as generateClientCommandHandler,
   type GenerateClientCommand,

@@ -27,7 +27,7 @@ export interface UnifiedCommandHandler<C extends Command<string, Record<string, 
 /**
  * Define a command handler with full type safety and metadata
  * @param config The command handler configuration
- * @returns A unified command handler with manifest metadata
+ * @returns A command handler with manifest metadata
  */
 export function defineCommandHandler<C extends Command<string, Record<string, unknown>>>(config: {
   name: CommandType<C>;

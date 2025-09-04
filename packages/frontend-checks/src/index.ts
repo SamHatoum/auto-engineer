@@ -187,12 +187,10 @@ export async function getPageScreenshot(url: string): Promise<string> {
 }
 
 // Export CLI manifest
-export { CLI_MANIFEST } from './cli-manifest';
-
-// Export command handler
+import { checkClientCommandHandler } from './commands/check-client';
+export const COMMANDS = [checkClientCommandHandler];
 export {
   checkClientCommandHandler,
-  handleCheckClientCommand,
   type CheckClientCommand,
   type ClientCheckedEvent,
   type ClientCheckFailedEvent,

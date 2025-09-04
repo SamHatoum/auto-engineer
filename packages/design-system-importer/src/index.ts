@@ -91,10 +91,6 @@ export async function generateDesignSystemMarkdown(inputDir: string, outputDir: 
   debugMarkdown('Markdown file written successfully, size: %d bytes', md.length);
 }
 
-export * from './commands/import-design-system';
-export type { FilterFunctionType } from './FigmaComponentsBuilder';
-export { CLI_MANIFEST } from './cli-manifest';
-
 async function copyFile(inputDir: string, outputDir: string, file: string): Promise<void> {
   const srcPath = path.join(inputDir, file);
   const destPath = path.join(outputDir, file);
@@ -331,3 +327,7 @@ if (process.argv[1] === __filename) {
       process.exit(1);
     });
 }
+
+import importDesignSystemHandler from './commands/import-design-system';
+export const COMMANDS = [importDesignSystemHandler];
+export type { FilterFunctionType } from './FigmaComponentsBuilder';

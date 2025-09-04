@@ -117,13 +117,12 @@ export type ReactSlice = z.infer<typeof ReactSliceSchema>;
 export type CommandSlice = z.infer<typeof CommandSliceSchema>;
 export type Message = z.infer<typeof MessageSchema>;
 
-// CLI Manifest
-export { CLI_MANIFEST } from './cli-manifest';
-
-// Commands
 export {
   commandHandler as exportSchemaCommandHandler,
   type ExportSchemaCommand,
   type SchemaExportedEvent,
   type SchemaExportFailedEvent,
 } from './commands/export-schema';
+
+import { commandHandler as exportSchemaHandler } from './commands/export-schema';
+export const COMMANDS = [exportSchemaHandler];

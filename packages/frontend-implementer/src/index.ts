@@ -317,5 +317,10 @@ if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
   debugLifecycle('Module imported, not starting MCP server');
 }
 
-export * from './commands/implement-client';
-export { CLI_MANIFEST } from './cli-manifest';
+import { commandHandler as implementClientHandler } from './commands/implement-client';
+export const COMMANDS = [implementClientHandler];
+export {
+  type ImplementClientCommand,
+  type ClientImplementedEvent,
+  type ClientImplementationFailedEvent,
+} from './commands/implement-client';
