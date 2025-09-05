@@ -19,7 +19,7 @@
     "changeset": "changeset",
     "changeset:prepare-changelog": "tsx scripts/prepare-changelog.ts",
     "version": "changeset version && pnpm changeset:prepare-changelog",
-    "release": "changeset publish",
+    "release": "pnpm build && changeset publish",
     "prepare": "husky",
     "install": "turbo run install build",
     "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm i -g @auto-engineer/cli@latest",
