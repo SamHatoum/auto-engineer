@@ -1,5 +1,13 @@
 # @auto-engineer/flow
 
+## 0.8.2
+
+### Patch Changes
+
+- fixes package.json dependencies
+  - @auto-engineer/file-store@0.8.2
+  - @auto-engineer/message-bus@0.8.2
+
 ## 0.3.0
 
 ### Minor Changes

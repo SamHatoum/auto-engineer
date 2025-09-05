@@ -1,5 +1,13 @@
 # @auto-engineer/server-generator-apollo-emmett
 
+## 0.8.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/flow@0.8.2
+  - @auto-engineer/message-bus@0.8.2
+
 ## 0.2.1
 
 ### Patch Changes

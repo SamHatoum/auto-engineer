@@ -1,5 +1,11 @@
 # @auto-engineer/cli
 
+## 0.8.2
+
+### Patch Changes
+
+- @auto-engineer/message-bus@0.8.2
+
 ## 0.8.0
 
 ### Minor Changes

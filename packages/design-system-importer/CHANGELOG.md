@@ -1,5 +1,11 @@
 # @auto-engineer/design-system-importer
 
+## 0.8.2
+
+### Patch Changes
+
+- @auto-engineer/message-bus@0.8.2
+
 ## 0.7.0
 
 ### Minor Changes

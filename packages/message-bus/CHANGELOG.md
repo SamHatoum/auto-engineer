@@ -1,5 +1,7 @@
 # @auto-engineer/message-bus
 
+## 0.8.2
+
 ## 0.6.0
 
 ### Minor Changes
