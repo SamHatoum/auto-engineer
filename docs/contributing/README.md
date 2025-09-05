@@ -21,9 +21,11 @@ This guide explains how to set up a local development environment for contributi
 
 2. **Install dependencies**: `pnpm install`
 
-3. **Build all packages**: `pnpm build`
+3. **To build all packages**: `pnpm build`
 
-4. **Set up environment variables**: Create a `.env` file in the root directory: `echo "ANTHROPIC_API_KEY=your-key-here" .env `
+4. **Run the app**: `pnpm dev`
+
+5. **Set up environment variables**: Create a `.env` file in the root directory: `echo "ANTHROPIC_API_KEY=your-key-here" .env `
 
 ### Working with Local Packages
 
