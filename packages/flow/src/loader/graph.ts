@@ -1,7 +1,7 @@
 import createDebug from 'debug';
 import type { Graph } from './types';
 import type { IFileStore } from '@auto-engineer/file-store';
-import { parseImports, patchImportMeta, transpileToCjs } from './ts-utils';
+import { parseImports, parseTypeDefinitions, patchImportMeta, transpileToCjs, TypeInfo } from './ts-utils';
 import { toPosix } from './fs-path';
 import { resolveSpecifier } from './resolver';
 
@@ -13,6 +13,8 @@ export type BuildGraphResult = {
   externals: string[]; // raw specifiers (e.g. "zod", "graphql-tag")
   importMap: Record<string, unknown>;
   typings: Record<string, string[]>; // absolute POSIX paths of .d.ts
+  typeMap: Map<string, string>; // mapping from TypeScript type names to string literals
+  typesByFile: Map<string, Map<string, TypeInfo>>; // mapping from file path to type definitions in that file
 };
 
 export async function buildGraph(
@@ -30,6 +32,8 @@ export async function buildGraph(
   const externals = new Set<string>();
   const externalPkgs = new Set<string>();
   const pkgTypings = new Map<string, Set<string>>();
+  const globalTypeMap = new Map<string, string>();
+  const typesByFile = new Map<string, Map<string, TypeInfo>>();
 
   function basePackageOf(spec: string): string {
     if (spec.startsWith('@')) {
@@ -55,6 +59,14 @@ export async function buildGraph(
     source = patchImportMeta(source, path);
 
     const imports = parseImports(ts, path, source);
+    const typeMap = parseTypeDefinitions(ts, path, source);
+
+    // Store types by file and merge into global type map
+    typesByFile.set(path, typeMap);
+    for (const [typeName, typeInfo] of typeMap) {
+      globalTypeMap.set(typeName, typeInfo.stringLiteral);
+    }
+
     const resolved = new Map<string, import('./types').Resolved>();
 
     for (const spec of imports) {
@@ -214,6 +226,8 @@ export async function buildGraph(
     externals: [...externals].sort(),
     importMap: { ...importMap },
     typings: Object.fromEntries([...pkgTypings.entries()].map(([k, v]) => [k, [...v].sort()])),
+    typeMap: globalTypeMap,
+    typesByFile,
   };
 
   debug(

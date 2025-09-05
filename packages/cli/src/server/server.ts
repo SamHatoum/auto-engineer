@@ -114,7 +114,11 @@ export class MessageBusServer {
           try {
             handler(event);
           } catch (error) {
-            console.error(`Error in event handler for ${event.type}:`, error);
+            const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+            if (!isTest) {
+              console.error(`Error in event handler for ${event.type}:`, error);
+            }
+            debugBus('Event handler error (suppressed in tests):', error);
           }
         }
 
@@ -225,7 +229,11 @@ export class MessageBusServer {
             debugHttp('Command processed successfully:', cmdWithId.type);
           })
           .catch((err) => {
-            console.error('Command failed:', err);
+            const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+            if (!isTest) {
+              console.error('Command failed:', err);
+            }
+            debugHttp('Command failed (suppressed in tests):', err);
             // Emit error event for UI to capture
             this.io.emit('commandError', {
               commandId: cmdWithId.requestId,
@@ -373,7 +381,11 @@ export class MessageBusServer {
         const result = registration.handler(event);
         await this.processHandlerResult(result);
       } catch (error) {
-        console.error('Error in event handler:', error);
+        const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+        if (!isTest) {
+          console.error('Error in event handler:', error);
+        }
+        debug('Event handler error (suppressed in tests):', error);
       }
     };
 
@@ -482,12 +494,19 @@ export class MessageBusServer {
     // Start HTTP/WebSocket server
     await new Promise<void>((resolve) => {
       this.httpServer.listen(port, () => {
-        console.log(`Message bus server running on port ${port}`);
-        console.log(`Dashboard available at http://localhost:${port}`);
-        console.log(`WebSocket server available on ws://localhost:${port}`);
-        if (enableFileSync === true) {
-          console.log(`File sync enabled for ${fileSyncDir} (extensions: ${fileSyncExtensions?.join(', ')})`);
+        // Only show console output if not in test environment
+        const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+        if (!isTest) {
+          console.log(`Message bus server running on port ${port}`);
+          console.log(`Dashboard available at http://localhost:${port}`);
+          console.log(`WebSocket server available on ws://localhost:${port}`);
+          if (enableFileSync === true) {
+            console.log(`File sync enabled for ${fileSyncDir} (extensions: ${fileSyncExtensions?.join(', ')})`);
+          }
         }
+
+        debug('Message bus server started on port', port);
         resolve();
       });
     });

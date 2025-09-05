@@ -1,5 +1,12 @@
 # @auto-engineer/file-syncer
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/flow@0.3.0
+
 ## 0.5.0
 
 ### Minor Changes

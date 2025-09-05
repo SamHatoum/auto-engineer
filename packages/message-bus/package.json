@@ -1,6 +1,5 @@
 {
   "name": "@auto-engineer/message-bus",
-  "version": "0.6.0",
   "publishConfig": {
     "access": "public"
   },
@@ -12,13 +11,13 @@
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "test:watch": "vitest",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "link:dev": "pnpm build && pnpm link --global",
     "unlink:dev": "pnpm unlink --global",
     "prepublishOnly": "npm run build"
@@ -33,5 +32,6 @@
     "tsx": "^4.20.3",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
-  }
+  },
+  "version": "0.8.1"
 }

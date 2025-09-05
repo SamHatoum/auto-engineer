@@ -38,7 +38,7 @@ describe('Seasonal Assistant | accepts items and adds to their cart', () => {
               { productId: 'prod-laptop-bag', quantity: 1 },
               { productId: 'prod-mtg-starter', quantity: 1 },
             ],
-            timestamp: new Date('2025-09-04T06:26:22.879Z'),
+            timestamp: new Date('2025-09-04T21:20:20.310Z'),
           },
         },
       ]);

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { SpecsSchema } from './schema';
 import { registry } from './flow-registry';
 import type { Flow } from './index';
-import { flowsToSchema } from './flow-to-schema';
+import { flowsToSchema } from './transformers/flow-to-schema';
 import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
 
@@ -29,7 +29,6 @@ export interface GetFlowsOptions {
 
 async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Promise<string[]> {
   const entries = await vfs.listTree(root);
-  console.log('discovered files', entries);
   const files = entries
     .filter((e) => e.type === 'file')
     .map((e) => toPosix(e.path))
@@ -60,6 +59,8 @@ export const getFlows = async (opts: GetFlowsOptions) => {
     vfsFiles: exec.vfsFiles, // absolute posix paths of all VFS modules in the graph
     externals: exec.externals, // external specifiers used
     typings: exec.typings, // { pkgName: [abs d.ts paths] }
-    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows),
+    typeMap: exec.typeMap, // mapping from TypeScript type names to string literals
+    typesByFile: exec.typesByFile, // mapping from file path to type definitions in that file
+    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows, exec.typesByFile),
   };
 };

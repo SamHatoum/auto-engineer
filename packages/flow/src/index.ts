@@ -40,26 +40,12 @@ export type { FieldSelector } from './data-flow-builders';
 
 // Flow language functions
 export { flow } from './flow';
-export { client, server, specs, should, request, data } from './flow';
+export { client, server, specs, should, request, data, rule, example } from './flow';
 export type { SliceTypeValueInterface } from './flow';
 export { SliceType } from './flow';
 
 // Flow conversion utilities
 export { getFlows } from './getFlows';
-
-// Event and command builders
-export {
-  event,
-  command,
-  state,
-  createEventBuilder,
-  createCommandBuilder,
-  createStateBuilder,
-  createBuilders,
-  createTypedEventBuilder,
-  createTypedCommandBuilder,
-  createTypedStateBuilder,
-} from './builders';
 
 // Testing helpers
 export { createFlowSpec, given, when } from './testing';
@@ -85,6 +71,9 @@ export {
   SpecsSchema,
   EventExampleSchema,
   CommandExampleSchema,
+  ExampleSchema,
+  RuleSchema,
+  SpecSchema,
 } from './schema';
 
 // Export the AppSchema type
@@ -101,6 +90,9 @@ import {
   ReactSliceSchema,
   MessageSchema,
   CommandSliceSchema,
+  ExampleSchema,
+  RuleSchema,
+  SpecSchema,
 } from './schema';
 export type AppSchema = z.infer<typeof ImportedAppSchema>;
 
@@ -116,6 +108,9 @@ export type QuerySlice = z.infer<typeof QuerySliceSchema>;
 export type ReactSlice = z.infer<typeof ReactSliceSchema>;
 export type CommandSlice = z.infer<typeof CommandSliceSchema>;
 export type Message = z.infer<typeof MessageSchema>;
+export type Example = z.infer<typeof ExampleSchema>;
+export type Rule = z.infer<typeof RuleSchema>;
+export type Spec = z.infer<typeof SpecSchema>;
 
 export {
   commandHandler as exportSchemaCommandHandler,

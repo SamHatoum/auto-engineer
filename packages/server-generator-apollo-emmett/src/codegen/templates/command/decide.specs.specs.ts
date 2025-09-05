@@ -16,36 +16,45 @@ describe('spec.ts.ejs', () => {
               client: { description: '', specs: [] },
               server: {
                 description: '',
-                gwt: [
-                  {
-                    when: {
-                      commandRef: 'CreateListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                        title: 'blah',
-                        pricePerNight: 250,
-                        maxGuests: 4,
-                        amenities: ['wifi', 'kitchen'],
-                        available: true,
-                        tags: ['some tag'],
-                        rating: 4.8,
-                        metadata: { foo: 'bar' },
-                        listedAt: '2024-01-15T10:00:00Z',
-                      },
-                    },
-                    then: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          listedAt: '2024-01-15T10:00:00Z',
-                          rating: 4.8,
-                          metadata: { foo: 'bar' },
+                specs: {
+                  name: 'Create listing spec',
+                  rules: [
+                    {
+                      description: 'Should create listing successfully',
+                      examples: [
+                        {
+                          description: 'User creates listing with valid data',
+                          when: {
+                            commandRef: 'CreateListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                              title: 'blah',
+                              pricePerNight: 250,
+                              maxGuests: 4,
+                              amenities: ['wifi', 'kitchen'],
+                              available: true,
+                              tags: ['some tag'],
+                              rating: 4.8,
+                              metadata: { foo: 'bar' },
+                              listedAt: '2024-01-15T10:00:00Z',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                listedAt: '2024-01-15T10:00:00Z',
+                                rating: 4.8,
+                                metadata: { foo: 'bar' },
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                  },
-                ],
+                      ],
+                    },
+                  ],
+                },
               },
             },
           ],
@@ -147,36 +156,45 @@ describe('spec.ts.ejs', () => {
               client: { description: '', specs: [] },
               server: {
                 description: '',
-                gwt: [
-                  {
-                    given: [
-                      {
-                        eventRef: 'ListingCreated',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          listedAt: '2024-01-15T10:00:00Z',
-                          rating: 4.8,
-                          metadata: { foo: 'bar' },
+                specs: {
+                  name: 'Remove listing spec',
+                  rules: [
+                    {
+                      description: 'Should remove existing listing',
+                      examples: [
+                        {
+                          description: 'Existing listing can be removed',
+                          given: [
+                            {
+                              eventRef: 'ListingCreated',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                listedAt: '2024-01-15T10:00:00Z',
+                                rating: 4.8,
+                                metadata: { foo: 'bar' },
+                              },
+                            },
+                          ],
+                          when: {
+                            commandRef: 'RemoveListing',
+                            exampleData: {
+                              propertyId: 'listing_123',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'ListingRemoved',
+                              exampleData: {
+                                propertyId: 'listing_123',
+                                removedAt: '2024-01-16T10:00:00Z',
+                              },
+                            },
+                          ],
                         },
-                      },
-                    ],
-                    when: {
-                      commandRef: 'RemoveListing',
-                      exampleData: {
-                        propertyId: 'listing_123',
-                      },
+                      ],
                     },
-                    then: [
-                      {
-                        eventRef: 'ListingRemoved',
-                        exampleData: {
-                          propertyId: 'listing_123',
-                          removedAt: '2024-01-16T10:00:00Z',
-                        },
-                      },
-                    ],
-                  },
-                ],
+                  ],
+                },
               },
             },
           ],

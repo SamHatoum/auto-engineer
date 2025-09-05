@@ -1,7 +1,6 @@
 import { CommandExample, EventExample } from '@auto-engineer/flow';
 import { Message, MessageDefinition } from '../types';
 import { extractFieldsFromMessage } from './fields';
-import { ReactGwtSpec } from './messages';
 
 function createCommandMessage(
   commandRef: string,
@@ -23,9 +22,9 @@ function createCommandMessage(
 
 export function extractCommandsFromGwt(
   gwtSpecs: Array<{
-    given?: EventExample[];
-    when: CommandExample;
-    then: Array<EventExample | { errorType: string; message?: string }>;
+    given?: Array<EventExample | unknown>;
+    when: CommandExample | EventExample | unknown[];
+    then: Array<EventExample | unknown | { errorType: string; message?: string }>;
   }>,
   allMessages: MessageDefinition[],
 ): { commands: Message[]; commandSchemasByName: Record<string, Message> } {
@@ -34,8 +33,15 @@ export function extractCommandsFromGwt(
   const commands: Message[] = gwtSpecs
     .map((gwt): Message | undefined => {
       const cmd = gwt.when;
-      if (!cmd.commandRef) return undefined;
-
+      if (
+        Array.isArray(cmd) ||
+        typeof cmd !== 'object' ||
+        cmd === null ||
+        !('commandRef' in cmd) ||
+        typeof cmd.commandRef !== 'string' ||
+        !cmd.commandRef
+      )
+        return undefined;
       const command = createCommandMessage(cmd.commandRef, allMessages, 'when');
       if (command) {
         commandSchemasByName[cmd.commandRef] = command;
@@ -47,8 +53,42 @@ export function extractCommandsFromGwt(
   return { commands, commandSchemasByName };
 }
 
+function isValidCommandExample(commandExample: unknown): commandExample is { commandRef: string } {
+  return (
+    typeof commandExample === 'object' &&
+    commandExample !== null &&
+    'commandRef' in commandExample &&
+    typeof commandExample.commandRef === 'string' &&
+    !!commandExample.commandRef
+  );
+}
+
+function processCommandExample(
+  commandExample: unknown,
+  commands: Message[],
+  commandSchemasByName: Record<string, Message>,
+  allMessages: MessageDefinition[],
+): void {
+  if (!isValidCommandExample(commandExample)) {
+    return;
+  }
+
+  const commandRef = commandExample.commandRef;
+  if (!(commandRef in commandSchemasByName)) {
+    const command = createCommandMessage(commandRef, allMessages, 'then');
+    if (command) {
+      commands.push(command);
+      commandSchemasByName[commandRef] = command;
+    }
+  }
+}
+
 export function extractCommandsFromThen(
-  gwtSpecs: ReactGwtSpec[],
+  gwtSpecs: Array<{
+    given?: Array<EventExample | unknown>;
+    when: CommandExample | EventExample | unknown[];
+    then: Array<EventExample | unknown | { errorType: string; message?: string }>;
+  }>,
   allMessages: MessageDefinition[],
 ): { commands: Message[]; commandSchemasByName: Record<string, Message> } {
   const commands: Message[] = [];
@@ -60,18 +100,7 @@ export function extractCommandsFromThen(
     }
 
     for (const commandExample of gwt.then) {
-      if (!commandExample.commandRef) {
-        continue;
-      }
-
-      const commandRef = commandExample.commandRef;
-      if (!(commandRef in commandSchemasByName)) {
-        const command = createCommandMessage(commandRef, allMessages, 'then');
-        if (command) {
-          commands.push(command);
-          commandSchemasByName[commandRef] = command;
-        }
-      }
+      processCommandExample(commandExample, commands, commandSchemasByName, allMessages);
     }
   }
 

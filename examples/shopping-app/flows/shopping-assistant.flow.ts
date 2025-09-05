@@ -3,11 +3,10 @@ import {
   querySlice,
   reactSlice,
   flow,
-  createBuilders,
   should,
-  given,
-  when,
   specs,
+  rule,
+  example,
   gql,
   source,
   data,
@@ -17,7 +16,7 @@ import {
   type State,
 } from '@auto-engineer/flow';
 
-import { AI, ProductCatalog, type DoChat, type ChatCompleted, type Products } from '../server/src/integrations';
+import { AI, ProductCatalog, type Products } from '../server/src/integrations';
 
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
@@ -77,13 +76,7 @@ type AddItemsToCart = Command<
   }
 >;
 
-const { Events, Commands, State } = createBuilders()
-  .events<ShoppingCriteriaEntered | ShoppingItemsSuggested | ChatCompleted | ItemsAddedToCart>()
-  .commands<EnterShoppingCriteria | SuggestShoppingItems | DoChat | AddItemsToCart>()
-  .state<{
-    Products: Products['data'];
-    SuggestedItems: SuggestedItems['data'];
-  }>();
+// Using generic DSL instead of typed builders
 
 flow('Seasonal Assistant', () => {
   commandSlice('enters shopping criteria into assistant')
@@ -111,43 +104,49 @@ flow('Seasonal Assistant', () => {
     .server(() => {
       data([sink().event('ShoppingCriteriaEntered').toStream('shopping-session-${sessionId}')]);
       specs('When shopper submits criteria, a shopping session is started', () => {
-        when(
-          Commands.EnterShoppingCriteria({
-            sessionId: 'shopper-123',
-            criteria:
-              'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-          }),
-        ).then([
-          Events.ShoppingCriteriaEntered({
-            sessionId: 'shopper-123',
-            criteria:
-              'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-            timestamp: new Date(),
-          }),
-        ]);
+        rule('Valid criteria should start a shopping session', () => {
+          example('User submits shopping criteria for children')
+            .when<EnterShoppingCriteria>({
+              sessionId: 'shopper-123',
+              criteria:
+                'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
+            })
+            .then<ShoppingCriteriaEntered>([
+              {
+                sessionId: 'shopper-123',
+                criteria:
+                  'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
+                timestamp: new Date(),
+              },
+            ]);
+        });
       });
     });
 
-  reactSlice('creates a chat session ').server(() => {
+  reactSlice('creates a chat session').server(() => {
     specs('When shopping criteria are entered, request wishlist creation', () => {
-      when([
-        Events.ShoppingCriteriaEntered({
-          sessionId: 'session-abc',
-          criteria:
-            'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-          timestamp: new Date(),
-        }),
-      ]).then([
-        Commands.SuggestShoppingItems({
-          sessionId: 'session-abc',
-          prompt:
-            'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-        }),
-      ]);
+      rule('Shopping criteria should trigger item suggestion', () => {
+        example('Criteria entered triggers wishlist creation')
+          .when<ShoppingCriteriaEntered>([
+            {
+              sessionId: 'session-abc',
+              criteria:
+                'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
+              timestamp: new Date(),
+            },
+          ])
+          .then<SuggestShoppingItems>([
+            {
+              sessionId: 'session-abc',
+              prompt:
+                'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
+            },
+          ]);
+      });
     });
   });
 
-  commandSlice('selects items relevant to the shopping criteria ').server(() => {
+  commandSlice('selects items relevant to the shopping criteria').server(() => {
     data([
       sink()
         .command('SuggestShoppingItems')
@@ -160,82 +159,83 @@ flow('Seasonal Assistant', () => {
     ]);
 
     specs('When chat is triggered, AI suggests items based on product catalog', () => {
-      given([
-        State.Products({
-          products: [
+      rule('AI should suggest relevant items from available products', () => {
+        example('Product catalog with matching items generates suggestions')
+          .given<Products>([
             {
-              productId: 'prod-soccer-ball',
-              name: 'Super Soccer Ball',
-              category: 'Sports',
-              price: 10,
-              tags: ['soccer', 'sports'],
-              imageUrl: 'https://example.com/soccer-ball.jpg',
+              products: [
+                {
+                  productId: 'prod-soccer-ball',
+                  name: 'Super Soccer Ball',
+                  category: 'Sports',
+                  price: 10,
+                  tags: ['soccer', 'sports'],
+                  imageUrl: 'https://example.com/soccer-ball.jpg',
+                },
+                {
+                  productId: 'prod-craft-kit',
+                  name: 'Deluxe Craft Kit',
+                  category: 'Arts & Crafts',
+                  price: 25,
+                  tags: ['crafts', 'art', 'creative'],
+                  imageUrl: 'https://example.com/craft-kit.jpg',
+                },
+                {
+                  productId: 'prod-laptop-bag',
+                  name: 'Tech Laptop Backpack',
+                  category: 'School Supplies',
+                  price: 45,
+                  tags: ['computers', 'tech', 'school'],
+                  imageUrl: 'https://example.com/laptop-bag.jpg',
+                },
+                {
+                  productId: 'prod-mtg-starter',
+                  name: 'Magic the Gathering Starter Set',
+                  category: 'Games',
+                  price: 30,
+                  tags: ['magic', 'tcg', 'games'],
+                  imageUrl: 'https://example.com/mtg-starter.jpg',
+                },
+              ],
             },
-            {
-              productId: 'prod-craft-kit',
-              name: 'Deluxe Craft Kit',
-              category: 'Arts & Crafts',
-              price: 25,
-              tags: ['crafts', 'art', 'creative'],
-              imageUrl: 'https://example.com/craft-kit.jpg',
-            },
-            {
-              productId: 'prod-laptop-bag',
-              name: 'Tech Laptop Backpack',
-              category: 'School Supplies',
-              price: 45,
-              tags: ['computers', 'tech', 'school'],
-              imageUrl: 'https://example.com/laptop-bag.jpg',
-            },
-            {
-              productId: 'prod-mtg-starter',
-              name: 'Magic the Gathering Starter Set',
-              category: 'Games',
-              price: 30,
-              tags: ['magic', 'tcg', 'games'],
-              imageUrl: 'https://example.com/mtg-starter.jpg',
-            },
-          ],
-        }),
-      ])
-        .when(
-          Commands.SuggestShoppingItems({
+          ])
+          .when<SuggestShoppingItems>({
             sessionId: 'session-abc',
             prompt:
               'I need back-to-school items for my 7-year-old daughter who loves soccer and crafts, and my 12-year-old son who is into computers and Magic the Gathering.',
-          }),
-        )
-        .then([
-          Events.ShoppingItemsSuggested({
-            sessionId: 'session-abc',
-            suggestedItems: [
-              {
-                productId: 'prod-soccer-ball',
-                name: 'Super Soccer Ball',
-                quantity: 1,
-                reason: 'Perfect for your daughter who loves soccer',
-              },
-              {
-                productId: 'prod-craft-kit',
-                name: 'Deluxe Craft Kit',
-                quantity: 1,
-                reason: 'Great for creative activities and crafts',
-              },
-              {
-                productId: 'prod-laptop-bag',
-                name: 'Tech Laptop Backpack',
-                quantity: 1,
-                reason: `Essential for your son's school computer needs`,
-              },
-              {
-                productId: 'prod-mtg-starter',
-                name: 'Magic the Gathering Starter Set',
-                quantity: 1,
-                reason: 'Ideal starter set for Magic the Gathering enthusiasts',
-              },
-            ],
-          }),
-        ]);
+          })
+          .then<ShoppingItemsSuggested>([
+            {
+              sessionId: 'session-abc',
+              suggestedItems: [
+                {
+                  productId: 'prod-soccer-ball',
+                  name: 'Super Soccer Ball',
+                  quantity: 1,
+                  reason: 'Perfect for your daughter who loves soccer',
+                },
+                {
+                  productId: 'prod-craft-kit',
+                  name: 'Deluxe Craft Kit',
+                  quantity: 1,
+                  reason: 'Great for creative activities and crafts',
+                },
+                {
+                  productId: 'prod-laptop-bag',
+                  name: 'Tech Laptop Backpack',
+                  quantity: 1,
+                  reason: `Essential for your son's school computer needs`,
+                },
+                {
+                  productId: 'prod-mtg-starter',
+                  name: 'Magic the Gathering Starter Set',
+                  quantity: 1,
+                  reason: 'Ideal starter set for Magic the Gathering enthusiasts',
+                },
+              ],
+            },
+          ]);
+      });
     });
   });
 
@@ -264,67 +264,67 @@ flow('Seasonal Assistant', () => {
       data([source().state('SuggestedItems').fromProjection('SuggestedItemsProjection', 'sessionId')]);
 
       specs('Suggested items are available for viewing', () => {
-        given([
-          Events.ShoppingItemsSuggested({
-            sessionId: 'session-abc',
-            suggestedItems: [
-              {
-                productId: 'prod-soccer-ball',
-                name: 'Super Soccer Ball',
-                quantity: 1,
-                reason: 'Perfect for your daughter who loves soccer',
-              },
-              {
-                productId: 'prod-craft-kit',
-                name: 'Deluxe Craft Kit',
-                quantity: 1,
-                reason: 'Great for creative activities and crafts',
-              },
-              {
-                productId: 'prod-laptop-bag',
-                name: 'Tech Laptop Backpack',
-                quantity: 1,
-                reason: `Essential for your son's school computer needs`,
-              },
-              {
-                productId: 'prod-mtg-starter',
-                name: 'Magic the Gathering Starter Set',
-                quantity: 1,
-                reason: 'Ideal starter set for Magic the Gathering enthusiasts',
-              },
-            ],
-          }),
-        ]).then([
-          State.SuggestedItems({
-            sessionId: 'session-abc',
-            items: [
-              {
-                productId: 'prod-soccer-ball',
-                name: 'Super Soccer Ball',
-                quantity: 1,
-                reason: 'Perfect for your daughter who loves soccer',
-              },
-              {
-                productId: 'prod-craft-kit',
-                name: 'Deluxe Craft Kit',
-                quantity: 1,
-                reason: 'Great for creative activities and crafts',
-              },
-              {
-                productId: 'prod-laptop-bag',
-                name: 'Tech Laptop Backpack',
-                quantity: 1,
-                reason: `Essential for your son's school computer needs`,
-              },
-              {
-                productId: 'prod-mtg-starter',
-                name: 'Magic the Gathering Starter Set',
-                quantity: 1,
-                reason: 'Ideal starter set for Magic the Gathering enthusiasts',
-              },
-            ],
-          }),
-        ]);
+        rule('Items should be available for viewing after suggestion', () => {
+          example('Item becomes available after AI suggestion event')
+            .when<ShoppingItemsSuggested>({
+              sessionId: 'session-abc',
+              suggestedItems: [
+                {
+                  productId: 'prod-soccer-ball',
+                  name: 'Super Soccer Ball',
+                  quantity: 1,
+                  reason: 'Perfect for your daughter who loves soccer',
+                },
+                {
+                  productId: 'prod-craft-kit',
+                  name: 'Deluxe Craft Kit',
+                  quantity: 1,
+                  reason: 'Great for creative activities and crafts',
+                },
+                {
+                  productId: 'prod-laptop-bag',
+                  name: 'Tech Laptop Backpack',
+                  quantity: 1,
+                  reason: `Essential for your son's school computer needs`,
+                },
+                {
+                  productId: 'prod-mtg-starter',
+                  name: 'Magic the Gathering Starter Set',
+                  quantity: 1,
+                  reason: 'Ideal starter set for Magic the Gathering enthusiasts',
+                },
+              ],
+            })
+            .then<SuggestedItems>({
+              sessionId: 'session-abc',
+              items: [
+                {
+                  productId: 'prod-soccer-ball',
+                  name: 'Super Soccer Ball',
+                  quantity: 1,
+                  reason: 'Perfect for your daughter who loves soccer',
+                },
+                {
+                  productId: 'prod-craft-kit',
+                  name: 'Deluxe Craft Kit',
+                  quantity: 1,
+                  reason: 'Great for creative activities and crafts',
+                },
+                {
+                  productId: 'prod-laptop-bag',
+                  name: 'Tech Laptop Backpack',
+                  quantity: 1,
+                  reason: `Essential for your son's school computer needs`,
+                },
+                {
+                  productId: 'prod-mtg-starter',
+                  name: 'Magic the Gathering Starter Set',
+                  quantity: 1,
+                  reason: 'Ideal starter set for Magic the Gathering enthusiasts',
+                },
+              ],
+            });
+        });
       });
     });
 
@@ -339,28 +339,28 @@ flow('Seasonal Assistant', () => {
     .server(() => {
       data([sink().event('ItemsAddedToCart').toStream('shopping-session-${sessionId}')]);
       specs('When shopper accepts items, they are added to cart', () => {
-        when(
-          Commands.AddItemsToCart({
-            sessionId: 'session-abc',
-            items: [
-              { productId: 'prod-soccer-ball', quantity: 1 },
-              { productId: 'prod-craft-kit', quantity: 1 },
-              { productId: 'prod-laptop-bag', quantity: 1 },
-              { productId: 'prod-mtg-starter', quantity: 1 },
-            ],
-          }),
-        ).then([
-          Events.ItemsAddedToCart({
-            sessionId: 'session-abc',
-            items: [
-              { productId: 'prod-soccer-ball', quantity: 1 },
-              { productId: 'prod-craft-kit', quantity: 1 },
-              { productId: 'prod-laptop-bag', quantity: 1 },
-              { productId: 'prod-mtg-starter', quantity: 1 },
-            ],
-            timestamp: new Date(),
-          }),
-        ]);
+        rule('Accepted items should be added to the shopping cart', () => {
+          example('User selects all suggested items for cart')
+            .when<AddItemsToCart>({
+              sessionId: 'session-abc',
+              items: [
+                { productId: 'prod-soccer-ball', quantity: 1 },
+                { productId: 'prod-craft-kit', quantity: 1 },
+                { productId: 'prod-laptop-bag', quantity: 1 },
+                { productId: 'prod-mtg-starter', quantity: 1 },
+              ],
+            })
+            .then<ItemsAddedToCart>({
+              sessionId: 'session-abc',
+              items: [
+                { productId: 'prod-soccer-ball', quantity: 1 },
+                { productId: 'prod-craft-kit', quantity: 1 },
+                { productId: 'prod-laptop-bag', quantity: 1 },
+                { productId: 'prod-mtg-starter', quantity: 1 },
+              ],
+              timestamp: new Date(),
+            });
+        });
       });
     });
 });

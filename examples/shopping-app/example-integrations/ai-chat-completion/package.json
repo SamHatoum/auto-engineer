@@ -5,18 +5,18 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@auto-engineer/flow": "^0.1.1",
-    "@auto-engineer/ai-gateway": "^0.6.1"
+    "@auto-engineer/flow": "workspace:*",
+    "@auto-engineer/ai-gateway": "workspace:*"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
     "type-check": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ./eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn"
   },
   "publishConfig": {
     "access": "public"

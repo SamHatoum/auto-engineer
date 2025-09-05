@@ -10,7 +10,7 @@ export const decide = (command: SuggestShoppingItems, state: State, products?: P
       /**
        * ## IMPLEMENTATION INSTRUCTIONS ##
        *
-       * This command can directly emit one or more events based on the input.
+       * This command requires evaluating prior state to determine if it can proceed.
        *
        * You should:
        * - Validate the command input fields
@@ -20,6 +20,14 @@ export const decide = (command: SuggestShoppingItems, state: State, products?: P
        * - If valid, return one or more events with the correct structure
        *
        * ⚠️ Only read from inputs — never mutate them. `evolve.ts` handles state updates.
+       *
+       * Integration result shape (Products):
+       * products?.data = {
+       *   type: "Products";
+       *   products: Array<{
+       *     productId: string; name;
+       *   }>;
+       * }
        */
 
       // return {

@@ -1,7 +1,5 @@
-import { flow, should, specs } from '../flow';
+import { flow, should, specs, rule, example } from '../flow';
 import { commandSlice } from '../fluent-builder';
-import { when } from '../testing';
-import { createBuilders } from '../builders';
 
 export interface OrderPlaced {
   type: 'OrderPlaced';
@@ -30,11 +28,6 @@ export interface OrderSummary {
   };
 }
 
-const { Events, Commands } = createBuilders()
-  .events<OrderPlaced>()
-  .commands<PlaceOrderFlow>()
-  .state<{ orders: OrderSummary[] }>();
-
 flow('Place order', () => {
   commandSlice('Submit order')
     .stream('order-${orderId}')
@@ -46,19 +39,19 @@ flow('Place order', () => {
     })
     .server(() => {
       specs('User submits a new order', () => {
-        when(
-          Commands.PlaceOrder({
-            productId: 'product_789',
-            quantity: 3,
-          }),
-        ).then([
-          Events.OrderPlaced({
-            orderId: 'order_001',
-            productId: 'product_789',
-            quantity: 3,
-            placedAt: new Date('2024-01-20T10:00:00Z'),
-          }),
-        ]);
+        rule('Valid orders should be processed successfully', () => {
+          example('User places order for available product')
+            .when<PlaceOrderFlow>({
+              productId: 'product_789',
+              quantity: 3,
+            })
+            .then<OrderPlaced>({
+              orderId: 'order_001',
+              productId: 'product_789',
+              quantity: 3,
+              placedAt: new Date('2024-01-20T10:00:00Z'),
+            });
+        });
       });
     });
 });

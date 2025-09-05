@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsx --no-deprecation src/server.ts",
     "type-check": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "dev": "tsx --no-deprecation src/server.ts"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { CommandExample, EventExample } from '@auto-engineer/flow';
+import { CommandExample, EventExample, StateExample } from '@auto-engineer/flow';
 
 export interface Message {
   type: string;
@@ -29,7 +29,7 @@ export interface MessageDefinition {
 }
 
 export interface GwtCondition {
-  given?: EventExample[];
-  when: CommandExample;
-  then: Array<EventExample | { errorType: string; message?: string }>;
+  given?: Array<EventExample | StateExample>;
+  when: CommandExample | EventExample[];
+  then: Array<EventExample | StateExample | CommandExample | { errorType: string; message?: string }>;
 }
