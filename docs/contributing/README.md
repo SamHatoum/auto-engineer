@@ -83,7 +83,3 @@ pnpm check:types
 - Aim for 80%+ test coverage: pnpm test:coverage.
 - Manually test UI or complex flows locally.
 - Update test docs if processes change.
-
-## Release Process
-
-...
