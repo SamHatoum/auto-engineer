@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.8.3
+
+### Patch Changes
+
+- 3aff24e: bump version up
+
 ## 0.8.2
 
 ## 0.6.0

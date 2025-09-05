@@ -1,5 +1,12 @@
 # @auto-engineer/frontend-checks
 
+## 0.8.3
+
+### Patch Changes
+
+- Updated dependencies [3aff24e]
+  - @auto-engineer/message-bus@0.8.3
+
 ## 0.8.2
 
 ### Patch Changes
