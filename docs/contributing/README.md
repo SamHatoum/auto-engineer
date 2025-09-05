@@ -59,4 +59,31 @@ For more details on contributing, see the Contributing Guide.
 
 ## Testing
 
+All contributions must pass tests to ensure quality.
+
+### Running Tests
+
+```bash
+pnpm test
+```
+
+Runs unit, integration, and E2E tests via Turborepo. Fix failures before submitting a PR.
+
+### Linting & Type Checking
+
+```bash
+pnpm lint --fix
+pnpm check:types
+```
+
+### Best Practices
+
+- Write clear, focused tests for single behaviors.
+- Cover edge cases (e.g., invalid inputs).
+- Aim for 80%+ test coverage: pnpm test:coverage.
+- Manually test UI or complex flows locally.
+- Update test docs if processes change.
+
 ## Release Process
+
+...
