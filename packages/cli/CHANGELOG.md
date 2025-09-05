@@ -1,5 +1,12 @@
 # @auto-engineer/cli
 
+## 0.8.4
+
+### Patch Changes
+
+- bump version up
+  - @auto-engineer/message-bus@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes

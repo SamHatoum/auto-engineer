@@ -2,6 +2,12 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.8.4
+
+### Patch Changes
+
+- bump version up
+
 ## 0.8.3
 
 ## 0.8.2
@@ -103,6 +109,13 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.8.4
+
+### Patch Changes
+
+- bump version up
+  - @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -407,6 +420,8 @@
 
 # create-auto-app
 
+## 0.8.4
+
 ## 0.8.3
 
 ## 0.8.2
@@ -442,6 +457,12 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -647,6 +668,8 @@
 
 # @auto-engineer/file-store
 
+## 0.8.4
+
 ## 0.8.3
 
 ## 0.8.2
@@ -706,6 +729,14 @@
 - version bump
 
 # @auto-engineer/file-syncer
+
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/flow@0.8.4
+- @auto-engineer/file-store@0.8.4
+- @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -793,6 +824,13 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/flow
+
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/file-store@0.8.4
+- @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -1047,6 +1085,12 @@
 
 # @auto-engineer/frontend-checks
 
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/message-bus@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes
@@ -1209,6 +1253,14 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.8.4
+  - @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -1419,6 +1471,14 @@
   - @auto-engineer/message-bus@0.0.2
 
 # @auto-engineer/frontend-implementer
+
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.8.4
+  - @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -1631,6 +1691,14 @@
 
 # @auto-engineer/information-architect
 
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.8.4
+  - @auto-engineer/message-bus@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes
@@ -1823,6 +1891,8 @@
 
 # @auto-engineer/message-bus
 
+## 0.8.4
+
 ## 0.8.3
 
 ### Patch Changes
@@ -1934,6 +2004,12 @@
 
 # @auto-engineer/server-checks
 
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/message-bus@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes
@@ -2022,6 +2098,13 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/flow@0.8.4
+- @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 
@@ -2227,6 +2310,14 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.8.4
+  - @auto-engineer/message-bus@0.8.4
 
 ## 0.8.3
 

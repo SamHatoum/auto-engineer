@@ -1,5 +1,12 @@
 # @auto-engineer/flow
 
+## 0.8.4
+
+### Patch Changes
+
+- @auto-engineer/file-store@0.8.4
+- @auto-engineer/message-bus@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.8.4
+
+### Patch Changes
+
+- bump version up
+
 ## 0.8.3
 
 ## 0.8.2

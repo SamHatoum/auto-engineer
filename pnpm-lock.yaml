@@ -14,13 +14,13 @@ importers:
   .:
     dependencies:
       '@auto-engineer/ai-gateway':
-        specifier: workspace:*
+        specifier: 0.8.4
         version: link:packages/ai-gateway
       '@auto-engineer/design-system-importer':
         specifier: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
         version: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
       '@auto-engineer/flow':
-        specifier: workspace:*
+        specifier: 0.8.4
         version: link:packages/flow
       axios:
         specifier: ^1.10.0
@@ -355,10 +355,10 @@ importers:
   packages/flow:
     dependencies:
       '@auto-engineer/file-store':
-        specifier: 0.8.3
+        specifier: 0.8.4
         version: link:../file-store
       '@auto-engineer/message-bus':
-        specifier: 0.8.3
+        specifier: 0.8.4
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3

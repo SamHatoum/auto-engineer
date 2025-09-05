@@ -1,5 +1,13 @@
 # @auto-engineer/server-implementer
 
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.8.4
+  - @auto-engineer/message-bus@0.8.4
+
 ## 0.8.3
 
 ### Patch Changes

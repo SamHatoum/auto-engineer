@@ -1,6 +1,6 @@
 {
   "name": "auto-engineer",
-  "version": "0.8.2",
+  "version": "0.8.4",
   "type": "module",
   "scripts": {
     "build": "turbo run build",
@@ -19,7 +19,7 @@
     "changeset": "changeset",
     "changeset:prepare-changelog": "tsx scripts/prepare-changelog.ts",
     "version": "changeset version && pnpm changeset:prepare-changelog",
-    "release": "pnpm build && changeset publish",
+    "release": "pnpm publish -r",
     "prepare": "husky",
     "install": "turbo run install build",
     "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm i -g @auto-engineer/cli@latest",
@@ -58,9 +58,9 @@
     "@types/react-dom": "^18.3.7"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*",
+    "@auto-engineer/ai-gateway": "0.8.4",
     "@auto-engineer/design-system-importer": "link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer",
-    "@auto-engineer/flow": "workspace:*",
+    "@auto-engineer/flow": "0.8.4",
     "axios": "^1.10.0",
     "debug": "^4.4.1",
     "dotenv": "^16.4.5"
