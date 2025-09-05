@@ -355,10 +355,10 @@ importers:
   packages/flow:
     dependencies:
       '@auto-engineer/file-store':
-        specifier: 0.8.2
+        specifier: 0.8.3
         version: link:../file-store
       '@auto-engineer/message-bus':
-        specifier: 0.8.2
+        specifier: 0.8.3
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
