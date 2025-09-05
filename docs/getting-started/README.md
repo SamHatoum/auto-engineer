@@ -50,13 +50,23 @@ Ensure you have completed the Installation steps, including installing Node.js, 
 
 4. **Export flow schemas**: `auto export:schema --output-dir=./.context --directory=./flows `
 
-5. **Generate and implement the server**: `auto generate:server --schema-path=.context/schema.json --destination=. auto implement:server --server-directory=./server `
+5. **Generate and implement the server**:
 
-6. **Run server validation**: `auto check:types --target-directory=./server auto check:tests --target-directory=./server auto check:lint --target-directory=./server --fix `
+```
+auto generate:server --schema-path=.context/schema.json --destination=. auto implement:server --server-directory=./server
+```
 
-7. **Generate and implement the frontend** (requires additional plugins): `auto generate:ia --output-dir=./.context --flow-files=./flows/\*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
---ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json auto implement:client --project-dir=./client --ia-scheme-dir=./.context \
---design-system-path=./design-system.md `
+6. **Run server validation**:
+
+```
+auto check:types --target-directory=./server auto check:tests --target-directory=./server auto check:lint --target-directory=./server --fix
+```
+
+7. **Generate and implement the frontend** (requires additional plugins):
+
+```auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
+--ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json auto implement:client --project-dir=./client --ia-scheme-dir=./.context --design-system-path=./design-system.md
+```
 
 8. **Start the application**: `pnpm start `
 
