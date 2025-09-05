@@ -82,5 +82,6 @@
     "@types/marked-terminal": "^6.1.1",
     "get-port": "^7.1.0",
     "tsx": "^4.20.3"
-  }
+  },
+  "version": "0.8.1"
 }
