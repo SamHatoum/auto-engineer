@@ -5,6 +5,7 @@ import { google } from '@ai-sdk/google';
 import { xai } from '@ai-sdk/xai';
 import { configureAIProvider } from './config';
 import { DEFAULT_MODELS, AIProvider } from './constants';
+import { createCustomProvider } from './providers/custom';
 
 export { AIProvider } from './constants';
 import { z } from 'zod';
@@ -191,6 +192,15 @@ export function getDefaultModel(provider: AIProvider): string {
     return envModel.trim();
   }
 
+  if (provider === AIProvider.Custom) {
+    const config = configureAIProvider();
+    if (config.custom != null) {
+      debugConfig('Selected custom provider default model %s for provider %s', config.custom.defaultModel, provider);
+      return config.custom.defaultModel;
+    }
+    throw new Error('Custom provider not configured');
+  }
+
   const model =
     DEFAULT_MODELS[provider] ??
     (() => {
@@ -213,6 +223,14 @@ function getModel(provider: AIProvider, model?: string) {
       return google(modelName);
     case AIProvider.XAI:
       return xai(modelName);
+    case AIProvider.Custom: {
+      const config = configureAIProvider();
+      if (config.custom == null) {
+        throw new Error('Custom provider not configured');
+      }
+      const customProvider = createCustomProvider(config.custom);
+      return customProvider.languageModel(modelName);
+    }
     default:
       throw new Error(`Unknown provider: ${provider as string}`);
   }
@@ -504,6 +522,7 @@ export function getAvailableProviders(): AIProvider[] {
   if (config.openai != null) providers.push(AIProvider.OpenAI);
   if (config.google != null) providers.push(AIProvider.Google);
   if (config.xai != null) providers.push(AIProvider.XAI);
+  if (config.custom != null) providers.push(AIProvider.Custom);
   debugConfig('Available providers: %o', providers);
   return providers;
 }

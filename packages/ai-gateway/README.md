@@ -35,6 +35,13 @@ ANTHROPIC_API_KEY=your-anthropic-key
 GEMINI_API_KEY=your-google-key
 XAI_API_KEY=your-xai-key
 
+# Custom Provider Configuration (optional)
+# Use this to connect to any OpenAI-compatible API endpoint
+CUSTOM_PROVIDER_NAME=litellm
+CUSTOM_PROVIDER_BASE_URL=https://api.litellm.ai
+CUSTOM_PROVIDER_API_KEY=your-custom-api-key
+CUSTOM_PROVIDER_DEFAULT_MODEL=claude-3-sonnet
+
 # Optional: Set default provider and model
 DEFAULT_AI_PROVIDER=openai
 DEFAULT_AI_MODEL=gpt-4o-mini
@@ -51,16 +58,69 @@ This plugin provides the following commands:
 
 ## What does this plugin do?
 
-The AI Gateway plugin provides a unified interface for interacting with multiple AI providers (OpenAI, Anthropic, Google, XAI) and integrates with the Auto Engineer ecosystem for AI-driven code generation and tool execution. It supports text generation, structured data generation, and streaming capabilities with robust error handling and debugging.
+The AI Gateway plugin provides a unified interface for interacting with multiple AI providers (OpenAI, Anthropic, Google, XAI, and Custom providers) and integrates with the Auto Engineer ecosystem for AI-driven code generation and tool execution. It supports text generation, structured data generation, and streaming capabilities with robust error handling and debugging.
+
+The plugin now includes custom provider support, enabling integration with any OpenAI-compatible API endpoint, including LiteLLM proxies, local AI models, and corporate AI services.
 
 ## Key Features
 
 ### Multi-Provider Support
 
-- Supports OpenAI, Anthropic, Google, and XAI providers
+- Supports OpenAI, Anthropic, Google, XAI, and Custom providers
 - Automatic provider selection based on environment configuration
 - Fallback to available providers if default is not configured
 - Configurable default models per provider
+
+### Custom Provider Support
+
+The AI Gateway now supports custom providers, allowing you to connect to any OpenAI-compatible API endpoint. This is particularly useful for:
+
+- **LiteLLM Proxy**: Access 100+ AI models through a single interface
+- **Local AI models**: Connect to locally hosted models (Ollama, local OpenAI servers)
+- **Corporate AI endpoints**: Use company-hosted AI services
+- **Custom AI proxies**: Route through custom authentication or processing layers
+
+#### Configuration
+
+To configure a custom provider, set all four environment variables:
+
+```bash
+CUSTOM_PROVIDER_NAME=your-provider-name
+CUSTOM_PROVIDER_BASE_URL=https://your-api-endpoint.com
+CUSTOM_PROVIDER_API_KEY=your-api-key
+CUSTOM_PROVIDER_DEFAULT_MODEL=your-default-model
+```
+
+#### Common Use Cases
+
+**LiteLLM Proxy:**
+
+```bash
+CUSTOM_PROVIDER_NAME=litellm
+CUSTOM_PROVIDER_BASE_URL=https://api.litellm.ai
+CUSTOM_PROVIDER_API_KEY=sk-litellm-your-key
+CUSTOM_PROVIDER_DEFAULT_MODEL=claude-3-sonnet
+```
+
+**Local Ollama:**
+
+```bash
+CUSTOM_PROVIDER_NAME=ollama
+CUSTOM_PROVIDER_BASE_URL=http://localhost:11434/v1
+CUSTOM_PROVIDER_API_KEY=ollama
+CUSTOM_PROVIDER_DEFAULT_MODEL=llama3.1:8b
+```
+
+**Azure OpenAI:**
+
+```bash
+CUSTOM_PROVIDER_NAME=azure
+CUSTOM_PROVIDER_BASE_URL=https://your-resource.openai.azure.com/openai/deployments
+CUSTOM_PROVIDER_API_KEY=your-azure-key
+CUSTOM_PROVIDER_DEFAULT_MODEL=gpt-4
+```
+
+The custom provider leverages the same robust OpenAI-compatible interface, ensuring full compatibility with all AI Gateway features including streaming, structured generation, and tool integration.
 
 ### Text Generation
 

@@ -1,4 +1,4 @@
-import { CommandExample, DataSink, Slice } from '@auto-engineer/flow';
+import { CommandExample, DataSink, Slice, type Example } from '@auto-engineer/flow';
 
 function resolveStreamId(stream: string, exampleData: Record<string, unknown>): string {
   return stream.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(exampleData?.[key] ?? 'unknown'));
@@ -61,7 +61,7 @@ export function getStreamFromSink(slice: Slice): { streamPattern?: string; strea
   const gwtSpecs =
     Array.isArray(rules) && rules.length > 0
       ? rules.flatMap((rule) =>
-          rule.examples.map((example) => ({
+          rule.examples.map((example: Example) => ({
             given: example.given,
             when: example.when,
             then: example.then,

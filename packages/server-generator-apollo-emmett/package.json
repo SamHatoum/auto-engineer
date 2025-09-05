@@ -1,6 +1,5 @@
 {
   "name": "@auto-engineer/server-generator-apollo-emmett",
-  "version": "0.2.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,19 +13,19 @@
     "generate:server": "tsx src/cli/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/codegen/templates && mkdir -p dist/codegen && cp -r src/codegen/templates dist/codegen/templates && cp src/server.ts dist/ && cp -r src/utils dist/ && cp -r src/domain dist/",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "type-check": "tsc --noEmit --project tsconfig.json",
     "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.tmp/**' --max-warnings 0 --config ../../eslint.config.ts",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "lint:fix": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.tmp/**' --fix --config ../../eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "link:dev": "pnpm build && pnpm link --global",
     "unlink:dev": "pnpm unlink --global",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/flow": "^0.3.0",
-    "@auto-engineer/message-bus": "^0.6.0",
+    "@auto-engineer/flow": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.2",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",
@@ -49,7 +48,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@auto-engineer/cli": "^0.8.0",
+    "@auto-engineer/cli": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/fs-extra": "^11.0.4"
   }

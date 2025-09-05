@@ -17,7 +17,7 @@
     "prepublishOnly": "npm run build",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts --ignore-pattern 'templates/**'",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore"
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn"
   },
   "keywords": [
     "auto-engineer",

@@ -1,6 +1,5 @@
 {
   "name": "@auto-engineer/design-system-importer",
-  "version": "0.7.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,13 +13,13 @@
     "start": "tsx src/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/utils/templates dist/utils/",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
-    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
     "link:dev": "pnpm build && pnpm link --global",
     "unlink:dev": "pnpm unlink --global"
   },
@@ -28,11 +27,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@auto-engineer/message-bus": "^0.6.0",
+    "@auto-engineer/message-bus": "workspace:*",
     "figma-api": "2.0.2-beta",
     "tsx": "^3.12.7"
   },
   "devDependencies": {
-    "@auto-engineer/cli": "^0.8.0"
+    "@auto-engineer/cli": "workspace:*"
   }
 }

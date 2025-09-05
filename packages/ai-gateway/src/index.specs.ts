@@ -1,6 +1,20 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { getAvailableProviders, getDefaultAIProvider, getDefaultModel } from './index';
 import { DEFAULT_MODELS, AIProvider } from './constants';
+import type { AIConfig } from './config';
+
+// Mock the config module
+vi.mock('./config', () => ({
+  configureAIProvider: vi.fn(
+    () =>
+      ({
+        anthropic: { apiKey: 'test-anthropic-key' },
+        openai: { apiKey: 'test-openai-key' },
+        google: { apiKey: 'test-google-key' },
+        xai: { apiKey: 'test-xai-key' },
+      }) as AIConfig,
+  ),
+}));
 
 describe('Provider Selection Logic', () => {
   describe('getDefaultAIProvider', () => {

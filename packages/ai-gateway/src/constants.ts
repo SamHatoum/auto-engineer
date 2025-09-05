@@ -3,6 +3,14 @@ export enum AIProvider {
   Anthropic = 'anthropic',
   Google = 'google',
   XAI = 'xai',
+  Custom = 'custom',
+}
+
+export interface CustomProviderConfig {
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  defaultModel: string;
 }
 
 export const DEFAULT_MODELS = {

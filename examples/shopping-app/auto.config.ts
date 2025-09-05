@@ -114,28 +114,28 @@ on<ServerGeneratedEvent>('ServerGenerated', (event) =>
   ]),
 );
 
-on<ServerImplementedEvent>('ServerImplemented', (event) =>
-  dispatch.parallel<CheckTypesCommand | CheckTestsCommand | CheckLintCommand>([
-    { type: 'CheckTypes', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
-    { type: 'CheckTests', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
-    { type: 'CheckLint', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
-  ]),
-);
+// on<ServerImplementedEvent>('ServerImplemented', (event) =>
+//   dispatch.parallel<CheckTypesCommand | CheckTestsCommand | CheckLintCommand>([
+//     { type: 'CheckTypes', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
+//     { type: 'CheckTests', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
+//     { type: 'CheckLint', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
+//   ]),
+// );
 
-on<IAGeneratedEvent>('IAGenerated', (event) =>
-  dispatch<ImplementClientCommand>({
-    type: 'ImplementClient',
-    data: {
-      projectDir: event.data.outputDir.replace('/.context', '/client'),
-      iaSchemeDir: event.data.outputDir,
-      designSystemPath: './.context/design-system.md',
-    },
-  }),
-);
+// on<IAGeneratedEvent>('IAGenerated', (event) =>
+//   dispatch<ImplementClientCommand>({
+//     type: 'ImplementClient',
+//     data: {
+//       projectDir: event.data.outputDir.replace('/.context', '/client'),
+//       iaSchemeDir: event.data.outputDir,
+//       designSystemPath: './.context/design-system.md',
+//     },
+//   }),
+// );
 
-on<ClientImplementedEvent>('ClientImplemented', (event) =>
-  dispatch<CheckClientCommand>({ type: 'CheckClient', data: { clientDirectory: './client', skipBrowserChecks: true } }),
-);
+// on<ClientImplementedEvent>('ClientImplemented', (event) =>
+//   dispatch<CheckClientCommand>({ type: 'CheckClient', data: { clientDirectory: './client', skipBrowserChecks: true } }),
+// );
 
 // on<ClientImplementationFailedEvent>('ClientImplementationFailed', (event) =>
 //   dispatch<ImplementClientCommand>({

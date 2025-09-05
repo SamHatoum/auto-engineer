@@ -361,7 +361,7 @@ async function generateFilesForSlice(
   debugSlice('    Commands: %d', extracted.commands.length);
   debugSlice('    Events: %d', extracted.events.length);
   debugSlice('    States: %d', extracted.states.length);
-  console.log(
+  debugSlice(
     '💡 Events for slice',
     slice.name,
     extracted.events.map((e) => e.type),
@@ -438,7 +438,6 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
     await fs.writeFile(outputPath, contents, 'utf8');
     writtenCount++;
     debugPlan('    File written successfully (%d/%d)', writtenCount, plans.length);
-    console.log(`✅ Created: ${outputPath}`);
   }
 
   debugPlan('All %d files written successfully', writtenCount);

@@ -465,28 +465,6 @@ let serverStarted = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let serverInstance: any = null; // Store server instance globally
 
-// Helper function to set command metadata on the server
-const setServerCommandMetadata = (
-  pluginLoader: PluginLoader,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  server: any,
-  commandHandlers: Record<string, unknown>,
-): void => {
-  const commands = pluginLoader.getCommands();
-  for (const [alias, command] of commands.entries()) {
-    if (commandHandlers[alias] !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      server.setCommandMetadata(alias, {
-        alias,
-        description: command.description,
-        package: command.package,
-        version: command.version,
-        category: command.category,
-      });
-    }
-  }
-};
-
 const startMessageBusServer = async (): Promise<void> => {
   if (serverStarted) {
     return;
@@ -515,39 +493,6 @@ const startMessageBusServer = async (): Promise<void> => {
   // Load message bus configuration if it exists
   if (fs.existsSync(configPath)) {
     await loadMessageBusConfig(configPath, server);
-
-    // Also try to load plugin command handlers
-    try {
-      const pluginLoader = new PluginLoader();
-      await pluginLoader.loadPlugins(configPath);
-
-      // Get the command handlers from the plugin loader's message bus
-      // and register them with the server's message bus
-      const pluginMessageBus = pluginLoader.getMessageBus();
-      const serverMessageBus = server.getMessageBus();
-
-      if (
-        pluginMessageBus !== null &&
-        pluginMessageBus !== undefined &&
-        serverMessageBus !== null &&
-        serverMessageBus !== undefined
-      ) {
-        const commandHandlers = pluginMessageBus.getCommandHandlers();
-        const handlerNames = Object.keys(commandHandlers);
-
-        debug('Transferring %d command handlers from plugins to server', handlerNames.length);
-
-        // Register each command handler with the server's tracking and message bus
-        const handlers = Object.values(commandHandlers);
-        server.registerCommandHandlers(handlers);
-        debug('Registered %d command handlers with server', handlers.length);
-
-        // Also set command metadata from the plugin loader
-        setServerCommandMetadata(pluginLoader, server, commandHandlers);
-      }
-    } catch (error) {
-      debug('Could not load plugins for server:', error);
-    }
   }
 
   // Store server instance globally for cleanup
