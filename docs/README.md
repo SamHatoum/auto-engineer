@@ -19,7 +19,11 @@ By leveraging a **plugin-based architecture**, Auto Engineer adapts to different
 
 ## Core Concepts
 
-- ...
+Auto Engineer is built around a few key primitives—flows, commands, and events—that work together to define and automate application logic in a modular, scalable way. These concepts enable developers to describe "what" an app should do, while AI-powered plugins handle "how" it's implemented.
+
+- Flows: A flow is a high-level description of a business process, like "user places an order" or "host creates a listing." It’s a sequence of steps (or "slices") that combines commands, events, and states to model how the app behaves. For example, a shopping cart flow might include a command to add an item, an event confirming the addition, and a state tracking the cart’s contents. Flows are defined in TypeScript files (e.g., in the flows/ directory) and serve as blueprints for generating code.
+- Commands: Commands are actions that trigger changes in the application, like "AddItemToCart" or "CreateListing." They represent user or system intents and carry data needed to perform the action (e.g., `{ productId: "123", quantity: 2 })`. Commands are type-safe, defined in message schemas, and processed by a command handler that decides what happens next, often producing events. Think of commands as instructions the app executes.
+- Events: Events are records of things that have happened, like "ItemAddedToCart" or "ListingCreated." They capture the outcome of a command or other system activity and are used to update the application’s state or trigger further actions. Events are immutable, type-safe, and sent via a message bus, enabling loose coupling (e.g., a payment service reacting to "OrderPlaced"). They’re defined alongside commands in message schemas.
 
 ## Features
 
