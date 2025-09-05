@@ -6,10 +6,15 @@
   "linked": [],
   "access": "public",
   "baseBranch": "main",
-  "updateInternalDependencies": "minor",
+  "updateInternalDependencies": "patch",
   "ignore": [],
+  "privatePackages": {
+    "version": true,
+    "tag": false
+  },
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "onlyUpdatePeerDependentsWhenOutOfRange": true,
-    "useCommitMessages": true
+    "useCommitMessages": true,
+    "updateInternalDependents": "always"
   }
 }
