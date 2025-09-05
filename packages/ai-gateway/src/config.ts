@@ -9,6 +9,9 @@ const debugEnv = createDebug('ai-gateway:config:env');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const TEST_CONST = 'THIS_IS_A_TEST_CONST';
+
 const envPath = resolve(__dirname, '../../../.env');
 debug('Loading environment from: %s', envPath);
 dotenv.config({ path: envPath });
