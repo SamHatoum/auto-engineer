@@ -7,8 +7,8 @@
   - You must fix the underlying issues rather than just make the checks pass
 
 - ALWAYS check everything still works after you make changes
-  - run `pnpm install` (which runs pnpm build) `pnpm check` at the top level and fix any problems
-  - fixing problems counts as a change. If you fix something, rerun `pnpm install` and `pnpm check` at the top level at the end
+  - run `pnpm check` at the top level and fix any problems
+  - fixing problems counts as a change. If you fix something, rerun `pnpm check` at the top level at the end
   - for each file not yet commited, use the IDE diagnostics tool on them to ensure the IDE is not reporting errors
 
 - ALWAYS assume you messed it up and that it was working before
