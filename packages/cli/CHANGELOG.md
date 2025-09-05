@@ -1,5 +1,15 @@
 # @auto-engineer/cli
 
+## 0.8.3
+
+### Patch Changes
+
+- 3aff24e: bump version up
+- version bump
+- Updated dependencies [3aff24e]
+- Updated dependencies
+  - @auto-engineer/message-bus@0.8.3
+
 ## 0.8.2
 
 ### Patch Changes

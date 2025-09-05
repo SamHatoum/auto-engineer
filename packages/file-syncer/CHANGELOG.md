@@ -1,5 +1,15 @@
 # @auto-engineer/file-syncer
 
+## 0.8.3
+
+### Patch Changes
+
+- Updated dependencies [3aff24e]
+- Updated dependencies
+  - @auto-engineer/message-bus@0.8.3
+  - @auto-engineer/flow@0.8.3
+  - @auto-engineer/file-store@0.8.3
+
 ## 0.8.2
 
 ### Patch Changes
