@@ -20,13 +20,13 @@ Before installing Auto Engineer, ensure you have the following:
 
 Auto Engineer uses a plugin-based architecture, allowing you to install only the components you need. Follow these steps to set up a new project:
 
-1. **Install the Auto Engineer CLI globally**: `bash pnpm install -g @auto-engineer/cli@latest `
+1. **Install the Auto Engineer CLI globally**: `pnpm install -g @auto-engineer/cli@latest `
 
-2. **Create a new project directory**: `bash mkdir my-app && cd my-app `
+2. **Create a new project directory**: `mkdir my-app && cd my-app`
 
-3. **Install required plugins**: For a typical setup, install the core plugins: ``bash pnpm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett \`\`\` To include additional functionality, such as frontend generation, install: \`\`\`bash pnpm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/server-implementer ``
+3. **Install required plugins**: For a typical setup, install the core plugins: `pnpm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett` To include additional functionality, such as frontend generation, install: `pnpm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/server-implementer`
 
-4. **Configure API keys**: Create a `.env` file in your project root and add your API keys: `bash echo "ANTHROPIC_API_KEY=your-key-here" &gt; .env `
+4. **Configure API keys**: Create a `.env` file in your project root and add your API keys: `echo "ANTHROPIC_API_KEY=your-key-here" &gt; .env `
 
 ### Next Steps
 
@@ -42,23 +42,23 @@ Ensure you have completed the Installation steps, including installing Node.js, 
 
 ### Creating Your First App
 
-1. **Create a new example project**: `bash auto create:example --name=shopping-assistant `
+1. **Create a new example project**: `auto create:example --name=shopping-assistant `
 
-2. **Navigate to the project directory**: `bash cd shopping-assistant `
+2. **Navigate to the project directory**: `cd shopping-assistant `
 
-3. **Install dependencies**: `bash pnpm install `
+3. **Install dependencies**: `pnpm install `
 
-4. **Export flow schemas**: `bash auto export:schema --output-dir=./.context --directory=./flows `
+4. **Export flow schemas**: `auto export:schema --output-dir=./.context --directory=./flows `
 
-5. **Generate and implement the server**: `bash auto generate:server --schema-path=.context/schema.json --destination=. auto implement:server --server-directory=./server `
+5. **Generate and implement the server**: `auto generate:server --schema-path=.context/schema.json --destination=. auto implement:server --server-directory=./server `
 
-6. **Run server validation**: `bash auto check:types --target-directory=./server auto check:tests --target-directory=./server auto check:lint --target-directory=./server --fix `
+6. **Run server validation**: `auto check:types --target-directory=./server auto check:tests --target-directory=./server auto check:lint --target-directory=./server --fix `
 
-7. **Generate and implement the frontend** (requires additional plugins): `bash auto generate:ia --output-dir=./.context --flow-files=./flows/\*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
+7. **Generate and implement the frontend** (requires additional plugins): `auto generate:ia --output-dir=./.context --flow-files=./flows/\*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
 --ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json auto implement:client --project-dir=./client --ia-scheme-dir=./.context \
 --design-system-path=./design-system.md `
 
-8. **Start the application**: `bash pnpm start `
+8. **Start the application**: `pnpm start `
 
 ### Next Steps
 
@@ -74,7 +74,18 @@ Auto Engineer uses a configuration file, `auto.config.ts`, to define plugins and
 
 In your project root, create an `auto.config.ts` file with the following structure:
 
-`typescript export default { plugins: \[ '@auto-engineer/flow', '@auto-engineer/server-generator-apollo-emmett', '@auto-engineer/server-implementer', '@auto-engineer/frontend-generator-react-graphql', \], aliases: { // Optional: Override command aliases if conflicts arise // 'command:name': '@auto-engineer/package-name' }, }; `
+```typescript
+export default {
+  plugins: [
+    '@auto-engineer/flow',
+    '@auto-engineer/server-generator-apollo-emmett',
+    '@auto-engineer/server-implementer',
+  ],
+  aliases: {
+    // Optional: Override command aliases if conflicts arise // 'command:name': '@auto-engineer/package-name'
+  },
+};
+```
 
 #### Key Configuration Options
 
@@ -85,7 +96,14 @@ In your project root, create an `auto.config.ts` file with the following structu
 
 If multiple plugins register the same command alias, Auto Engineer will display an error. To resolve this, add an alias override in the `aliases` section of `auto.config.ts`. For example:
 
-`typescript export default { plugins: \[ '@auto-engineer/package-a', '@auto-engineer/package-b', \], aliases: { 'conflicting:command': '@auto-engineer/package-a', }, }; `
+```typescript
+export default {
+  plugins: ['@auto-engineer/package-a', '@auto-engineer/package-b'],
+  aliases: {
+    'conflicting:command': '@auto-engineer/package-a',
+  },
+};
+```
 
 ### Next Steps
 
