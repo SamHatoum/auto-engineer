@@ -46,6 +46,10 @@
       "cache": false,
       "persistent": true
     },
+    "dev:core": {
+      "cache": false,
+      "persistent": true
+    },
     "clean": {
       "cache": false
     },

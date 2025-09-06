@@ -11,6 +11,7 @@
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "build:core": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
+    "dev:core": "tsc --watch",
     "clean": "rm -rf dist",
     "test": "vitest run --reporter=dot",
     "test:watch": "vitest",
