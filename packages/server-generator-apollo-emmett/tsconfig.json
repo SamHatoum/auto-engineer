@@ -7,5 +7,7 @@
     "experimentalDecorators": true,
     "types": ["node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../message-bus" }]
 }
