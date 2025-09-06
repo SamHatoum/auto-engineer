@@ -17,7 +17,6 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/generator/templates dist/generator/",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",

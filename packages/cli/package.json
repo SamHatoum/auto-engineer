@@ -34,7 +34,6 @@
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && chmod +x dist/bin/auto.js && cp -r src/server/*.html src/server/*.svg dist/src/server/ 2>/dev/null || true",
     "build:tsx": "echo 'Using tsx runtime, no build needed'",
-    "dev": "node scripts/watch.js",
     "test": "vitest run --reporter=dot",
     "test:watch": "vitest",
     "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --max-warnings 0 --config ../../eslint.config.ts",

@@ -12,7 +12,6 @@
   "scripts": {
     "generate:server": "tsx src/cli/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && rm -rf dist/codegen/templates && mkdir -p dist/codegen && cp -r src/codegen/templates dist/codegen/templates && cp src/server.ts dist/ && cp -r src/utils dist/ && cp -r src/domain dist/",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "type-check": "tsc --noEmit --project tsconfig.json",
     "lint": "eslint 'src/**/*.ts' --ignore-pattern '**/*.specs.ts' --ignore-pattern '**/.tmp/**' --max-warnings 0 --config ../../eslint.config.ts",

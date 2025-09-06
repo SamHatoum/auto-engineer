@@ -3,8 +3,8 @@
   "version": "0.8.4",
   "type": "module",
   "scripts": {
-    "build": "turbo run build:core --filter='@auto-engineer/message-bus' --filter='@auto-engineer/ai-gateway' --filter='@auto-engineer/file-store' --filter='@auto-engineer/flow' && npx turbo run build",
-    "dev": "turbo run build:core --filter='@auto-engineer/message-bus' --filter='@auto-engineer/ai-gateway' --filter='@auto-engineer/file-store' --filter='@auto-engineer/flow' && npx turbo run dev --filter='./packages/*' --filter='./examples/*' --concurrency=20",
+    "build": "turbo run build",
+    "watch": "turbo watch build",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
