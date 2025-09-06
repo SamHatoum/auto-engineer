@@ -39,8 +39,9 @@ jobs:
           version: 8.15.4
 
       - name: Install Dependencies
-        run: pnpm install --no-frozen-lockfile
-        run: pnpm build
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm build
 
       - name: Update lockfile if needed
         run: |
