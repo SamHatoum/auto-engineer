@@ -1,3 +1,3 @@
 export * from './ai-integration';
 export * from './cart-integration';
-export * from './product-catalogue-integration';
+export * from './product-catalogue';
