@@ -131,6 +131,9 @@ importers:
       '@auto-engineer/server-implementer':
         specifier: workspace:*
         version: link:../../packages/server-implementer
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^24.3.1

@@ -5,7 +5,9 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "build:core": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
+    "dev:core": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",

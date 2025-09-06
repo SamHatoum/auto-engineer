@@ -4,6 +4,7 @@ import { execSync } from 'child_process';
 
 const commands = [
   'rm -rf node_modules',
+  'rm -rf packages/**/dist',
   'rm -rf packages/*/node_modules',
   'rm -rf apps/*/node_modules',
   'rm -rf .pnpm-store',
@@ -15,7 +16,6 @@ const commands = [
   'find . -type d -name "build" -exec rm -rf {} +',
   'find . -name "*.tsbuildinfo" -delete',
   'find . -type d -name ".cache" -exec rm -rf {} +',
-  'pnpm install',
 ];
 
 commands.forEach((cmd) => {

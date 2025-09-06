@@ -1,4 +1,4 @@
-import { CommandExample, DataSink, Slice, type Example } from '@auto-engineer/flow';
+import { CommandExample, Slice, type Example } from '@auto-engineer/flow';
 
 function resolveStreamId(stream: string, exampleData: Record<string, unknown>): string {
   return stream.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(exampleData?.[key] ?? 'unknown'));
@@ -49,33 +49,59 @@ function extractExampleDataFromSpecs(
   }
 }
 
-function findStreamSink(slice: Slice): DataSink | undefined {
-  return (slice.server?.data ?? []).find((item) => (item as DataSink)?.destination?.type === 'stream') as
-    | DataSink
-    | undefined;
+function extractGwtSpecs(slice: Slice) {
+  const specs = slice.server?.specs;
+  const rules = specs?.rules;
+  return Array.isArray(rules) && rules.length > 0
+    ? rules.flatMap((rule) =>
+        rule.examples.map((example: Example) => ({
+          given: example.given,
+          when: example.when,
+          then: example.then,
+        })),
+      )
+    : [];
+}
+
+function isValidStreamSink(item: unknown): item is { destination: { pattern: string } } {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    'destination' in item &&
+    typeof item.destination === 'object' &&
+    item.destination !== null &&
+    'type' in item.destination &&
+    item.destination.type === 'stream' &&
+    'pattern' in item.destination &&
+    typeof item.destination.pattern === 'string'
+  );
+}
+
+function processStreamSink(item: unknown, exampleData: Record<string, unknown>) {
+  if (!isValidStreamSink(item)) {
+    return null;
+  }
+
+  const streamPattern = item.destination.pattern;
+  const streamId = streamPattern.length > 0 ? resolveStreamId(streamPattern, exampleData) : undefined;
+
+  return { streamPattern, streamId };
 }
 
 export function getStreamFromSink(slice: Slice): { streamPattern?: string; streamId?: string } {
-  const specs = slice.server?.specs;
-  const rules = specs?.rules;
-  const gwtSpecs =
-    Array.isArray(rules) && rules.length > 0
-      ? rules.flatMap((rule) =>
-          rule.examples.map((example: Example) => ({
-            given: example.given,
-            when: example.when,
-            then: example.then,
-          })),
-        )
-      : [];
-
+  const gwtSpecs = extractGwtSpecs(slice);
   const exampleData = extractExampleDataFromSpecs(slice, gwtSpecs);
-  const sink = findStreamSink(slice);
+  const serverData = slice.server?.data;
 
-  if (sink && sink.destination.type === 'stream' && 'pattern' in sink.destination) {
-    const streamPattern = sink.destination.pattern;
-    const streamId = streamPattern ? resolveStreamId(streamPattern, exampleData) : undefined;
-    return { streamPattern, streamId };
+  if (!Array.isArray(serverData)) {
+    return {};
+  }
+
+  for (const item of serverData) {
+    const result = processStreamSink(item, exampleData);
+    if (result) {
+      return result;
+    }
   }
 
   return {};

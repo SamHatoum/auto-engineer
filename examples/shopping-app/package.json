@@ -5,7 +5,7 @@
   "scripts": {
     "auto": "auto",
     "start": "dotenv -e .env -- pnpm --parallel start",
-    "build": "pnpm --parallel build",
+    "build": "tsc",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",
     "start:product-api": "cd examples/product-catalogue-api && pnpm start",
     "start:cart-api": "cd examples/cart-api && pnpm start",
@@ -22,7 +22,8 @@
     "@auto-engineer/message-bus": "workspace:*",
     "@auto-engineer/server-checks": "workspace:*",
     "@auto-engineer/server-generator-apollo-emmett": "workspace:*",
-    "@auto-engineer/server-implementer": "workspace:*"
+    "@auto-engineer/server-implementer": "workspace:*",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.3.1",

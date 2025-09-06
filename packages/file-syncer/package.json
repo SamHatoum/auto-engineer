@@ -9,7 +9,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "start:server": "DEBUG=flow:*,ai-gateway:mcp* tsx src/index.ts ../../../shop/flows",
+    "start:server": "DEBUG=flow:*,ai-gateway:mcp* tsx src/index.ts ../../examples/shopping-app",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
     "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
