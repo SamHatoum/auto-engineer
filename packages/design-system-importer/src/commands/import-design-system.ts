@@ -32,7 +32,7 @@ export type DesignSystemImportFailedEvent = Event<
   }
 >;
 
-export const commandHandler = defineCommandHandler<ImportDesignSystemCommand>({
+export const commandHandler = defineCommandHandler({
   name: 'ImportDesignSystem',
   alias: 'import:design-system',
   description: 'Import Figma design system',

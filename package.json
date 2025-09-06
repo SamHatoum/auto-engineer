@@ -3,7 +3,7 @@
   "version": "0.8.4",
   "type": "module",
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build:core --filter='@auto-engineer/message-bus' --filter='@auto-engineer/ai-gateway' && turbo run build",
     "dev": "turbo run dev --filter='./packages/*' --filter='./examples/*' --concurrency=20",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
@@ -11,8 +11,9 @@
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore --log-level warn",
-    "check": "pnpm i && turbo run lint format type-check test",
+    "check": "pnpm i && pnpm build && turbo run lint format type-check test",
     "clean": "tsx scripts/clean.ts",
+    "clean:check": "tsx scripts/clean.ts && pnpm check",
     "reset": "pnpm clean && pnpm install && pnpm build",
     "link:dev": "pnpm --filter @auto-engineer/* run link:dev",
     "unlink:dev": "pnpm --filter @auto-engineer/* run unlink:dev",
@@ -21,7 +22,6 @@
     "version": "changeset version && pnpm changeset:prepare-changelog",
     "release": "pnpm publish -r",
     "prepare": "husky",
-    "install": "turbo run install build",
     "update:auto": "node scripts/clean-global-auto.js && rm -rf $(pnpm root -g) && pnpm i -g @auto-engineer/cli@latest",
     "kill:auto": "lsof -ti:5555 | xargs kill -9 2>/dev/null"
   },

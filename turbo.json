@@ -6,6 +6,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"]
     },
+    "build:core": {
+      "dependsOn": [],
+      "outputs": ["dist/**"]
+    },
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts"]
