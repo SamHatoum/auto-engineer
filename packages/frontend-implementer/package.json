@@ -12,7 +12,6 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp src/*.html dist/src/ 2>/dev/null || true",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "ai-agent": "tsx -r dotenv/config src/agent-cli.ts",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",

@@ -12,7 +12,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --ignore-pattern 'src/generated/**/*' --max-warnings 0 --config ./eslint.config.ts",
     "type-check": "tsc --noEmit",

@@ -11,7 +11,6 @@
   },
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp src/auto-ux-schema.json dist/",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",

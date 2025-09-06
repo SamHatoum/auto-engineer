@@ -12,9 +12,8 @@
   ],
   "scripts": {
     "copy-templates": "rm -rf templates/shopping-app && rsync -av --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' ../../examples/shopping-app/ templates/shopping-app/",
-    "build": "pnpm run copy-templates && tsc && chmod +x dist/index.js",
-    "dev": "tsc --watch",
-    "prepublishOnly": "pnpm run build",
+    "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
+    "prepublishOnly": "npm run build",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts --ignore-pattern 'templates/**'",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn"
