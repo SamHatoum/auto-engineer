@@ -43,7 +43,7 @@ jobs:
 
       - name: Update lockfile if needed
         run: |
-          if ! git diff --exit-code pnpm-lock.yaml; then
+          if ! git diff --exit-code pnpm-lock.yaml >/dev/null 2>&1; then
             echo "Lockfile was updated during install"
             git config --global user.name "github-actions[bot]"
             git config --global user.email "github-actions[bot]@users.noreply.github.com"
