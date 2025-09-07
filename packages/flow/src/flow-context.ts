@@ -156,13 +156,14 @@ function stripTypeDiscriminator(items: DataItem[]): (DataSink | DataSource)[] {
   });
 }
 
-export function recordRule(description: string): void {
+export function recordRule(description: string, id?: string): void {
   if (!context || context.currentSpecIndex === null) throw new Error('No active spec context');
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
 
   const spec = slice.server.specs;
   spec.rules.push({
+    id,
     description,
     examples: [],
   });
