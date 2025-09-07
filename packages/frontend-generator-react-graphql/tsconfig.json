@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "outDir": "./dist"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "mui-starter", "shadcn-starter"],

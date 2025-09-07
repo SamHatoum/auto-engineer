@@ -2,11 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "composite": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "types": ["node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../message-bus" }]
 }

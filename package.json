@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "watch": "turbo watch build",
+    "watch": "turbo watch build auto",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
@@ -13,8 +13,7 @@
     "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path .prettierignore --log-level warn",
     "check": "pnpm i && pnpm build && turbo run lint format type-check test",
     "clean": "tsx scripts/clean.ts",
-    "clean:check": "tsx scripts/clean.ts && pnpm check",
-    "reset": "pnpm clean && pnpm install && pnpm build",
+    "clean:check": "pnpm clean && pnpm check",
     "link:dev": "pnpm --filter @auto-engineer/* run link:dev",
     "unlink:dev": "pnpm --filter @auto-engineer/* run unlink:dev",
     "changeset": "changeset",

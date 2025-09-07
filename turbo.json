@@ -2,6 +2,10 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
+    "auto": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts", ".env.*local"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"]
