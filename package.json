@@ -5,6 +5,7 @@
   "scripts": {
     "build": "turbo run build",
     "watch": "turbo watch build auto",
+    "watch:debug": "turbo watch build auto:debug",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",

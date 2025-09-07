@@ -1,4 +1,7 @@
 import path from 'path';
+import createDebug from 'debug';
+
+const debug = createDebug('cli:file-syncer:path');
 
 export const posix = (p: string) => p.split(path.sep).join('/');
 
@@ -7,19 +10,18 @@ export function toWirePath(abs: string, projectRoot: string) {
 
   // If path is outside project root (starts with ..), remap to virtual path
   if (rel.startsWith('..')) {
-    console.warn(`[sync] ⚠ toWirePath: abs is outside projectRoot. abs=${abs}`);
+    debug('toWirePath: abs is outside projectRoot. abs=%s', abs);
 
     // Check if it's in node_modules
     const nodeModulesMatch = abs.match(/.*\/node_modules\/(.*)/);
     if (nodeModulesMatch) {
-      // Remap to virtual /.external/node_modules/ path to avoid Lightning FS traversal error
+      // Remap to virtual /.external/node_modules/ path to avoid traversal error
       let modulePath = nodeModulesMatch[1];
 
       // Normalize path by removing redundant ./  segments
       modulePath = modulePath.replace(/\/\.\//g, '/').replace(/^\.\//, '');
 
       const wire = `/.external/node_modules/${modulePath}`.split(path.sep).join('/');
-      console.log(`[sync] Remapped external path to: ${wire}`);
       cacheWireMapping(wire, abs); // Cache for reverse mapping
       return wire;
     }
@@ -31,7 +33,7 @@ export function toWirePath(abs: string, projectRoot: string) {
       .substring(0, 16);
     const fileName = path.basename(abs);
     const wire = `/.external/other/${hash}_${fileName}`;
-    console.log(`[sync] Remapped external path to: ${wire}`);
+    debug('Remapped external path to: %s', wire);
     cacheWireMapping(wire, abs); // Cache for reverse mapping
     return wire;
   }
@@ -45,9 +47,8 @@ export function sample<T>(arr: T[], n = 5) {
   return arr.slice(0, n);
 }
 
-export function logArray(label: string, arr: string[], n = 5) {
-  console.log(`[sync] ${label}: count=${arr.length}`);
-  if (arr.length) console.log(`  ${label} sample:`, sample(arr, n));
+export function logArray(label: string, arr: string[], _n = 5) {
+  // Utility function for debugging - kept for potential future use
 }
 
 export function uniq<T>(arr: T[]): T[] {
@@ -65,7 +66,6 @@ export function rebuildWirePathCache(files: Array<{ abs: string; projectRoot: st
     toWirePath(abs, projectRoot);
     // Cache will be populated automatically by toWirePath for external paths
   }
-  console.log(`[sync] Rebuilt wire path cache with ${wirePathToAbsCache.size} external mappings`);
 }
 
 export function fromWirePath(wirePath: string, projectRoot: string): string {
@@ -77,7 +77,7 @@ export function fromWirePath(wirePath: string, projectRoot: string): string {
       return cached;
     }
     // Can't reverse map without cache - this shouldn't happen in practice
-    console.warn(`[sync] Cannot reverse map virtual path: ${wirePath}`);
+    debug('⚠ Cannot reverse map virtual path: %s', wirePath);
     return path.join(projectRoot, wirePath.substring(1)); // Fallback
   }
 

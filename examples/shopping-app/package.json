@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "auto": "auto",
+    "auto:debug": "DEBUG=flow:*,cli:* auto",
     "start": "dotenv -e .env -- pnpm --parallel start",
     "build": "tsc",
     "start:ecommerce-site": "cd examples/ecommerce-site && pnpm start",

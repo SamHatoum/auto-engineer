@@ -4,7 +4,15 @@
   "tasks": {
     "auto": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts", ".env.*local"]
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts", ".env.*local"],
+      "cache": false,
+      "persistent": true
+    },
+    "auto:debug": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts", ".env.*local"],
+      "cache": false,
+      "persistent": true
     },
     "build": {
       "dependsOn": ["^build"],

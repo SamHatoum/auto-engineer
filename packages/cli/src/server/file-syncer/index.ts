@@ -1,11 +1,14 @@
 import chokidar from 'chokidar';
 import path from 'path';
 import type { Server as SocketIOServer } from 'socket.io';
+import createDebug from 'debug';
 import { NodeFileStore } from '@auto-engineer/file-store';
 import { computeDesiredSet } from './sync/computeDesiredSet';
 import { md5, readBase64, statSize } from './utils/hash';
 import { toWirePath, fromWirePath, rebuildWirePathCache } from './utils/path';
 import type { WireChange, WireInitial } from './types/wire';
+
+const debug = createDebug('cli:file-syncer');
 
 type FileMeta = { hash: string; size: number };
 
@@ -34,22 +37,17 @@ export class FileSyncer {
       const now = Date.now();
       // Cache computeDesiredSet results for 1 second to prevent rapid repeated calls
       if (this.cachedDesiredSet && now - this.lastComputeTime < 1000) {
-        console.log(`[sync] Using cached desired set (${this.cachedDesiredSet.size} files)`);
         return this.cachedDesiredSet;
       }
 
-      console.log(`[sync] Computing desired set...`);
       const result = await computeDesiredSet({ vfs: this.vfs, watchDir: this.watchDir, projectRoot: this.projectRoot });
       this.cachedDesiredSet = result;
       this.lastComputeTime = now;
-      console.log(`[sync] Computed ${result.size} desired files`);
       return result;
     };
 
     const initialFiles = async (): Promise<WireInitial> => {
-      console.log(`[sync] initialFiles() called - active size before: ${this.active.size}`);
       const desired = await compute();
-      console.log(`[sync] initialFiles() - computed ${desired.size} desired files`);
 
       const files: WireInitial['files'] = [];
       for (const abs of desired) {
@@ -67,10 +65,8 @@ export class FileSyncer {
         }
         this.active.set(abs, { hash, size });
         files.push({ path: wire, content });
-        console.log(`[sync] Successfully processed file: ${wire} (${size} bytes)`);
       }
       files.sort((a, b) => a.path.localeCompare(b.path));
-      console.log(`[sync] initialFiles() - active size after: ${this.active.size}, returning ${files.length} files`);
       return { files, directory: path.resolve(this.watchDir) };
     };
 
@@ -124,7 +120,7 @@ export class FileSyncer {
         const files = outgoing
           .map((o) => ({ path: o.path, content: o.content! }))
           .sort((a, b) => a.path.localeCompare(b.path));
-        console.log(`[sync] REHYDRATE: Sending initial-sync with ${files.length} files`);
+        debug('REHYDRATE: Sending initial-sync with %d files', files.length);
         this.io.emit('initial-sync', { files, directory: path.resolve(this.watchDir) });
         return true;
       }
@@ -132,12 +128,10 @@ export class FileSyncer {
     };
 
     const rebuildAndBroadcast = async (): Promise<void> => {
-      console.log(`[sync] rebuildAndBroadcast called - activeSizeBefore: ${this.active.size}`);
       const desired = await compute();
       const activeSizeBefore = this.active.size;
       const outgoing = await computeChanges(desired);
       const toDelete = computeDeletions(desired);
-      console.log(`[sync] Changes: ${outgoing.length} outgoing, ${toDelete.length} deletions`);
 
       for (const ch of toDelete) {
         this.io.emit('file-change', ch);
@@ -147,11 +141,8 @@ export class FileSyncer {
       if (handleRehydration(activeSizeBefore, outgoing, desired)) return;
 
       // otherwise: normal incremental flow
-      if (outgoing.length > 0) {
-        console.log(`[sync] INCREMENTAL: Sending ${outgoing.length} file-change events`);
-        for (const ch of outgoing) {
-          this.io.emit('file-change', ch);
-        }
+      for (const ch of outgoing) {
+        this.io.emit('file-change', ch);
       }
     };
 
@@ -165,24 +156,19 @@ export class FileSyncer {
 
     this.watcher = chokidar.watch([this.watchDir], { ignoreInitial: true, persistent: true });
     this.watcher
-      .on('add', (filePath) => {
-        console.log(`[sync] Watcher ADD: ${filePath}`);
+      .on('add', (_filePath) => {
         scheduleRebuild();
       })
-      .on('change', (filePath) => {
-        console.log(`[sync] Watcher CHANGE: ${filePath}`);
+      .on('change', (_filePath) => {
         scheduleRebuild();
       })
-      .on('unlink', (filePath) => {
-        console.log(`[sync] Watcher UNLINK: ${filePath}`);
+      .on('unlink', (_filePath) => {
         scheduleRebuild();
       })
-      .on('addDir', (dirPath) => {
-        console.log(`[sync] Watcher ADD_DIR: ${dirPath}`);
+      .on('addDir', (_dirPath) => {
         scheduleRebuild();
       })
-      .on('unlinkDir', (dirPath) => {
-        console.log(`[sync] Watcher UNLINK_DIR: ${dirPath}`);
+      .on('unlinkDir', (_dirPath) => {
         scheduleRebuild();
       })
       .on('error', (err) => console.error('[watcher]', err));
@@ -191,24 +177,11 @@ export class FileSyncer {
       try {
         // Deduplicate concurrent initialFiles calls by reusing pending promise
         if (this.pendingInitialFiles) {
-          console.log(`[sync] Reusing pending initialFiles call for new connection`);
           const init = await this.pendingInitialFiles;
           socket.emit('initial-sync', init);
-          console.log(`[sync] Initial sync sent to browser (reused) - ${init.files.length} files`);
-          console.log(`[sync] Files type check (reused):`, typeof init.files, Array.isArray(init.files));
-          try {
-            console.log(
-              `[sync] Files sent to browser (reused):`,
-              init.files.map((f) => `${f.path} (${f.content?.length || 'no content'} chars)`),
-            );
-          } catch (e) {
-            console.error(`[sync] Error logging files (reused):`, e);
-            console.log(`[sync] Files array (reused):`, init.files);
-          }
           return;
         }
 
-        console.log(`[sync] Starting new initialFiles call for connection`);
         this.pendingInitialFiles = initialFiles();
         const init = await this.pendingInitialFiles;
         this.pendingInitialFiles = null; // Clear after completion
@@ -218,17 +191,6 @@ export class FileSyncer {
         rebuildWirePathCache(files);
 
         socket.emit('initial-sync', init);
-        console.log(`[sync] Initial sync sent to browser - ${init.files.length} files`);
-        console.log(`[sync] Files type check:`, typeof init.files, Array.isArray(init.files));
-        try {
-          console.log(
-            `[sync] Files sent to browser:`,
-            init.files.map((f) => `${f.path} (${f.content?.length || 'no content'} chars)`),
-          );
-        } catch (e) {
-          console.error(`[sync] Error logging files:`, e);
-          console.log(`[sync] Files array:`, init.files);
-        }
       } catch (e) {
         console.error('[sync] initial-sync failed:', e);
         this.pendingInitialFiles = null; // Clear on error
