@@ -128,6 +128,13 @@ export function registerTool<T extends Record<string, unknown> = Record<string, 
     throw new Error('Cannot register tools after server has started');
   }
 
+  // Check if tool is already registered to avoid duplicate registration errors
+  if (toolRegistry.has(name)) {
+    debugRegistry('Tool %s is already registered, skipping registration', name);
+    console.log(`Tool ${name} is already registered, skipping registration. Total tools: ${toolRegistry.size}`);
+    return;
+  }
+
   const mcpHandler = createMcpHandler(handler);
   const aiSdkTool = createAiSdkTool(description, handler as ToolHandler<Record<string, unknown>>);
 
@@ -139,7 +146,19 @@ export function registerTool<T extends Record<string, unknown> = Record<string, 
   };
 
   toolRegistry.set(name, registeredTool);
-  server.registerTool(name, description, mcpHandler);
+
+  // Try to register with the underlying server, but catch and ignore duplicate registration errors
+  try {
+    server.registerTool(name, description, mcpHandler);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('already registered')) {
+      debugRegistry('Tool %s already registered in underlying server, ignoring error', name);
+      console.log(`⚠️ Tool ${name} already registered in underlying server, ignoring duplicate registration error`);
+    } else {
+      // Re-throw any other errors
+      throw error;
+    }
+  }
   debugRegistry('Tool %s registered successfully. Total tools: %d', name, toolRegistry.size);
   console.log(`✅ Tool ${name} registered successfully. Total tools: ${toolRegistry.size}`);
 }
