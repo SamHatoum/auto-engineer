@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",
-    "typescript-eslint": "^7.0.0",
-    "vitest": "^3.2.4"
+    "typescript-eslint": "^7.0.0"
   }
 }

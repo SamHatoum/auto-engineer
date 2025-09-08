@@ -5,7 +5,15 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/*.specs.{js,ts}'],
-    exclude: ['**/.tmp/**', '**/node_modules/**', '**/dist/**'],
+    exclude: [
+      '**/.tmp/**',
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/examples/**',
+      '**/templates/**',
+      '**/*-starter/**',
+      '**/vite.config.ts',
+    ],
     passWithNoTests: true,
   },
 });
