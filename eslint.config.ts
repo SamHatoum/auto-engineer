@@ -2,25 +2,13 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  {
-    ignores: [
-      '**/eslint.config.ts',
-      '**/eslint.config.js',
-      'scripts/clean.ts',
-      'scripts/clean-global-auto.js',
-      'scripts/fix-esm-imports.ts',
-      '**/bin/**/*',
-      '**/dist/**/*',
-      '**/node_modules/**/*',
-    ],
-  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  // ...tseslint.configs.strictTypeChecked,
   {
     languageOptions: {
       parserOptions: {
         project: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {},
@@ -44,6 +32,18 @@ export default tseslint.config(
       '@typescript-eslint/restrict-plus-operands': 'error',
       '@typescript-eslint/restrict-template-expressions': 'error',
       '@typescript-eslint/unbound-method': 'error',
+    },
+  },
+  {
+    files: ['**/*.specs.ts', '**/*.spec.ts', '**/*.test.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: ['**/tsconfig.test.json', '**/tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      complexity: ['error', { max: 15 }],
     },
   },
 );
