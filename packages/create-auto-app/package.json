@@ -11,7 +11,7 @@
     "templates"
   ],
   "scripts": {
-    "copy-templates": "rm -rf templates/shopping-app && rsync -av --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' ../../examples/shopping-app/ templates/shopping-app/",
+    "copy-templates": "rm -rf templates/shopping-app && rsync -a --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' --exclude='**/*.js' --exclude='**/*.js.map' ../../examples/shopping-app/ templates/shopping-app/",
     "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
     "prepublishOnly": "npm run build",
     "type-check": "tsc --noEmit",
