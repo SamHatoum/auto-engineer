@@ -20,7 +20,23 @@ Before installing Auto Engineer, ensure you have the following:
 
 Auto Engineer uses a plugin-based architecture, allowing you to install only the components you need. Follow these steps to set up a new project:
 
-1. **Install the Auto Engineer CLI globally**: `pnpm install -g @auto-engineer/cli@latest `
+1. **Install the Auto Engineer CLI globally**:
+   {% tabs %}
+   {% tab title="pnpm" %}
+
+```bash
+pnpm install -g @auto-engineer/cli@latest
+```
+
+{% endtab %}
+{% tab title="npm" %}
+
+```bash
+pnpm install -g @auto-engineer/cli@latest
+```
+
+{% endtab %}
+{% endtabs %}
 
 2. **Create a new project directory**: `mkdir my-app && cd my-app`
 
