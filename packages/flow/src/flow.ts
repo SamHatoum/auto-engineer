@@ -74,10 +74,15 @@ export const specs = (description: string, fn: () => void) => {
   fn();
 };
 
-export const rule = (description: string, fn: () => void) => {
-  recordRule(description);
-  fn();
-};
+export function rule(description: string, fn: () => void): void;
+export function rule(description: string, id: string, fn: () => void): void;
+export function rule(description: string, idOrFn: string | (() => void), fn?: () => void): void {
+  const id = typeof idOrFn === 'string' ? idOrFn : undefined;
+  const callback = typeof idOrFn === 'function' ? idOrFn : fn!;
+
+  recordRule(description, id);
+  callback();
+}
 
 export const example = (description: string) => {
   recordExample(description);

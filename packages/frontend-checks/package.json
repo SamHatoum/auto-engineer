@@ -1,12 +1,12 @@
 {
   "name": "@auto-engineer/frontend-checks",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,7 +16,6 @@
   ],
   "scripts": {
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
     "type-check": "tsc --noEmit",

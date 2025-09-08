@@ -119,8 +119,9 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
     };
 
     try {
+      const codeWithShim = 'var r = require; var __require = require;\n' + mod.js;
       // eslint-disable-next-line @typescript-eslint/no-implied-eval
-      const fn = new Function('require', 'module', 'exports', '__filename', '__dirname', mod.js) as (
+      const fn = new Function('require', 'module', 'exports', '__filename', '__dirname', codeWithShim) as (
         req: (s: string) => unknown,
         module: { exports: Record<string, unknown> },
         exports: Record<string, unknown>,
@@ -128,7 +129,6 @@ export function runGraph(entryFiles: string[], graph: Graph): void {
         __dirname: string,
       ) => void;
 
-      // Expose current module path so startFlow() can capture it
       const prev = (globalThis as Record<string, unknown>).__aeCurrentModulePath;
       try {
         (globalThis as Record<string, unknown>).__aeCurrentModulePath = path;

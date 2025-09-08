@@ -22,7 +22,6 @@
   },
   "scripts": {
     "build": "tsx scripts/build.ts",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "lint": "eslint '{src,scripts}/**/*.ts' --max-warnings 0 --config ./eslint.config.ts",
     "type-check": "tsc --noEmit",

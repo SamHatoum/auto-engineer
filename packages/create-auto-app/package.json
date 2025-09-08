@@ -1,5 +1,5 @@
 {
-  "name": "@auto-engineer/create-auto-app",
+  "name": "create-auto-app",
   "version": "0.8.4",
   "description": "Create Auto Engineer apps with no configuration",
   "type": "module",
@@ -13,7 +13,6 @@
   "scripts": {
     "copy-templates": "rm -rf templates/shopping-app && rsync -av --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' ../../examples/shopping-app/ templates/shopping-app/",
     "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
-    "dev": "tsc --watch",
     "prepublishOnly": "npm run build",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts --ignore-pattern 'templates/**'",

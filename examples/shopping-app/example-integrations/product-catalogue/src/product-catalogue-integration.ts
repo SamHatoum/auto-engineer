@@ -1,5 +1,4 @@
 import type { State, Integration } from '@auto-engineer/flow';
-import { registerTool, z } from '@auto-engineer/ai-gateway';
 
 import { createClient } from './generated/product-catalog/client';
 import type {
@@ -11,12 +10,6 @@ import type {
   GetApiProductsByIdResponses,
   GetApiProductsByIdErrors,
 } from './generated/product-catalog';
-import {
-  zGetApiProductsResponse,
-  zGetApiProductsSearchResponse,
-  zGetApiProductsCategoryByCategoryResponse,
-  zGetApiProductsByIdResponse,
-} from './generated/product-catalog/zod.gen';
 
 export type Product = ProductCatalogItem;
 
@@ -105,128 +98,3 @@ const _ProductCatalog: Integration<'product-catalog', ProductCatalogQueries> = {
     },
   },
 };
-
-// ---------- Lazy MCP tool registration  ----------
-let _toolsRegistered = false;
-
-function registerProductCatalogToolsOnce(): void {
-  if (_toolsRegistered) return;
-  _toolsRegistered = true;
-
-  // All products
-  registerTool<Record<string, unknown>>(
-    'PRODUCT_CATALOGUE_PRODUCTS',
-    {
-      title: 'Get All Products',
-      description: 'Fetches all products from the product catalog',
-      inputSchema: {},
-      schema: zGetApiProductsResponse,
-      schemaName: 'GetApiProductsResponse',
-      schemaDescription: 'Array of ProductCatalogItem',
-    },
-    async () => {
-      const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.Products) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.Products is not available' }],
-          isError: true,
-        };
-      }
-      const result = await queries.Products();
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
-    },
-  );
-
-  // By category
-  interface ProductsByCategoryParams extends Record<string, unknown> {
-    category: string;
-  }
-  registerTool<ProductsByCategoryParams>(
-    'PRODUCT_CATALOGUE_PRODUCTS_BY_CATEGORY',
-    {
-      title: 'Get Products by Category',
-      description: 'Fetches products from a specific category',
-      inputSchema: { category: z.string().min(1, 'Category is required') },
-      schema: zGetApiProductsCategoryByCategoryResponse,
-      schemaName: 'GetApiProductsCategoryByCategoryResponse',
-      schemaDescription: 'Array of ProductCatalogItem',
-    },
-    async ({ category }) => {
-      const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.ProductsByCategory) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductsByCategory is not available' }],
-          isError: true,
-        };
-      }
-      const result = await queries.ProductsByCategory({ category });
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
-    },
-  );
-
-  // Search
-  interface ProductSearchParams extends Record<string, unknown> {
-    query: string;
-  }
-  registerTool<ProductSearchParams>(
-    'PRODUCT_CATALOGUE_SEARCH',
-    {
-      title: 'Search Products',
-      description: 'Search for products using a query string',
-      inputSchema: { query: z.string().min(1, 'Search query is required') },
-      schema: zGetApiProductsSearchResponse,
-      schemaName: 'GetApiProductsSearchResponse',
-      schemaDescription: 'Array of ProductCatalogItem',
-    },
-    async ({ query }) => {
-      const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.ProductSearchResults) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductSearchResults is not available' }],
-          isError: true,
-        };
-      }
-      const result = await queries.ProductSearchResults({ query });
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
-    },
-  );
-
-  // Details
-  interface ProductDetailsParams extends Record<string, unknown> {
-    id: string;
-  }
-  registerTool<ProductDetailsParams>(
-    'PRODUCT_CATALOGUE_PRODUCT_DETAILS',
-    {
-      title: 'Get Product Details',
-      description: 'Fetches detailed information about a specific product',
-      inputSchema: { id: z.string().min(1, 'Product ID is required') },
-      schema: zGetApiProductsByIdResponse,
-      schemaName: 'GetApiProductsByIdResponse',
-      schemaDescription: 'Single ProductCatalogItem',
-    },
-    async ({ id }) => {
-      const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.ProductDetails) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductDetails is not available' }],
-          isError: true,
-        };
-      }
-      const result = await queries.ProductDetails({ id });
-      if (result.data.product === null) {
-        return { content: [{ type: 'text' as const, text: `Product with ID "${id}" not found` }], isError: true };
-      }
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.product, null, 2) }] };
-    },
-  );
-}
-
-// registers tools on *first usage* of the integration
-export const ProductCatalog: Integration<'product-catalog', ProductCatalogQueries> = new Proxy(_ProductCatalog, {
-  get(target, prop, receiver) {
-    // First touch of ProductCatalog triggers tool registration
-    registerProductCatalogToolsOnce();
-    return Reflect.get(target, prop, receiver);
-  },
-});

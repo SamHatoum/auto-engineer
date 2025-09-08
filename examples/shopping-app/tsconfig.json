@@ -7,9 +7,9 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "noEmit": false
   },
-  "include": ["src/**/*", "vitest.config.ts"],
+  "include": ["flows/**/*", "vitest.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

@@ -1,11 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": ".",
-    "composite": true
+    "composite": true,
+    "outDir": "./dist"
   },
   "include": ["src/**/*", "bin/**/*"],
   "exclude": ["node_modules", "dist", "**/*.specs.ts", "**/*.spec.ts", "**/*.test.ts"],
-  "references": []
+  "references": [{ "path": "../message-bus" }]
 }

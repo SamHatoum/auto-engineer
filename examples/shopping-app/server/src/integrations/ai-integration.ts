@@ -52,7 +52,7 @@ export const AI: Integration<'ai', Record<string, never>, AICommands> = {
         const schema = getSchemaByName(schemaName);
 
         if (schema) {
-          return await generateStructuredDataWithAI(fullPrompt, undefined, {
+          return await generateStructuredDataWithAI(fullPrompt, {
             schema: schema as z.ZodSchema<T>,
             schemaName,
             schemaDescription: `AI output matching schema '${schemaName}'`,
@@ -60,7 +60,7 @@ export const AI: Integration<'ai', Record<string, never>, AICommands> = {
           });
         }
       }
-      const raw = await generateTextWithAI(fullPrompt, undefined, {
+      const raw = await generateTextWithAI(fullPrompt, {
         includeTools: true,
       });
 

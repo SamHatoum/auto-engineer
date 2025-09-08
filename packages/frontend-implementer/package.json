@@ -1,8 +1,8 @@
 {
   "name": "@auto-engineer/frontend-implementer",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -12,7 +12,6 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp src/*.html dist/src/ 2>/dev/null || true",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "ai-agent": "tsx -r dotenv/config src/agent-cli.ts",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",

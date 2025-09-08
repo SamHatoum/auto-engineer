@@ -1,8 +1,8 @@
 {
   "name": "@auto-engineer/design-system-importer",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -12,7 +12,6 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc && tsx ../../scripts/fix-esm-imports.ts && cp -r src/utils/templates dist/utils/",
-    "dev": "tsc --watch",
     "test": "vitest run --reporter=dot",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",

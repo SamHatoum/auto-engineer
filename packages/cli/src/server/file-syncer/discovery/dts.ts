@@ -1,5 +1,8 @@
 import { NodeFileStore } from '@auto-engineer/file-store';
+import createDebug from 'debug';
 import { posix } from '../utils/path';
+
+const debug = createDebug('auto-engineer:file-syncer:dts');
 
 export async function readJsonIfExists(vfs: NodeFileStore, p: string): Promise<Record<string, unknown> | null> {
   try {
@@ -105,7 +108,7 @@ export async function probeEntryDtsForPackagesFromRoots(
       candidates.sort((a, b) => scorePath(a) - scorePath(b));
       out.add(candidates[0]);
     } else {
-      console.log(`[sync] dts-probe: ⚠ no entry .d.ts found for ${pkg}`);
+      debug('dts-probe: ⚠ no entry .d.ts found for %s', pkg);
     }
   }
 

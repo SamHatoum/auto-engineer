@@ -187,6 +187,7 @@ const ExampleSchema = z
 
 const RuleSchema = z
   .object({
+    id: z.string().optional().describe('Optional rule identifier'),
     description: z.string().describe('Rule description'),
     examples: z.array(ExampleSchema).describe('Examples demonstrating the rule'),
   })

@@ -41,7 +41,7 @@ export type ClientCheckFailedEvent = Event<
   }
 >;
 
-export const checkClientCommandHandler = defineCommandHandler<CheckClientCommand>({
+export const checkClientCommandHandler = defineCommandHandler({
   name: 'CheckClient',
   alias: 'check:client',
   description: 'Full frontend validation suite',

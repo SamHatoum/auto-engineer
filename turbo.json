@@ -2,9 +2,25 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
+    "auto": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts", ".env.*local"],
+      "cache": false,
+      "persistent": true
+    },
+    "auto:debug": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.tsx", "test/**/*.ts", ".env.*local"],
+      "cache": false,
+      "persistent": true
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"]
+    },
+    "build:core": {
+      "dependsOn": [],
+      "outputs": ["dist/**"]
     },
     "test": {
       "dependsOn": ["^build"],
@@ -39,6 +55,10 @@
       "outputs": []
     },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:core": {
       "cache": false,
       "persistent": true
     },

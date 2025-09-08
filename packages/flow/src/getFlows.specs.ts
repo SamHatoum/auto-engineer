@@ -269,4 +269,63 @@ describe('getFlows', (_mode) => {
     expect(reactSlice?.id).toBe('SLICE-003');
     expect(reactSlice?.type).toBe('react');
   });
+
+  it('should have ids for command slice rules', async () => {
+    const flows = await getFlows({ vfs: vfs, root: root });
+    const schemas = flows.toSchema();
+
+    const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
+    if (!testFlowWithIds) return;
+
+    const commandSlice = testFlowWithIds.slices.find((s) => s.name === 'Create test item');
+    if (commandSlice?.type !== 'command') return;
+
+    expect(commandSlice.server.specs.rules).toHaveLength(2);
+
+    const rule1 = commandSlice.server.specs.rules.find(
+      (r) => r.description === 'Valid test items should be created successfully',
+    );
+    expect(rule1?.id).toBe('RULE-001');
+
+    const rule2 = commandSlice.server.specs.rules.find(
+      (r) => r.description === 'Invalid test items should be rejected',
+    );
+    expect(rule2?.id).toBe('RULE-002');
+  });
+
+  it('should have ids for query slice rules', async () => {
+    const flows = await getFlows({ vfs: vfs, root: root });
+    const schemas = flows.toSchema();
+
+    const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
+    if (!testFlowWithIds) return;
+
+    const querySlice = testFlowWithIds.slices.find((s) => s.name === 'Get test items');
+    if (querySlice?.type !== 'query') return;
+
+    expect(querySlice.server.specs.rules).toHaveLength(1);
+
+    const rule3 = querySlice.server.specs.rules.find(
+      (r) => r.description === 'Items should be retrievable after creation',
+    );
+    expect(rule3?.id).toBe('RULE-003');
+  });
+
+  it('should have ids for react slice rules', async () => {
+    const flows = await getFlows({ vfs: vfs, root: root });
+    const schemas = flows.toSchema();
+
+    const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
+    if (!testFlowWithIds) return;
+
+    const reactSlice = testFlowWithIds.slices.find((s) => s.name === 'React to test event');
+    if (reactSlice?.type !== 'react') return;
+
+    expect(reactSlice.server.specs.rules).toHaveLength(1);
+
+    const rule4 = reactSlice.server.specs.rules.find(
+      (r) => r.description === 'System should react to test item creation',
+    );
+    expect(rule4?.id).toBe('RULE-004');
+  });
 });
