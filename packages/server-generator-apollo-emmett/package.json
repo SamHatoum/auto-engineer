@@ -51,5 +51,5 @@
     "@types/ejs": "^3.1.5",
     "@types/fs-extra": "^11.0.4"
   },
-  "version": "0.8.4"
+  "version": "0.8.5"
 }
