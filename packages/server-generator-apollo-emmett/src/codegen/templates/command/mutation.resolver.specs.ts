@@ -15,7 +15,6 @@ describe('mutation.resolver.ts.ejs', () => {
               name: 'Create listing',
               client: {
                 description: 'A form that allows users to add a new listing',
-                specs: [],
               },
               server: {
                 description: 'Handles listing creation',

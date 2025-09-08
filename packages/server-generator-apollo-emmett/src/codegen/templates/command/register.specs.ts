@@ -16,7 +16,6 @@ describe('generateScaffoldFilePlans', () => {
               stream: 'listings-${propertyId}',
               client: {
                 description: 'test',
-                specs: [],
               },
               server: {
                 description: 'test',

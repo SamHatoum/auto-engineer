@@ -1,6 +1,8 @@
 import type tsNS from 'typescript';
+import type { z } from 'zod';
 import { jsonToExpr } from '../ast/emit-helpers';
 import { buildGwtSpecBlock, type GWTBlock } from './gwt';
+import { CommandSliceSchema, QuerySliceSchema, ReactSliceSchema, ExampleSchema } from '../../../schema';
 
 type Destination =
   | { type: 'stream'; pattern: string }
@@ -30,35 +32,23 @@ type DataSourceItem = {
   _additionalInstructions?: string;
 };
 
-type CommandSlice = {
-  type: 'command';
-  name: string;
-  client?: { description: string; specs: string[] };
-  request?: string;
-  server: { description: string; data?: DataSinkItem[]; gwt: GWTBlock[] };
-};
-
-type QuerySlice = {
-  type: 'query';
-  name: string;
-  client?: { description: string; specs: string[] };
-  request?: string;
-  server: { description: string; data?: DataSourceItem[]; gwt: GWTBlock[] };
-};
-
-type ReactSlice = {
-  type: 'react';
-  name: string;
-  server: { description?: string; data?: Array<DataSinkItem | DataSourceItem>; gwt: GWTBlock[] };
-};
+// Use existing schema types instead of duplicating
+type CommandSlice = z.infer<typeof CommandSliceSchema>;
+type QuerySlice = z.infer<typeof QuerySliceSchema>;
+type ReactSlice = z.infer<typeof ReactSliceSchema>;
+type Example = z.infer<typeof ExampleSchema>;
 
 type Flow = {
   name: string;
   slices: Array<CommandSlice | QuerySlice | ReactSlice>;
 };
 
-function buildClientSpecs(ts: typeof import('typescript'), f: tsNS.NodeFactory, title: string, lines: string[]) {
-  const shouldCalls = lines.map((txt) =>
+function buildClientSpecs(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  specs: { name: string; rules: string[] },
+) {
+  const shouldCalls = specs.rules.map((txt) =>
     f.createExpressionStatement(
       f.createCallExpression(f.createIdentifier('should'), undefined, [f.createStringLiteral(txt)]),
     ),
@@ -66,7 +56,7 @@ function buildClientSpecs(ts: typeof import('typescript'), f: tsNS.NodeFactory, 
 
   return f.createExpressionStatement(
     f.createCallExpression(f.createIdentifier('specs'), undefined, [
-      f.createStringLiteral(title),
+      f.createStringLiteral(specs.name),
       f.createArrowFunction(
         undefined,
         undefined,
@@ -314,7 +304,7 @@ function addClientToChain(
   chain: tsNS.Expression,
   slice: CommandSlice | QuerySlice | ReactSlice,
 ): tsNS.Expression {
-  if ('client' in slice && slice.client !== null && slice.client !== undefined && slice.client.specs.length > 0) {
+  if ('client' in slice && slice.client !== null && slice.client !== undefined && slice.client.specs) {
     return f.createCallExpression(f.createPropertyAccessExpression(chain, f.createIdentifier('client')), undefined, [
       f.createArrowFunction(
         undefined,
@@ -322,7 +312,7 @@ function addClientToChain(
         [],
         undefined,
         f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-        f.createBlock([buildClientSpecs(ts, f, slice.client.description || slice.name, slice.client.specs)], true),
+        f.createBlock([buildClientSpecs(ts, f, slice.client.specs)], true),
       ),
     ]);
   }
@@ -344,21 +334,118 @@ function addRequestToChain(
   return chain;
 }
 
+/**
+ * Convert schema example structure to GWT format expected by buildGwtSpecBlock
+ */
+function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' | 'react'): GWTBlock {
+  const gwtBlock: GWTBlock = {
+    then: [],
+  };
+
+  // Add description metadata
+  (gwtBlock as { description?: string }).description = example.description;
+
+  // Convert given
+  if (example.given) {
+    gwtBlock.given = example.given.map((given) => {
+      if ('stateRef' in given) {
+        return { eventRef: given.stateRef, exampleData: given.exampleData };
+      } else if ('eventRef' in given) {
+        return { eventRef: given.eventRef, exampleData: given.exampleData };
+      }
+      return given;
+    });
+  }
+
+  // Convert when
+  if (example.when !== null && example.when !== undefined) {
+    if (Array.isArray(example.when)) {
+      // Array of events for react slices
+      gwtBlock.when = example.when.map((when) => {
+        if ('eventRef' in when) {
+          return { eventRef: when.eventRef, exampleData: when.exampleData };
+        }
+        return when;
+      });
+    } else {
+      // Single object - could be command (command slices) or event (query slices)
+      if ('commandRef' in example.when) {
+        // Command for command slices
+        gwtBlock.when = {
+          commandRef: example.when.commandRef,
+          exampleData: example.when.exampleData,
+        };
+      } else if ('eventRef' in example.when) {
+        // Event for query slices
+        gwtBlock.when = {
+          eventRef: example.when.eventRef,
+          exampleData: example.when.exampleData,
+        };
+      }
+    }
+  }
+
+  // Convert then
+  gwtBlock.then = example.then.map((then) => {
+    if ('eventRef' in then) {
+      return { eventRef: then.eventRef, exampleData: then.exampleData };
+    } else if ('commandRef' in then) {
+      return { commandRef: then.commandRef, exampleData: then.exampleData };
+    } else if ('stateRef' in then) {
+      return { stateRef: then.stateRef, exampleData: then.exampleData };
+    } else {
+      // Error case - return as-is
+      return then;
+    }
+  });
+
+  return gwtBlock;
+}
+
 function buildServerStatements(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
-  server: { data?: Array<DataSinkItem | DataSourceItem>; gwt: GWTBlock[] },
+  server: CommandSlice['server'] | QuerySlice['server'] | ReactSlice['server'],
   sliceType: 'command' | 'query' | 'react',
 ): tsNS.Statement[] {
   const statements: tsNS.Statement[] = [];
 
   if (server.data !== null && server.data !== undefined && server.data.length > 0) {
-    statements.push(buildDataItems(ts, f, server.data));
+    statements.push(buildDataItems(ts, f, server.data as Array<DataSinkItem | DataSourceItem>));
   }
 
-  if (server.gwt !== null && server.gwt !== undefined && server.gwt.length > 0) {
-    for (const gwt of server.gwt) {
-      statements.push(buildGwtSpecBlock(ts, f, gwt, sliceType));
+  // Handle server.specs structure from schema
+  if (server.specs !== null && server.specs !== undefined) {
+    // Create the outer specs() block
+    const allRuleStatements: tsNS.Statement[] = [];
+
+    for (const rule of server.specs.rules) {
+      for (const example of rule.examples) {
+        const gwtBlock = convertExampleToGWT(example, sliceType);
+        // Add metadata to the GWT block
+        (gwtBlock as { ruleDescription?: string; exampleDescription?: string }).ruleDescription = rule.description;
+        (gwtBlock as { ruleDescription?: string; exampleDescription?: string }).exampleDescription =
+          example.description;
+        allRuleStatements.push(buildGwtSpecBlock(ts, f, gwtBlock, sliceType));
+      }
+    }
+
+    // Wrap all rules in a single specs() block
+    if (allRuleStatements.length > 0) {
+      const specsStatement = f.createExpressionStatement(
+        f.createCallExpression(f.createIdentifier('specs'), undefined, [
+          f.createStringLiteral(server.specs.name),
+          f.createArrowFunction(
+            undefined,
+            undefined,
+            [],
+            undefined,
+            f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+            f.createBlock(allRuleStatements, true),
+          ),
+        ]),
+      );
+      statements.push(specsStatement);
     }
   }
 

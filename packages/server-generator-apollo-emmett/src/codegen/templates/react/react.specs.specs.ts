@@ -13,7 +13,7 @@ describe('react.specs.ts.ejs (react slice)', () => {
             {
               type: 'command',
               name: 'guest submits booking request',
-              client: { description: '', specs: [] },
+              client: { description: '' },
               server: {
                 description: '',
                 specs: {

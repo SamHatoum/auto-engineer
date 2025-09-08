@@ -14,7 +14,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'command',
               name: 'CreateListing',
               stream: 'listing-${propertyId}',
-              client: { description: '', specs: [] },
+              client: { description: '' },
               server: {
                 description: '',
                 specs: {
@@ -73,7 +73,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'query',
               name: 'search-listings',
               stream: 'listings',
-              client: { description: '', specs: [] },
+              client: { description: '' },
               server: {
                 description: '',
                 data: [

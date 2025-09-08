@@ -1,5 +1,6 @@
 import type { DataSinkItem, DataSourceItem, MessageTarget, Integration } from './types';
 import { createIntegrationOrigin } from './types';
+import { integrationExportRegistry } from './integration-export-registry';
 
 // Extended interfaces that add chainable methods
 export interface ChainableSinkMethods {
@@ -91,7 +92,10 @@ export class EventSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
   toIntegration(...systems: Integration[]): ChainableSink {
     const sinkItem: DataSinkItem = {
       target: this.target as MessageTarget,
-      destination: { type: 'integration', systems: systems.map((s) => s.name) },
+      destination: {
+        type: 'integration',
+        systems: systems.map((s) => integrationExportRegistry.getExportNameForIntegration(s)),
+      },
       __type: 'sink' as const,
       ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
@@ -146,7 +150,7 @@ export class CommandSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
       target: this.target as MessageTarget,
       destination: {
         type: 'integration',
-        systems: [typeof system === 'string' ? system : system.name],
+        systems: [typeof system === 'string' ? system : integrationExportRegistry.getExportNameForIntegration(system)],
         ...(messageName && messageType
           ? {
               message: {
@@ -285,7 +289,9 @@ export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
   fromIntegration(...systems: (Integration | string)[]): ChainableSource {
     const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
-      origin: createIntegrationOrigin(systems.map((s) => (typeof s === 'string' ? s : s.name))),
+      origin: createIntegrationOrigin(
+        systems.map((s) => (typeof s === 'string' ? s : integrationExportRegistry.getExportNameForIntegration(s))),
+      ),
       __type: 'source' as const,
       ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };

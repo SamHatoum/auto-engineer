@@ -47,7 +47,7 @@ export const createSliceBuilder = (config: SliceConfig = {}): SliceBuilder => ({
     const slice: CommandSlice = {
       type: 'command',
       name,
-      client: { description: '', specs: [] },
+      client: { description: '', specs: undefined },
       server: { description: '', specs: { name: '', rules: [] }, data: undefined },
       // Optional fields
       ...(config.eventStream != null && { stream: config.eventStream }),
@@ -66,7 +66,7 @@ export const createSliceBuilder = (config: SliceConfig = {}): SliceBuilder => ({
     const slice: QuerySlice = {
       type: 'query',
       name,
-      client: { description: '', specs: [] },
+      client: { description: '', specs: undefined },
       server: { description: '', specs: { name: '', rules: [] }, data: undefined },
       // Optional fields
       ...(config.eventStream != null && { stream: config.eventStream }),

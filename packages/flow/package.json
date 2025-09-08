@@ -36,7 +36,10 @@
   "devDependencies": {
     "@auto-engineer/cli": "workspace:*",
     "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "eslint-plugin-sort-keys-fix": "^1.1.2",
     "fake-indexeddb": "^6.0.0",
+    "prettier-plugin-organize-imports": "^4.2.0",
     "tsx": "^4.20.3"
   },
   "publishConfig": {

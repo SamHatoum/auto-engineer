@@ -48,7 +48,9 @@ describe('getFlows', (_mode) => {
       expect(createItemSlice.name).toBe('Create item');
       expect(createItemSlice.stream).toBe('item-${id}');
       if (createItemSlice.type === 'command') {
-        expect(createItemSlice.client.specs).toContain('A form that allows users to add items');
+        expect(createItemSlice.client.specs).toBeDefined();
+        expect(createItemSlice.client.specs?.name).toBe('A form that allows users to add items');
+        expect(createItemSlice.client.specs?.rules).toHaveLength(1);
         expect(createItemSlice.server.specs).toBeDefined();
         const spec = createItemSlice.server.specs;
         expect(spec.name).toBeDefined();
@@ -81,6 +83,9 @@ describe('getFlows', (_mode) => {
       const viewItemSlice = items.slices[1] as QuerySlice;
       expect(viewItemSlice.type).toBe('query');
       expect(viewItemSlice.name).toBe('view items');
+      expect(viewItemSlice.client.specs).toBeDefined();
+      expect(viewItemSlice.client.specs?.name).toBe('view Items Screen');
+      expect(viewItemSlice.client.specs?.rules).toHaveLength(3);
       expect(viewItemSlice.request).toBeDefined();
       expect(viewItemSlice.request).toMatch(
         /query items\(\$itemId: String!\) {\s+items\(itemId: \$itemId\) {\s+id\s+description\s+}/,
@@ -106,7 +111,9 @@ describe('getFlows', (_mode) => {
       expect(submitOrderSlice.stream).toBe('order-${orderId}');
 
       if (submitOrderSlice.type === 'command') {
-        expect(submitOrderSlice.client.specs).toContain('Order submission form');
+        expect(submitOrderSlice.client.specs).toBeDefined();
+        expect(submitOrderSlice.client.specs?.name).toBe('Order submission form');
+        expect(submitOrderSlice.client.specs?.rules).toHaveLength(2);
         expect(submitOrderSlice.server.specs).toBeDefined();
         const spec = submitOrderSlice.server.specs;
         expect(spec.rules).toHaveLength(1);

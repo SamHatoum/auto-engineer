@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { SpecsSchema } from '../../schema';
 import { Flow, Message } from '../../index';
 import { globalIntegrationRegistry } from '../../integration-registry';
+import { integrationExportRegistry } from '../../integration-export-registry';
 import { TypeInfo } from '../../loader/ts-utils';
 import { resolveInferredType } from './type-inference';
 import { inlineAllMessageFieldTypes } from './inlining';
@@ -138,11 +139,12 @@ export const flowsToSchema = (
   });
   // Ensure all registered integrations are listed
   for (const integration of registeredIntegrations) {
-    if (!integrations.has(integration.name)) {
-      integrations.set(integration.name, {
-        name: integration.name,
-        description: `${integration.name} integration`,
-        source: `@auto-engineer/${integration.name.toLowerCase()}-integration`,
+    const exportName = integrationExportRegistry.getExportNameForIntegration(integration);
+    if (!integrations.has(exportName)) {
+      integrations.set(exportName, {
+        name: exportName,
+        description: `${exportName} integration`,
+        source: `@auto-engineer/${exportName.toLowerCase()}-integration`,
       });
     }
   }

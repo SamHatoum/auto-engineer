@@ -3,6 +3,7 @@ import createDebug from 'debug';
 import type { ExecuteOptions } from './types';
 import { registry } from '../flow-registry';
 import { integrationRegistry } from '../integration-registry';
+import { integrationExportRegistry } from '../integration-export-registry';
 import { buildGraph, type BuildGraphResult } from './graph';
 import { runGraph } from './runtime-cjs';
 import { createEnhancedImportMap } from './importmap';
@@ -30,6 +31,7 @@ export async function executeAST(
 ): Promise<ExecuteResult> {
   registry.clearAll();
   integrationRegistry.clear();
+  integrationExportRegistry.clear();
 
   // seed with built-ins (browser-safe shims included)
   let enhanced = await createEnhancedImportMap(importMap);

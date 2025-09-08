@@ -53,7 +53,6 @@ export const getFlows = async (opts: GetFlowsOptions) => {
   const exec = await executeAST(files, vfs, importMap ?? {}, projectRoot);
 
   const flows: Flow[] = registry.getAllFlows();
-
   return {
     flows,
     vfsFiles: exec.vfsFiles, // absolute posix paths of all VFS modules in the graph

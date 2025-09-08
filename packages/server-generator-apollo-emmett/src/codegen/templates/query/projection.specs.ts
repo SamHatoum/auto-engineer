@@ -16,7 +16,6 @@ describe('projection.ts.ejs', () => {
               stream: 'listing-${propertyId}',
               client: {
                 description: 'create listing UI',
-                specs: [],
               },
               server: {
                 description: 'handles create/remove listing',
@@ -78,7 +77,6 @@ describe('projection.ts.ejs', () => {
               stream: 'listings',
               client: {
                 description: 'search listings UI',
-                specs: [],
               },
               server: {
                 description: 'projection for available listings',
@@ -282,7 +280,6 @@ describe('projection.ts.ejs', () => {
             `,
               client: {
                 description: '',
-                specs: [],
               },
               server: {
                 description: '',

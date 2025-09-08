@@ -2,7 +2,7 @@ import { IllegalStateError } from '@event-driven-io/emmett';
 import type { State } from './state';
 import type { SuggestShoppingItems } from './commands';
 import type { ShoppingItemsSuggested } from './events';
-import type { Products } from '@auto-engineer/product-catalog-integration';
+import type { Products } from '@auto-engineer/productcatalog-integration';
 
 export const decide = (command: SuggestShoppingItems, state: State, products?: Products): ShoppingItemsSuggested => {
   switch (command.type) {

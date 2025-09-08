@@ -68,7 +68,7 @@ function createArrayTypeNode(
   const arrayMatch = /^Array<(.+)>$/.exec(trimmed);
   if (arrayMatch) {
     const inner = typeFromString(ts, f, arrayMatch[1]);
-    return f.createTypeReferenceNode('Array', [inner]);
+    return f.createArrayTypeNode(inner);
   }
   return null;
 }

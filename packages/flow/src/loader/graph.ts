@@ -1,9 +1,17 @@
 import createDebug from 'debug';
 import type { Graph } from './types';
 import type { IFileStore } from '@auto-engineer/file-store';
-import { parseImports, parseTypeDefinitions, patchImportMeta, transpileToCjs, TypeInfo } from './ts-utils';
+import {
+  parseImports,
+  parseTypeDefinitions,
+  parseIntegrationExports,
+  patchImportMeta,
+  transpileToCjs,
+  TypeInfo,
+} from './ts-utils';
 import { toPosix } from './fs-path';
 import { resolveSpecifier } from './resolver';
+import { integrationExportRegistry } from '../integration-export-registry';
 
 const debug = createDebug('flow:graph');
 
@@ -60,11 +68,18 @@ export async function buildGraph(
 
     const imports = parseImports(ts, path, source);
     const typeMap = parseTypeDefinitions(ts, path, source);
+    const integrationExports = parseIntegrationExports(ts, path, source);
 
     // Store types by file and merge into global type map
     typesByFile.set(path, typeMap);
     for (const [typeName, typeInfo] of typeMap) {
       globalTypeMap.set(typeName, typeInfo.stringLiteral);
+    }
+
+    // Register integration exports
+    if (integrationExports.length > 0) {
+      integrationExportRegistry.registerIntegrationExports(integrationExports);
+      debug('[integrations] registered %d integration exports from %s', integrationExports.length, path);
     }
 
     const resolved = new Map<string, import('./types').Resolved>();

@@ -5,6 +5,5 @@ export type ShoppingCriteriaEntered = Event<
   {
     sessionId: string;
     criteria: string;
-    timestamp: Date;
   }
 >;

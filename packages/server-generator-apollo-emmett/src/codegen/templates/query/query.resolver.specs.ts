@@ -26,7 +26,6 @@ describe('query.resolver.ts.ejs', () => {
               `,
               client: {
                 description: '',
-                specs: [],
               },
               server: {
                 description: '',
@@ -150,7 +149,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               }
             `,
-              client: { description: '', specs: [] },
+              client: { description: '' },
               server: {
                 description: '',
                 data: [

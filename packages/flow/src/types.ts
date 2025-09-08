@@ -19,6 +19,7 @@ export interface Integration<
   readonly __brand: 'Integration';
   readonly type: Type;
   readonly name: string;
+  readonly exportName?: string; // The name used when exporting this integration
   readonly Queries?: WithSchema<Q>;
   readonly Commands?: WithSchema<C>;
   readonly Reactions?: WithSchema<R>;
@@ -30,6 +31,16 @@ export const createIntegration = <T extends string>(type: T, name: string): Inte
     type,
     name,
   }) as Integration<T>;
+
+/**
+ * Helper function to set the export name on an integration
+ */
+export function withExportName<T extends Integration>(integration: T, exportName: string): T {
+  return {
+    ...integration,
+    exportName,
+  };
+}
 
 // Data flow types (keeping existing types)
 export interface MessageTarget {

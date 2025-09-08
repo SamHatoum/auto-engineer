@@ -204,7 +204,13 @@ const CommandSliceSchema = BaseSliceSchema.extend({
   type: z.literal('command'),
   client: z.object({
     description: z.string(),
-    specs: z.array(z.string()).describe('UI specifications (should statements)'),
+    specs: z
+      .object({
+        name: z.string().describe('Spec group name'),
+        rules: z.array(z.string()).describe('UI specifications (should statements)'),
+      })
+      .optional()
+      .describe('Client-side specifications'),
   }),
   request: z.string().describe('Command request (GraphQL, REST endpoint, or other query format)').optional(),
   server: z.object({
@@ -218,7 +224,13 @@ const QuerySliceSchema = BaseSliceSchema.extend({
   type: z.literal('query'),
   client: z.object({
     description: z.string(),
-    specs: z.array(z.string()).describe('UI specifications (should statements)'),
+    specs: z
+      .object({
+        name: z.string().describe('Spec group name'),
+        rules: z.array(z.string()).describe('UI specifications (should statements)'),
+      })
+      .optional()
+      .describe('Client-side specifications'),
   }),
   request: z.string().describe('Query request (GraphQL, REST endpoint, or other query format)').optional(),
   server: z.object({

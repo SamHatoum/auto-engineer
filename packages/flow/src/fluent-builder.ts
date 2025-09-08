@@ -63,7 +63,7 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
       type: 'command',
       name,
       id,
-      client: { description: '', specs: [] },
+      client: { description: '', specs: undefined },
       server: { description: '', specs: { name: '', rules: [] }, data: undefined },
     };
     addSlice(this.slice);
@@ -170,7 +170,7 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
       type: 'query',
       name,
       id,
-      client: { description: '', specs: [] },
+      client: { description: '', specs: undefined },
       server: { description: '', specs: { name: '', rules: [] }, data: undefined },
     };
     addSlice(this.slice);

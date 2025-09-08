@@ -1,8 +1,8 @@
-import '@auto-engineer/product-catalog-integration';
+import '@auto-engineer/productcatalog-integration';
 
 import { AI } from '@auto-engineer/ai-integration';
 
-import { Products } from '@auto-engineer/product-catalog-integration';
+import { Products } from '@auto-engineer/productcatalog-integration';
 
 import { CommandHandler, type EventStore, type MessageHandlerResult } from '@event-driven-io/emmett';
 import { evolve } from './evolve';

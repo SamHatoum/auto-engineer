@@ -78,6 +78,11 @@ export interface TypeInfo {
   dataFields?: { name: string; type: string; required: boolean }[];
 }
 
+export interface IntegrationExport {
+  exportName: string; // The variable name used in export (e.g., "ProductCatalog")
+  integrationName: string; // The internal integration name (e.g., "product-catalog")
+}
+
 function extractDataFieldsFromTypeLiteral(
   ts: typeof import('typescript'),
   secondArg: import('typescript').TypeLiteralNode,
@@ -340,6 +345,81 @@ export function parseTypeDefinitions(
 
   visitNode(sf);
   return typeMap;
+}
+
+/**
+ * Parses integration export declarations from TypeScript source code.
+ * Looks for patterns like: export const ProductCatalog: Integration<'product-catalog', ...> = ...
+ */
+function processVariableDeclaration(
+  ts: typeof import('typescript'),
+  declaration: import('typescript').VariableDeclaration,
+  integrations: IntegrationExport[],
+): void {
+  if (!ts.isIdentifier(declaration.name)) {
+    return;
+  }
+
+  const exportName = declaration.name.text;
+
+  // Check if the type annotation is Integration<...>
+  if (!declaration.type || !ts.isTypeReferenceNode(declaration.type)) {
+    return;
+  }
+
+  const typeRef = declaration.type;
+
+  // Check if the type reference is "Integration"
+  if (!ts.isIdentifier(typeRef.typeName) || typeRef.typeName.text !== 'Integration') {
+    return;
+  }
+
+  // Extract the first type argument (the integration name string literal)
+  const typeArgs = typeRef.typeArguments;
+  if (!typeArgs || typeArgs.length === 0) {
+    return;
+  }
+
+  const firstTypeArg = typeArgs[0];
+  if (ts.isLiteralTypeNode(firstTypeArg) && ts.isStringLiteral(firstTypeArg.literal)) {
+    const integrationName = firstTypeArg.literal.text;
+    integrations.push({ exportName, integrationName });
+  }
+}
+
+function processVariableStatement(
+  ts: typeof import('typescript'),
+  node: import('typescript').VariableStatement,
+  integrations: IntegrationExport[],
+): void {
+  const hasExportModifier = Boolean(node.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword));
+
+  if (!hasExportModifier) {
+    return;
+  }
+
+  for (const declaration of node.declarationList.declarations) {
+    processVariableDeclaration(ts, declaration, integrations);
+  }
+}
+
+export function parseIntegrationExports(
+  ts: typeof import('typescript'),
+  fileName: string,
+  source: string,
+): IntegrationExport[] {
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.ES2020, true, ts.ScriptKind.TSX);
+  const integrations: IntegrationExport[] = [];
+
+  const visitNode = (node: import('typescript').Node) => {
+    if (ts.isVariableStatement(node)) {
+      processVariableStatement(ts, node, integrations);
+    }
+    ts.forEachChild(node, visitNode);
+  };
+
+  visitNode(sf);
+  return integrations;
 }
 
 export function transpileToCjs(ts: typeof import('typescript'), fileName: string, source: string): string {

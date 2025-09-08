@@ -56,7 +56,7 @@ export function startClientBlock(slice: Slice, description: string = ''): void {
   if (slice.type === 'command' || slice.type === 'query') {
     slice.client = {
       description,
-      specs: [],
+      specs: undefined,
     };
     context.currentSpecTarget = 'client';
   }
@@ -106,7 +106,10 @@ export function pushSpec(description: string): void {
   if (!slice) throw new Error('No active slice');
 
   if (context.currentSpecTarget === 'client' && (slice.type === 'command' || slice.type === 'query')) {
-    slice.client.specs.push(description);
+    slice.client.specs = {
+      name: description,
+      rules: [],
+    };
   } else if (context.currentSpecTarget === 'server') {
     slice.server.specs = {
       name: description,
@@ -120,7 +123,13 @@ export function recordShouldBlock(description?: string): void {
   if (typeof description === 'string' && context?.currentSpecTarget === 'client') {
     const slice = getCurrentSlice();
     if (slice && (slice.type === 'command' || slice.type === 'query')) {
-      slice.client.specs.push(description);
+      if (!slice.client.specs) {
+        slice.client.specs = {
+          name: '',
+          rules: [],
+        };
+      }
+      slice.client.specs.rules.push(description);
     }
   }
 }

@@ -15,7 +15,6 @@ describe('decide.ts.ejs', () => {
               name: 'Create listing',
               client: {
                 description: 'test',
-                specs: [],
               },
               server: {
                 description: 'test',
@@ -126,7 +125,6 @@ describe('decide.ts.ejs', () => {
               name: 'Remove listing',
               client: {
                 description: 'test',
-                specs: [],
               },
               server: {
                 description: 'test',
@@ -252,7 +250,6 @@ describe('decide.ts.ejs', () => {
               name: 'Create listing',
               client: {
                 description: 'test',
-                specs: [],
               },
               server: {
                 description: 'test',
@@ -398,7 +395,6 @@ describe('decide.ts.ejs', () => {
               stream: 'session-${sessionId}',
               client: {
                 description: 'test',
-                specs: [],
               },
               server: {
                 description: '',

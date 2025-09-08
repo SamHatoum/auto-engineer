@@ -5,6 +5,5 @@ export type ItemsAddedToCart = Event<
   {
     sessionId: string;
     items: Array<{ productId: string; quantity: number }>;
-    timestamp: Date;
   }
 >;
