@@ -4,50 +4,67 @@ Auto Engineer puts your SDLC on auto, helping you build **production-grade appli
 
 ## Overview
 
-Auto Engineer is a developer tool designed to **automate the Software Development Life Cycle (SDLC)** by combining human input with **AI-powered agents**.
+Auto Engineer is a tool that automates the **Software Development Life Cycle (SDLC)** by combining developer input with _AI-powered agents_.
 
-It enables developers to:
+It lets you:
 
 - Define **high-level system behavior** using models.
 - Automatically **generate, scaffold, and implement code**.
 - Build robust frontend and backend components faster.
 - Streamline the entire workflow from **design to production**.
 
-By leveraging a **plugin-based architecture**, Auto Engineer adapts to different projects, enabling you to install only the components you need.
+Its **plugin-based architecture** means you install only the components you need.
 
 > ⚡ Currently in **early preview**. Join our [Discord](https://discord.gg/B8BKcKMRm8) or star the repo on [GitHub](https://github.com/SamHatoum/auto-engineer) to stay updated.
 
 ## Core Concepts
 
-Auto Engineer is built around a few key primitives—flows, commands, and events—that work together to define and automate application logic in a modular, scalable way. These concepts enable developers to describe "what" an app should do, while AI-powered plugins handle "how" it's implemented.
+Auto Engineer is built around three core primitives—**flows**, **commands**, and **events**. Together, they let you describe _what_ an app should do, while AI-powered plugins handle _how_ it’s implemented.
 
-- Flows: A flow is a high-level description of a business process, like "user places an order" or "host creates a listing." It’s a sequence of steps (or "slices") that combines commands, events, and states to model how the app behaves. For example, a shopping cart flow might include a command to add an item, an event confirming the addition, and a state tracking the cart’s contents. Flows are defined in TypeScript files (e.g., in the flows/ directory) and serve as blueprints for generating code.
-- Commands: Commands are actions that trigger changes in the application, like "AddItemToCart" or "CreateListing." They represent user or system intents and carry data needed to perform the action (e.g., `{ productId: "123", quantity: 2 })`. Commands are type-safe, defined in message schemas, and processed by a command handler that decides what happens next, often producing events. Think of commands as instructions the app executes.
-- Events: Events are records of things that have happened, like "ItemAddedToCart" or "ListingCreated." They capture the outcome of a command or other system activity and are used to update the application’s state or trigger further actions. Events are immutable, type-safe, and sent via a message bus, enabling loose coupling (e.g., a payment service reacting to "OrderPlaced"). They’re defined alongside commands in message schemas.
+- **Flows**
+  - **Purpose**: Define high-level business processes (e.g. _"user places an order"_).
+  - **Structure**: A sequence of slices combining commands, events, and states.
+  - **Example**: Shopping cart flow → `AddItemToCart` (command) → `ItemAddedToCart` (event) → cart state updated.
+  - **Definition**: Written in TypeScript under `flows/`, validated at build time, and converted into schemas for code generation.
+
+- **Commands**
+  - **Purpose**: Represent actions or intents, either user-driven or system-driven.
+  - **Data**: Include payloads needed to execute the action (e.g. `{ productId: "123", quantity: 2 }`).
+  - **Processing**: Handled by command handlers, which enforce business rules and typically emit events.
+  - **Properties**: Type-safe, schema-defined, versioned for evolution.
+
+- **Events**
+  - **Purpose**: Record outcomes of commands or other activities.
+  - **Nature**: Immutable, type-safe, and versioned.
+  - **Usage**: Update application state or trigger additional processes.
+  - **Delivery**: Published on a message bus so other services can subscribe (e.g. a payment service listening to `OrderPlaced`).
+
+Together, these primitives separate **intent** (commands), **outcome** (events), **context** (states), and **process** (flows).
 
 ## Features
 
-Auto Engineer provides a **comprehensive toolkit** for automating modern application development.
+Auto Engineer provides a toolkit for automating modern application development.  
+Its features span from modeling to implementation and monitoring.
 
 ### Core Capabilities
 
-- **Flow Modeling DSL** – Define app behavior using a type-safe, high-level modeling language.
-- **AI-Powered Code Implementation** – Generate server and frontend code using intelligent AI agents.
-- **Deterministic Scaffolding** – Produce complete, predictable application scaffolds from your flow models.
-- **Information Architecture Generation** – Automatically create schemas and structure for your app.
-- **Event-Driven Architecture** – Build loosely coupled components communicating via events.
-- **Comprehensive Validation** – Includes type checking, linting, automated tests, and AI-powered visual validation.
-- **Modular Plugin System** – Install only what you need (e.g., server, frontend, integrations).
-- **Real-Time Monitoring** – Watch commands and events live via a web dashboard at `http://localhost:5555`.
-- **TypeScript First** – Fully integrated with strict typing for safer, more robust development.
-- **File Synchronization** – Automatically watch, sync, and regenerate files as you iterate.
+- **Flow Modeling DSL**: Define application behavior with a type-safe DSL that maps directly to commands, events, and state transitions.
+- **Deterministic Scaffolding**: Produce predictable project scaffolds from flow definitions, ensuring consistent structure across services and clients.
+- **Information Architecture Generation**: Automatically generate schemas, projections, and resolvers from flow specifications.
+- **AI-Powered Code Implementation**: Use AI agents to generate and implement both server and frontend code, guided by your flow models and schemas.
+- **Event-Driven Architecture**: Build loosely coupled services that communicate via a message bus. Commands trigger events, and events update state or trigger additional logic.
+- **Validation and Quality Checks**: Includes type checking, linting, automated tests, and AI-assisted visual validation. Validation runs through plugins like `server-checks` and `frontend-checks`.
+- **Modular Plugin System**: Install only the plugins you need (e.g. `server-generator-apollo-emmett`, `frontend-implementer`, `design-system-importer`).
+- **Real-Time Monitoring**: Observe commands, events, and state changes live through a web dashboard (`http://localhost:5555`).
+- **TypeScript First**: All flows, commands, events, and states are schema-driven and strongly typed for safer development.
+- **File Synchronization**: A background file-sync service watches your project, regenerates artifacts, and keeps generated code in sync as flows evolve.
 
-> 💡 For deep-dives into these features, see the **Guides** and **Core Concepts** sections.
+> 💡 For deep dives into these capabilities, see the **Guides** and **Core Concepts** sections.
 
 ## Roadmap
 
 Auto Engineer is evolving rapidly. Our near-term focus includes:
 
-... TBA
+TBA
 
 Stay tuned for updates via the [changelog](../CHANGELOG.md).

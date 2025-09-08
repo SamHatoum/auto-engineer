@@ -1,5 +1,13 @@
 # @auto-engineer/flow
 
+## 0.8.5
+
+### Patch Changes
+
+- Adds ids to rules
+  - @auto-engineer/file-store@0.8.5
+  - @auto-engineer/message-bus@0.8.5
+
 ## 0.8.4
 
 ### Patch Changes

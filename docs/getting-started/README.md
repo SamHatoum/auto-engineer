@@ -2,7 +2,7 @@
 
 ## Installation
 
-This guide covers the steps to install Auto Engineer and set up the necessary prerequisites.
+This guide explains how to install Auto Engineer and set up prerequisites.
 
 ### Prerequisites
 
@@ -20,13 +20,102 @@ Before installing Auto Engineer, ensure you have the following:
 
 Auto Engineer uses a plugin-based architecture, allowing you to install only the components you need. Follow these steps to set up a new project:
 
-1. **Install the Auto Engineer CLI globally**: `pnpm install -g @auto-engineer/cli@latest `
+1. **Install the Auto Engineer CLI globally**:
 
-2. **Create a new project directory**: `mkdir my-app && cd my-app`
+{% tabs %}
+{% tab title="pnpm" %}
 
-3. **Install required plugins**: For a typical setup, install the core plugins: `pnpm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett` To include additional functionality, such as frontend generation, install: `pnpm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/server-implementer`
+```bash
+pnpm add -g @auto-engineer/cli@latest
+```
 
-4. **Configure API keys**: Create a `.env` file in your project root and add your API keys: `echo "ANTHROPIC_API_KEY=your-key-here" &gt; .env `
+{% endtab %}
+
+{% tab title="npm" %}
+
+```bash
+npm install -g @auto-engineer/cli@latest
+```
+
+{% endtab %}
+
+{% tab title="yarn" %}
+
+```bash
+yarn global add @auto-engineer/cli@latest
+```
+
+{% endtab %}
+{% endtabs %}
+
+2. **Create a new project directory**:
+
+```bash
+mkdir my-app && cd my-app
+```
+
+3. **Install required plugins**: For a typical setup, install the core plugins:&#x20;
+
+{% tabs %}
+{% tab title="pnpm" %}
+
+```bash
+pnpm add @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
+```
+
+{% endtab %}
+
+{% tab title="npm" %}
+
+```bash
+npm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
+```
+
+{% endtab %}
+
+{% tab title="yarn" %}
+
+```bash
+yarn add @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
+```
+
+{% endtab %}
+{% endtabs %}
+
+To include additional functionality, such as frontend generation, install:
+
+{% tabs %}
+{% tab title="pnpm" %}
+
+```bash
+pnpm add @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
+```
+
+{% endtab %}
+
+{% tab title="npm" %}
+
+```bash
+npm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
+```
+
+{% endtab %}
+
+{% tab title="yarn" %}
+
+```bash
+yarn add @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
+```
+
+{% endtab %}
+{% endtabs %}
+
+4. **Configure API keys**: Create a `.env` file in your project root and add your API keys:
+
+```bash
+echo "ANTHROPIC_API_KEY=your-key-here" > .env
+# Add other API keys as needed
+```
 
 ### Next Steps
 
@@ -42,14 +131,10 @@ Ensure you have completed the Installation steps, including installing Node.js, 
 
 ### Creating Your First App
 
-1. **Create a new example project**: `auto create:example --name=shopping-assistant `
-
-2. **Navigate to the project directory**: `cd shopping-assistant `
-
-3. **Install dependencies**: `pnpm install `
-
-4. **Export flow schemas**: `auto export:schema --output-dir=./.context --directory=./flows `
-
+1. **Create a new example project**: `auto create:example --name=shopping-assistant`
+2. **Navigate to the project directory**: `cd shopping-assistant`
+3. **Install dependencies**: `pnpm install`
+4. **Export flow schemas**: `auto export:schema --output-dir=./.context --directory=./flows`
 5. **Generate and implement the server**:
 
 ```
@@ -64,11 +149,11 @@ auto check:types --target-directory=./server auto check:tests --target-directory
 
 7. **Generate and implement the frontend** (requires additional plugins):
 
-```auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
+```auto
 --ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json auto implement:client --project-dir=./client --ia-scheme-dir=./.context --design-system-path=./design-system.md
 ```
 
-8. **Start the application**: `pnpm start `
+8. **Start the application**: `pnpm start`
 
 ### Next Steps
 
