@@ -1,17 +1,19 @@
 import type { MessageBus, Event, Command } from '@auto-engineer/message-bus';
+import type { IMessageStore } from '@auto-engineer/message-store';
 import type { StateManager } from './state-manager';
 import type { EventRegistration, DispatchAction } from '../dsl/types';
+import { nanoid } from 'nanoid';
 import createDebug from 'debug';
 
 const debugBus = createDebug('auto-engineer:server:bus');
 
 export class EventProcessor {
   private eventHandlers: Map<string, Array<(event: Event) => void>> = new Map();
-  private eventHistory: Array<{ event: Event; timestamp: string }> = [];
-  private readonly maxEventHistory = 1000;
+  private correlationContext: Map<string, string> = new Map(); // requestId -> correlationId mapping
 
   constructor(
     private messageBus: MessageBus,
+    private messageStore: IMessageStore,
     private stateManager: StateManager<Record<string, unknown>>,
     private onEventBroadcast: (event: Event) => void,
   ) {}
@@ -22,15 +24,13 @@ export class EventProcessor {
       handle: async (event: Event) => {
         debugBus('Received event:', event.type);
 
-        // Store event in history
-        this.eventHistory.push({
-          event,
-          timestamp: new Date().toISOString(),
-        });
-
-        // Trim history if it exceeds max size
-        if (this.eventHistory.length > this.maxEventHistory) {
-          this.eventHistory = this.eventHistory.slice(-this.maxEventHistory);
+        // Store event in message store
+        try {
+          await this.messageStore.saveMessages('$all-events', [event], undefined, 'event');
+          await this.messageStore.saveMessages(`event-${event.type}`, [event], undefined, 'event');
+          debugBus('Event stored in message store:', event.type);
+        } catch (error) {
+          debugBus('Error storing event:', error);
         }
 
         // Apply event to state
@@ -108,8 +108,9 @@ export class EventProcessor {
         'type' in command &&
         'data' in command
       ) {
-        debugBus('Dispatching command:', (command as Command).type);
-        await this.messageBus.sendCommand(command as Command);
+        const enhancedCommand = this.enhanceCommandWithIds(command as Command);
+        debugBus('Dispatching command:', enhancedCommand.type);
+        await this.messageBus.sendCommand(enhancedCommand);
       }
     }
   }
@@ -117,8 +118,9 @@ export class EventProcessor {
   private async processActionOrCommand(action: unknown): Promise<void> {
     const actionObj = action as Record<string, unknown>;
     if (actionObj !== null && typeof actionObj === 'object' && 'data' in actionObj) {
-      debugBus('Dispatching command from event handler:', (action as Command).type);
-      await this.messageBus.sendCommand(action as Command);
+      const enhancedCommand = this.enhanceCommandWithIds(action as Command);
+      debugBus('Dispatching command from event handler:', enhancedCommand.type);
+      await this.messageBus.sendCommand(enhancedCommand);
     } else {
       await this.processDispatchAction(action as DispatchAction);
     }
@@ -143,15 +145,17 @@ export class EventProcessor {
 
   private async handleSingleDispatch(action: DispatchAction): Promise<void> {
     if (action.command) {
-      debugBus('Dispatching command from dispatch action:', action.command.type);
-      await this.messageBus.sendCommand(action.command);
+      const enhancedCommand = this.enhanceCommandWithIds(action.command);
+      debugBus('Dispatching command from dispatch action:', enhancedCommand.type);
+      await this.messageBus.sendCommand(enhancedCommand);
     }
   }
 
   private async handleParallelDispatch(action: DispatchAction): Promise<void> {
     if (action.commands) {
       debugBus('Dispatching parallel commands from event handler');
-      await Promise.all(action.commands.map((cmd) => this.messageBus.sendCommand(cmd)));
+      const enhancedCommands = action.commands.map((cmd) => this.enhanceCommandWithIds(cmd));
+      await Promise.all(enhancedCommands.map((cmd) => this.messageBus.sendCommand(cmd)));
     }
   }
 
@@ -159,7 +163,8 @@ export class EventProcessor {
     if (action.commands) {
       debugBus('Dispatching sequential commands from event handler');
       for (const cmd of action.commands) {
-        await this.messageBus.sendCommand(cmd);
+        const enhancedCommand = this.enhanceCommandWithIds(cmd);
+        await this.messageBus.sendCommand(enhancedCommand);
       }
     }
   }
@@ -169,7 +174,8 @@ export class EventProcessor {
       const cmds = action.commandFactory();
       const commands = Array.isArray(cmds) ? cmds : [cmds];
       for (const cmd of commands) {
-        await this.messageBus.sendCommand(cmd);
+        const enhancedCommand = this.enhanceCommandWithIds(cmd);
+        await this.messageBus.sendCommand(enhancedCommand);
       }
     }
   }
@@ -178,11 +184,92 @@ export class EventProcessor {
     return this.eventHandlers;
   }
 
-  getEventHistory(): Array<{ event: Event; timestamp: string }> {
-    return this.eventHistory;
+  /**
+   * Store a command in the message store
+   */
+  async storeCommand(command: Command): Promise<void> {
+    try {
+      const enhancedCommand = this.enhanceCommandWithIds(command);
+      await this.messageStore.saveMessages('$all-commands', [enhancedCommand], undefined, 'command');
+      await this.messageStore.saveMessages(`command-${enhancedCommand.type}`, [enhancedCommand], undefined, 'command');
+
+      // Store correlation context for this command's potential events
+      if (
+        enhancedCommand.requestId !== undefined &&
+        enhancedCommand.requestId !== null &&
+        enhancedCommand.requestId !== '' &&
+        enhancedCommand.correlationId !== undefined &&
+        enhancedCommand.correlationId !== null &&
+        enhancedCommand.correlationId !== ''
+      ) {
+        this.correlationContext.set(enhancedCommand.requestId, enhancedCommand.correlationId);
+      }
+
+      debugBus('Command stored in message store:', enhancedCommand.type);
+    } catch (error) {
+      debugBus('Error storing command:', error);
+    }
   }
 
-  clearEventHistory(): void {
-    this.eventHistory = [];
+  /**
+   * Enhance command with proper request and correlation IDs
+   */
+  private enhanceCommandWithIds(command: Command): Command {
+    const now = new Date();
+
+    // Generate requestId if not present
+    const requestId = command.requestId ?? `req-${Date.now()}-${nanoid(8)}`;
+
+    // Handle correlation ID:
+    // 1. Use existing correlationId if present
+    // 2. If triggered by another command/event, inherit its correlationId
+    // 3. Otherwise, create new correlationId
+    let correlationId = command.correlationId;
+
+    if (correlationId === undefined || correlationId === null || correlationId === '') {
+      // Try to inherit from correlation context (if this command is triggered by an event)
+      const inheritedCorrelationId = this.findInheritedCorrelationId(command);
+      correlationId = inheritedCorrelationId ?? `corr-${Date.now()}-${nanoid(8)}`;
+    }
+
+    return {
+      ...command,
+      requestId,
+      correlationId,
+      timestamp: command.timestamp || now,
+    };
+  }
+
+  /**
+   * Try to find a correlation ID to inherit from the current context
+   */
+  private findInheritedCorrelationId(_command: Command): string | undefined {
+    // This is a simplified implementation - in a more sophisticated system,
+    // you might use async context tracking or other mechanisms
+
+    // For now, try to find the most recent correlation ID from the context map
+    const contextEntries = Array.from(this.correlationContext.entries());
+    if (contextEntries.length > 0) {
+      // Return the most recently stored correlation ID
+      return contextEntries[contextEntries.length - 1][1];
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Clear correlation context periodically to prevent memory leaks
+   */
+  private cleanupCorrelationContext(): void {
+    // Keep only the last 1000 entries
+    if (this.correlationContext.size > 1000) {
+      const entries = Array.from(this.correlationContext.entries());
+      this.correlationContext.clear();
+
+      // Keep the last 500 entries
+      entries.slice(-500).forEach(([requestId, correlationId]) => {
+        this.correlationContext.set(requestId, correlationId);
+      });
+    }
   }
 }

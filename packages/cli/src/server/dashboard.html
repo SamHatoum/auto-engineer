@@ -475,7 +475,7 @@
             transition: background-color 0.3s ease;
         }
         
-        .events-header {
+        .messages-header {
             padding: 16px 20px;
             background: var(--bg-tertiary);
             border-bottom: 1px solid var(--border);
@@ -484,7 +484,7 @@
             align-items: center;
         }
         
-        .events-title {
+        .messages-title {
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
@@ -494,15 +494,145 @@
             align-items: center;
         }
         
-        .events-controls {
+        .messages-controls {
             display: flex;
             gap: 8px;
         }
         
-        .events-list {
+        .message-filters {
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .filter-row select,
+        .filter-row input,
+        .filter-row textarea {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 11px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .filter-row textarea {
+            resize: vertical;
+            min-height: 32px;
+        }
+        
+        .filter-stats {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-align: center;
+            padding: 4px 0;
+        }
+        
+        .messages-list {
             flex: 1;
             overflow-y: auto;
             padding: 12px;
+        }
+        
+        .message-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .message-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message-header {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .message-type {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .message-type-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+        
+        .message-type-indicator.command {
+            background: #42c3f7;
+        }
+        
+        .message-type-indicator.event {
+            background: #ff8a1d;
+        }
+        
+        .message-name {
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .message-timestamp {
+            font-size: 9px;
+            color: var(--text-tertiary);
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .message-body {
+            padding: 12px;
+        }
+        
+        .message-ids {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 9px;
+            color: var(--text-tertiary);
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .message-id {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .message-id-label {
+            color: var(--text-secondary);
+        }
+        
+        .message-data {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 10px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            max-height: 200px;
+            overflow-y: auto;
         }
         
         /* Registry sections in left sidebar */
@@ -1030,20 +1160,50 @@
             </div>
         </div>
         
-        <!-- Right Sidebar: Events -->
+        <!-- Right Sidebar: Messages -->
         <div class="sidebar-right">
-            <div class="events-header">
-                <div class="events-title">
-                    <span class="tab-indicator event"></span>
-                    Events
+            <div class="messages-header">
+                <div class="messages-title">
+                    <span class="tab-indicator message"></span>
+                    Messages
                 </div>
-                <div class="events-controls">
-                    <button class="button button-small button-secondary" onclick="loadEvents()">↻</button>
-                    <button class="button button-small button-secondary" onclick="clearEvents()">Clear</button>
+                <div class="messages-controls">
+                    <button class="button button-small button-secondary" onclick="loadMessages()">↻</button>
+                    <button class="button button-small button-secondary" onclick="clearMessageFilters()">Clear Filters</button>
                 </div>
             </div>
-            <div class="events-list" id="eventsContainer">
-                <div class="empty">No events yet</div>
+            
+            <!-- Message Filters -->
+            <div class="message-filters">
+                <div class="filter-row">
+                    <select id="messageTypeFilter" onchange="applyMessageFilters()">
+                        <option value="">All Types</option>
+                        <option value="command">Commands</option>
+                        <option value="event">Events</option>
+                    </select>
+                    
+                    <select id="sessionFilter" onchange="applyMessageFilters()">
+                        <option value="">All Sessions</option>
+                    </select>
+                </div>
+                
+                <div class="filter-row">
+                    <input type="text" id="messageNameFilter" placeholder="Message name..." onchange="applyMessageFilters()" />
+                    <input type="text" id="correlationIdFilter" placeholder="Correlation ID..." onchange="applyMessageFilters()" />
+                </div>
+                
+                <div class="filter-row">
+                    <textarea id="jsonFilter" placeholder='JSON Filter (e.g., {"userId": "123"})' 
+                              onchange="applyMessageFilters()" rows="2"></textarea>
+                </div>
+                
+                <div class="filter-stats" id="filterStats">
+                    Showing all messages
+                </div>
+            </div>
+            
+            <div class="messages-list" id="messagesContainer">
+                <div class="empty">No messages yet</div>
             </div>
         </div>
     </div>
@@ -1051,7 +1211,9 @@
     <script>
         const API_BASE = window.location.origin;
         let currentState = {};
-        let currentEvents = [];
+        let currentMessages = [];
+        let filteredMessages = [];
+        let availableSessions = [];
         let responseStartTime;
         let availableCommands = [];
         let currentCommand = localStorage.getItem('lastCommand') || null;
@@ -1356,66 +1518,182 @@
             }
         }
         
-        async function loadEvents() {
+        async function loadMessages() {
             try {
-                const response = await fetch(`${API_BASE}/events`);
-                currentEvents = await response.json();
-                displayEvents();
+                // Load all messages
+                const messagesResponse = await fetch(`${API_BASE}/messages?count=500`);
+                currentMessages = await messagesResponse.json();
+                
+                // Load available sessions for filter dropdown
+                const sessionsResponse = await fetch(`${API_BASE}/sessions`);
+                availableSessions = await sessionsResponse.json();
+                updateSessionFilter();
+                
+                applyMessageFilters();
             } catch (error) {
-                console.error('Failed to load events:', error);
-                document.getElementById('eventsContainer').innerHTML = '<div class="empty">Failed to load events</div>';
+                console.error('Failed to load messages:', error);
+                document.getElementById('messagesContainer').innerHTML = '<div class="empty">Failed to load messages</div>';
             }
         }
         
-        function displayEvents() {
-            const searchTerm = ''; // Event search removed for now
-            const container = document.getElementById('eventsContainer');
+        function updateSessionFilter() {
+            const sessionFilter = document.getElementById('sessionFilter');
+            const currentValue = sessionFilter.value;
             
-            if (currentEvents.length === 0) {
-                container.innerHTML = '<div class="empty">No events yet</div>';
-                return;
-            }
+            sessionFilter.innerHTML = '<option value="">All Sessions</option>';
             
-            let filteredEvents = currentEvents;
-            if (searchTerm) {
-                filteredEvents = currentEvents.filter(item => {
-                    const eventStr = JSON.stringify(item.event).toLowerCase();
-                    return eventStr.includes(searchTerm) || item.event.type.toLowerCase().includes(searchTerm);
+            availableSessions
+                .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt))
+                .forEach(session => {
+                    const startTime = new Date(session.startedAt).toLocaleString();
+                    const option = document.createElement('option');
+                    option.value = session.sessionId;
+                    option.textContent = `${session.sessionId} (${startTime})`;
+                    sessionFilter.appendChild(option);
                 });
+            
+            // Restore previous selection
+            sessionFilter.value = currentValue;
+        }
+        
+        function applyMessageFilters() {
+            const messageTypeFilter = document.getElementById('messageTypeFilter').value;
+            const sessionFilter = document.getElementById('sessionFilter').value;
+            const messageNameFilter = document.getElementById('messageNameFilter').value.toLowerCase();
+            const correlationIdFilter = document.getElementById('correlationIdFilter').value.toLowerCase();
+            const jsonFilterText = document.getElementById('jsonFilter').value.trim();
+            
+            let jsonFilterObj = null;
+            if (jsonFilterText) {
+                try {
+                    jsonFilterObj = JSON.parse(jsonFilterText);
+                } catch (error) {
+                    console.warn('Invalid JSON filter:', error);
+                }
             }
             
-            if (filteredEvents.length === 0) {
-                container.innerHTML = '<div class="empty">No matching events</div>';
+            filteredMessages = currentMessages.filter(message => {
+                // Message type filter
+                if (messageTypeFilter && message.messageType !== messageTypeFilter) {
+                    return false;
+                }
+                
+                // Session filter
+                if (sessionFilter && message.sessionId !== sessionFilter) {
+                    return false;
+                }
+                
+                // Message name filter
+                if (messageNameFilter && !message.message.type.toLowerCase().includes(messageNameFilter)) {
+                    return false;
+                }
+                
+                // Correlation ID filter
+                if (correlationIdFilter) {
+                    const correlationId = message.message.correlationId || '';
+                    if (!correlationId.toLowerCase().includes(correlationIdFilter)) {
+                        return false;
+                    }
+                }
+                
+                // JSON filter
+                if (jsonFilterObj) {
+                    if (!matchesJsonFilter(message.message.data, jsonFilterObj)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayMessages();
+        }
+        
+        function matchesJsonFilter(data, filterObj) {
+            for (const [key, expectedValue] of Object.entries(filterObj)) {
+                if (data[key] !== expectedValue) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        function displayMessages() {
+            const container = document.getElementById('messagesContainer');
+            const statsElement = document.getElementById('filterStats');
+            
+            if (filteredMessages.length === 0) {
+                container.innerHTML = '<div class="empty">No messages match the current filters</div>';
+                statsElement.textContent = `Showing 0 of ${currentMessages.length} messages`;
                 return;
             }
             
-            // Display events in reverse chronological order (newest first)
-            const eventsHtml = filteredEvents
+            // Update stats
+            const commandCount = filteredMessages.filter(m => m.messageType === 'command').length;
+            const eventCount = filteredMessages.filter(m => m.messageType === 'event').length;
+            statsElement.textContent = `Showing ${filteredMessages.length} of ${currentMessages.length} messages (${commandCount} commands, ${eventCount} events)`;
+            
+            // Display messages in reverse chronological order (newest first)
+            const messagesHtml = filteredMessages
                 .slice()
                 .reverse()
-                .map((item, index) => {
-                    const time = new Date(item.timestamp).toLocaleTimeString();
+                .map((message) => {
+                    const time = new Date(message.timestamp).toLocaleTimeString();
+                    const date = new Date(message.timestamp).toLocaleDateString();
+                    
+                    const correlationId = message.message.correlationId || 'none';
+                    const requestId = message.message.requestId || 'none';
+                    const sessionId = message.sessionId || 'none';
+                    
                     return `
-                        <div class="event-item">
-                            <div class="event-header">
-                                <div class="event-type">${item.event.type}</div>
-                                <div class="event-time">${time}</div>
+                        <div class="message-item">
+                            <div class="message-header">
+                                <div class="message-type">
+                                    <div class="message-type-indicator ${message.messageType}"></div>
+                                    <div class="message-name">${message.message.type}</div>
+                                </div>
+                                <div class="message-timestamp">${date} ${time}</div>
                             </div>
-                            <div class="event-data">${JSON.stringify(item.event.data, null, 2)}</div>
+                            <div class="message-body">
+                                <div class="message-ids">
+                                    <div class="message-id">
+                                        <span class="message-id-label">Session:</span>
+                                        <span>${sessionId.substring(0, 8)}...</span>
+                                    </div>
+                                    <div class="message-id">
+                                        <span class="message-id-label">Correlation:</span>
+                                        <span>${correlationId.substring(0, 8)}...</span>
+                                    </div>
+                                    <div class="message-id">
+                                        <span class="message-id-label">Request:</span>
+                                        <span>${requestId.substring(0, 8)}...</span>
+                                    </div>
+                                </div>
+                                <div class="message-data">${JSON.stringify(message.message.data, null, 2)}</div>
+                            </div>
                         </div>
                     `;
                 })
                 .join('');
             
-            container.innerHTML = eventsHtml;
+            container.innerHTML = messagesHtml;
+        }
+        
+        function clearMessageFilters() {
+            document.getElementById('messageTypeFilter').value = '';
+            document.getElementById('sessionFilter').value = '';
+            document.getElementById('messageNameFilter').value = '';
+            document.getElementById('correlationIdFilter').value = '';
+            document.getElementById('jsonFilter').value = '';
+            applyMessageFilters();
         }
         
         // Event search removed - no longer needed
         // document.getElementById('eventSearch').addEventListener('input', displayEvents);
         
+        // Legacy function - no longer needed with new message system
         async function clearEvents() {
-            currentEvents = [];
-            displayEvents();
+            console.log('clearEvents is deprecated - use clearMessageFilters instead');
         }
         
         
@@ -1439,8 +1717,8 @@
             if (message.type === 'event' || message.type === 'state') {
                 // Reload state when events occur
                 loadState();
-                // Also reload events
-                loadEvents();
+                // Also reload messages
+                loadMessages();
             } else if (message.type === 'commandError') {
                 // Show command error in response
                 document.getElementById('responseContent').textContent = JSON.stringify({
@@ -1468,15 +1746,15 @@
         // Initial load
         loadRegistry();
         loadState();
-        loadEvents();
+        loadMessages();
         
         // Initial command will be restored when registry loads
         
         // Refresh registry every 5 seconds
         setInterval(loadRegistry, 5000);
         
-        // Auto-refresh events every 2 seconds
-        setInterval(loadEvents, 2000);
+        // Auto-refresh messages every 2 seconds
+        setInterval(loadMessages, 2000);
     </script>
 </body>
 </html>

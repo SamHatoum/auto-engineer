@@ -6,5 +6,5 @@
   },
   "include": ["src/**/*", "bin/**/*"],
   "exclude": ["node_modules", "dist", "**/*.specs.ts", "**/*.spec.ts", "**/*.test.ts"],
-  "references": [{ "path": "../message-bus" }]
+  "references": [{ "path": "../message-bus" }, { "path": "../message-store" }]
 }

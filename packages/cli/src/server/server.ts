@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { createMessageBus, type MessageBus, type Event } from '@auto-engineer/message-bus';
+import { createMessageBus, type MessageBus, type Event, type Command } from '@auto-engineer/message-bus';
+import { MemoryMessageStore, type ILocalMessageStore } from '@auto-engineer/message-store';
 import createDebug from 'debug';
 import { StateManager } from './state-manager';
 import { FileSyncer } from './file-syncer';
@@ -20,6 +21,8 @@ export interface MessageBusServerConfig {
   fileSyncDir?: string;
   fileSyncExtensions?: string[];
   enableFileSync?: boolean;
+  messageStore?: ILocalMessageStore;
+  maxMessages?: number;
 }
 
 export class MessageBusServer {
@@ -27,11 +30,13 @@ export class MessageBusServer {
   private httpServer: ReturnType<typeof createServer>;
   private io: SocketIOServer;
   private messageBus: MessageBus;
+  private messageStore: ILocalMessageStore;
   private stateManager: StateManager<Record<string, unknown>>;
   private fileSyncer?: FileSyncer;
   private config: MessageBusServerConfig;
   private eventProcessor: EventProcessor;
   private commandRegistry: CommandRegistry;
+  private currentSessionId?: string;
 
   constructor(config: MessageBusServerConfig = {}) {
     this.config = {
@@ -40,6 +45,7 @@ export class MessageBusServer {
       fileSyncDir: config.fileSyncDir ?? '.',
       fileSyncExtensions: config.fileSyncExtensions ?? ['.js', '.html', '.css'],
       enableFileSync: config.enableFileSync !== false,
+      maxMessages: config.maxMessages ?? 50000,
     };
 
     // Initialize Express app
@@ -55,12 +61,13 @@ export class MessageBusServer {
       cors: { origin: '*' },
     });
 
-    // Initialize message bus and state manager
+    // Initialize message bus, message store, and state manager
     this.messageBus = createMessageBus();
+    this.messageStore = config.messageStore ?? new MemoryMessageStore();
     this.stateManager = new StateManager<Record<string, unknown>>();
 
     // Initialize modules
-    this.eventProcessor = new EventProcessor(this.messageBus, this.stateManager, (event: Event) =>
+    this.eventProcessor = new EventProcessor(this.messageBus, this.messageStore, this.stateManager, (event: Event) =>
       this.io.emit('event', event),
     );
     this.commandRegistry = new CommandRegistry(this.messageBus, this.stateManager);
@@ -86,9 +93,12 @@ export class MessageBusServer {
       commandMetadata: this.commandRegistry.getCommandMetadata(),
       eventHandlers: this.eventProcessor.getEventHandlers(),
       foldRegistry: this.commandRegistry.getFoldRegistry(),
-      eventHistory: this.eventProcessor.getEventHistory(),
+      messageStore: this.messageStore,
       onCommandError: (error) => {
         this.io.emit('commandError', error);
+      },
+      onCommandReceived: async (command: Command) => {
+        await this.eventProcessor.storeCommand(command);
       },
     });
   }
@@ -149,6 +159,10 @@ export class MessageBusServer {
   async start(): Promise<void> {
     const { port, enableFileSync, fileSyncDir, fileSyncExtensions } = this.config;
 
+    // Create a new session for this server startup
+    this.currentSessionId = await this.messageStore.createSession();
+    debug(`Created new session: ${this.currentSessionId}`);
+
     // Start file syncer if enabled
     if (enableFileSync === true) {
       this.fileSyncer = new FileSyncer(this.io, fileSyncDir, fileSyncExtensions);
@@ -190,6 +204,12 @@ export class MessageBusServer {
   async stop(): Promise<void> {
     debug('Stopping message bus server');
 
+    // End current session if exists
+    if (this.currentSessionId !== undefined && this.currentSessionId !== null && this.currentSessionId !== '') {
+      await this.messageStore.endSession(this.currentSessionId);
+      debug(`Ended session: ${this.currentSessionId}`);
+    }
+
     // Stop file syncer
     if (this.fileSyncer) {
       this.fileSyncer.stop();
@@ -222,16 +242,9 @@ export class MessageBusServer {
   }
 
   /**
-   * Get the event history
+   * Get the message store instance
    */
-  getEventHistory(): Array<{ event: Event; timestamp: string }> {
-    return this.eventProcessor.getEventHistory();
-  }
-
-  /**
-   * Clear event history
-   */
-  clearEventHistory(): void {
-    this.eventProcessor.clearEventHistory();
+  getMessageStore(): ILocalMessageStore {
+    return this.messageStore;
   }
 }
