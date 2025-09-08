@@ -19,3 +19,6 @@
 - DO NOT EVER mix js with ts
   - js files only belong in the dist folders.
   - Don't import .js files in my TS files. JS is a concern for the dist dir only
+
+- DO NOT WRITE COMMENTS
+  - instead focuson writing self-expressing code with methods and parameters names and placement of these symbols in an order that makes it all read like English.
