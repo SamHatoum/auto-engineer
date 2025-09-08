@@ -8,13 +8,13 @@ This guide covers the steps to install Auto Engineer and set up the necessary pr
 
 Before installing Auto Engineer, ensure you have the following:
 
-* **Node.js**: Version 20.0.0 or higher
-* **pnpm**: Version 8.15.4 or higher
-* **AI Provider API Key**: At least one of the following:
-  * Anthropic Claude (recommended)
-  * OpenAI
-  * Google Gemini
-  * X.AI Grok
+- **Node.js**: Version 20.0.0 or higher
+- **pnpm**: Version 8.15.4 or higher
+- **AI Provider API Key**: At least one of the following:
+  - Anthropic Claude (recommended)
+  - OpenAI
+  - Google Gemini
+  - X.AI Grok
 
 ### Installation Steps
 
@@ -24,21 +24,27 @@ Auto Engineer uses a plugin-based architecture, allowing you to install only the
 
 {% tabs %}
 {% tab title="pnpm" %}
+
 ```bash
 pnpm add -g @auto-engineer/cli@latest
 ```
+
 {% endtab %}
 
 {% tab title="npm" %}
+
 ```bash
 npm install -g @auto-engineer/cli@latest
 ```
+
 {% endtab %}
 
 {% tab title="yarn" %}
+
 ```bash
 yarn global add @auto-engineer/cli@latest
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -52,21 +58,27 @@ mkdir my-app && cd my-app
 
 {% tabs %}
 {% tab title="pnpm" %}
+
 ```bash
 pnpm add @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
 ```
+
 {% endtab %}
 
 {% tab title="npm" %}
+
 ```bash
 npm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
 ```
+
 {% endtab %}
 
 {% tab title="yarn" %}
+
 ```bash
 yarn add @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -74,21 +86,27 @@ To include additional functionality, such as frontend generation, install:
 
 {% tabs %}
 {% tab title="pnpm" %}
+
 ```bash
 pnpm add @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
 ```
+
 {% endtab %}
 
 {% tab title="npm" %}
+
 ```bash
 npm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
 ```
+
 {% endtab %}
 
 {% tab title="yarn" %}
+
 ```bash
 yarn add @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
 ```
+
 {% endtab %}
 {% endtabs %}
 
@@ -139,9 +157,9 @@ auto check:types --target-directory=./server auto check:tests --target-directory
 
 ### Next Steps
 
-* Explore the generated project structure and modify the flow models in the `flows/` directory.
-* Learn more about configuring plugins in Configuration Basics.
-* See CLI Guide for a full list of available commands.
+- Explore the generated project structure and modify the flow models in the `flows/` directory.
+- Learn more about configuring plugins in Configuration Basics.
+- See CLI Guide for a full list of available commands.
 
 ## Configuration Basics
 
@@ -166,8 +184,8 @@ export default {
 
 #### Key Configuration Options
 
-* **plugins**: An array of plugin package names to load. Only include the plugins required for your project.
-* **aliases**: An optional object to resolve command alias conflicts by mapping a command to a specific plugin package.
+- **plugins**: An array of plugin package names to load. Only include the plugins required for your project.
+- **aliases**: An optional object to resolve command alias conflicts by mapping a command to a specific plugin package.
 
 ### Handling Plugin Conflicts
 
@@ -184,8 +202,8 @@ export default {
 
 ### Next Steps
 
-* Install the plugins listed in your configuration as described in Installation.
-* Learn how to use CLI commands in CLI Guide.
+- Install the plugins listed in your configuration as described in Installation.
+- Learn how to use CLI commands in CLI Guide.
 
 ## CLI Guide
 
@@ -193,39 +211,39 @@ Auto Engineer provides a command-line interface (CLI) powered by plugins. Run `a
 
 ### Flow Development
 
-* `create:example --name=<project-name>`Creates an example project with the specified name.
-* `export:schema --output-dir=<dir> --directory=<flows-dir>`Exports flow schemas to the specified output directory.
+- `create:example --name=<project-name>`Creates an example project with the specified name.
+- `export:schema --output-dir=<dir> --directory=<flows-dir>`Exports flow schemas to the specified output directory.
 
 ### Server Generation
 
-* `generate:server --schema-path=<schema> --destination=<dest>`Generates server code from a schema file.
-* `implement:server --server-directory=<dir>`Uses AI to implement the server code in the specified directory.
-* `implement:slice --server-directory=<dir> --slice=<name>`Implements a specific server slice.
+- `generate:server --schema-path=<schema> --destination=<dest>`Generates server code from a schema file.
+- `implement:server --server-directory=<dir>`Uses AI to implement the server code in the specified directory.
+- `implement:slice --server-directory=<dir> --slice=<name>`Implements a specific server slice.
 
 ### Frontend Generation
 
-* `generate:ia --output-dir=<dir> --flow-files=<patterns>`Generates an information architecture schema from flow files.
-* `generate:client --starter-template=<template> --client-dir=<dir> --ia-schema=<file> --gql-schema=<file>`Generates a React client using the specified template and schemas.
-* `implement:client --project-dir=<dir> --ia-scheme-dir=<dir> --design-system-path=<file>`Uses AI to implement the client code.
+- `generate:ia --output-dir=<dir> --flow-files=<patterns>`Generates an information architecture schema from flow files.
+- `generate:client --starter-template=<template> --client-dir=<dir> --ia-schema=<file> --gql-schema=<file>`Generates a React client using the specified template and schemas.
+- `implement:client --project-dir=<dir> --ia-scheme-dir=<dir> --design-system-path=<file>`Uses AI to implement the client code.
 
 ### Validation and Testing
 
-* `check:types --target-directory=<dir> --scope=<project|changed>`Runs TypeScript type checking on the specified directory.
-* `check:tests --target-directory=<dir> --scope=<project|changed>`Runs test suites for the specified directory.
-* `check:lint --target-directory=<dir> --fix --scope=<project|changed>`Runs linting with an optional auto-fix feature.
-* `check:client --client-directory=<dir> --skip-browser-checks`Performs full frontend validation, with an option to skip browser checks.
+- `check:types --target-directory=<dir> --scope=<project|changed>`Runs TypeScript type checking on the specified directory.
+- `check:tests --target-directory=<dir> --scope=<project|changed>`Runs test suites for the specified directory.
+- `check:lint --target-directory=<dir> --fix --scope=<project|changed>`Runs linting with an optional auto-fix feature.
+- `check:client --client-directory=<dir> --skip-browser-checks`Performs full frontend validation, with an option to skip browser checks.
 
 ### Design System
 
-* `import:design-system --figma-file-id=<id> --figma-access-token=<token> --output-dir=<dir>`Imports a design system from Figma.
+- `import:design-system --figma-file-id=<id> --figma-access-token=<token> --output-dir=<dir>`Imports a design system from Figma.
 
 ### Notes
 
-* All commands use named parameters for clarity (e.g., `--input-path=value`).
-* Commands are provided by installed plugins. Ensure the relevant plugins are installed as described in Installation.
-* For help with a specific command, run `auto <command> --help`.
+- All commands use named parameters for clarity (e.g., `--input-path=value`).
+- Commands are provided by installed plugins. Ensure the relevant plugins are installed as described in Installation.
+- For help with a specific command, run `auto <command> --help`.
 
 ### Next Steps
 
-* Learn how to configure plugins in Configuration Basics.
-* Explore flow modeling in Building a Flow.
+- Learn how to configure plugins in Configuration Basics.
+- Explore flow modeling in Building a Flow.

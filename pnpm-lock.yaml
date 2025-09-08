@@ -15,13 +15,13 @@ importers:
     dependencies:
       '@auto-engineer/ai-gateway':
         specifier: 0.8.4
-        version: link:packages/ai-gateway
+        version: 0.8.4(react@19.1.1)
       '@auto-engineer/design-system-importer':
         specifier: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
         version: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
       '@auto-engineer/flow':
         specifier: 0.8.4
-        version: link:packages/flow
+        version: 0.8.4(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
       axios:
         specifier: ^1.10.0
         version: 1.11.0(debug@4.4.1)
@@ -333,10 +333,10 @@ importers:
   packages/flow:
     dependencies:
       '@auto-engineer/file-store':
-        specifier: 0.8.4
+        specifier: 0.8.5
         version: link:../file-store
       '@auto-engineer/message-bus':
-        specifier: 0.8.4
+        specifier: 0.8.5
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
@@ -755,6 +755,18 @@ packages:
 
   '@asamuzakjp/css-color@3.2.0':
     resolution: {integrity: sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==}
+
+  '@auto-engineer/ai-gateway@0.8.4':
+    resolution: {integrity: sha512-oK7z5IDWGuPd8Rd3iEc0bPGVl47va4uPPbA5RjWvgnsUjLX1U6A3glwFsCHCay7oKEqqBowKFqWUCuOelz7+rw==}
+
+  '@auto-engineer/file-store@0.8.4':
+    resolution: {integrity: sha512-rid2SkkLV1y1lk+2EfDP2Xxe6CZGYptlzbZuYRixD9rpxu9H/gsWOdKCt6jIO4TExXVw9gYYqctPImAwxWpfPQ==}
+
+  '@auto-engineer/flow@0.8.4':
+    resolution: {integrity: sha512-Z/K9PqSo8eJc8NpLPyx45cNxer4JbYqjPz0PYSuwf3nYqaaUauK7330VbiwLBreFGpi4lWYQZ9DelKDL7EaYlA==}
+
+  '@auto-engineer/message-bus@0.8.4':
+    resolution: {integrity: sha512-4kQE6XsTVI1UFn8XZbnDJ1tLnksCMFJSx0FEUyg7F9mvkFrs17o0QEjqasHTISXZlCEw2L3Vt8Na4dXSC70fnQ==}
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -5182,6 +5194,47 @@ snapshots:
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
       lru-cache: 10.4.3
+
+  '@auto-engineer/ai-gateway@0.8.4(react@19.1.1)':
+    dependencies:
+      '@ai-sdk/anthropic': 1.2.12(zod@3.25.76)
+      '@ai-sdk/google': 1.2.22(zod@3.25.76)
+      '@ai-sdk/openai': 1.3.24(zod@3.25.76)
+      '@ai-sdk/xai': 1.2.18(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.17.4
+      ai: 4.3.19(react@19.1.1)(zod@3.25.76)
+      debug: 4.4.1
+      dotenv: 16.6.1
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - react
+      - supports-color
+
+  '@auto-engineer/file-store@0.8.4': {}
+
+  '@auto-engineer/flow@0.8.4(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
+    dependencies:
+      '@auto-engineer/file-store': 0.8.4
+      '@auto-engineer/message-bus': 0.8.4
+      '@event-driven-io/emmett': 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
+      debug: 4.4.1
+      fast-glob: 3.3.3
+      graphql: 16.11.0
+      graphql-tag: 2.12.6(graphql@16.11.0)
+      typescript: 5.9.2
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.6(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@types/async-retry'
+      - '@types/uuid'
+      - async-retry
+      - commander
+      - supports-color
+      - ts-node
+      - uuid
+      - web-streams-polyfill
+
+  '@auto-engineer/message-bus@0.8.4': {}
 
   '@babel/code-frame@7.27.1':
     dependencies:
