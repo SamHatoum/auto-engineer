@@ -13,11 +13,11 @@ import { execa } from 'execa';
 import createDebug from 'debug';
 import { defineCommandHandler } from '@auto-engineer/message-bus';
 
-const debug = createDebug('emmett:generate-server');
-const debugSchema = createDebug('emmett:generate-server:schema');
-const debugFiles = createDebug('emmett:generate-server:files');
-const debugDeps = createDebug('emmett:generate-server:deps');
-const debugScaffold = createDebug('emmett:generate-server:scaffold');
+const debug = createDebug('auto:generate-server');
+const debugSchema = createDebug('auto:generate-server:schema');
+const debugFiles = createDebug('auto:generate-server:files');
+const debugDeps = createDebug('auto:generate-server:deps');
+const debugScaffold = createDebug('auto:generate-server:scaffold');
 
 type DefaultRecord = Record<string, unknown>;
 export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord> = Readonly<{
@@ -183,16 +183,16 @@ async function copyAllFiles(serverDir: string): Promise<void> {
 }
 
 async function writeConfigurationFiles(serverDir: string, absDest: string): Promise<void> {
-  debugFiles('Writing package.json...');
+  debugFiles(`Writing package.json... to ${serverDir}`);
   await writePackage(serverDir);
 
-  debugFiles('Writing tsconfig.json...');
+  debugFiles(`Writing tsconfig.json... to ${serverDir}`);
   await writeTsconfig(serverDir);
 
-  debugFiles('Writing vitest config...');
+  debugFiles(`Writing vitest config... to ${serverDir}`);
   await writeVitestConfig(serverDir);
 
-  debugFiles('Generating GraphQL schema script...');
+  debugFiles(`Generating GraphQL schema script... ${serverDir} to ${absDest}`);
   await generateSchemaScript(serverDir, absDest);
 }
 
@@ -338,19 +338,20 @@ async function copySharedAndRootFiles(from: string, to: string): Promise<void> {
 async function writePackage(dest: string): Promise<void> {
   debugFiles('Writing package.json to %s', dest);
 
-  const packageRoot = path.resolve(__dirname, '../..');
+  const packageRoot = path.resolve(__dirname, '../../..');
   const localPkgPath = path.resolve(packageRoot, 'package.json');
   const rootPkgPath = path.resolve(packageRoot, '../../package.json');
 
+  debugFiles('  package root: %s', packageRoot);
   debugFiles('  Local package path: %s', localPkgPath);
   debugFiles('  Root package path: %s', rootPkgPath);
 
-  const localPkg = (await fs.readJson(localPkgPath).catch(() => ({}))) as {
+  const localPkg = (await fs.readJson(localPkgPath)) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
 
-  const rootPkg = (await fs.readJson(rootPkgPath).catch(() => ({}))) as {
+  const rootPkg = (await fs.readJson(rootPkgPath)) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
@@ -402,7 +403,7 @@ async function writePackage(dest: string): Promise<void> {
     devDependencies: resolveDeps(['typescript', 'vitest', 'tsx']),
   } as const;
 
-  const existingPkg = (await fs.readJson(path.join(dest, 'package.json')).catch(() => ({}))) as Record<string, unknown>;
+  const existingPkg = (await fs.readJson(path.join(dest, 'package.json'))) as Record<string, unknown>;
   const mergedDeps = {
     ...(existingPkg.dependencies as Record<string, string>),
     ...packageJson.dependencies,
@@ -493,7 +494,7 @@ async function installDependenciesAndGenerateSchema(serverDir: string, workingDi
 
   try {
     debugDeps('Running: pnpm install');
-    await execa('pnpm', ['install'], { cwd: serverDir });
+    await execa('pnpm', ['install', '--ignore-workspace'], { cwd: serverDir });
     debugDeps('✅ Dependencies installed successfully');
     debugDeps('Dependencies installed successfully');
 
