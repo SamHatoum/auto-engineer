@@ -64,9 +64,6 @@
     "@types/react-dom": "^18.3.7"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "0.8.5",
-    "@auto-engineer/design-system-importer": "link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer",
-    "@auto-engineer/flow": "0.8.5",
     "axios": "^1.10.0",
     "debug": "^4.4.1",
     "dotenv": "^16.4.5"
