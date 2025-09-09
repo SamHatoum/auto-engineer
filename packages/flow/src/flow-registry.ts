@@ -15,8 +15,6 @@ class FlowRegistry {
 
   constructor() {
     debug('Creating new FlowRegistry instance: %s', this.instanceId);
-    const stack = new Error().stack;
-    debug('Stack trace for instance %s:\n%s', this.instanceId, stack);
   }
 
   register(flow: Flow) {
