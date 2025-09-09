@@ -6,14 +6,14 @@ This guide explains how to set up a local development environment for contributi
 
 ### Prerequisites
 
-* **Node.js**: Version 20.0.0 or higher
-* **pnpm**: Version 8.15.4 or higher
-* **Git**: For cloning the repository
-* **AI Provider API Key**: At least one from:
-  * Anthropic Claude
-  * OpenAI
-  * Google Gemini
-  * X.AI Grok
+- **Node.js**: Version 20.0.0 or higher
+- **pnpm**: Version 8.15.4 or higher
+- **Git**: For cloning the repository
+- **AI Provider API Key**: At least one from:
+  - Anthropic Claude
+  - OpenAI
+  - Google Gemini
+  - X.AI Grok
 
 ### Setup Steps
 
@@ -72,8 +72,8 @@ pnpm check:types
 
 ### Best Practices
 
-* Write clear, focused tests for single behaviors.
-* Cover edge cases (e.g., invalid inputs).
-* Aim for 80%+ test coverage: pnpm test:coverage.
-* Manually test UI or complex flows locally.
-* Update test docs if processes change.
+- Write clear, focused tests for single behaviors.
+- Cover edge cases (e.g., invalid inputs).
+- Aim for 80%+ test coverage: pnpm test:coverage.
+- Manually test UI or complex flows locally.
+- Update test docs if processes change.
