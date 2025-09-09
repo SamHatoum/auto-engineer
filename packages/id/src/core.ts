@@ -1,18 +1,27 @@
 import { randomBytes } from 'crypto';
-import { RANDOM_BYTES, BASE64URL_REGEX } from './constants.js';
+import { BASE63_ALPHABET, SAFE_PREFIX_REGEX } from './constants.js';
 
-function toBase64Url(buf: Buffer): string {
-  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-/** Generate a 64-char base64url token (no prefix). */
-export function generateToken(): string {
-  const buf = randomBytes(RANDOM_BYTES);
-  return toBase64Url(buf); // length 64
-}
+const BASE = BASE63_ALPHABET.length;
+const ACCEPT_BOUND = Math.floor(256 / BASE) * BASE;
 
 export function assertSafePrefix(prefix: string): void {
-  if (prefix && !BASE64URL_REGEX.test(prefix.replace(/-$/, ''))) {
+  const check = prefix.replace(/-$/, '');
+  if (check && !SAFE_PREFIX_REGEX.test(check)) {
     throw new Error(`Prefix must be URL-safe (A–Z a–z 0–9 _ -). Got: "${prefix}"`);
   }
+}
+
+/** Unbiased base-63 token using rejection sampling. Default: 9 chars. */
+export function generateBase63Token(length = 9): string {
+  const out: string[] = [];
+  while (out.length < length) {
+    // Pull a small batch; loop continues only if we need more accepted bytes.
+    const buf = randomBytes(length);
+    for (let i = 0; i < buf.length && out.length < length; i++) {
+      const byte = buf[i];
+      if (byte >= ACCEPT_BOUND) continue; // reject to avoid modulo bias
+      out.push(BASE63_ALPHABET[byte % BASE]);
+    }
+  }
+  return out.join('');
 }

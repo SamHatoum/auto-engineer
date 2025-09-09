@@ -13,8 +13,16 @@ npm install @auto-engineer/id
 ## Usage
 
 ```ts
-import { generateId } from '@auto-engineer/id';
+// Default: 9-character base-63 token (A–Z a–z 0–9 _)
+const id = generateId();
+// e.g. "aP9ZfWcLQ"
 
-const id = generateId(); // "<64 base64url chars>"
+// With a custom prefix (validated to be URL-safe)
+// Result: <prefix><token>
 const idWithPrefix = generateId({ prefix: 'AUTO-' });
+// e.g. "AUTO-xYz7GhtR2"
+
+// With a custom token length
+const longerId = generateId({ length: 12 });
+// e.g. "QwErTyUiOp12"
 ```

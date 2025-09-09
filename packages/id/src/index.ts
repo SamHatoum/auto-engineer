@@ -1,18 +1,16 @@
-import { assertSafePrefix, generateToken } from './core.js';
+import { assertSafePrefix, generateBase63Token } from './core.js';
 
 export type GenerateIdOptions = {
-  /** Optional string to prepend before the 64-char token. */
+  /** Optional string to prepend before the token. (URL-safe; trailing '-' ok) */
   prefix?: string;
+  /** Token length; default 9 (base-63). */
+  length?: number;
 };
 
-/**
- * Generate an opaque ID: <prefix?><64 base64url chars>.
- * - Prefix is optional (no default).
- * - Payload is 64 URL-safe Base64 characters (no '=' padding).
- */
+/** Generate ID: <prefix?><base-63 token>. Default token: 9 chars. */
 export function generateId(opts: GenerateIdOptions = {}): string {
-  const prefix = opts.prefix ?? '';
+  const { prefix = '', length = 9 } = opts;
   assertSafePrefix(prefix);
-  const token = generateToken(); // 64 chars
+  const token = generateBase63Token(length);
   return `${prefix}${token}`;
 }

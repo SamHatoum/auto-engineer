@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { addAutoIds } from './';
 import { Model } from '../index';
 
-describe('ensureHasIds', () => {
+describe('addAutoIds', () => {
   const flows: Model = {
     variant: 'specs',
     flows: [
@@ -73,17 +73,19 @@ describe('ensureHasIds', () => {
     integrations: [],
   };
 
+  const AUTO_ID_REGEX = /^AUTO-[A-Za-z0-9_]{9}$/;
+
   it('should assign IDs to entities that do not have them', () => {
     const result = addAutoIds(flows);
 
-    expect(result.flows[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].id).toMatch(AUTO_ID_REGEX);
     expect(result.flows[1].id).toBe('EXISTING-FLOW-001');
-    expect(result.flows[0].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].slices[0].id).toMatch(AUTO_ID_REGEX);
     expect(result.flows[0].slices[1].id).toBe('EXISTING-SLICE-001');
-    expect(result.flows[1].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
-    expect(result.flows[0].slices[0].server?.specs.rules[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[1].slices[0].id).toMatch(AUTO_ID_REGEX);
+    expect(result.flows[0].slices[0].server?.specs.rules[0].id).toMatch(AUTO_ID_REGEX);
     expect(result.flows[0].slices[0].server?.specs.rules[1].id).toBe('EXISTING-RULE-001');
-    expect(result.flows[1].slices[0].server?.specs.rules[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[1].slices[0].server?.specs.rules[0].id).toMatch(AUTO_ID_REGEX);
   });
 
   it('should not mutate the original flows', () => {
@@ -139,8 +141,8 @@ describe('ensureHasIds', () => {
 
     const result = addAutoIds(modelWithoutServer);
 
-    expect(result.flows[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
-    expect(result.flows[0].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].id).toMatch(AUTO_ID_REGEX);
+    expect(result.flows[0].slices[0].id).toMatch(AUTO_ID_REGEX);
   });
 
   it('should generate unique IDs for multiple calls', () => {
