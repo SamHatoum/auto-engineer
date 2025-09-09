@@ -18,7 +18,7 @@ import {
   recordThenData,
   recordAndThenData,
 } from './flow-context';
-import type { DataSinkItem, DataSourceItem, DataItem } from './types';
+import type { DataItem } from './types';
 import createDebug from 'debug';
 
 const debug = createDebug('flow:flow');
@@ -78,7 +78,11 @@ export function rule(description: string, fn: () => void): void;
 export function rule(description: string, id: string, fn: () => void): void;
 export function rule(description: string, idOrFn: string | (() => void), fn?: () => void): void {
   const id = typeof idOrFn === 'string' ? idOrFn : undefined;
-  const callback = typeof idOrFn === 'function' ? idOrFn : fn!;
+  const callback = typeof idOrFn === 'function' ? idOrFn : fn;
+
+  if (!callback) {
+    throw new Error(`rule() requires a callback function. Got: ${typeof idOrFn}, ${typeof fn}`);
+  }
 
   recordRule(description, id);
   callback();
@@ -89,7 +93,6 @@ export const example = (description: string) => {
   return createExampleBuilder();
 };
 
-// Type helpers to extract data and type names from Command/Event/State types
 type ExtractData<T> = T extends { data: infer D } ? D : T;
 
 interface TypedExampleBuilder {
@@ -184,22 +187,6 @@ export const SliceType = {
 
 export interface SliceTypeValueInterface {
   readonly value: 'command' | 'query' | 'react';
-}
-
-export interface CommandDataArray {
-  readonly length: number;
-  readonly __commandDataMarker?: never;
-  [index: number]: DataSinkItem;
-}
-export interface QueryDataArray {
-  readonly length: number;
-  readonly __queryDataMarker?: never;
-  [index: number]: DataSourceItem;
-}
-export interface ReactDataArray {
-  readonly length: number;
-  readonly __reactDataMarker?: never;
-  [index: number]: DataItem;
 }
 
 export function data(items: DataItem[]): void {

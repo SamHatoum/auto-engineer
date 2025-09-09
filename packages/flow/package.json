@@ -9,8 +9,8 @@
     }
   },
   "dependencies": {
-    "@auto-engineer/file-store": "0.8.5",
-    "@auto-engineer/message-bus": "0.8.5",
+    "@auto-engineer/file-store": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.3",
     "debug": "^4.4.1",
     "fast-glob": "^3.3.3",
