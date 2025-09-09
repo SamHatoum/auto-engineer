@@ -14,16 +14,14 @@ const getPackages = (dir: string) => {
 
 const specialScopes = ['global', 'root'];
 const packages = getPackages(join(process.cwd(), 'packages'));
-const apps = getPackages(join(process.cwd(), 'apps'));
 const examples = getPackages(join(process.cwd(), 'examples'));
-const integrations = getPackages(join(process.cwd(), 'integrations'));
 
 const scopes = [
   ...specialScopes,
   ...packages.map((pkg) => `packages/${pkg}`),
-  ...apps.map((app) => `apps/${app}`),
+  ...packages.map((pkg) => `${pkg}`),
   ...examples.map((example) => `examples/${example}`),
-  ...integrations.map((integration) => `integrations/${integration}`),
+  ...examples.map((example) => `${example}`),
 ];
 
 const config: UserConfig = {
