@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ensureHasIds } from './ensure-has-ids';
-import { Model } from './index';
+import { addAutoIds } from './';
+import { Model } from '../index';
 
 describe('ensureHasIds', () => {
   const flows: Model = {
@@ -74,7 +74,7 @@ describe('ensureHasIds', () => {
   };
 
   it('should assign IDs to entities that do not have them', () => {
-    const result = ensureHasIds(flows);
+    const result = addAutoIds(flows);
 
     expect(result.flows[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
     expect(result.flows[1].id).toBe('EXISTING-FLOW-001');
@@ -90,7 +90,7 @@ describe('ensureHasIds', () => {
     const originalFlow = flows.flows[0];
     const originalSlice = originalFlow.slices[0];
 
-    ensureHasIds(flows);
+    addAutoIds(flows);
 
     expect(originalFlow.id).toBeUndefined();
     expect(originalSlice.id).toBeUndefined();
@@ -104,7 +104,7 @@ describe('ensureHasIds', () => {
   });
 
   it('should preserve existing IDs and not overwrite them', () => {
-    const result = ensureHasIds(flows);
+    const result = addAutoIds(flows);
 
     expect(result.flows[1].id).toBe('EXISTING-FLOW-001');
     expect(result.flows[0].slices[1].id).toBe('EXISTING-SLICE-001');
@@ -137,15 +137,15 @@ describe('ensureHasIds', () => {
       integrations: [],
     };
 
-    const result = ensureHasIds(modelWithoutServer);
+    const result = addAutoIds(modelWithoutServer);
 
     expect(result.flows[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
     expect(result.flows[0].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
   });
 
   it('should generate unique IDs for multiple calls', () => {
-    const result1 = ensureHasIds(flows);
-    const result2 = ensureHasIds(flows);
+    const result1 = addAutoIds(flows);
+    const result2 = addAutoIds(flows);
 
     expect(result1.flows[0].id).not.toBe(result2.flows[0].id);
     expect(result1.flows[0].slices[0].id).not.toBe(result2.flows[0].slices[0].id);

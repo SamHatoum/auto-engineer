@@ -45,6 +45,7 @@ export { SliceType } from './flow';
 
 // Flow conversion utilities
 export { getFlows } from './getFlows';
+export { modelToFlow } from './transformers/model-to-flow';
 
 // Testing helpers
 export { createFlowSpec, given, when } from './testing';
@@ -116,4 +117,4 @@ import { commandHandler as exportSchemaHandler } from './commands/export-schema'
 export const COMMANDS = [exportSchemaHandler];
 
 // ID assignment utilities
-export { ensureHasIds } from './ensure-has-ids';
+export { addAutoIds, hasAllIds } from './id';

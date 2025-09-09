@@ -1,7 +1,7 @@
 import { generateAutoId } from './generators';
 import { Model } from '../index';
 
-export function ensureHasIds(specs: Model): Model {
+export function addAutoIds(specs: Model): Model {
   const result = structuredClone(specs);
   result.flows = result.flows.map((flow) => {
     const flowCopy = { ...flow };

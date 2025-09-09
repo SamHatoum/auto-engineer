@@ -29,23 +29,21 @@ function stableCandidateNmRoots(projectRoot: string): string[] {
   return [...roots].map((p) => p.replace(/\/+/g, '/'));
 }
 
-export async function computeDesiredSet(opts: { vfs: NodeFileStore; watchDir: string; projectRoot: string }) {
+export async function resolveSyncFileSet(opts: { vfs: NodeFileStore; watchDir: string; projectRoot: string }) {
   const { vfs, watchDir, projectRoot } = opts;
   try {
-    const res = await getFlows({ vfs, root: watchDir });
-    const files = flattenPaths(res.vfsFiles);
-
+    const flows = await getFlows({ vfs, root: watchDir });
+    const files = flattenPaths(flows.vfsFiles);
     const baseDirs = uniq([projectRoot, ...files.map(dirOf)]);
     const dynamicRoots = nmRootsForBases(baseDirs);
     const fallbackRoots = stableCandidateNmRoots(projectRoot);
     const nmRoots = uniq([...dynamicRoots, ...fallbackRoots]);
 
-    // --- External packages: from flow graph + harvested bare imports in synced files ---
-    const externalsFromFlows = res.externals ?? [];
+    // Gather externals from flow graph + bare imports in source files
+    const externalsFromFlows = flows.externals ?? [];
     const extraPkgs = await collectBareImportsFromFiles(files, vfs);
     const externals = Array.from(new Set([...externalsFromFlows, ...extraPkgs]));
-
-    const dtsFromGraph = flattenPaths(res.typings);
+    const dtsFromGraph = flattenPaths(flows.typings);
     const dtsFromProbe = await probeEntryDtsForPackagesFromRoots(vfs, nmRoots, externals);
 
     // Merge & prefer non-.pnpm & shorter paths for stability
