@@ -452,7 +452,7 @@
           }
         }
       ],
-      "sourceFile": "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app/flows/shopping-assistant.flow.ts"
+      "sourceFile": "./examples/shopping-app/flows/shopping-assistant.flow.ts"
     }
   ],
   "messages": [

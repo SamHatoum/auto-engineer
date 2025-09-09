@@ -12,6 +12,7 @@ import { handleError } from './utils/errors';
 import { createOutput } from './utils/terminal';
 import { Analytics } from './utils/analytics';
 import { PluginLoader } from './plugin-loader';
+import getPort, { portNumbers } from 'get-port';
 
 // Export DSL functions for use in auto.config.ts
 export { on, dispatch, fold } from './dsl/index';
@@ -483,8 +484,8 @@ const startMessageBusServer = async (): Promise<void> => {
   }
 
   const server = new MessageBusServer({
-    port: 5555,
-    wsPort: 5551,
+    port: await getPort({ port: portNumbers(5555, 6000) }),
+    wsPort: await getPort({ port: portNumbers(5551, 6000) }),
     enableFileSync: true,
     fileSyncDir: process.cwd(),
     fileSyncExtensions: ['.js', '.ts', '.tsx', '.jsx', '.html', '.css'],

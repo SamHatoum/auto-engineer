@@ -30,9 +30,9 @@ type MutationError {
   message: String
 }
 
-input SuggestShoppingItemsInput {
+input AddItemsToCartInput {
   sessionId: String!
-  prompt: String!
+  items: String!
 }
 
 input EnterShoppingCriteriaInput {
@@ -40,7 +40,7 @@ input EnterShoppingCriteriaInput {
   criteria: String!
 }
 
-input AddItemsToCartInput {
+input SuggestShoppingItemsInput {
   sessionId: String!
-  items: String!
+  prompt: String!
 }
