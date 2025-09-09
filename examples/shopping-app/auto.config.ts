@@ -29,6 +29,7 @@ import {
   type ClientImplementedEvent,
   type ClientImplementationFailedEvent,
 } from '@auto-engineer/frontend-implementer';
+import { type GenerateClientCommand } from '@auto-engineer/frontend-generator-react-graphql';
 
 // Plugin configuration
 export default {
@@ -100,7 +101,10 @@ const completedOperations = fold<string[], Event>('*', (state = [], event) => {
 on<SchemaExportedEvent>('SchemaExported', (event) =>
   dispatch<GenerateServerCommand>({
     type: 'GenerateServer',
-    data: { schemaPath: event.data.outputPath, destination: event.data.outputPath.replace('/schema.json', '/server') },
+    data: {
+      schemaPath: event.data.outputPath,
+      destination: event.data.outputPath.replace('/.context/schema.json', '/server'),
+    },
   }),
 );
 
@@ -122,16 +126,20 @@ on<ServerGeneratedEvent>('ServerGenerated', (event) =>
 //   ]),
 // );
 
-// on<IAGeneratedEvent>('IAGenerated', (event) =>
-//   dispatch<ImplementClientCommand>({
-//     type: 'ImplementClient',
-//     data: {
-//       projectDir: event.data.outputDir.replace('/.context', '/client'),
-//       iaSchemeDir: event.data.outputDir,
-//       designSystemPath: './.context/design-system.md',
-//     },
-//   }),
-// );
+on<SchemaExportedEvent>('SchemaExported', (event) =>
+  dispatch<GenerateClientCommand>({
+    type: 'GenerateClient',
+    data: {
+      starterDir:
+        '/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter',
+      targetDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/client',
+      iaSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/auto-ia-scheme.json',
+      gqlSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/schema.graphql',
+      figmaVariablesPath:
+        '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/figma-variables.json',
+    },
+  }),
+);
 
 // on<ClientImplementedEvent>('ClientImplemented', (event) =>
 //   dispatch<CheckClientCommand>({ type: 'CheckClient', data: { clientDirectory: './client', skipBrowserChecks: true } }),
