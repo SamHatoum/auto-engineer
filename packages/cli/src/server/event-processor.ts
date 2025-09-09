@@ -22,7 +22,7 @@ export class EventProcessor {
     this.messageBus.subscribeAll({
       name: 'ServerStateManager',
       handle: async (event: Event) => {
-        debugBus('Received event:', event.type);
+        debugBus('Received event:', event.type, JSON.stringify(event));
 
         // Store event in message store
         try {
