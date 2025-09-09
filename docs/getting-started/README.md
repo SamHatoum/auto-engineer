@@ -58,6 +58,12 @@ FIGMA_PERSONAL_TOKEN=your-figma-personal-access-token
 FIGMA_FILE_ID=your-figma-file-id
 ```
 
+3. **Run the app**: Go into the generated directory `cd <project-name>` and run:
+
+```bash
+pnpm auto
+```
+
 ### Next Steps
 
 After installation, configure your plugins in an `auto.config.ts` file. See Configuration Basics for details. To create your first app, follow the Quickstart Guide.
