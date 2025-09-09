@@ -20,101 +20,42 @@ Before installing Auto Engineer, ensure you have the following:
 
 Auto Engineer uses a plugin-based architecture, allowing you to install only the components you need. Follow these steps to set up a new project:
 
-1. **Install the Auto Engineer CLI globally**:
-
-{% tabs %}
-{% tab title="pnpm" %}
+1. **Create a new Auto project**:
 
 ```bash
-pnpm add -g @auto-engineer/cli@latest
+npx create-auto-app@latest shop
 ```
 
-{% endtab %}
-
-{% tab title="npm" %}
+4. **Configure API keys**: Cope the `.env.template` variables into a new `.env` and add your API keys:
 
 ```bash
-npm install -g @auto-engineer/cli@latest
-```
+# Auto-Engineer Environment Variables
 
-{% endtab %}
+# At least one of these is required
+OPENAI_API_KEY=your-openai-key
+ANTHROPIC_API_KEY=your-anthropic-key
+GEMINI_API_KEY=your-google-key
+XAI_API_KEY=your-xai-key
 
-{% tab title="yarn" %}
+# Custom Provider Configuration (optional)
+# Use this to connect to any OpenAI-compatible API endpoint
+CUSTOM_PROVIDER_NAME=litellm
+CUSTOM_PROVIDER_BASE_URL=https://api.litellm.ai
+CUSTOM_PROVIDER_API_KEY=your-custom-api-key
+CUSTOM_PROVIDER_DEFAULT_MODEL=claude-3-sonnet
 
-```bash
-yarn global add @auto-engineer/cli@latest
-```
+# Optional: Set default provider and model
+DEFAULT_AI_PROVIDER=openai
+DEFAULT_AI_MODEL=gpt-4o-mini
 
-{% endtab %}
-{% endtabs %}
+# Debug Configuration
+DEBUG=
+NO_COLOR=
+OUTPUT_FORMAT=text
 
-2. **Create a new project directory**:
-
-```bash
-mkdir my-app && cd my-app
-```
-
-3. **Install required plugins**: For a typical setup, install the core plugins:&#x20;
-
-{% tabs %}
-{% tab title="pnpm" %}
-
-```bash
-pnpm add @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
-```
-
-{% endtab %}
-
-{% tab title="npm" %}
-
-```bash
-npm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
-```
-
-{% endtab %}
-
-{% tab title="yarn" %}
-
-```bash
-yarn add @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett
-```
-
-{% endtab %}
-{% endtabs %}
-
-To include additional functionality, such as frontend generation, install:
-
-{% tabs %}
-{% tab title="pnpm" %}
-
-```bash
-pnpm add @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
-```
-
-{% endtab %}
-
-{% tab title="npm" %}
-
-```bash
-npm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
-```
-
-{% endtab %}
-
-{% tab title="yarn" %}
-
-```bash
-yarn add @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer
-```
-
-{% endtab %}
-{% endtabs %}
-
-4. **Configure API keys**: Create a `.env` file in your project root and add your API keys:
-
-```bash
-echo "ANTHROPIC_API_KEY=your-key-here" > .env
-# Add other API keys as needed
+# Figma
+FIGMA_PERSONAL_TOKEN=your-figma-personal-access-token
+FIGMA_FILE_ID=your-figma-file-id
 ```
 
 ### Next Steps
