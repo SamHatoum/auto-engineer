@@ -376,7 +376,7 @@ importers:
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.3
-        version: 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.9.2))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
+        version: 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@14.0.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.9.2))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
       debug:
         specifier: ^4.4.1
         version: 4.4.1
@@ -577,7 +577,7 @@ importers:
         version: link:../message-bus
       '@event-driven-io/emmett':
         specifier: ^0.38.2
-        version: 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
+        version: 0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@14.0.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)
       apollo-server:
         specifier: ^3.13.0
         version: 3.13.0(graphql@16.11.0)
@@ -2572,6 +2572,10 @@ packages:
     resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
     engines: {node: '>=18'}
 
+  commander@14.0.0:
+    resolution: {integrity: sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==}
+    engines: {node: '>=20'}
+
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
@@ -2795,8 +2799,8 @@ packages:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
-  dotenv@17.2.1:
-    resolution: {integrity: sha512-kQhDYKZecqnM0fCnzI5eIv5L4cAe/iRI+HqMbO/hbRdTAeXDG+M9FjipUxNfbARuEg4iHIbhnhs78BCHNbSxEQ==}
+  dotenv@17.2.2:
+    resolution: {integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q==}
     engines: {node: '>=12'}
 
   dotenv@8.6.0:
@@ -6085,22 +6089,22 @@ snapshots:
       '@eslint/core': 0.15.2
       levn: 0.4.1
 
-  '@event-driven-io/emmett@0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
+  '@event-driven-io/emmett@0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@14.0.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.8.3))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
     dependencies:
       '@types/async-retry': 1.4.9
       '@types/uuid': 10.0.0
       async-retry: 1.3.3
-      commander: 12.1.0
+      commander: 14.0.0
       ts-node: 10.9.2(@types/node@20.19.11)(typescript@5.8.3)
       uuid: 10.0.0
       web-streams-polyfill: 4.2.0
 
-  '@event-driven-io/emmett@0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@12.1.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.9.2))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
+  '@event-driven-io/emmett@0.38.5(@types/async-retry@1.4.9)(@types/uuid@10.0.0)(async-retry@1.3.3)(commander@14.0.0)(ts-node@10.9.2(@types/node@20.19.11)(typescript@5.9.2))(uuid@10.0.0)(web-streams-polyfill@4.2.0)':
     dependencies:
       '@types/async-retry': 1.4.9
       '@types/uuid': 10.0.0
       async-retry: 1.3.3
-      commander: 12.1.0
+      commander: 14.0.0
       ts-node: 10.9.2(@types/node@20.19.11)(typescript@5.9.2)
       uuid: 10.0.0
       web-streams-polyfill: 4.2.0
@@ -6396,24 +6400,24 @@ snapshots:
 
   '@types/babel__core@7.20.5':
     dependencies:
-      '@babel/parser': 7.28.3
-      '@babel/types': 7.28.2
+      '@babel/parser': 7.28.4
+      '@babel/types': 7.28.4
       '@types/babel__generator': 7.27.0
       '@types/babel__template': 7.4.4
       '@types/babel__traverse': 7.28.0
 
   '@types/babel__generator@7.27.0':
     dependencies:
-      '@babel/types': 7.28.2
+      '@babel/types': 7.28.4
 
   '@types/babel__template@7.4.4':
     dependencies:
-      '@babel/parser': 7.28.3
-      '@babel/types': 7.28.2
+      '@babel/parser': 7.28.4
+      '@babel/types': 7.28.4
 
   '@types/babel__traverse@7.28.0':
     dependencies:
-      '@babel/types': 7.28.2
+      '@babel/types': 7.28.4
 
   '@types/body-parser@1.19.2':
     dependencies:
@@ -7358,6 +7362,8 @@ snapshots:
 
   commander@12.1.0: {}
 
+  commander@14.0.0: {}
+
   commander@2.20.3: {}
 
   commander@4.1.1: {}
@@ -7534,7 +7540,7 @@ snapshots:
   dotenv-cli@9.0.0:
     dependencies:
       cross-spawn: 7.0.6
-      dotenv: 17.2.1
+      dotenv: 17.2.2
       dotenv-expand: 10.0.0
       minimist: 1.2.8
 
@@ -7542,7 +7548,7 @@ snapshots:
 
   dotenv@16.6.1: {}
 
-  dotenv@17.2.1: {}
+  dotenv@17.2.2: {}
 
   dotenv@8.6.0: {}
 
