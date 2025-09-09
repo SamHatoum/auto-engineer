@@ -14,7 +14,7 @@ async function main() {
     });
     const printedSchema = printSchema(schema);
 
-    const contextDir = path.resolve('/Users/sam/WebstormProjects/top/my-shop', '.context');
+    const contextDir = path.resolve('../.context');
     const schemaPath = path.join(contextDir, 'schema.graphql');
     await writeFile(schemaPath, printedSchema, 'utf-8');
 
