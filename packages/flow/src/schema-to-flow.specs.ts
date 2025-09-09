@@ -1,13 +1,11 @@
-// src/schema-to-flow.specs.ts
 import { describe, it, expect } from 'vitest';
-import type { z } from 'zod';
-import { SpecsSchema } from './schema';
 import schema from './samples/seasonal-assistant.schema.json';
-import { schemaToFlow } from './transformers/schema-to-flow';
+import { modelToFlow } from './transformers/model-to-flow';
+import { Model } from './index';
 
 describe('schemaToFlow', () => {
   it('should create a full flow DSL from a model', async () => {
-    const code = await schemaToFlow(schema as z.infer<typeof SpecsSchema>, {
+    const code = await modelToFlow(schema as Model, {
       flowImport: '@auto-engineer/flow',
       integrationImport: '../server/src/integrations',
     });

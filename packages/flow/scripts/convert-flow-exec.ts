@@ -6,7 +6,7 @@ import path from 'path';
 const main = async () => {
   try {
     const result = await getFlows({ vfs: new NodeFileStore(), root: path.resolve(__dirname) });
-    const schema = result.toSchema();
+    const schema = result.toModel();
     console.log(JSON.stringify(schema, null, 2));
   } catch (error) {
     console.error('Error:', error);

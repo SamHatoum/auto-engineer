@@ -1,0 +1,153 @@
+import { describe, it, expect } from 'vitest';
+import { ensureHasIds } from './ensure-has-ids';
+import { Model } from './index';
+
+describe('ensureHasIds', () => {
+  const flows: Model = {
+    variant: 'specs',
+    flows: [
+      {
+        name: 'Test Flow',
+        slices: [
+          {
+            type: 'command',
+            name: 'Test Command Slice',
+            client: { description: 'Test client' },
+            server: {
+              description: 'Test server',
+              specs: {
+                name: 'Test Specs',
+                rules: [
+                  {
+                    description: 'Test rule without ID',
+                    examples: [],
+                  },
+                  {
+                    id: 'EXISTING-RULE-001',
+                    description: 'Test rule with existing ID',
+                    examples: [],
+                  },
+                ],
+              },
+            },
+          },
+          {
+            type: 'query',
+            name: 'Test Query Slice',
+            id: 'EXISTING-SLICE-001',
+            client: { description: 'Test client' },
+            server: {
+              description: 'Test server',
+              specs: {
+                name: 'Test Specs',
+                rules: [],
+              },
+            },
+          },
+        ],
+      },
+      {
+        name: 'Flow with ID',
+        id: 'EXISTING-FLOW-001',
+        slices: [
+          {
+            type: 'react',
+            name: 'React Slice',
+            server: {
+              description: 'React server',
+              specs: {
+                name: 'React Specs',
+                rules: [
+                  {
+                    description: 'React rule',
+                    examples: [],
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ],
+    messages: [],
+    integrations: [],
+  };
+
+  it('should assign IDs to entities that do not have them', () => {
+    const result = ensureHasIds(flows);
+
+    expect(result.flows[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[1].id).toBe('EXISTING-FLOW-001');
+    expect(result.flows[0].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].slices[1].id).toBe('EXISTING-SLICE-001');
+    expect(result.flows[1].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].slices[0].server?.specs.rules[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].slices[0].server?.specs.rules[1].id).toBe('EXISTING-RULE-001');
+    expect(result.flows[1].slices[0].server?.specs.rules[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+  });
+
+  it('should not mutate the original flows', () => {
+    const originalFlow = flows.flows[0];
+    const originalSlice = originalFlow.slices[0];
+
+    ensureHasIds(flows);
+
+    expect(originalFlow.id).toBeUndefined();
+    expect(originalSlice.id).toBeUndefined();
+    if (
+      'server' in originalSlice &&
+      originalSlice.server?.specs?.rules !== undefined &&
+      originalSlice.server.specs.rules.length > 0
+    ) {
+      expect(originalSlice.server.specs.rules[0].id).toBeUndefined();
+    }
+  });
+
+  it('should preserve existing IDs and not overwrite them', () => {
+    const result = ensureHasIds(flows);
+
+    expect(result.flows[1].id).toBe('EXISTING-FLOW-001');
+    expect(result.flows[0].slices[1].id).toBe('EXISTING-SLICE-001');
+    expect(result.flows[0].slices[0].server?.specs.rules[1].id).toBe('EXISTING-RULE-001');
+  });
+
+  it('should handle flows without server blocks', () => {
+    const modelWithoutServer: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Simple Flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'Simple Command',
+              client: { description: 'Simple client' },
+              server: {
+                description: 'Simple server',
+                specs: {
+                  name: 'Simple specs',
+                  rules: [],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [],
+      integrations: [],
+    };
+
+    const result = ensureHasIds(modelWithoutServer);
+
+    expect(result.flows[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+    expect(result.flows[0].slices[0].id).toMatch(/^AUTO-[a-zA-Z0-9_-]{64}$/);
+  });
+
+  it('should generate unique IDs for multiple calls', () => {
+    const result1 = ensureHasIds(flows);
+    const result2 = ensureHasIds(flows);
+
+    expect(result1.flows[0].id).not.toBe(result2.flows[0].id);
+    expect(result1.flows[0].slices[0].id).not.toBe(result2.flows[0].slices[0].id);
+  });
+});

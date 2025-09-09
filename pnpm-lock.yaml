@@ -365,6 +365,9 @@ importers:
       '@auto-engineer/file-store':
         specifier: workspace:*
         version: link:../file-store
+      '@auto-engineer/id':
+        specifier: workspace:*
+        version: link:../id
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../message-bus
@@ -498,6 +501,8 @@ importers:
       playwright:
         specifier: ^1.54.1
         version: 1.55.0
+
+  packages/id: {}
 
   packages/information-architect:
     dependencies:

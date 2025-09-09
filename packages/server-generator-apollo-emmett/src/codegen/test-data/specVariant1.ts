@@ -1,4 +1,4 @@
-import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/flow';
 
 const specVariant1: SpecsSchema = {
   variant: 'specs',

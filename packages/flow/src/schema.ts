@@ -323,7 +323,6 @@ const FlowWithClientServerNamesSchema = z
 
 // Variant 4: Full specs (uses existing schemas)
 
-// Export individual variant schemas
 export const FlowNamesSchema = z
   .object({
     variant: z.literal('flow-names').describe('Just flow names for initial ideation'),
@@ -345,7 +344,7 @@ export const ClientServerNamesSchema = z
   })
   .describe('System with client/server descriptions for behavior planning');
 
-export const SpecsSchema = z
+export const modelSchema = z
   .object({
     variant: z.literal('specs').describe('Full specification with all details'),
     flows: z.array(FlowSchema),
@@ -354,33 +353,6 @@ export const SpecsSchema = z
   })
   .describe('Complete system specification with all implementation details');
 
-export const AppSchema = z
-  .discriminatedUnion('variant', [FlowNamesSchema, SliceNamesSchema, ClientServerNamesSchema, SpecsSchema])
-  .describe('Progressive system definition supporting incremental co-creation');
-
-// if (require.main === module) {
-//   const schemas = Object.fromEntries(
-//     Object.entries({
-//       flow: FlowSchema,
-//       message: MessageSchema,
-//       integration: IntegrationSchema,
-//       commandSlice: CommandSliceSchema,
-//       querySlice: QuerySliceSchema,
-//       reactSlice: ReactSliceSchema,
-//     }).map(([k, v]) => [
-//       k,
-//       zodToJsonSchema(v, {
-//         $refStrategy: 'root' as const,
-//         target: 'jsonSchema7' as const,
-//         definitionPath: 'definitions',
-//         name: k[0].toUpperCase() + k.slice(1),
-//       }),
-//     ]),
-//   );
-//   console.log(JSON.stringify(schemas, null, 2));
-// }
-
-// Re-export schemas for external usage
 export {
   StateExampleSchema,
   MessageFieldSchema,

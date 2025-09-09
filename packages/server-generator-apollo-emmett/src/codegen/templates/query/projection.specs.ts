@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flow';
+import { Model } from '@auto-engineer/flow';
 
 describe('projection.ts.ejs', () => {
   it('should generate a valid projection file with correct relative event import path from producing slice', async () => {
-    const spec: SpecsSchema = {
+    const flows: Model = {
       variant: 'specs',
       flows: [
         {
@@ -201,7 +201,7 @@ describe('projection.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(flows.flows, flows.messages, undefined, 'src/domain/flows');
     const projectionFile = plans.find((p) => p.outputPath.endsWith('projection.ts'));
 
     expect(projectionFile?.contents).toMatchInlineSnapshot(`
@@ -261,7 +261,7 @@ describe('projection.ts.ejs', () => {
     `);
   });
   it('should generate a valid query resolver using ID type', async () => {
-    const spec: SpecsSchema = {
+    const spec: Model = {
       variant: 'specs',
       flows: [
         {

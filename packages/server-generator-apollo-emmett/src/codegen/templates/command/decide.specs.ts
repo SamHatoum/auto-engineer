@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/flow';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 
 describe('decide.ts.ejs', () => {

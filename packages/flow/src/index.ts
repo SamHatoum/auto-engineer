@@ -17,7 +17,6 @@ export type {
 } from './types';
 export { MessageTargetSchema, DataSinkSchema, DataSourceSchema } from './schema';
 export { createIntegration } from './types';
-//export { registerIntegrations } from './integration-registry';
 
 // Apollo GraphQL
 export { gql } from 'graphql-tag';
@@ -55,7 +54,7 @@ export {
   FlowNamesSchema as FlowNamesSystemSchema,
   SliceNamesSchema as SliceNamesSystemSchema,
   ClientServerNamesSchema as ClientServerNamesSystemSchema,
-  SpecsSchema as SpecsSystemSchema,
+  modelSchema as SpecsSystemSchema,
   MessageFieldSchema,
   MessageSchema,
   CommandSchema,
@@ -67,8 +66,7 @@ export {
   ReactSliceSchema,
   SliceSchema,
   FlowSchema,
-  AppSchema as AppSchemaZod,
-  SpecsSchema,
+  modelSchema,
   EventExampleSchema,
   CommandExampleSchema,
   ExampleSchema,
@@ -76,15 +74,13 @@ export {
   SpecSchema,
 } from './schema';
 
-// Export the AppSchema type
 import {
-  AppSchema as ImportedAppSchema,
   CommandExampleSchema,
   ErrorExampleSchema,
   EventExampleSchema,
   FlowSchema,
   SliceSchema,
-  SpecsSchema,
+  modelSchema,
   StateExampleSchema,
   QuerySliceSchema,
   ReactSliceSchema,
@@ -94,14 +90,11 @@ import {
   RuleSchema,
   SpecSchema,
 } from './schema';
-export type AppSchema = z.infer<typeof ImportedAppSchema>;
-
-// Export additional required types
+export type Model = z.infer<typeof modelSchema>;
+export type Flow = z.infer<typeof FlowSchema>;
 export type CommandExample = z.infer<typeof CommandExampleSchema>;
 export type EventExample = z.infer<typeof EventExampleSchema>;
-export type Flow = z.infer<typeof FlowSchema>;
 export type Slice = z.infer<typeof SliceSchema>;
-export type SpecsSchemaType = z.infer<typeof SpecsSchema>;
 export type StateExample = z.infer<typeof StateExampleSchema>;
 export type ErrorExample = z.infer<typeof ErrorExampleSchema>;
 export type QuerySlice = z.infer<typeof QuerySliceSchema>;
@@ -121,3 +114,6 @@ export {
 
 import { commandHandler as exportSchemaHandler } from './commands/export-schema';
 export const COMMANDS = [exportSchemaHandler];
+
+// ID assignment utilities
+export { ensureHasIds } from './ensure-has-ids';

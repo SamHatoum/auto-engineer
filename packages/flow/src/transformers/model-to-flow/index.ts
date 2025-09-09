@@ -1,9 +1,6 @@
-import type { z } from 'zod';
-import { SpecsSchema } from '../../schema';
 import { generateTypeScriptCode } from './generators/compose';
 import { formatWithPrettier } from './formatting/prettier';
-
-type SchemaData = z.infer<typeof SpecsSchema>;
+import { Model } from '../../index';
 
 /**
  * Converts a schema specification to TypeScript flow DSL code.
@@ -12,14 +9,14 @@ type SchemaData = z.infer<typeof SpecsSchema>;
  * TypeScript code using the flow DSL, including imports, type definitions, builders,
  * and flow specifications.
  *
- * @param schema The complete schema specification conforming to SpecsSchema
+ * @param model The complete schema specification conforming to SpecsSchema
  * @param opts Configuration options for import paths
  * @returns Promise resolving to formatted TypeScript code string
  */
-export async function schemaToFlow(
-  schema: SchemaData,
+export async function modelToFlow(
+  model: Model,
   opts: { flowImport: string; integrationImport: string },
 ): Promise<string> {
-  const rawCode = generateTypeScriptCode(schema, opts);
+  const rawCode = generateTypeScriptCode(model, opts);
   return await formatWithPrettier(rawCode);
 }

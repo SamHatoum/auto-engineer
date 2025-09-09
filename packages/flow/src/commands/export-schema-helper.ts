@@ -28,7 +28,7 @@ const main = async () => {
     debug('Resolved flows path: %s', flowsPath);
 
     const result = await getFlows({ vfs: new NodeFileStore(), root: flowsPath });
-    const schema = result.toSchema();
+    const schema = result.toModel();
     debug(
       'Schema generated with %d flows, %d messages, %d integrations',
       schema.flows.length,

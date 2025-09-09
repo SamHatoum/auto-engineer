@@ -1,6 +1,4 @@
-import { z } from 'zod';
-import { SpecsSchema } from '../../schema';
-import { Flow, Message } from '../../index';
+import { Flow, Message, Model } from '../../index';
 import { globalIntegrationRegistry } from '../../integration-registry';
 import { integrationExportRegistry } from '../../integration-export-registry';
 import { TypeInfo } from '../../loader/ts-utils';
@@ -71,10 +69,7 @@ function createTypeResolver(
   };
 }
 
-export const flowsToSchema = (
-  flows: Flow[],
-  typesByFile?: Map<string, Map<string, TypeInfo>>,
-): z.infer<typeof SpecsSchema> => {
+export const flowsToModel = (flows: Flow[], typesByFile?: Map<string, Map<string, TypeInfo>>): Model => {
   const messages = new Map<string, Message>();
   const integrations = new Map<
     string,

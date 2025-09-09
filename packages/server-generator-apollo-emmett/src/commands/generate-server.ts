@@ -6,7 +6,7 @@ import { resolve, join } from 'path';
 import { existsSync } from 'fs';
 import { generateScaffoldFilePlans, writeScaffoldFilePlans } from '../codegen/scaffoldFromSchema';
 import { ensureDirExists } from '../codegen/utils/path';
-import { SpecsSchemaType } from '@auto-engineer/flow';
+import { Model } from '@auto-engineer/flow';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execa } from 'execa';
@@ -117,12 +117,12 @@ async function validateSchemaFile(
   return null;
 }
 
-async function readAndParseSchema(absSchema: string): Promise<SpecsSchemaType> {
+async function readAndParseSchema(absSchema: string): Promise<Model> {
   debugSchema('Reading schema file from %s', absSchema);
   const content = await readFile(absSchema, 'utf8');
 
   debugSchema('Schema content length: %d bytes', content.length);
-  const spec = JSON.parse(content) as SpecsSchemaType;
+  const spec = JSON.parse(content) as Model;
 
   debugSchema('Parsed schema:');
   debugSchema('  Flows: %d', spec.flows?.length || 0);
@@ -133,7 +133,7 @@ async function readAndParseSchema(absSchema: string): Promise<SpecsSchemaType> {
   return spec;
 }
 
-function logFlowDetails(spec: SpecsSchemaType): void {
+function logFlowDetails(spec: Model): void {
   if (spec.flows !== undefined && spec.flows.length > 0) {
     debugSchema(
       'Flow names: %o',
@@ -148,7 +148,7 @@ function logFlowDetails(spec: SpecsSchemaType): void {
   }
 }
 
-async function generateAndWriteScaffold(spec: SpecsSchemaType, serverDir: string): Promise<void> {
+async function generateAndWriteScaffold(spec: Model, serverDir: string): Promise<void> {
   const domainFlowsPath = join(serverDir, 'src', 'domain', 'flows');
   debugScaffold('Generating scaffold file plans');
   debugScaffold('  Domain flows path: %s', domainFlowsPath);

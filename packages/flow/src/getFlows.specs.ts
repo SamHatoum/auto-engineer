@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SpecsSchema } from './schema';
+import { modelSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -13,11 +13,11 @@ const root = path.resolve(__dirname);
 
 describe('getFlows', (_mode) => {
   // eslint-disable-next-line complexity
-  it('loads multiple flows and generates correct schemas', async () => {
+  it('loads multiple flows and generates correct models', async () => {
     const flows = await getFlows({ vfs, root: path.resolve(__dirname) });
-    const schemas = flows.toSchema();
+    const schemas = flows.toModel();
 
-    const parseResult = SpecsSchema.safeParse(schemas);
+    const parseResult = modelSchema.safeParse(schemas);
     if (!parseResult.success) {
       console.error(`Schema validation errors:`, parseResult.error.format());
     }
@@ -177,8 +177,8 @@ describe('getFlows', (_mode) => {
 
   it('validates the complete schema with Zod', async () => {
     const flows = await getFlows({ vfs: vfs, root });
-    const schemas = flows.toSchema();
-    const parsed = SpecsSchema.parse(schemas);
+    const schemas = flows.toModel();
+    const parsed = modelSchema.parse(schemas);
     expect(parsed.variant).toBe('specs');
     expect(Array.isArray(parsed.flows)).toBe(true);
     expect(Array.isArray(parsed.messages)).toBe(true);
@@ -187,7 +187,7 @@ describe('getFlows', (_mode) => {
 
   it('handles flows with integrations', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
-    const specsSchema = flows.toSchema();
+    const specsSchema = flows.toModel();
 
     const flowsWithIntegrations = specsSchema.flows.filter((f) =>
       f.slices.some((s) => {
@@ -211,7 +211,7 @@ describe('getFlows', (_mode) => {
 
   it('handles react slices correctly', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
-    const specsSchema = flows.toSchema();
+    const specsSchema = flows.toModel();
 
     const reactSlices = specsSchema.flows.flatMap((f) => f.slices.filter((s) => s.type === 'react'));
     reactSlices.forEach((slice) => {
@@ -236,9 +236,9 @@ describe('getFlows', (_mode) => {
 
   it('parses and validates a complete flow with all slice types', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
-    const schemas = flows.toSchema();
+    const schemas = flows.toModel();
 
-    const validationResult = SpecsSchema.safeParse(schemas);
+    const validationResult = modelSchema.safeParse(schemas);
     if (!validationResult.success) {
       console.error(`Validation errors:`, JSON.stringify(validationResult.error.format(), null, 2));
     }
@@ -262,7 +262,7 @@ describe('getFlows', (_mode) => {
   it('should have ids for flows and slices that have ids', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
 
-    const schemas = flows.toSchema();
+    const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
     if (!testFlowWithIds) return;
@@ -279,7 +279,7 @@ describe('getFlows', (_mode) => {
 
   it('should have ids for command slice rules', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
-    const schemas = flows.toSchema();
+    const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
     if (!testFlowWithIds) return;
@@ -302,7 +302,7 @@ describe('getFlows', (_mode) => {
 
   it('should have ids for query slice rules', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
-    const schemas = flows.toSchema();
+    const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
     if (!testFlowWithIds) return;
@@ -320,7 +320,7 @@ describe('getFlows', (_mode) => {
 
   it('should have ids for react slice rules', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
-    const schemas = flows.toSchema();
+    const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
     if (!testFlowWithIds) return;

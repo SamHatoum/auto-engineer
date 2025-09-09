@@ -1,0 +1,23 @@
+{
+  "name": "@auto-engineer/id",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "test": "vitest run --reporter=dot",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
+    "link:dev": "pnpm build && pnpm link --global",
+    "unlink:dev": "pnpm unlink --global",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "0.8.5"
+}

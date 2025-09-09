@@ -1,9 +1,7 @@
 import createDebug from 'debug';
-import { z } from 'zod';
-import { SpecsSchema } from './schema';
 import { registry } from './flow-registry';
-import type { Flow } from './index';
-import { flowsToSchema } from './transformers/flow-to-schema';
+import type { Flow, Model } from './index';
+import { flowsToModel } from './transformers/flow-to-model';
 import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
 
@@ -60,6 +58,6 @@ export const getFlows = async (opts: GetFlowsOptions) => {
     typings: exec.typings, // { pkgName: [abs d.ts paths] }
     typeMap: exec.typeMap, // mapping from TypeScript type names to string literals
     typesByFile: exec.typesByFile, // mapping from file path to type definitions in that file
-    toSchema: (): z.infer<typeof SpecsSchema> => flowsToSchema(flows, exec.typesByFile),
+    toModel: (): Model => flowsToModel(flows, exec.typesByFile),
   };
 };

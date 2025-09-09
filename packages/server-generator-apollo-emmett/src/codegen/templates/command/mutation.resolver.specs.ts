@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/flow';
 
 describe('mutation.resolver.ts.ejs', () => {
   it('should generate a valid mutation resolver file', async () => {

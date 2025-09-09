@@ -1,19 +1,13 @@
 import ts from 'typescript';
-import type { z } from 'zod';
-import { SpecsSchema } from '../../../schema';
 import { buildImports } from './imports';
 import { buildTypeAliases } from './types';
 import { buildFlowStatements } from './flow';
 import { extractTypeIntegrationNames } from '../utils/integration-extractor';
 import { integrationNameToPascalCase } from '../utils/strings';
 import { analyzeCodeUsage } from '../analysis/usage';
+import { Model } from '../../../index';
 
-type SchemaData = z.infer<typeof SpecsSchema>;
-
-export function generateTypeScriptCode(
-  schema: SchemaData,
-  opts: { flowImport: string; integrationImport: string },
-): string {
+export function generateTypeScriptCode(schema: Model, opts: { flowImport: string; integrationImport: string }): string {
   const f = ts.factory;
   const messages = schema.messages ?? [];
   const flows = schema.flows ?? [];
@@ -81,10 +75,10 @@ export function generateTypeScriptCode(
 function buildStatements(
   ts: typeof import('typescript'),
   opts: { flowImport: string; integrationImport: string },
-  messages: SchemaData['messages'],
+  messages: Model['messages'],
   typeIntegrationNames: string[],
   valueIntegrationNames: string[],
-  flows: SchemaData['flows'],
+  flows: Model['flows'],
 ): ts.Statement[] {
   const statements: ts.Statement[] = [];
 

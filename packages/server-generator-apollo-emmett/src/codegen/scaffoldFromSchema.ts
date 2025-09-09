@@ -6,7 +6,7 @@ import ejs from 'ejs';
 import { ensureDirExists, ensureDirPath, toKebabCase } from './utils/path';
 import { camelCase, pascalCase } from 'change-case';
 import prettier from 'prettier';
-import { Flow, Slice, SpecsSchemaType } from '@auto-engineer/flow';
+import { Flow, Slice, Model } from '@auto-engineer/flow';
 import createDebug from 'debug';
 
 const debug = createDebug('emmett:scaffold');
@@ -201,7 +201,7 @@ async function prepareTemplateData(
   commandSchemasByName: Record<string, Message>,
   projectionIdField: string | undefined,
   allMessages?: MessageDefinition[],
-  integrations?: SpecsSchemaType['integrations'],
+  integrations?: Model['integrations'],
 ): Promise<Record<string, unknown>> {
   debug('Preparing template data for slice: %s (flow: %s)', slice.name, flow.name);
   debug('  Commands: %d', commands.length);
@@ -343,7 +343,7 @@ async function generateFilesForSlice(
   sliceDir: string,
   messages: MessageDefinition[],
   flows: Flow[],
-  integrations?: SpecsSchemaType['integrations'],
+  integrations?: Model['integrations'],
 ): Promise<FilePlan[]> {
   debugSlice('Generating files for slice: %s (type: %s)', slice.name, slice.type);
   debugSlice('  Flow: %s', flow.name);
@@ -391,8 +391,8 @@ async function generateFilesForSlice(
 
 export async function generateScaffoldFilePlans(
   flows: Flow[],
-  messages: SpecsSchemaType['messages'],
-  integrations?: SpecsSchemaType['integrations'],
+  messages: Model['messages'],
+  integrations?: Model['integrations'],
   baseDir = 'src/domain/flows',
 ): Promise<FilePlan[]> {
   debug('Generating scaffold file plans');
@@ -445,7 +445,7 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
 
 export async function scaffoldFromSchema(
   flows: Flow[],
-  messages: SpecsSchemaType['messages'],
+  messages: Model['messages'],
   baseDir = 'src/domain/flows',
 ): Promise<void> {
   debug('Starting scaffold from schema');

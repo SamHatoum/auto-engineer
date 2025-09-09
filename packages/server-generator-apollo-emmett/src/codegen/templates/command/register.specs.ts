@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { SpecsSchemaType as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/flow';
 
 describe('generateScaffoldFilePlans', () => {
   it('should generate a valid register file', async () => {

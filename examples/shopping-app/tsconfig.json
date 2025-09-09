@@ -8,7 +8,9 @@
     "experimentalDecorators": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "noEmit": false
+    "noEmit": false,
+    "strict": true,
+    "strictNullChecks": true
   },
   "include": ["flows/**/*", "vitest.config.ts"],
   "exclude": ["dist", "node_modules"]
