@@ -1,14 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { hasAllIds, addAutoIds } from './index';
 import { getFlows } from '../getFlows';
 import { NodeFileStore } from '@auto-engineer/file-store';
 import path from 'path';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
-const vfs = new NodeFileStore();
-const root = path.resolve(__dirname, '..');
 
 describe('hasAllIds', () => {
+  let vfs: NodeFileStore;
+  let root: string;
+
+  beforeEach(() => {
+    vfs = new NodeFileStore();
+    root = path.resolve(__dirname, '..');
+  });
   it('should return false for models without IDs', async () => {
     const flows = await getFlows({ vfs, root });
     const model = flows.toModel();
