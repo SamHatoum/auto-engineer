@@ -68,11 +68,16 @@ export const should = (description: string) => {
   recordShouldBlock(description);
 };
 
-export const specs = (description: string, fn: () => void) => {
+export function specs(description: string, fn: () => void): void;
+export function specs(fn: () => void): void;
+export function specs(descriptionOrFn: string | (() => void), fn?: () => void): void {
+  const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+  const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn!;
+
   pushSpec(description);
   recordShouldBlock();
-  fn();
-};
+  callback();
+}
 
 export function rule(description: string, fn: () => void): void;
 export function rule(description: string, id: string, fn: () => void): void;
