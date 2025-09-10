@@ -5,6 +5,7 @@ import {
   parseImports,
   parseTypeDefinitions,
   parseIntegrationExports,
+  parseGivenTypeArguments,
   patchImportMeta,
   transpileToCjs,
   TypeInfo,
@@ -23,6 +24,7 @@ export type BuildGraphResult = {
   typings: Record<string, string[]>; // absolute POSIX paths of .d.ts
   typeMap: Map<string, string>; // mapping from TypeScript type names to string literals
   typesByFile: Map<string, Map<string, TypeInfo>>; // mapping from file path to type definitions in that file
+  givenTypesByFile: Map<string, import('./ts-utils').GivenTypeInfo[]>; // mapping from file path to given type info
 };
 
 export async function buildGraph(
@@ -42,6 +44,50 @@ export async function buildGraph(
   const pkgTypings = new Map<string, Set<string>>();
   const globalTypeMap = new Map<string, string>();
   const typesByFile = new Map<string, Map<string, TypeInfo>>();
+  const givenTypesByFile = new Map<string, import('./ts-utils').GivenTypeInfo[]>();
+
+  const compilerOptions: import('typescript').CompilerOptions = {
+    target: ts.ScriptTarget.ES2020,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+    lib: ['es2020'],
+    allowJs: true,
+    checkJs: false,
+    skipLibCheck: true,
+    esModuleInterop: true,
+  };
+
+  const defaultHost = ts.createCompilerHost(compilerOptions);
+  const sourceFiles = new Map<string, import('typescript').SourceFile>();
+
+  const host: import('typescript').CompilerHost = {
+    ...defaultHost,
+    getSourceFile: (fileName: string, languageVersion: import('typescript').ScriptTarget) => {
+      const posixPath = toPosix(fileName);
+      if (sourceFiles.has(posixPath)) {
+        return sourceFiles.get(posixPath);
+      }
+      return defaultHost.getSourceFile(fileName, languageVersion);
+    },
+    readFile: (fileName: string) => {
+      const posixPath = toPosix(fileName);
+      const sourceFile = sourceFiles.get(posixPath);
+      if (sourceFile) {
+        return sourceFile.getFullText();
+      }
+      return defaultHost.readFile(fileName);
+    },
+    fileExists: (fileName: string) => {
+      const posixPath = toPosix(fileName);
+      if (sourceFiles.has(posixPath)) {
+        return true;
+      }
+      return defaultHost.fileExists(fileName);
+    },
+    getDefaultLibFileName: (options: import('typescript').CompilerOptions) =>
+      defaultHost.getDefaultLibFileName(options),
+    useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
+  };
 
   function basePackageOf(spec: string): string {
     if (spec.startsWith('@')) {
@@ -50,6 +96,48 @@ export async function buildGraph(
     }
     const i = spec.indexOf('/');
     return i === -1 ? spec : spec.slice(0, i);
+  }
+
+  function detectScriptKind(path: string): import('typescript').ScriptKind {
+    if (path.endsWith('.tsx')) return ts.ScriptKind.TSX;
+    if (path.endsWith('.jsx')) return ts.ScriptKind.JSX;
+    if (path.endsWith('.js') || path.endsWith('.mjs')) return ts.ScriptKind.JS;
+    return ts.ScriptKind.TS;
+  }
+
+  function processTypesAndIntegrations(
+    path: string,
+    typeMap: Map<string, TypeInfo>,
+    integrationExports: import('./ts-utils').IntegrationExport[],
+  ): void {
+    typesByFile.set(path, typeMap);
+    for (const [typeName, typeInfo] of typeMap) {
+      globalTypeMap.set(typeName, typeInfo.stringLiteral);
+    }
+
+    if (integrationExports.length > 0) {
+      integrationExportRegistry.registerIntegrationExports(integrationExports);
+      debug('[integrations] registered %d integration exports from %s', integrationExports.length, path);
+    }
+  }
+
+  async function processImports(imports: string[], path: string): Promise<Map<string, import('./types').Resolved>> {
+    const resolved = new Map<string, import('./types').Resolved>();
+
+    for (const spec of imports) {
+      const r = await resolveSpecifier(vfs, spec, path, importMap);
+      resolved.set(spec, r);
+      if (r.kind === 'vfs') {
+        await buildRec(r.path);
+      } else if (r.kind === 'external') {
+        externals.add(spec);
+        const base = basePackageOf(spec);
+        externalPkgs.add(base);
+        debug('[externals] seen bare "%s" -> base "%s"', spec, base);
+      }
+    }
+
+    return resolved;
   }
 
   async function buildRec(absPath: string): Promise<void> {
@@ -66,36 +154,16 @@ export async function buildGraph(
     let source = new TextDecoder().decode(buf);
     source = patchImportMeta(source, path);
 
+    const scriptKind = detectScriptKind(path);
+    const sourceFile = ts.createSourceFile(path, source, ts.ScriptTarget.ES2020, true, scriptKind);
+    sourceFiles.set(path, sourceFile);
+
     const imports = parseImports(ts, path, source);
     const typeMap = parseTypeDefinitions(ts, path, source);
     const integrationExports = parseIntegrationExports(ts, path, source);
 
-    // Store types by file and merge into global type map
-    typesByFile.set(path, typeMap);
-    for (const [typeName, typeInfo] of typeMap) {
-      globalTypeMap.set(typeName, typeInfo.stringLiteral);
-    }
-
-    // Register integration exports
-    if (integrationExports.length > 0) {
-      integrationExportRegistry.registerIntegrationExports(integrationExports);
-      debug('[integrations] registered %d integration exports from %s', integrationExports.length, path);
-    }
-
-    const resolved = new Map<string, import('./types').Resolved>();
-
-    for (const spec of imports) {
-      const r = await resolveSpecifier(vfs, spec, path, importMap);
-      resolved.set(spec, r);
-      if (r.kind === 'vfs') {
-        await buildRec(r.path);
-      } else if (r.kind === 'external') {
-        externals.add(spec);
-        const base = basePackageOf(spec);
-        externalPkgs.add(base);
-        debug('[externals] seen bare "%s" -> base "%s"', spec, base);
-      }
-    }
+    processTypesAndIntegrations(path, typeMap, integrationExports);
+    const resolved = await processImports(imports, path);
 
     const js = transpileToCjs(ts, path, source);
     graph.set(path, { js, imports, resolved });
@@ -105,7 +173,6 @@ export async function buildGraph(
     await buildRec(toPosix(entry));
   }
 
-  // ---- Typings discovery------------------------
   const normRoot = toPosix(rootDir).replace(/\/+$/, '');
 
   function toTypesAlias(pkg: string): string {
@@ -118,7 +185,6 @@ export async function buildGraph(
     return `@types/${pkg}`;
   }
 
-  // Probe helpers (only check a few specific files)
   async function readJsonIfExists(path: string): Promise<Record<string, unknown> | null> {
     try {
       const buf = await vfs.read(path);
@@ -138,7 +204,6 @@ export async function buildGraph(
     }
   }
 
-  // Find likely node_modules roots without crawling
   async function nodeModulesRoots(root: string): Promise<string[]> {
     const roots = new Set<string>();
     let cur = root;
@@ -235,6 +300,23 @@ export async function buildGraph(
   }
   // ---------------------------------------------------------------------------
 
+  const program = ts.createProgram([...sourceFiles.keys()], compilerOptions, host);
+  const checker = program.getTypeChecker();
+
+  // Process each VFS source file to extract given types using the TypeChecker
+  for (const sourceFile of program.getSourceFiles()) {
+    const posixPath = toPosix(sourceFile.fileName);
+    // Skip non-VFS files and declaration files
+    if (!sourceFiles.has(posixPath) || posixPath.endsWith('.d.ts')) continue;
+
+    const fileTypeMap = typesByFile.get(posixPath) || new Map();
+    const extractedGivenTypes = parseGivenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
+    if (extractedGivenTypes.length > 0) {
+      givenTypesByFile.set(posixPath, extractedGivenTypes);
+      debug('[given-types] extracted %d .given<T>() calls from %s', extractedGivenTypes.length, posixPath);
+    }
+  }
+
   const result: BuildGraphResult = {
     graph,
     vfsFiles: [...vfsFiles].sort(),
@@ -243,6 +325,7 @@ export async function buildGraph(
     typings: Object.fromEntries([...pkgTypings.entries()].map(([k, v]) => [k, [...v].sort()])),
     typeMap: globalTypeMap,
     typesByFile,
+    givenTypesByFile,
   };
 
   debug(

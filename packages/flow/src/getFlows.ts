@@ -58,6 +58,7 @@ export const getFlows = async (opts: GetFlowsOptions) => {
     typings: exec.typings, // { pkgName: [abs d.ts paths] }
     typeMap: exec.typeMap, // mapping from TypeScript type names to string literals
     typesByFile: exec.typesByFile, // mapping from file path to type definitions in that file
+    givenTypesByFile: exec.givenTypesByFile, // mapping from file path to given type info
     toModel: (): Model => flowsToModel(flows, exec.typesByFile),
   };
 };

@@ -59,21 +59,34 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
   });
   debugTemplate('Template compiled successfully');
 
-  const graphqlType = (tsType: string): string => {
-    debugTemplate('Converting TS type to GraphQL: %s', tsType);
-    if (!tsType) return 'String';
-    if (tsType === 'ID') return 'ID';
-    if (tsType === 'string') return 'String';
-    if (tsType === 'number') return 'Number';
-    if (tsType === 'boolean') return 'Boolean';
-    if (tsType === 'Date') return 'Date';
-    if (tsType === 'object') return 'Object';
-    if (tsType.endsWith('[]')) {
-      const inner = tsType.slice(0, -2);
-      return `[${graphqlType(inner)}]`;
-    }
+  const convertPrimitiveType = (base: string): string => {
+    if (base === 'ID') return 'ID';
+    if (base === 'string') return 'String';
+    if (base === 'number') return 'Float';
+    if (base === 'boolean') return 'Boolean';
+    if (base === 'Date') return 'GraphQLISODateTime';
+    if (base === 'unknown' || base === 'any' || base === 'object') return 'JSON';
     return 'String';
   };
+
+  const isInlineObject = (base: string): boolean => /^{[\s\S]*}$/.test(base);
+  const isStringLiteralUnion = (base: string): boolean => /^"[^"]+"\s*(\|\s*"[^"]+")+$/.test(base);
+
+  const graphqlType = (rawTs: string): string => {
+    debugTemplate('Converting TS type to GraphQL: %s', rawTs);
+    if (!rawTs) return 'String';
+    const t = rawTs.trim();
+    const base = t.replace(/\s*\|\s*null\b/g, '').trim();
+    const arr1 = base.match(/^Array<(.*)>$/);
+    const arr2 = base.match(/^(.*)\[\]$/);
+    if (arr1) return `[${graphqlType(arr1[1].trim())}]`;
+    if (arr2) return `[${graphqlType(arr2[1].trim())}]`;
+    if (isInlineObject(base)) return 'JSON';
+    if (isStringLiteralUnion(base)) return 'String';
+    return convertPrimitiveType(base);
+  };
+
+  const isNullable = (rawTs: string): boolean => /\|\s*null\b/.test(rawTs);
 
   const result = await template({
     ...data,
@@ -81,6 +94,7 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
     toKebabCase,
     camelCase,
     graphqlType,
+    isNullable,
     formatTsValue,
     formatDataObject,
     messages: data.messages,

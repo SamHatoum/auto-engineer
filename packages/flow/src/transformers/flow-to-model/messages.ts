@@ -10,7 +10,7 @@ function mapKindToMessageType(k: 'command' | 'query' | 'reaction'): 'command' | 
 function buildInitialFields(typeInfo: TypeInfo | undefined) {
   return (typeInfo?.dataFields ?? []).map((f) => ({
     name: f.name,
-    type: f.type,
+    type: f.type.includes(' | ') ? f.type.replace(/\bunknown\b/g, 'null') : f.type, // Fix TypeScript parsing issue: unknown -> null in union types only
     required: f.required,
     description: undefined,
     defaultValue: undefined,

@@ -46,7 +46,7 @@ function isPrimitiveType(type: string): boolean {
 
 function isStructuralType(type: string): boolean {
   const trimmed = type.trim();
-  return (trimmed.startsWith('{') && trimmed.endsWith('}')) || trimmed.includes('| null');
+  return (trimmed.startsWith('{') && trimmed.endsWith('}')) || trimmed.includes(' | null') || trimmed.includes('|null');
 }
 
 function inlineTypeString(type: string, lookup: Map<string, TypeInfo>, seen = new Set<string>()): string | undefined {
@@ -62,6 +62,25 @@ function inlineTypeString(type: string, lookup: Map<string, TypeInfo>, seen = ne
   // Already structural? (starts with '{' and ends with '}' or looks like a union with null)
   if (isStructuralType(type)) {
     return undefined; // keep as is
+  }
+
+  // Handle union types like "string | null"
+  if (type.includes(' | ')) {
+    const parts = type.split(' | ').map((p) => p.trim());
+    const inlinedParts = parts.map((part) => {
+      if (isPrimitiveType(part) || part === 'null') {
+        return part;
+      }
+      const inlined = inlineTypeString(part, lookup, seen);
+      return inlined ?? part;
+    });
+    // Fix: Convert "unknown" back to "null" in union types (TypeScript parsing issue)
+    // Only replace unknown with null when it's part of a union with other types
+    const result = inlinedParts.join(' | ');
+    if (inlinedParts.length > 1 && inlinedParts.includes('unknown')) {
+      return result.replace(/\bunknown\b/g, 'null');
+    }
+    return result;
   }
 
   // Single identifier? Try to inline it

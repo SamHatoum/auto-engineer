@@ -78,13 +78,13 @@ describe('query.resolver.ts.ejs', () => {
         @Field(() => String)
         title!: string;
 
-        @Field(() => Number)
+        @Field(() => Float)
         pricePerNight!: number;
 
         @Field(() => String)
         location!: string;
 
-        @Field(() => Number)
+        @Field(() => Float)
         maxGuests!: number;
 
         [key: string]: unknown;
@@ -96,14 +96,13 @@ describe('query.resolver.ts.ejs', () => {
         async searchProperties(
           @Ctx() ctx: GraphQLContext,
           @Arg('location', () => String, { nullable: true }) location?: string,
-          @Arg('maxPrice', () => Number, { nullable: true }) maxPrice?: number,
-          @Arg('minGuests', () => Number, { nullable: true }) minGuests?: number,
+          @Arg('maxPrice', () => Float, { nullable: true }) maxPrice?: number,
+          @Arg('minGuests', () => Float, { nullable: true }) minGuests?: number,
         ): Promise<AvailableListings[]> {
           const model = new ReadModel<AvailableListings>(ctx.eventStore, 'AvailablePropertiesProjection');
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:
-          //
           // - model.getAll() — fetch all documents
           // - model.getById(id) — fetch a single document by ID (default key: 'id')
           // - model.find(filterFn) — filter documents using a predicate
@@ -213,7 +212,7 @@ describe('query.resolver.ts.ejs', () => {
         @Field(() => String)
         name!: string;
 
-        @Field(() => Number)
+        @Field(() => Float)
         quantity!: number;
 
         @Field(() => String)
@@ -231,7 +230,6 @@ describe('query.resolver.ts.ejs', () => {
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:
-          //
           // - model.getAll() — fetch all documents
           // - model.getById(id) — fetch a single document by ID (default key: 'id')
           // - model.find(filterFn) — filter documents using a predicate

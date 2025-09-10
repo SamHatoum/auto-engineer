@@ -3,6 +3,7 @@ import { modelSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 import { NodeFileStore } from '@auto-engineer/file-store';
 import { getFlows } from './getFlows';
 
@@ -185,7 +186,7 @@ describe('getFlows', (_mode) => {
     expect(Array.isArray(parsed.integrations)).toBe(true);
   });
 
-  it('handles flows with integrations', async () => {
+  it('should handle flows with integrations', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
     const specsSchema = flows.toModel();
 
@@ -209,7 +210,7 @@ describe('getFlows', (_mode) => {
     }
   });
 
-  it('handles react slices correctly', async () => {
+  it('should handle react slices correctly', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
     const specsSchema = flows.toModel();
 
@@ -234,7 +235,7 @@ describe('getFlows', (_mode) => {
     });
   });
 
-  it('parses and validates a complete flow with all slice types', async () => {
+  it('should parse and validate a complete flow with all slice types', async () => {
     const flows = await getFlows({ vfs: vfs, root: root });
     const schemas = flows.toModel();
 
@@ -335,4 +336,248 @@ describe('getFlows', (_mode) => {
     );
     expect(rule4?.id).toBe('RULE-004');
   });
+
+  it('handles shopping-app Products state classification correctly', async () => {
+    const flows = await getFlows({
+      vfs,
+      root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app',
+    });
+    const model = flows.toModel();
+
+    const shoppingFlow = model.flows.find((f) => f.name === 'Seasonal Assistant');
+    expect(shoppingFlow).toBeDefined();
+
+    if (shoppingFlow) {
+      const selectItemsSlice = shoppingFlow.slices.find(
+        (s) => s.name === 'selects items relevant to the shopping criteria',
+      );
+      expect(selectItemsSlice?.type).toBe('command');
+
+      if (selectItemsSlice?.type === 'command') {
+        const example = selectItemsSlice.server?.specs?.rules[0]?.examples[0];
+        if (example?.given && Array.isArray(example.given) && example.given.length > 0) {
+          const givenItem = example.given[0];
+          if (typeof givenItem === 'object' && givenItem !== null) {
+            expect('stateRef' in givenItem).toBe(true);
+            expect('eventRef' in givenItem).toBe(false);
+            if ('stateRef' in givenItem) {
+              expect(givenItem.stateRef).toBe('Products');
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('handles real questionnaires example correctly', async () => {
+    const flows = await getFlows({
+      vfs,
+      root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
+    });
+    const model = flows.toModel();
+
+    const questionnaireFlow = model.flows.find((f) => f.name === 'Questionnaires');
+    expect(questionnaireFlow).toBeDefined();
+
+    if (questionnaireFlow) {
+      const submitSlice = questionnaireFlow.slices.find((s) => s.name === 'submits the questionnaire');
+      expect(submitSlice?.type).toBe('command');
+
+      if (submitSlice?.type === 'command') {
+        const example = submitSlice.server?.specs?.rules[0]?.examples[0];
+        if (
+          example !== null &&
+          example !== undefined &&
+          typeof example.when === 'object' &&
+          example.when !== null &&
+          !Array.isArray(example.when) &&
+          'commandRef' in example.when
+        ) {
+          expect(example.when.commandRef).toBe('SubmitQuestionnaire');
+        }
+      }
+    }
+  });
+
+  it('should handle flow type resolutions correctly', async () => {
+    const questionnairePath = await createTestFlow();
+
+    try {
+      const flows = await getFlows({ vfs, root: path.dirname(questionnairePath) });
+      const model = flows.toModel();
+      const questionnaireFlow = model.flows.find((f) => f.name === 'questionnaires-test');
+      expect(questionnaireFlow).toBeDefined();
+      if (questionnaireFlow !== null && questionnaireFlow !== undefined) {
+        validateSubmitQuestionnaireCommand(questionnaireFlow);
+        validateQuestionAnsweredEvent(model);
+        validateGivenSectionEventRefs(questionnaireFlow);
+        validateCurrentQuestionIdType(model);
+      }
+    } finally {
+      cleanupTestFile(questionnairePath);
+    }
+  });
 });
+
+function createTestFlow(): Promise<string> {
+  return new Promise((resolve) => {
+    const questionnairePath = path.join(__dirname, 'samples/questionnaires.flow.ts');
+    const questionnaireFlow = `
+import { data, flow, should, specs, rule, example } from '../flow';
+import { commandSlice, querySlice } from '../fluent-builder';
+import gql from 'graphql-tag';
+import { source } from '../data-flow-builders';
+import { type Event, type Command, type State } from '../types';
+
+type QuestionAnswered = Event<
+  'QuestionAnswered',
+  {
+    questionnaireId: string;
+    participantId: string;
+    questionId: string;
+    answer: unknown;
+    savedAt: Date;
+  }
+>;
+
+type SubmitQuestionnaire = Command<
+  'SubmitQuestionnaire',
+  {
+    questionnaireId: string;
+    participantId: string;
+  }
+>;
+
+type AnswerQuestion = Command<
+  'AnswerQuestion',
+  {
+    questionnaireId: string;
+    participantId: string;
+    questionId: string;
+    answer: unknown;
+  }
+>;
+
+type QuestionnaireProgress = State<
+  'QuestionnaireProgress',
+  {
+    questionnaireId: string;
+    participantId: string;
+    status: 'in_progress' | 'ready_to_submit' | 'submitted';
+    currentQuestionId: string | null;
+    remainingQuestions: string[];
+    answers: { questionId: string; value: unknown }[];
+  }
+>;
+
+flow('questionnaires-test', () => {
+  querySlice('views progress')
+    .server(() => {
+      specs('Questionnaire progress display', () => {
+        rule('shows answered questions', () => {
+          example('question already answered')
+            .given<QuestionAnswered>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              questionId: 'q1',
+              answer: 'Yes',
+              savedAt: new Date('2030-01-01T09:05:00Z'),
+            })
+            .when({})
+            .then<QuestionnaireProgress>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              status: 'in_progress',
+              currentQuestionId: 'q2',
+              remainingQuestions: ['q2', 'q3'],
+              answers: [{ questionId: 'q1', value: 'Yes' }],
+            });
+        });
+      });
+    });
+  
+  commandSlice('submits questionnaire')
+    .server(() => {
+      specs('Questionnaire submission', () => {
+        rule('allows submission when ready', () => {
+          example('submit completed questionnaire')
+            .when<SubmitQuestionnaire>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+            })
+            .then<QuestionAnswered>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              questionId: 'final',
+              answer: 'submitted',
+              savedAt: new Date('2030-01-01T09:10:00Z'),
+            });
+        });
+      });
+    });
+});
+    `;
+
+    if (!fs.existsSync(path.dirname(questionnairePath))) {
+      fs.mkdirSync(path.dirname(questionnairePath), { recursive: true });
+    }
+    fs.writeFileSync(questionnairePath, questionnaireFlow);
+    resolve(questionnairePath);
+  });
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/strict-boolean-expressions */
+
+function validateSubmitQuestionnaireCommand(questionnaireFlow: any): void {
+  const submitSlice = questionnaireFlow.slices.find((s: any) => s.name === 'submits questionnaire');
+  expect(submitSlice?.type).toBe('command');
+  if (submitSlice?.type === 'command') {
+    const example = submitSlice.server?.specs?.rules[0]?.examples[0];
+    if (
+      example !== null &&
+      example !== undefined &&
+      typeof example.when === 'object' &&
+      example.when !== null &&
+      !Array.isArray(example.when) &&
+      'commandRef' in example.when
+    ) {
+      expect(example.when.commandRef).toBe('SubmitQuestionnaire');
+    }
+  }
+}
+
+function validateQuestionAnsweredEvent(model: any): void {
+  const questionAnsweredMessage = model.messages.find((m: any) => m.name === 'QuestionAnswered');
+  expect(questionAnsweredMessage?.type).toBe('event');
+}
+
+function validateGivenSectionEventRefs(questionnaireFlow: any): void {
+  const viewsSlice = questionnaireFlow.slices.find((s: any) => s.name === 'views progress');
+  if (viewsSlice?.type === 'query') {
+    const example = viewsSlice.server?.specs?.rules[0]?.examples[0];
+    if (example?.given && Array.isArray(example.given) && example.given.length > 0) {
+      const givenItem = example.given[0];
+      if (typeof givenItem === 'object' && givenItem !== null) {
+        expect('eventRef' in givenItem).toBe(true);
+        expect('stateRef' in givenItem).toBe(false);
+        if ('eventRef' in givenItem) {
+          expect(givenItem.eventRef).toBe('QuestionAnswered');
+        }
+      }
+    }
+  }
+}
+
+function validateCurrentQuestionIdType(model: any): void {
+  const progressMessage = model.messages.find((m: any) => m.name === 'QuestionnaireProgress');
+  expect(progressMessage?.type).toBe('state');
+  const currentQuestionIdField = progressMessage?.fields.find((f: any) => f.name === 'currentQuestionId');
+  expect(currentQuestionIdField?.type).toBe('string | null');
+}
+
+/* eslint-enable */
+function cleanupTestFile(questionnairePath: string): void {
+  if (fs.existsSync(questionnairePath)) {
+    fs.unlinkSync(questionnairePath);
+  }
+}

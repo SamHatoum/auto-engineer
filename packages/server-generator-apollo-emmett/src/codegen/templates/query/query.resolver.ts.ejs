@@ -8,77 +8,136 @@ const message = messages?.find(m => m.name === viewType);
 const resolverClassName = `${pascalCase(slice.name)}QueryResolver`;
 const usesID = parsedRequest?.args?.some(arg => graphqlType(arg.tsType) === 'ID');
 
-const embeddedTypes = [];
-function getEmbeddedObjectTypeName(parentName, fieldName) {
-    return `${parentName}${pascalCase(fieldName)}`;
+function isInlineObject(ts) {
+    return /^\{[\s\S]*\}$/.test((ts ?? '').trim());
 }
+function isInlineObjectArray(ts) {
+    const t = (ts ?? '').trim();
+    return /^Array<\{[\s\S]*\}>$/.test(t) || /^\{[\s\S]*\}\[\]$/.test(t);
+}
+function baseTs(ts) {
+    return (ts ?? 'string').replace(/\s*\|\s*null\b/g, '').trim();
+}
+function fieldUsesDate(ts) {
+    const b = baseTs(ts);
+    if (b === 'Date') return true;
+    if (isInlineObject(b) || isInlineObjectArray(b)) {
+        // quick check for Date inside inline object
+        return /:\s*Date\b/.test(b);
+    }
+    return false;
+}
+function fieldUsesJSON(ts) {
+    const b = baseTs(ts);
+    if (b === 'unknown' || b === 'any' || b === 'object') return true;
+    if (isInlineObject(b) || isInlineObjectArray(b)) {
+        // quick check for unknown/any/object inside inline object
+        return /:\s*(unknown|any|object)\b/.test(b);
+    }
+    return false;
+}
+
+// Scan fields to know which extra scalars we actually need
+const messageFields = message?.fields ?? [];
+const usesDate = messageFields.some(f => fieldUsesDate(f.type)) ||
+        (parsedRequest?.args ?? []).some(a => baseTs(a.tsType) === 'Date');
+const usesJSON = messageFields.some(f => fieldUsesJSON(f.type));
 %>
-import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %> } from 'type-graphql';
-import { type GraphQLContext, ReadModel } from '../../../shared';
+import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
+<% if (usesJSON) { %>import GraphQLJSON from 'graphql-type-json';
+<% } %>import { type GraphQLContext, ReadModel } from '../../../shared';
 
 @ObjectType()
 export class <%= viewType %> {
-<% if (message?.fields?.length) {
-        for (const field of message.fields) {
-    const gqlType = graphqlType(field.type ?? 'string');
+<% if (messageFields.length) {
+    const embeddedTypes = [];
+    function getEmbeddedObjectTypeName(parentName, fieldName) {
+        return `${parentName}${pascalCase(fieldName)}`;
+    }
+
+        for (const field of messageFields) {
     const tsType = field.type ?? 'string';
-    const isInlineArray = tsType.startsWith('Array<{') || tsType.startsWith('{') || tsType.includes('[]');
+    const gqlType = graphqlType(tsType);
     const fieldTypeName = getEmbeddedObjectTypeName(viewType, field.name);
 
-if (isInlineArray) {
+if (isInlineObjectArray(tsType)) {
     embeddedTypes.push({ parentName: viewType, fieldName: field.name, typeName: fieldTypeName, tsType });
 %>
 @Field(() => [<%= fieldTypeName %>])
 <%= field.name %>!: <%= fieldTypeName %>[];
-<%      } else { %>
-    @Field(() => <%= gqlType %>)
-    <%= field.name %>!: <%= tsType %>;
-<%      }
-} %>
+<%
+} else if (isInlineObject(tsType)) {
+    embeddedTypes.push({ parentName: viewType, fieldName: field.name, typeName: fieldTypeName, tsType });
+%>
+@Field(() => <%= fieldTypeName %>)
+<%= field.name %>!: <%= fieldTypeName %>;
+<%
+} else {
+%>
+    @Field(() => <%= gqlType %><%= isNullable(tsType) ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= isNullable(tsType) ? '?' : '!' %>: <%= tsType %>;
+<%  } } %>
 [key: string]: unknown;
 <% } else { %>
     [key: string]: unknown;
 <% } %>
 }
 
-<% for (const { typeName, tsType } of embeddedTypes) {
-    const match = tsType.match(/Array<\{([^}]*)\}>/);
-    const rawFields = match?.[1]?.split(/[,;]/) ?? [];
-    const parsedFields = rawFields
-            .map(f => {
-                const [name, type] = f.trim().split(':').map(x => x.trim());
-                if (!name || !type) return null;
-                return { name, tsType: type, gqlType: graphqlType(type) };
-            })
-            .filter(Boolean);
+<% if (messageFields.length) {
+    // Re-emit embedded object types that were collected above
+    const embeddedTypes = [];
+    for (const field of messageFields) {
+        const tsType = field.type ?? 'string';
+        if (isInlineObjectArray(tsType) || isInlineObject(tsType)) {
+            embeddedTypes.push({
+                typeName: `${viewType}${pascalCase(field.name)}`,
+                tsType,
+            });
+        }
+    }
+
+        for (const { typeName, tsType } of embeddedTypes) {
+    // Extract "{ ... }" body whether Array<{...}> or "{...}[]"
+    const inner = tsType.trim().startsWith('Array<')
+            ? tsType.trim().replace(/^Array<\{/, '{').replace(/}>$/, '}')
+            : tsType.trim().replace(/\[\]$/, '');
+    const match = inner.match(/^\{([\s\S]*)\}$/);
+    const body = match ? match[1] : '';
+    const rawFields = body.split(/[,;]\s*/).filter(Boolean);
+    const parsedFields = rawFields.map(f => {
+        const parts = f.split(':');
+        const name = parts[0]?.trim();
+        const type = parts.slice(1).join(':').trim();
+        if (!name || !type) return null;
+        return { name, tsType: type, gqlType: graphqlType(type), nullable: isNullable(type) };
+    }).filter(Boolean);
 %>
 
 @ObjectType()
 export class <%= typeName %> {
 <% for (const f of parsedFields) { %>
-    @Field(() => <%= f.gqlType %>)
-    <%= f.name %>!: <%= f.tsType %>;
+    @Field(() => <%= f.gqlType %><%= f.nullable ? ', { nullable: true }' : '' %>)
+    <%= f.name %><%= f.nullable ? '?' : '!' %>: <%= f.tsType %>;
 <% } %>
 }
-<% } %>
+<% } } %>
 
 @Resolver()
 export class <%= resolverClassName %> {
 @Query(() => [<%= viewType %>])
 async <%= queryName %>(
 @Ctx() ctx: GraphQLContext<% if (parsedRequest?.args?.length) { %>,
-<%     for (let i = 0; i < parsedRequest.args.length; i++) {
+<%   for (let i = 0; i < parsedRequest.args.length; i++) {
     const arg = parsedRequest.args[i];
     const gqlType = graphqlType(arg.tsType);
     const tsType = arg.tsType === 'ID' ? 'string' : arg.tsType;
 %>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%= tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
-<%     } } %>
+<%   } } %>
 ): Promise<<%= viewType %>[]> {
 const model = new ReadModel<<%= viewType %>>(ctx.eventStore, '<%= projectionType %>');
 
 // ## IMPLEMENTATION INSTRUCTIONS ##
 // You can query the projection using the ReadModel API:
-//
 // - model.getAll() — fetch all documents
 // - model.getById(id) — fetch a single document by ID (default key: 'id')
 // - model.find(filterFn) — filter documents using a predicate
@@ -91,7 +150,7 @@ return model.find((item) => {
 <% if (parsedRequest?.args?.length) {
         for (const arg of parsedRequest.args) { %>
     if (<%= arg.name %> !== undefined && item.<%= arg.name %> !== <%= arg.name %>) return false;
-<%    } } %>
+<% } } %>
 return true;
 });
 }

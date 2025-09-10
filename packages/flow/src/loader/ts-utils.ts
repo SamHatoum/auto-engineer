@@ -83,6 +83,15 @@ export interface IntegrationExport {
   integrationName: string; // The internal integration name (e.g., "product-catalog")
 }
 
+export interface GivenTypeInfo {
+  fileName: string;
+  line: number;
+  column: number;
+  ordinal: number; // Sequential position within the file
+  typeName: string;
+  classification: 'command' | 'event' | 'state';
+}
+
 function extractDataFieldsFromTypeLiteral(
   ts: typeof import('typescript'),
   secondArg: import('typescript').TypeLiteralNode,
@@ -420,6 +429,161 @@ export function parseIntegrationExports(
 
   visitNode(sf);
   return integrations;
+}
+
+function classifyBaseGeneric(
+  ts: typeof import('typescript'),
+  checker: import('typescript').TypeChecker,
+  typeRef: import('typescript').TypeReferenceNode,
+): 'event' | 'command' | 'state' | null {
+  // Resolve base symbol (handles aliases and qualified names)
+  let sym: import('typescript').Symbol | undefined;
+  if (ts.isIdentifier(typeRef.typeName) || ts.isQualifiedName(typeRef.typeName)) {
+    const baseType = checker.getTypeAtLocation(typeRef.typeName);
+    sym = baseType.aliasSymbol ?? baseType.getSymbol();
+    if (sym && baseType.aliasSymbol) sym = checker.getAliasedSymbol(sym);
+  }
+  if (!sym) return null;
+  const base = checker.getFullyQualifiedName(sym).replace(/^".*"\./, '');
+  if (base.endsWith('Event')) return 'event';
+  if (base.endsWith('Command')) return 'command';
+  if (base.endsWith('State')) return 'state';
+  return null;
+}
+
+function tryUnwrapGeneric(
+  ts: typeof import('typescript'),
+  typeArg: import('typescript').TypeNode,
+  checker: import('typescript').TypeChecker,
+): { typeName: string; classification: 'event' | 'command' | 'state' } | null {
+  if (!ts.isTypeReferenceNode(typeArg) || typeArg.typeArguments === undefined || typeArg.typeArguments.length === 0) {
+    return null;
+  }
+
+  const kind = classifyBaseGeneric(ts, checker, typeArg);
+  const first = typeArg.typeArguments[0];
+
+  if (kind && ts.isLiteralTypeNode(first) && ts.isStringLiteral(first.literal)) {
+    return {
+      typeName: first.literal.text,
+      classification: kind,
+    };
+  }
+
+  return null;
+}
+
+function resolveTypeName(
+  ts: typeof import('typescript'),
+  typeArg: import('typescript').TypeNode,
+  checker: import('typescript').TypeChecker,
+): string | null {
+  if (ts.isTypeReferenceNode(typeArg) && ts.isIdentifier(typeArg.typeName)) {
+    return typeArg.typeName.text;
+  }
+
+  const t = checker.getTypeFromTypeNode(typeArg);
+  if (t === null || t === undefined) return null;
+
+  const sym = t.aliasSymbol ?? t.getSymbol();
+  if (!sym) return null;
+
+  return checker.getFullyQualifiedName(sym).replace(/^".*"\./, '');
+}
+
+function findTypeInfo(
+  typeName: string,
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+): TypeInfo | null {
+  let ti = typeMap.get(typeName);
+
+  if (!ti?.classification) {
+    for (const [, fileTypeMap] of typesByFile) {
+      ti = fileTypeMap.get(typeName);
+      if (ti?.classification) break;
+    }
+  }
+
+  return ti && ti.classification ? ti : null;
+}
+
+function createGivenTypeInfo(
+  sourceFile: import('typescript').SourceFile,
+  node: import('typescript').CallExpression,
+  ordinal: number,
+  typeName: string,
+  classification: 'event' | 'command' | 'state',
+): GivenTypeInfo {
+  const { line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+  return {
+    fileName: sourceFile.fileName,
+    line: line + 1,
+    column: character + 1,
+    ordinal,
+    typeName,
+    classification,
+  };
+}
+
+function processGivenOrAndCallExpression(
+  ts: typeof import('typescript'),
+  node: import('typescript').CallExpression,
+  checker: import('typescript').TypeChecker,
+  sourceFile: import('typescript').SourceFile,
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+  givenTypes: GivenTypeInfo[],
+  ordinal: number,
+): void {
+  const typeArg = node.typeArguments?.[0];
+  if (!typeArg) return;
+
+  const genericResult = tryUnwrapGeneric(ts, typeArg, checker);
+  if (genericResult) {
+    givenTypes.push(
+      createGivenTypeInfo(sourceFile, node, ordinal, genericResult.typeName, genericResult.classification),
+    );
+    return;
+  }
+
+  const typeName = resolveTypeName(ts, typeArg, checker);
+  if (typeName === null || typeName === undefined) return;
+
+  const typeInfo = findTypeInfo(typeName, typeMap, typesByFile);
+  if (!typeInfo?.classification) return;
+
+  givenTypes.push(createGivenTypeInfo(sourceFile, node, ordinal, typeInfo.stringLiteral, typeInfo.classification));
+}
+
+export function parseGivenTypeArguments(
+  ts: typeof import('typescript'),
+  checker: import('typescript').TypeChecker,
+  sourceFile: import('typescript').SourceFile,
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+): GivenTypeInfo[] {
+  const givenTypes: GivenTypeInfo[] = [];
+  let ordinal = 0;
+
+  const visit = (node: import('typescript').Node): void => {
+    if (ts.isCallExpression(node)) {
+      if (ts.isPropertyAccessExpression(node.expression)) {
+        const method = node.expression.name.getText();
+        if (
+          (method === 'given' || method === 'and') &&
+          node.typeArguments !== undefined &&
+          node.typeArguments.length > 0
+        ) {
+          processGivenOrAndCallExpression(ts, node, checker, sourceFile, typeMap, typesByFile, givenTypes, ordinal++);
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  return givenTypes;
 }
 
 export function transpileToCjs(ts: typeof import('typescript'), fileName: string, source: string): string {

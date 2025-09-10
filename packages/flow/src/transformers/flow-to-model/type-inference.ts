@@ -35,14 +35,64 @@ function tryTopLevelMatch(typeInfo: TypeInfo, dataKeys: Set<string>): boolean {
 }
 
 function tryMatchCandidates(candidates: TypeInfo[], dataKeys: Set<string>): string | null {
+  let bestMatch: TypeInfo | null = null;
+  let bestScore = -1;
+
   for (const typeInfo of candidates) {
     if (typeInfo.dataFields && typeInfo.dataFields.length > 0) {
-      if (tryDataFieldMatch(typeInfo, dataKeys) || tryTopLevelMatch(typeInfo, dataKeys)) {
-        return typeInfo.stringLiteral;
+      const dataFieldMatch = tryDataFieldMatch(typeInfo, dataKeys);
+      const topLevelMatch = tryTopLevelMatch(typeInfo, dataKeys);
+
+      if (dataFieldMatch || topLevelMatch) {
+        // Calculate a score: higher is better
+        // Exact field count match gets higher score than partial match
+        const typeKeys = new Set(typeInfo.dataFields.map((f) => f.name));
+        const isExactMatch = dataKeys.size === typeKeys.size;
+        const score = isExactMatch ? 100 : 50; // Prefer exact matches
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = typeInfo;
+        }
       }
     }
   }
+
+  return bestMatch?.stringLiteral ?? null;
+}
+
+function tryResolveByExampleData(
+  candidates: TypeInfo[],
+  all: TypeInfo[],
+  expectedMessageType: 'command' | 'event' | 'state' | undefined,
+  exampleData: unknown,
+): string | null {
+  if (exampleData === null || typeof exampleData !== 'object' || exampleData === undefined) {
+    return null;
+  }
+
+  const dataKeys = new Set(Object.keys(exampleData));
+  const match = tryMatchCandidates(candidates, dataKeys);
+  if (match !== null) return match;
+
+  if (expectedMessageType !== undefined) {
+    const fallbackMatch = tryMatchCandidates(all, dataKeys);
+    if (fallbackMatch !== null) return fallbackMatch;
+  }
+
   return null;
+}
+
+function tryResolveByExpectedType(
+  candidates: TypeInfo[],
+  expectedMessageType: 'command' | 'event' | 'state' | undefined,
+): string | null {
+  if (!expectedMessageType || candidates.length === 0) {
+    return null;
+  }
+
+  const typeMatchedCandidate = candidates.find((c) => c.classification === expectedMessageType);
+  return typeMatchedCandidate ? typeMatchedCandidate.stringLiteral : null;
 }
 
 function resolveFromCandidates(
@@ -53,19 +103,10 @@ function resolveFromCandidates(
 ): string | null {
   if (candidates.length === 1) return candidates[0].stringLiteral;
 
-  if (exampleData !== null && typeof exampleData === 'object' && exampleData !== undefined) {
-    const dataKeys = new Set(Object.keys(exampleData));
+  const exampleMatch = tryResolveByExampleData(candidates, all, expectedMessageType, exampleData);
+  if (exampleMatch !== null) return exampleMatch;
 
-    const match = tryMatchCandidates(candidates, dataKeys);
-    if (match !== null) return match;
-
-    if (expectedMessageType !== undefined) {
-      const fallbackMatch = tryMatchCandidates(all, dataKeys);
-      if (fallbackMatch !== null) return fallbackMatch;
-    }
-  }
-
-  return null;
+  return tryResolveByExpectedType(candidates, expectedMessageType);
 }
 
 export function resolveInferredType(

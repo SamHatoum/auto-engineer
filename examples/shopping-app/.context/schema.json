@@ -159,6 +159,7 @@
                       "description": "Product catalog with matching items generates suggestions",
                       "given": [
                         {
+                          "stateRef": "Products",
                           "exampleData": {
                             "products": [
                               {
@@ -194,8 +195,7 @@
                                 "imageUrl": "https://example.com/mtg-starter.jpg"
                               }
                             ]
-                          },
-                          "stateRef": "Products"
+                          }
                         }
                       ],
                       "when": {
@@ -452,7 +452,7 @@
           }
         }
       ],
-      "sourceFile": "./examples/shopping-app/flows/shopping-assistant.flow.ts"
+      "sourceFile": "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app/flows/shopping-assistant.flow.ts"
     }
   ],
   "messages": [

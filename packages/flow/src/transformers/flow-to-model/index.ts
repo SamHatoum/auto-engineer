@@ -38,6 +38,66 @@ function getTypesForFlow(
   return undefined;
 }
 
+function tryResolveFromFlowTypes(
+  t: string,
+  flowSpecificTypes: Map<string, TypeInfo>,
+  expected?: 'command' | 'event' | 'state',
+  exampleData?: unknown,
+): { resolvedName: string; typeInfo: TypeInfo | undefined } {
+  if (t !== 'InferredType') {
+    const typeInfo = flowSpecificTypes.get(t);
+    if (typeInfo) {
+      return { resolvedName: t, typeInfo };
+    }
+    const inferredName = resolveInferredType(t, flowSpecificTypes, expected, exampleData);
+    return { resolvedName: inferredName, typeInfo: flowSpecificTypes.get(inferredName) };
+  }
+
+  const inferredName = resolveInferredType(t, flowSpecificTypes, expected, exampleData);
+  return { resolvedName: inferredName, typeInfo: flowSpecificTypes.get(inferredName) };
+}
+
+function tryFallbackToUnionTypes(
+  t: string,
+  resolvedName: string,
+  typeInfo: TypeInfo | undefined,
+  unionTypes: Map<string, TypeInfo>,
+  expected?: 'command' | 'event' | 'state',
+  exampleData?: unknown,
+): { resolvedName: string; typeInfo: TypeInfo | undefined } {
+  if (resolvedName !== 'InferredType' && typeInfo) {
+    return { resolvedName, typeInfo };
+  }
+
+  const fallbackName = resolveInferredType(t, unionTypes, expected, exampleData);
+  const fallbackTypeInfo = unionTypes.get(fallbackName);
+
+  if (fallbackName !== 'InferredType' && fallbackTypeInfo) {
+    return { resolvedName: fallbackName, typeInfo: fallbackTypeInfo };
+  }
+
+  return { resolvedName, typeInfo };
+}
+
+function tryResolveFromUnionTypes(
+  t: string,
+  unionTypes: Map<string, TypeInfo>,
+  expected?: 'command' | 'event' | 'state',
+  exampleData?: unknown,
+): { resolvedName: string; typeInfo: TypeInfo | undefined } {
+  if (t !== 'InferredType') {
+    const typeInfo = unionTypes.get(t);
+    if (typeInfo) {
+      return { resolvedName: t, typeInfo };
+    }
+    const inferredName = resolveInferredType(t, unionTypes, expected, exampleData);
+    return { resolvedName: inferredName, typeInfo: unionTypes.get(inferredName) };
+  }
+
+  const inferredName = resolveInferredType(t, unionTypes, expected, exampleData);
+  return { resolvedName: inferredName, typeInfo: unionTypes.get(inferredName) };
+}
+
 function createTypeResolver(
   flowSpecificTypes: Map<string, TypeInfo> | undefined,
   unionTypes: Map<string, TypeInfo> | undefined,
@@ -47,25 +107,19 @@ function createTypeResolver(
     expected?: 'command' | 'event' | 'state',
     exampleData?: unknown,
   ): { resolvedName: string; typeInfo: TypeInfo | undefined } => {
-    // First try flow-specific types, then union/global
-    let resolvedName = t;
-    let typeInfo: TypeInfo | undefined;
-
     if (flowSpecificTypes) {
-      resolvedName = resolveInferredType(t, flowSpecificTypes, expected, exampleData);
-      typeInfo = flowSpecificTypes.get(resolvedName);
-
-      // If not resolved and we have union types, try union types as fallback
-      if (resolvedName === 'InferredType' && unionTypes) {
-        resolvedName = resolveInferredType(t, unionTypes, expected, exampleData);
-        typeInfo = unionTypes.get(resolvedName);
+      const result = tryResolveFromFlowTypes(t, flowSpecificTypes, expected, exampleData);
+      if (unionTypes) {
+        return tryFallbackToUnionTypes(t, result.resolvedName, result.typeInfo, unionTypes, expected, exampleData);
       }
-    } else if (unionTypes) {
-      resolvedName = resolveInferredType(t, unionTypes, expected, exampleData);
-      typeInfo = unionTypes.get(resolvedName);
+      return result;
     }
 
-    return { resolvedName, typeInfo };
+    if (unionTypes) {
+      return tryResolveFromUnionTypes(t, unionTypes, expected, exampleData);
+    }
+
+    return { resolvedName: t, typeInfo: undefined };
   };
 }
 

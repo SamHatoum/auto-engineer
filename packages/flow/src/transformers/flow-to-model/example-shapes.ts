@@ -33,6 +33,10 @@ function isStructural(s: string): boolean {
 }
 
 function shouldApplyExampleShape(currentType: string, exampleType: string): boolean {
+  // Don't override union types (like "string | null") with single types (like "null")
+  if (currentType.includes(' | ') && !exampleType.includes(' | ')) {
+    return false;
+  }
   // Prefer structural example over alias-like/non-structural current type
   return !isStructural(currentType) && isStructural(exampleType);
 }

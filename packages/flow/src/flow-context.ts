@@ -1,5 +1,9 @@
+import createDebug from 'debug';
 import type { DataSinkItem, DataSourceItem, DataItem, DataSink, DataSource } from './types';
+import type { GivenTypeInfo } from './loader/ts-utils';
 import { Flow, Slice } from './index';
+
+const debug = createDebug('flow:context:given-types');
 
 interface FlowContext {
   flow: Flow;
@@ -11,6 +15,14 @@ interface FlowContext {
 }
 
 let context: FlowContext | null = null;
+let givenTypesByFile: Map<string, GivenTypeInfo[]> = new Map();
+const givenCallCounters: Map<string, number> = new Map();
+
+export function setGivenTypesByFile(types: Map<string, GivenTypeInfo[]>): void {
+  givenTypesByFile = types;
+  // Reset counters when AST types are set
+  givenCallCounters.clear();
+}
 
 export function startFlow(name: string, id?: string): Flow {
   const sourceFile = (globalThis as Record<string, unknown>).__aeCurrentModulePath as string | undefined;
@@ -209,12 +221,48 @@ export function recordGivenData(data: unknown[]): void {
 
   const example = slice.server.specs.rules[context.currentRuleIndex].examples[context.currentExampleIndex];
 
-  const items =
-    slice.type === 'query'
-      ? data.map((item) => convertToStateExample(item))
-      : data.map((item) => convertToEventExample(item));
+  // Get normalized source file path for lookup
+  const sourceFile = context.flow.sourceFile;
+
+  const items = data.map((item) => {
+    if (sourceFile !== null && sourceFile !== undefined && sourceFile !== '') {
+      const currentCount = givenCallCounters.get(sourceFile) ?? 0;
+      givenCallCounters.set(sourceFile, currentCount + 1);
+
+      // Look up AST-extracted type info by ordinal position
+      const givenTypes = givenTypesByFile.get(sourceFile) || [];
+      const matchingType = givenTypes[currentCount]; // Use ordinal index
+
+      if (matchingType !== null && matchingType !== undefined) {
+        const refType =
+          matchingType.classification === 'event'
+            ? 'eventRef'
+            : matchingType.classification === 'command'
+              ? 'commandRef'
+              : 'stateRef';
+        debug('AST match for %s at ordinal %d: %s -> %s', sourceFile, currentCount, matchingType.typeName, refType);
+        return {
+          [refType]: matchingType.typeName,
+          exampleData: ensureMessageFormat(item).data,
+        };
+      } else {
+        // Log diagnostic when falling back
+        debug('No AST match for %s at ordinal %d, item: %o', sourceFile, currentCount, item);
+      }
+    }
+
+    // Fallback: emit explicit InferredType for downstream processing
+    return {
+      eventRef: 'InferredType',
+      exampleData: ensureMessageFormat(item).data,
+    };
+  });
 
   example.given = items as typeof example.given;
+}
+
+function getInferredRefType(): string {
+  return 'eventRef';
 }
 
 export function recordAndGivenData(data: unknown[]): void {
@@ -231,10 +279,10 @@ export function recordAndGivenData(data: unknown[]): void {
 
   const example = slice.server.specs.rules[context.currentRuleIndex].examples[context.currentExampleIndex];
 
-  const items =
-    slice.type === 'query'
-      ? data.map((item) => convertToStateExample(item))
-      : data.map((item) => convertToEventExample(item));
+  const items = data.map((item) => ({
+    [getInferredRefType()]: 'InferredType',
+    exampleData: ensureMessageFormat(item).data,
+  }));
 
   if (example.given) {
     example.given.push(...(items as NonNullable<typeof example.given>));
@@ -299,14 +347,6 @@ export function recordAndThenData(data: unknown[]): void {
   const example = slice.server.specs.rules[context.currentRuleIndex].examples[context.currentExampleIndex];
   const outcomes = data.map((item) => convertToOutcomeExample(item, slice.type));
   example.then.push(...(outcomes as typeof example.then));
-}
-
-function convertToStateExample(item: unknown): { stateRef: string; exampleData: Record<string, unknown> } {
-  const message = ensureMessageFormat(item);
-  return {
-    stateRef: message.type,
-    exampleData: message.data,
-  };
 }
 
 function convertToEventExample(item: unknown): { eventRef: string; exampleData: Record<string, unknown> } {

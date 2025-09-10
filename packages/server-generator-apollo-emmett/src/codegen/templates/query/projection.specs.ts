@@ -343,7 +343,6 @@ describe('projection.ts.ejs', () => {
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:
-          //
           // - model.getAll() — fetch all documents
           // - model.getById(id) — fetch a single document by ID (default key: 'id')
           // - model.find(filterFn) — filter documents using a predicate

@@ -45,7 +45,7 @@
                       "description": "a question has already been answered",
                       "given": [
                         {
-                          "stateRef": "QuestionnaireLinkSent",
+                          "eventRef": "QuestionAnswered",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -54,7 +54,7 @@
                           }
                         },
                         {
-                          "stateRef": "QuestionAnswered",
+                          "eventRef": "QuestionAnswered",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -65,8 +65,8 @@
                         }
                       ],
                       "when": {
-                        "commandRef": "InferredType",
-                        "exampleData": {}
+                        "exampleData": {},
+                        "eventRef": "QuestionnaireLinkSent"
                       },
                       "then": [
                         {
@@ -165,7 +165,7 @@
                       "description": "all questions have already been answered and submitted",
                       "given": [
                         {
-                          "eventRef": "QuestionnaireSubmitted",
+                          "eventRef": "QuestionnaireLinkSent",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -249,14 +249,14 @@
                       "description": "all questions have been answered",
                       "given": [
                         {
-                          "stateRef": "QuestionnaireConfig",
+                          "eventRef": "QuestionnaireSubmitted",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "numberOfQuestions": 2
                           }
                         },
                         {
-                          "stateRef": "QuestionnaireLinkSent",
+                          "eventRef": "QuestionnaireLinkSent",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -265,7 +265,7 @@
                           }
                         },
                         {
-                          "stateRef": "QuestionAnswered",
+                          "eventRef": "QuestionAnswered",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -275,7 +275,7 @@
                           }
                         },
                         {
-                          "stateRef": "QuestionAnswered",
+                          "eventRef": "QuestionAnswered",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -286,8 +286,8 @@
                         }
                       ],
                       "when": {
-                        "commandRef": "InferredType",
-                        "exampleData": {}
+                        "exampleData": {},
+                        "eventRef": "QuestionnaireLinkSent"
                       },
                       "then": [
                         {
@@ -316,7 +316,7 @@
                       "description": "some questions are still unanswered",
                       "given": [
                         {
-                          "stateRef": "QuestionnaireLinkSent",
+                          "eventRef": "QuestionAnswered",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -325,7 +325,7 @@
                           }
                         },
                         {
-                          "stateRef": "QuestionAnswered",
+                          "eventRef": "QuestionAnswered",
                           "exampleData": {
                             "questionnaireId": "q-001",
                             "participantId": "participant-abc",
@@ -336,8 +336,8 @@
                         }
                       ],
                       "when": {
-                        "commandRef": "InferredType",
-                        "exampleData": {}
+                        "exampleData": {},
+                        "eventRef": "QuestionnaireLinkSent"
                       },
                       "then": [
                         {
@@ -397,20 +397,8 @@
                   "examples": [
                     {
                       "description": "submits the questionnaire successfully",
-                      "given": [
-                        {
-                          "eventRef": "QuestionAnswered",
-                          "exampleData": {
-                            "questionnaireId": "q-001",
-                            "participantId": "participant-abc",
-                            "questionId": "q1",
-                            "answer": "Yes",
-                            "savedAt": "2030-01-01T09:05:00.000Z"
-                          }
-                        }
-                      ],
                       "when": {
-                        "commandRef": "AnswerQuestion",
+                        "commandRef": "SubmitQuestionnaire",
                         "exampleData": {
                           "questionnaireId": "q-001",
                           "participantId": "participant-abc"
@@ -434,39 +422,10 @@
           }
         }
       ],
-      "sourceFile": "/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts"
+      "sourceFile": "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts"
     }
   ],
   "messages": [
-    {
-      "type": "state",
-      "name": "QuestionnaireLinkSent",
-      "fields": [
-        {
-          "name": "questionnaireId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "participantId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "link",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "sentAt",
-          "type": "Date",
-          "required": true
-        }
-      ],
-      "metadata": {
-        "version": 1
-      }
-    },
     {
       "type": "event",
       "name": "QuestionAnswered",
@@ -504,8 +463,29 @@
     },
     {
       "type": "event",
-      "name": "InferredType",
-      "fields": [],
+      "name": "QuestionnaireLinkSent",
+      "fields": [
+        {
+          "name": "questionnaireId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "participantId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "link",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "sentAt",
+          "type": "Date",
+          "required": true
+        }
+      ],
       "source": "internal",
       "metadata": {
         "version": 1
@@ -532,7 +512,7 @@
         },
         {
           "name": "currentQuestionId",
-          "type": "string | unknown",
+          "type": "string | null",
           "required": true
         },
         {
@@ -581,31 +561,6 @@
     },
     {
       "type": "event",
-      "name": "QuestionnaireSubmitted",
-      "fields": [
-        {
-          "name": "questionnaireId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "participantId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "submittedAt",
-          "type": "Date",
-          "required": true
-        }
-      ],
-      "source": "internal",
-      "metadata": {
-        "version": 1
-      }
-    },
-    {
-      "type": "event",
       "name": "QuestionnaireEditRejected",
       "fields": [
         {
@@ -635,8 +590,8 @@
       }
     },
     {
-      "type": "state",
-      "name": "QuestionnaireConfig",
+      "type": "event",
+      "name": "QuestionnaireSubmitted",
       "fields": [
         {
           "name": "questionnaireId",
@@ -644,8 +599,33 @@
           "required": true
         },
         {
-          "name": "numberOfQuestions",
-          "type": "number",
+          "name": "participantId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "submittedAt",
+          "type": "Date",
+          "required": true
+        }
+      ],
+      "source": "internal",
+      "metadata": {
+        "version": 1
+      }
+    },
+    {
+      "type": "command",
+      "name": "SubmitQuestionnaire",
+      "fields": [
+        {
+          "name": "questionnaireId",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "participantId",
+          "type": "string",
           "required": true
         }
       ],

@@ -10,7 +10,6 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/examples/**',
-      '**/templates/**',
       '**/*-starter/**',
       '**/vite.config.ts',
     ],

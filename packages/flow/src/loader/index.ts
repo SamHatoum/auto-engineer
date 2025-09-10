@@ -1,4 +1,3 @@
-// loader/index.ts
 import createDebug from 'debug';
 import type { ExecuteOptions } from './types';
 import { registry } from '../flow-registry';
@@ -7,6 +6,7 @@ import { integrationExportRegistry } from '../integration-export-registry';
 import { buildGraph, type BuildGraphResult } from './graph';
 import { runGraph } from './runtime-cjs';
 import { createEnhancedImportMap } from './importmap';
+import { setGivenTypesByFile } from '../flow-context';
 
 const debug = createDebug('flow:ast-loader:index');
 
@@ -59,6 +59,9 @@ export async function executeAST(
   } else {
     final = first;
   }
+
+  // Set given types before running graph so flow-context can use them
+  setGivenTypesByFile(final.givenTypesByFile);
 
   runGraph(entryFiles, final.graph);
 

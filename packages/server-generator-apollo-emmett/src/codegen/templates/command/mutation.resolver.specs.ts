@@ -76,7 +76,8 @@ describe('mutation.resolver.ts.ejs', () => {
     const mutationFile = plans.find((p) => p.outputPath.endsWith('mutation.resolver.ts'));
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
-      "import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
+      "import { Mutation, Resolver, Arg, Ctx, Field, InputType, GraphQLISODateTime } from 'type-graphql';
+      import GraphQLJSON from 'graphql-type-json';
       import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
       @InputType()
@@ -85,9 +86,9 @@ describe('mutation.resolver.ts.ejs', () => {
         propertyId!: string;
         @Field(() => String)
         title!: string;
-        @Field(() => Number)
+        @Field(() => Float)
         pricePerNight!: number;
-        @Field(() => Number)
+        @Field(() => Float)
         maxGuests!: number;
         @Field(() => [String])
         amenities!: string[];
@@ -95,11 +96,11 @@ describe('mutation.resolver.ts.ejs', () => {
         available!: boolean;
         @Field(() => [String])
         tags!: string[];
-        @Field(() => Number)
+        @Field(() => Float)
         rating!: number;
-        @Field(() => Object)
+        @Field(() => JSON)
         metadata!: object;
-        @Field(() => Date)
+        @Field(() => GraphQLISODateTime)
         listedAt!: Date;
       }
 
