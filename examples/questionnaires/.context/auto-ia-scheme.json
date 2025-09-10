@@ -1,0 +1,128 @@
+{
+  "schema_description": "A questionnaire application where participants can answer questions, track progress, and submit completed questionnaires.",
+  "atoms": {
+    "description": "Atomic UI primitives used in the questionnaire application.",
+    "items": {}
+  },
+  "molecules": {
+    "description": "Reusable components composed from atoms for questionnaire functionality.",
+    "items": {
+      "QuestionCard": {
+        "description": "Displays a single question with input field for answering.",
+        "composition": {
+          "atoms": ["Card", "Input", "Button", "Label"]
+        }
+      },
+      "ProgressIndicator": {
+        "description": "Shows questionnaire completion progress that remains visible during scrolling.",
+        "composition": {
+          "atoms": ["Progress", "Card"]
+        },
+        "specs": ["show a progress indicator that is always visible as the user scrolls"]
+      },
+      "QuestionList": {
+        "description": "Displays list of answered and remaining questions.",
+        "composition": {
+          "atoms": ["Card", "Checkbox", "Label"]
+        },
+        "specs": ["display the list of answered questions", "display the list of remaining questions"]
+      },
+      "SubmissionControls": {
+        "description": "Contains submit button and submission status messages.",
+        "composition": {
+          "atoms": ["Button", "Alert"]
+        },
+        "specs": [
+          "enable the submit button when all questions are answered",
+          "disable the submit button when all questions have not been answered",
+          "display a confirmation message upon successful submission"
+        ]
+      }
+    }
+  },
+  "organisms": {
+    "description": "Smart components that handle questionnaire data and user interactions.",
+    "items": {
+      "QuestionnaireForm": {
+        "description": "Main questionnaire interface that manages question answering and progress tracking.",
+        "composition": {
+          "molecules": ["QuestionCard", "ProgressIndicator", "QuestionList", "SubmissionControls"]
+        },
+        "data_requirements": [
+          {
+            "type": "query",
+            "description": "Fetches current questionnaire progress and state",
+            "trigger": "On component mount and after each answer submission",
+            "details": {
+              "source": "QuestionnaireProgress projection",
+              "gql": "query QuestionnaireProgress($participantId: ID!) { questionnaireProgress(participantId: $participantId) { questionnaireId participantId status currentQuestionId remainingQuestions answers { questionId value } } }"
+            }
+          },
+          {
+            "type": "mutation",
+            "description": "Submits answer for a specific question",
+            "trigger": "When user submits an answer",
+            "details": {
+              "source": "AnswerQuestion command",
+              "gql": "mutation AnswerQuestion($input: AnswerQuestionInput!) { answerQuestion(input: $input) { success } }",
+              "payload_schema": {
+                "questionnaireId": "string",
+                "participantId": "string",
+                "questionId": "string",
+                "answer": "unknown"
+              }
+            }
+          },
+          {
+            "type": "mutation",
+            "description": "Submits the completed questionnaire",
+            "trigger": "When user clicks submit questionnaire button",
+            "details": {
+              "source": "SubmitQuestionnaire command",
+              "gql": "mutation SubmitQuestionnaire($input: SubmitQuestionnaireInput!) { submitQuestionnaire(input: $input) { success } }",
+              "payload_schema": {
+                "questionnaireId": "string",
+                "participantId": "string"
+              }
+            }
+          }
+        ],
+        "specs": [
+          "focus on the current question based on the progress state",
+          "display the list of answered questions",
+          "display the list of remaining questions",
+          "show a progress indicator that is always visible as the user scrolls",
+          "display a success message when the answer is submitted",
+          "display an error message when the answer submission is rejected",
+          "enable the submit button when all questions are answered",
+          "disable the submit button when all questions have not been answered",
+          "display a confirmation message upon successful submission"
+        ]
+      }
+    }
+  },
+  "pages": {
+    "description": "Top-level questionnaire pages accessible via routes.",
+    "items": {
+      "QuestionnairePage": {
+        "route": "/q/:questionnaireId",
+        "description": "Main questionnaire page where participants answer questions and submit responses.",
+        "layout": {
+          "organisms": ["QuestionnaireForm"]
+        },
+        "navigation": [],
+        "data_requirements": [
+          {
+            "type": "query",
+            "description": "Loads questionnaire progress on page load",
+            "trigger": "On page mount with participant ID from URL params",
+            "details": {
+              "source": "QuestionnaireProgress projection",
+              "gql": "query QuestionnaireProgress($participantId: ID!) { questionnaireProgress(participantId: $participantId) { questionnaireId participantId status currentQuestionId remainingQuestions answers { questionId value } } }"
+            }
+          }
+        ]
+      }
+    }
+  }
+}
