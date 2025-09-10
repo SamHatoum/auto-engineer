@@ -1,5 +1,6 @@
 import type { State, Integration } from '@auto-engineer/flow';
-import { registerTool, z } from '@auto-engineer/ai-gateway';
+import { registerTool } from '@auto-engineer/ai-gateway';
+import { z } from 'zod';
 
 import { createClient } from './generated/product-catalog/client';
 import type {
@@ -109,6 +110,7 @@ const _ProductCatalog: Integration<'product-catalog', ProductCatalogQueries> = {
 // ---------- Lazy MCP tool registration  ----------
 let _toolsRegistered = false;
 
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 function registerProductCatalogToolsOnce(): void {
   if (_toolsRegistered) return;
   _toolsRegistered = true;
@@ -126,12 +128,6 @@ function registerProductCatalogToolsOnce(): void {
     },
     async () => {
       const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.Products) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.Products is not available' }],
-          isError: true,
-        };
-      }
       const result = await queries.Products();
       return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
     },
@@ -151,14 +147,8 @@ function registerProductCatalogToolsOnce(): void {
       schemaName: 'GetApiProductsCategoryByCategoryResponse',
       schemaDescription: 'Array of ProductCatalogItem',
     },
-    async ({ category }) => {
+    async ({ category }: ProductsByCategoryParams) => {
       const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.ProductsByCategory) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductsByCategory is not available' }],
-          isError: true,
-        };
-      }
       const result = await queries.ProductsByCategory({ category });
       return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
     },
@@ -178,14 +168,8 @@ function registerProductCatalogToolsOnce(): void {
       schemaName: 'GetApiProductsSearchResponse',
       schemaDescription: 'Array of ProductCatalogItem',
     },
-    async ({ query }) => {
+    async ({ query }: ProductSearchParams) => {
       const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.ProductSearchResults) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductSearchResults is not available' }],
-          isError: true,
-        };
-      }
       const result = await queries.ProductSearchResults({ query });
       return { content: [{ type: 'text' as const, text: JSON.stringify(result.data.products, null, 2) }] };
     },
@@ -205,14 +189,8 @@ function registerProductCatalogToolsOnce(): void {
       schemaName: 'GetApiProductsByIdResponse',
       schemaDescription: 'Single ProductCatalogItem',
     },
-    async ({ id }) => {
+    async ({ id }: ProductDetailsParams) => {
       const queries = _ProductCatalog.Queries as ProductCatalogQueries;
-      if (!queries?.ProductDetails) {
-        return {
-          content: [{ type: 'text' as const, text: 'ProductCatalog.Queries.ProductDetails is not available' }],
-          isError: true,
-        };
-      }
       const result = await queries.ProductDetails({ id });
       if (result.data.product === null) {
         return { content: [{ type: 'text' as const, text: `Product with ID "${id}" not found` }], isError: true };
@@ -221,12 +199,13 @@ function registerProductCatalogToolsOnce(): void {
     },
   );
 }
+/* eslint-enable @typescript-eslint/no-unsafe-call */
 
 // registers tools on *first usage* of the integration
 export const ProductCatalog: Integration<'product-catalog', ProductCatalogQueries> = new Proxy(_ProductCatalog, {
   get(target, prop, receiver) {
     // First touch of ProductCatalog triggers tool registration
     registerProductCatalogToolsOnce();
-    return Reflect.get(target, prop, receiver);
+    return Reflect.get(target, prop, receiver) as unknown;
   },
 });
