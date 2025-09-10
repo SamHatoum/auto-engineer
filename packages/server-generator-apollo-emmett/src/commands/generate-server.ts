@@ -403,7 +403,12 @@ async function writePackage(dest: string): Promise<void> {
     devDependencies: resolveDeps(['typescript', 'vitest', 'tsx']),
   } as const;
 
-  const existingPkg = (await fs.readJson(path.join(dest, 'package.json'))) as Record<string, unknown>;
+  debugFiles('Loading package.json from', path.join(dest, 'package.json'));
+  const existingPkg = (await fs.readJson(path.join(dest, 'package.json')).catch(() => {
+    debugFiles('Failed to load package.json, using empty object');
+    return {};
+  })) as Record<string, unknown>;
+  debugFiles('Existing package.json:', existingPkg);
   const mergedDeps = {
     ...(existingPkg.dependencies as Record<string, string>),
     ...packageJson.dependencies,
@@ -489,29 +494,29 @@ main().catch((err) => {
 }
 
 async function installDependenciesAndGenerateSchema(serverDir: string, workingDir: string): Promise<void> {
-  debugDeps('📦 Installing dependencies...');
+  debugDeps('Installing dependencies...');
   debugDeps('Starting dependency installation in %s', serverDir);
+  debugDeps('Hint: You can debug by manually running: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
 
   try {
-    debugDeps('Running: pnpm install');
+    debugDeps('Running pnpm install');
     await execa('pnpm', ['install', '--ignore-workspace'], { cwd: serverDir });
-    debugDeps('✅ Dependencies installed successfully');
     debugDeps('Dependencies installed successfully');
+  } catch (error) {
+    debugDeps('Failed to pnpm install: %s', error instanceof Error ? error.message : 'Unknown error');
+  }
 
-    debugDeps('🔄 Generating GraphQL schema...');
-    debugDeps('Running: tsx scripts/generate-schema.ts');
+  try {
+    debugDeps('Generating GraphQL schema...');
+    debugDeps('Running: tsx scripts/generate-schema.ts', serverDir + '/scripts/generate-schema.ts');
     await execa('tsx', ['scripts/generate-schema.ts'], { cwd: serverDir });
-
     const schemaPath = join(workingDir, '.context', 'schema.graphql');
-    debugDeps('✅ GraphQL schema generated at: %s', schemaPath);
     debugDeps('GraphQL schema generated at: %s', schemaPath);
   } catch (error) {
-    debugDeps('Failed to install dependencies or generate schema: %O', error);
     debugDeps(
-      '⚠️  Failed to install dependencies or generate schema: %s',
+      'Failed to run tsx scripts/generate-schema.ts: %s',
       error instanceof Error ? error.message : 'Unknown error',
     );
-    debugDeps('You can manually run: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
   }
 }
 
