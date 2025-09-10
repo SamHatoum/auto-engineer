@@ -12,15 +12,6 @@ importers:
 
   .:
     dependencies:
-      '@auto-engineer/ai-gateway':
-        specifier: 0.8.5
-        version: link:packages/ai-gateway
-      '@auto-engineer/design-system-importer':
-        specifier: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
-        version: link:../../../Library/pnpm/global/5/node_modules/@auto-engineer/design-system-importer
-      '@auto-engineer/flow':
-        specifier: 0.8.5
-        version: link:packages/flow
       axios:
         specifier: ^1.10.0
         version: 1.11.0(debug@4.4.1)
@@ -113,7 +104,7 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(jsdom@26.1.0)
 
-  examples/shopping-app:
+  examples/questionnaires:
     dependencies:
       '@auto-engineer/cli':
         specifier: workspace:*
@@ -148,9 +139,6 @@ importers:
       '@auto-engineer/server-implementer':
         specifier: workspace:*
         version: link:../../packages/server-implementer
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^24.3.1
@@ -168,7 +156,7 @@ importers:
         specifier: ^3.12.7
         version: 3.14.0
 
-  examples/shopping-app/client:
+  examples/questionnaires/client:
     dependencies:
       '@apollo/client':
         specifier: ^3.13.8
