@@ -39,11 +39,24 @@ async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Pr
   return files;
 }
 
-export const getFlows = async (opts: GetFlowsOptions) => {
+export const getFlows = async (
+  opts: GetFlowsOptions,
+): Promise<{
+  flows: Flow[];
+  vfsFiles: string[];
+  externals: string[];
+  typings: Record<string, string[]>;
+  typeMap: Map<string, string>;
+  typesByFile: Map<string, Map<string, unknown>>;
+  givenTypesByFile: Map<string, unknown[]>;
+  toModel: () => Model;
+}> => {
   const { vfs, root, pattern = DEFAULT_PATTERN, importMap = {} } = opts;
   const normRoot = toPosix(root);
   const projectRoot = dirnamePosix(normRoot);
+
   const files = await discoverFiles(vfs, normRoot, pattern);
+
   if (files.length === 0) {
     throw new Error(`getFlows: no candidate files found. root=${normRoot} pattern=${String(pattern)}`);
   }

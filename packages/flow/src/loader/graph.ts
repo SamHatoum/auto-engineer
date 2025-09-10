@@ -55,6 +55,13 @@ export async function buildGraph(
     checkJs: false,
     skipLibCheck: true,
     esModuleInterop: true,
+    // Performance optimizations
+    noResolve: false, // We need module resolution for imports
+    skipDefaultLibCheck: true,
+    isolatedModules: true, // Faster compilation
+    declaration: false,
+    sourceMap: false,
+    removeComments: true,
   };
 
   const defaultHost = ts.createCompilerHost(compilerOptions);

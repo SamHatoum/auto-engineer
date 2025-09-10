@@ -596,8 +596,19 @@ export function transpileToCjs(ts: typeof import('typescript'), fileName: string
       allowJs: true,
       skipLibCheck: true,
       sourceMap: false,
+      // Performance optimizations
+      removeComments: true,
+      skipDefaultLibCheck: true,
+      isolatedModules: true,
+      declaration: false,
+      noEmitHelpers: true,
+      importHelpers: false,
     },
     fileName,
+    transformers: {
+      before: [],
+      after: [],
+    },
   });
   return out.outputText;
 }
