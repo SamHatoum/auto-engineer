@@ -159,9 +159,6 @@ importers:
 
   examples/shopping-app:
     dependencies:
-      '@auto-engineer/ai-gateway':
-        specifier: workspace:*
-        version: link:../../packages/ai-gateway
       '@auto-engineer/cli':
         specifier: workspace:*
         version: link:../../packages/cli

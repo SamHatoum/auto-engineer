@@ -13,7 +13,6 @@
     "start:examples": "pnpm --parallel --filter @examples/* start 2>&1 | grep -E '(localhost|Local)' || true"
   },
   "dependencies": {
-    "@auto-engineer/ai-gateway": "workspace:*",
     "@auto-engineer/cli": "workspace:*",
     "@auto-engineer/design-system-importer": "workspace:*",
     "@auto-engineer/flow": "workspace:*",
