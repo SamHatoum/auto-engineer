@@ -102,8 +102,9 @@ on<SchemaExportedEvent>('SchemaExported', (event) =>
   dispatch<GenerateServerCommand>({
     type: 'GenerateServer',
     data: {
-      schemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.json',
-      destination: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires',
+      schemaPath:
+        '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context/schema.json',
+      destination: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
     },
   }),
 );
@@ -112,7 +113,7 @@ on<SchemaExportedEvent>('SchemaExported', (event) =>
 //   dispatch<ImplementServerCommand>(
 //     {
 //       type: 'ImplementServer', data: {
-//         serverDirectory: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/server'
+//         serverDirectory: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/server'
 //       }
 //     })
 // );
@@ -121,8 +122,10 @@ on<ServerGeneratedEvent>('ServerGenerated', () =>
   dispatch<GenerateIACommand>({
     type: 'GenerateIA',
     data: {
-      outputDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context',
-      flowFiles: ['/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts'],
+      outputDir: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context',
+      flowFiles: [
+        '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts',
+      ],
     },
   }),
 );
@@ -132,13 +135,14 @@ on<IAGeneratedEvent>('IAGenerated', (event) =>
     type: 'GenerateClient',
     data: {
       starterDir:
-        '/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter',
-      targetDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client',
+        '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter',
+      targetDir: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/client',
       iaSchemaPath:
-        '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/auto-ia-scheme.json',
-      gqlSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.graphql',
+        '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context/auto-ia-scheme.json',
+      gqlSchemaPath:
+        '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context/schema.graphql',
       figmaVariablesPath:
-        '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/figma-variables.json',
+        '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context/figma-variables.json',
     },
   }),
 );
@@ -147,23 +151,23 @@ on<IAGeneratedEvent>('IAGenerated', (event) =>
 //   dispatch<ImplementServerCommand>(
 //     {
 //       type: 'ImplementServer', data: {
-//         serverDirectory: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/server'
+//         serverDirectory: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/server'
 //       }
 //     })
 // );
 
 // {
-// "error": "ENOENT: no such file or directory, open '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.graphql'",
-// "targetDir": "/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client"
+// "error": "ENOENT: no such file or directory, open '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context/schema.graphql'",
+// "targetDir": "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/client"
 // }
 
 // on<ClientGeneratedEvent>('ClientGenerated', (event) =>
 //   dispatch<ImplementClientCommand>({
 //     type: 'ImplementClient',
 // data: {
-//   projectDir: "/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client",
-//   iaSchemeDir: "/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context",
-//   designSystemPath: "/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/design-system.md",
+//   projectDir: "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/client",
+//   iaSchemeDir: "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context",
+//   designSystemPath: "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/.context/design-system.md",
 // },
 //   }),
 // );

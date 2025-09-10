@@ -2,14 +2,14 @@ import { CommandHandler, type EventStore, type MessageHandlerResult } from '@eve
 import { evolve } from './evolve';
 import { initialState } from './state';
 import { decide } from './decide';
-import type { AnswerQuestion } from './commands';
+import type { SubmitQuestionnaire } from './commands';
 
 const handler = CommandHandler({
   evolve,
   initialState,
 });
 
-export const handle = async (eventStore: EventStore, command: AnswerQuestion): Promise<MessageHandlerResult> => {
+export const handle = async (eventStore: EventStore, command: SubmitQuestionnaire): Promise<MessageHandlerResult> => {
   const streamId = 'questionnaire-participantId';
 
   try {

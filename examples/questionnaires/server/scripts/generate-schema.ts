@@ -15,7 +15,7 @@ async function main() {
     const printedSchema = printSchema(schema);
 
     const contextDir = path.resolve(
-      '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires',
+      '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
       '.context',
     );
     const schemaPath = path.join(contextDir, 'schema.graphql');

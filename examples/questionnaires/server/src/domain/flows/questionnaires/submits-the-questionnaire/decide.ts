@@ -1,15 +1,15 @@
 import { IllegalStateError } from '@event-driven-io/emmett';
 import type { State } from './state';
-import type { AnswerQuestion } from './commands';
+import type { SubmitQuestionnaire } from './commands';
 import type { QuestionnaireSubmitted } from './events';
 
-export const decide = (command: AnswerQuestion, state: State): QuestionnaireSubmitted => {
+export const decide = (command: SubmitQuestionnaire, state: State): QuestionnaireSubmitted => {
   switch (command.type) {
-    case 'AnswerQuestion': {
+    case 'SubmitQuestionnaire': {
       /**
        * ## IMPLEMENTATION INSTRUCTIONS ##
        *
-       * This command requires evaluating prior state to determine if it can proceed.
+       * This command can directly emit one or more events based on the input.
        *
        * You should:
        * - Validate the command input fields

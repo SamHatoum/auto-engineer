@@ -348,7 +348,7 @@ describe('projection.ts.ejs', () => {
           // - model.find(filterFn) — filter documents using a predicate
           // - model.first(filterFn) — fetch the first document matching a predicate
           //
-          // Example below uses \`.find()\` to filter
+          // Example below uses \\\`.find()\\\` to filter
           // change the logic for the query as needed to meet the requirements for the current slice.
 
           return model.find((item) => {

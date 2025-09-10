@@ -59,31 +59,44 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
   });
   debugTemplate('Template compiled successfully');
 
+  const isInlineObject = (s: string) => /^\{[\s\S]*\}$/.test(s.trim());
+  const isStringLiteralUnion = (s: string) => /^"(?:[^"]+)"\s*(\|\s*"(?:[^"]+)")+$/.test(s.trim());
   const convertPrimitiveType = (base: string): string => {
+    // GraphQL-native scalars
     if (base === 'ID') return 'ID';
+    if (base === 'Int') return 'Int';
+    if (base === 'Float') return 'Float';
+    // TS primitives
     if (base === 'string') return 'String';
     if (base === 'number') return 'Float';
     if (base === 'boolean') return 'Boolean';
     if (base === 'Date') return 'GraphQLISODateTime';
-    if (base === 'unknown' || base === 'any' || base === 'object') return 'JSON';
     return 'String';
   };
 
-  const isInlineObject = (base: string): boolean => /^{[\s\S]*}$/.test(base);
-  const isStringLiteralUnion = (base: string): boolean => /^"[^"]+"\s*(\|\s*"[^"]+")+$/.test(base);
-
   const graphqlType = (rawTs: string): string => {
-    debugTemplate('Converting TS type to GraphQL: %s', rawTs);
-    if (!rawTs) return 'String';
-    const t = rawTs.trim();
+    const t = (rawTs ?? '').trim();
+    if (!t) return 'String';
     const base = t.replace(/\s*\|\s*null\b/g, '').trim();
+    // arrays
     const arr1 = base.match(/^Array<(.*)>$/);
     const arr2 = base.match(/^(.*)\[\]$/);
     if (arr1) return `[${graphqlType(arr1[1].trim())}]`;
     if (arr2) return `[${graphqlType(arr2[1].trim())}]`;
+    // JSON
+    if (base === 'unknown' || base === 'any') return 'GraphQLJSON';
+    if (base === 'object') return 'JSON';
     if (isInlineObject(base)) return 'JSON';
     if (isStringLiteralUnion(base)) return 'String';
     return convertPrimitiveType(base);
+  };
+
+  const toTsFieldType = (ts: string): string => {
+    if (!ts) return 'string';
+    const t = ts.trim();
+    const arr = t.match(/^Array<(.*)>$/);
+    if (arr) return `${arr[1].trim()}[]`;
+    return t;
   };
 
   const isNullable = (rawTs: string): boolean => /\|\s*null\b/.test(rawTs);
@@ -95,6 +108,7 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
     camelCase,
     graphqlType,
     isNullable,
+    toTsFieldType,
     formatTsValue,
     formatDataObject,
     messages: data.messages,
@@ -240,12 +254,16 @@ async function prepareTemplateData(
   const uniqueCommands = Array.from(new Map(commands.map((c) => [c.type, c])).values());
   debug('  Unique commands: %d', uniqueCommands.length);
 
+  const allowedForSlice = new Set(Object.keys(gwtMapping));
+  const filteredCommands =
+    allowedForSlice.size > 0 ? uniqueCommands.filter((c) => allowedForSlice.has(c.type)) : uniqueCommands;
+
   return {
     flowName: flow.name,
     sliceName: slice.name,
     slice,
     stream: { pattern: streamPattern, id: streamId },
-    commands: uniqueCommands,
+    commands: filteredCommands,
     events,
     states,
     gwtMapping,

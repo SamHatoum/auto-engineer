@@ -21,83 +21,40 @@ function baseTs(ts) {
 function fieldUsesDate(ts) {
     const b = baseTs(ts);
     if (b === 'Date') return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) {
-        // quick check for Date inside inline object
-        return /:\s*Date\b/.test(b);
-    }
+    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*Date\b/.test(b);
     return false;
 }
 function fieldUsesJSON(ts) {
     const b = baseTs(ts);
     if (b === 'unknown' || b === 'any' || b === 'object') return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) {
-        // quick check for unknown/any/object inside inline object
-        return /:\s*(unknown|any|object)\b/.test(b);
-    }
+    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*(unknown|any|object)\b/.test(b);
     return false;
 }
 
-// Scan fields to know which extra scalars we actually need
 const messageFields = message?.fields ?? [];
 const usesDate = messageFields.some(f => fieldUsesDate(f.type)) ||
         (parsedRequest?.args ?? []).some(a => baseTs(a.tsType) === 'Date');
 const usesJSON = messageFields.some(f => fieldUsesJSON(f.type));
+
+// Collect embedded types up-front so we can emit them before the parent
+const embeddedTypes = [];
+for (const field of messageFields) {
+    const tsType = field.type ?? 'string';
+    if (isInlineObjectArray(tsType) || isInlineObject(tsType)) {
+        embeddedTypes.push({
+            typeName: `${viewType}${pascalCase(field.name)}`,
+            tsType,
+        });
+    }
+}
 %>
 import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
 <% if (usesJSON) { %>import GraphQLJSON from 'graphql-type-json';
 <% } %>import { type GraphQLContext, ReadModel } from '../../../shared';
 
-@ObjectType()
-export class <%= viewType %> {
-<% if (messageFields.length) {
-    const embeddedTypes = [];
-    function getEmbeddedObjectTypeName(parentName, fieldName) {
-        return `${parentName}${pascalCase(fieldName)}`;
-    }
-
-        for (const field of messageFields) {
-    const tsType = field.type ?? 'string';
-    const gqlType = graphqlType(tsType);
-    const fieldTypeName = getEmbeddedObjectTypeName(viewType, field.name);
-
-if (isInlineObjectArray(tsType)) {
-    embeddedTypes.push({ parentName: viewType, fieldName: field.name, typeName: fieldTypeName, tsType });
-%>
-@Field(() => [<%= fieldTypeName %>])
-<%= field.name %>!: <%= fieldTypeName %>[];
-<%
-} else if (isInlineObject(tsType)) {
-    embeddedTypes.push({ parentName: viewType, fieldName: field.name, typeName: fieldTypeName, tsType });
-%>
-@Field(() => <%= fieldTypeName %>)
-<%= field.name %>!: <%= fieldTypeName %>;
-<%
-} else {
-%>
-    @Field(() => <%= gqlType %><%= isNullable(tsType) ? ', { nullable: true }' : '' %>)
-    <%= field.name %><%= isNullable(tsType) ? '?' : '!' %>: <%= tsType %>;
-<%  } } %>
-[key: string]: unknown;
-<% } else { %>
-    [key: string]: unknown;
-<% } %>
-}
-
-<% if (messageFields.length) {
-    // Re-emit embedded object types that were collected above
-    const embeddedTypes = [];
-    for (const field of messageFields) {
-        const tsType = field.type ?? 'string';
-        if (isInlineObjectArray(tsType) || isInlineObject(tsType)) {
-            embeddedTypes.push({
-                typeName: `${viewType}${pascalCase(field.name)}`,
-                tsType,
-            });
-        }
-    }
-
+<% // Emit embedded types FIRST — this matches your snapshot order
         for (const { typeName, tsType } of embeddedTypes) {
-    // Extract "{ ... }" body whether Array<{...}> or "{...}[]"
+    // Extract inner "{ ... }" whether Array<{...}> or "{...}[]"
     const inner = tsType.trim().startsWith('Array<')
             ? tsType.trim().replace(/^Array<\{/, '{').replace(/}>$/, '}')
             : tsType.trim().replace(/\[\]$/, '');
@@ -112,15 +69,38 @@ if (isInlineObjectArray(tsType)) {
         return { name, tsType: type, gqlType: graphqlType(type), nullable: isNullable(type) };
     }).filter(Boolean);
 %>
-
 @ObjectType()
 export class <%= typeName %> {
 <% for (const f of parsedFields) { %>
     @Field(() => <%= f.gqlType %><%= f.nullable ? ', { nullable: true }' : '' %>)
-    <%= f.name %><%= f.nullable ? '?' : '!' %>: <%= f.tsType %>;
+    <%= f.name %><%= f.nullable ? '?' : '!' %>: <%= toTsFieldType(f.tsType) %>;
 <% } %>
 }
+<% } %>
+
+@ObjectType()
+export class <%= viewType %> {
+<% if (messageFields.length) {
+        for (const field of messageFields) {
+    const tsType = field.type ?? 'string';
+    const gqlType = graphqlType(tsType);
+    const typeName = `${viewType}${pascalCase(field.name)}`;
+%>
+<% if (isInlineObjectArray(tsType)) { %>
+    @Field(() => [<%= typeName %>])
+    <%= field.name %>!: <%= typeName %>[];
+<% } else if (isInlineObject(tsType)) { %>
+    @Field(() => <%= typeName %>)
+    <%= field.name %>!: <%= typeName %>;
+<% } else { %>
+    @Field(() => <%= gqlType %><%= isNullable(tsType) ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= isNullable(tsType) ? '?' : '!' %>: <%= toTsFieldType(tsType) %>;
 <% } } %>
+[key: string]: unknown;
+<% } else { %>
+    [key: string]: unknown;
+<% } %>
+}
 
 @Resolver()
 export class <%= resolverClassName %> {
@@ -143,7 +123,7 @@ const model = new ReadModel<<%= viewType %>>(ctx.eventStore, '<%= projectionType
 // - model.find(filterFn) — filter documents using a predicate
 // - model.first(filterFn) — fetch the first document matching a predicate
 //
-// Example below uses `.find()` to filter
+// Example below uses \`.find()\` to filter
 // change the logic for the query as needed to meet the requirements for the current slice.
 
 return model.find((item) => {

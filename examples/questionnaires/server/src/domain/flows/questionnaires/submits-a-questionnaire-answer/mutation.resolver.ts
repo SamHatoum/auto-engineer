@@ -1,15 +1,19 @@
 import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
+import GraphQLJSON from 'graphql-type-json';
 import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
 @InputType()
 export class AnswerQuestionInput {
   @Field(() => String)
   questionnaireId!: string;
+
   @Field(() => String)
   participantId!: string;
+
   @Field(() => String)
   questionId!: string;
-  @Field(() => String)
+
+  @Field(() => GraphQLJSON)
   answer!: unknown;
 }
 

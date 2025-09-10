@@ -11,21 +11,10 @@ describe('Questionnaires | submits the questionnaire', () => {
     initialState,
   });
 
-  it('should emit QuestionnaireSubmitted for valid AnswerQuestion', () => {
-    given([
-      {
-        type: 'QuestionAnswered',
-        data: {
-          questionnaireId: 'q-001',
-          participantId: 'participant-abc',
-          questionId: 'q1',
-          answer: 'Yes',
-          savedAt: new Date('2030-01-01T09:05:00.000Z'),
-        },
-      },
-    ])
+  it('should emit QuestionnaireSubmitted for valid SubmitQuestionnaire', () => {
+    given([])
       .when({
-        type: 'AnswerQuestion',
+        type: 'SubmitQuestionnaire',
         data: {
           questionnaireId: 'q-001',
           participantId: 'participant-abc',

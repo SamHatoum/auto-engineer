@@ -1,6 +1,6 @@
 import type { State } from './state';
 import type { QuestionAnswered } from './events';
-import type { QuestionnaireSubmitted } from './events';
+import type { QuestionnaireLinkSent } from './events';
 import type { QuestionnaireEditRejected } from './events';
 
 /**
@@ -18,7 +18,7 @@ import type { QuestionnaireEditRejected } from './events';
 
 export const evolve = (
   state: State,
-  event: QuestionAnswered | QuestionnaireSubmitted | QuestionnaireEditRejected,
+  event: QuestionAnswered | QuestionnaireLinkSent | QuestionnaireEditRejected,
 ): State => {
   switch (event.type) {
     case 'QuestionAnswered': {
@@ -27,8 +27,8 @@ export const evolve = (
         ...state,
       };
     }
-    case 'QuestionnaireSubmitted': {
-      // TODO: Update state based on QuestionnaireSubmitted
+    case 'QuestionnaireLinkSent': {
+      // TODO: Update state based on QuestionnaireLinkSent
       return {
         ...state,
       };

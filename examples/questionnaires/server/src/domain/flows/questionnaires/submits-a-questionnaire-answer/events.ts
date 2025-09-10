@@ -10,12 +10,13 @@ export type QuestionAnswered = Event<
     savedAt: Date;
   }
 >;
-export type QuestionnaireSubmitted = Event<
-  'QuestionnaireSubmitted',
+export type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
   {
     questionnaireId: string;
     participantId: string;
-    submittedAt: Date;
+    link: string;
+    sentAt: Date;
   }
 >;
 export type QuestionnaireEditRejected = Event<

@@ -2,26 +2,23 @@ import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
 import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
 @InputType()
-export class AnswerQuestionInput {
+export class SubmitQuestionnaireInput {
   @Field(() => String)
   questionnaireId!: string;
+
   @Field(() => String)
   participantId!: string;
-  @Field(() => String)
-  questionId!: string;
-  @Field(() => String)
-  answer!: unknown;
 }
 
 @Resolver()
-export class AnswerQuestionResolver {
+export class SubmitQuestionnaireResolver {
   @Mutation(() => MutationResponse)
-  async answerQuestion(
-    @Arg('input', () => AnswerQuestionInput) input: AnswerQuestionInput,
+  async submitQuestionnaire(
+    @Arg('input', () => SubmitQuestionnaireInput) input: SubmitQuestionnaireInput,
     @Ctx() ctx: GraphQLContext,
   ): Promise<MutationResponse> {
     return await sendCommand(ctx.messageBus, {
-      type: 'AnswerQuestion',
+      type: 'SubmitQuestionnaire',
       kind: 'Command',
       data: { ...input },
     });

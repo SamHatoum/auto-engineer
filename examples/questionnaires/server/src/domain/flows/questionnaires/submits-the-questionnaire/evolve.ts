@@ -1,5 +1,4 @@
 import type { State } from './state';
-import type { QuestionAnswered } from './events';
 import type { QuestionnaireSubmitted } from './events';
 
 /**
@@ -15,14 +14,8 @@ import type { QuestionnaireSubmitted } from './events';
  * - Avoid spreading all of `event.data` unless all fields are relevant.
  */
 
-export const evolve = (state: State, event: QuestionAnswered | QuestionnaireSubmitted): State => {
+export const evolve = (state: State, event: QuestionnaireSubmitted): State => {
   switch (event.type) {
-    case 'QuestionAnswered': {
-      // TODO: Update state based on QuestionAnswered
-      return {
-        ...state,
-      };
-    }
     case 'QuestionnaireSubmitted': {
       // TODO: Update state based on QuestionnaireSubmitted
       return {

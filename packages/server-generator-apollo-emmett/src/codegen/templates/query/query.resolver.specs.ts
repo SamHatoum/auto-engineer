@@ -108,7 +108,7 @@ describe('query.resolver.ts.ejs', () => {
           // - model.find(filterFn) — filter documents using a predicate
           // - model.first(filterFn) — fetch the first document matching a predicate
           //
-          // Example below uses \`.find()\` to filter
+          // Example below uses \\\`.find()\\\` to filter
           // change the logic for the query as needed to meet the requirements for the current slice.
 
           return model.find((item) => {
@@ -194,17 +194,6 @@ describe('query.resolver.ts.ejs', () => {
       import { type GraphQLContext, ReadModel } from '../../../shared';
 
       @ObjectType()
-      export class SuggestedItems {
-        @Field(() => String)
-        sessionId!: string;
-
-        @Field(() => [SuggestedItemsItems])
-        items!: SuggestedItemsItems[];
-
-        [key: string]: unknown;
-      }
-
-      @ObjectType()
       export class SuggestedItemsItems {
         @Field(() => String)
         productId!: string;
@@ -217,6 +206,17 @@ describe('query.resolver.ts.ejs', () => {
 
         @Field(() => String)
         reason!: string;
+      }
+
+      @ObjectType()
+      export class SuggestedItems {
+        @Field(() => String)
+        sessionId!: string;
+
+        @Field(() => [SuggestedItemsItems])
+        items!: SuggestedItemsItems[];
+
+        [key: string]: unknown;
       }
 
       @Resolver()
@@ -235,11 +235,185 @@ describe('query.resolver.ts.ejs', () => {
           // - model.find(filterFn) — filter documents using a predicate
           // - model.first(filterFn) — fetch the first document matching a predicate
           //
-          // Example below uses \`.find()\` to filter
+          // Example below uses \\\`.find()\\\` to filter
           // change the logic for the query as needed to meet the requirements for the current slice.
 
           return model.find((item) => {
             if (sessionId !== undefined && item.sessionId !== sessionId) return false;
+
+            return true;
+          });
+        }
+      }
+      "
+    `);
+  });
+  it('should generate the query resolver for "views the questionnaire"', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Questionnaires',
+          slices: [
+            {
+              name: 'views the questionnaire',
+              type: 'query',
+              client: {
+                description: '',
+                specs: {
+                  name: '',
+                  rules: [
+                    'focus on the current question based on the progress state',
+                    'display the list of answered questions',
+                    'display the list of remaining questions',
+                    'show a progress indicator that is always visible as the user scrolls',
+                  ],
+                },
+              },
+              request:
+                'query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    status\n    currentQuestionId\n    remainingQuestions\n    answers {\n      questionId\n      value\n    }\n  }\n}',
+              server: {
+                description: '',
+                data: [
+                  {
+                    target: { type: 'State', name: 'QuestionnaireProgress' },
+                    origin: { type: 'projection', name: 'Questionnaires', idField: 'questionnaire-participantId' },
+                  },
+                ],
+                specs: {
+                  name: '',
+                  rules: [
+                    {
+                      description: 'questionnaires show current progress',
+                      examples: [
+                        {
+                          description: 'a question has already been answered',
+                          given: [
+                            {
+                              eventRef: 'QuestionAnswered',
+                              exampleData: {
+                                questionnaireId: 'q-001',
+                                participantId: 'participant-abc',
+                                link: 'https://app.example.com/q/q-001?participant=participant-abc',
+                                sentAt: '2030-01-01T09:00:00.000Z',
+                              },
+                            },
+                            {
+                              eventRef: 'QuestionAnswered',
+                              exampleData: {
+                                questionnaireId: 'q-001',
+                                participantId: 'participant-abc',
+                                questionId: 'q1',
+                                answer: 'Yes',
+                                savedAt: '2030-01-01T09:05:00.000Z',
+                              },
+                            },
+                          ],
+                          when: { exampleData: {}, eventRef: 'QuestionnaireLinkSent' },
+                          then: [
+                            {
+                              stateRef: 'QuestionnaireProgress',
+                              exampleData: {
+                                questionnaireId: 'q-001',
+                                participantId: 'participant-abc',
+                                status: 'in_progress',
+                                currentQuestionId: 'q2',
+                                remainingQuestions: ['q2', 'q3'],
+                                answers: [{ questionId: 'q1', value: 'Yes' }],
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'QuestionnaireProgress',
+          fields: [
+            { name: 'questionnaireId', type: 'string', required: true },
+            { name: 'participantId', type: 'string', required: true },
+            { name: 'status', type: '"in_progress" | "ready_to_submit" | "submitted"', required: true },
+            { name: 'currentQuestionId', type: 'string | null', required: true },
+            { name: 'remainingQuestions', type: 'Array<string>', required: true },
+            { name: 'answers', type: 'Array<{ questionId: string; value: unknown }>', required: true },
+          ],
+          metadata: { version: 1 },
+        },
+      ],
+      integrations: [],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const queryFile = plans.find(
+      (p) => p.outputPath.endsWith('query.resolver.ts') && p.contents.includes('ViewsTheQuestionnaireQueryResolver'),
+    );
+
+    expect(queryFile?.contents).toMatchInlineSnapshot(`
+      "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID } from 'type-graphql';
+      import GraphQLJSON from 'graphql-type-json';
+      import { type GraphQLContext, ReadModel } from '../../../shared';
+
+      @ObjectType()
+      export class QuestionnaireProgressAnswers {
+        @Field(() => String)
+        questionId!: string;
+
+        @Field(() => GraphQLJSON)
+        value!: unknown;
+      }
+
+      @ObjectType()
+      export class QuestionnaireProgress {
+        @Field(() => String)
+        questionnaireId!: string;
+
+        @Field(() => String)
+        participantId!: string;
+
+        @Field(() => String)
+        status!: 'in_progress' | 'ready_to_submit' | 'submitted';
+
+        @Field(() => String, { nullable: true })
+        currentQuestionId?: string | null;
+
+        @Field(() => [String])
+        remainingQuestions!: string[];
+
+        @Field(() => [QuestionnaireProgressAnswers])
+        answers!: QuestionnaireProgressAnswers[];
+
+        [key: string]: unknown;
+      }
+
+      @Resolver()
+      export class ViewsTheQuestionnaireQueryResolver {
+        @Query(() => [QuestionnaireProgress])
+        async questionnaireProgress(
+          @Ctx() ctx: GraphQLContext,
+          @Arg('participantId', () => ID, { nullable: true }) participantId?: string,
+        ): Promise<QuestionnaireProgress[]> {
+          const model = new ReadModel<QuestionnaireProgress>(ctx.eventStore, 'Questionnaires');
+
+          // ## IMPLEMENTATION INSTRUCTIONS ##
+          // You can query the projection using the ReadModel API:
+          // - model.getAll() — fetch all documents
+          // - model.getById(id) — fetch a single document by ID (default key: 'id')
+          // - model.find(filterFn) — filter documents using a predicate
+          // - model.first(filterFn) — fetch the first document matching a predicate
+          //
+          // Example below uses \\\`.find()\\\` to filter
+          // change the logic for the query as needed to meet the requirements for the current slice.
+
+          return model.find((item) => {
+            if (participantId !== undefined && item.participantId !== participantId) return false;
 
             return true;
           });

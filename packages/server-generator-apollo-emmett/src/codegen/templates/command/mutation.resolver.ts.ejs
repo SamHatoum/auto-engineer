@@ -1,26 +1,97 @@
-import { Mutation, Resolver, Arg, Ctx, Field, InputType, GraphQLISODateTime } from 'type-graphql';
-import GraphQLJSON from 'graphql-type-json';
-import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
+<%
+function isInlineObject(ts) {
+    return /^\{[\s\S]*\}$/.test((ts ?? '').trim());
+}
+function isInlineObjectArray(ts) {
+    const t = (ts ?? '').trim();
+    return /^Array<\{[\s\S]*\}>$/.test(t) || /^\{[\s\S]*\}\[\]$/.test(t);
+}
+function baseTs(ts) {
+    return (ts ?? 'string').replace(/\s*\|\s*null\b/g, '').trim();
+}
+function fieldUsesDate(ts) {
+    const b = baseTs(ts);
+    if (b === 'Date') return true;
+    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*Date\b/.test(b);
+    return false;
+}
+function fieldUsesJSON(ts) {
+    const b = baseTs(ts);
+    if (b === 'unknown' || b === 'any' || b === 'object') return true;
+    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*(unknown|any|object)\b/.test(b);
+    return false;
+}
+const cmd = commands[0];
+const usesDate = cmd.fields.some(f => fieldUsesDate(f.tsType));
+const usesJSON = cmd.fields.some(f => fieldUsesJSON(f.tsType));
+
+const embeddedInputs = [];
+for (const f of cmd.fields) {
+    const tsType = f.tsType ?? 'string';
+    if (isInlineObjectArray(tsType) || isInlineObject(tsType)) {
+        embeddedInputs.push({
+            typeName: `${pascalCase(cmd.type)}${pascalCase(f.name)}Input`,
+            tsType,
+        });
+    }
+}
+%>
+import { Mutation, Resolver, Arg, Ctx, Field, InputType<% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
+<% if (usesJSON) { %>import GraphQLJSON from 'graphql-type-json';
+<% } %>import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
+
+<% for (const { typeName, tsType } of embeddedInputs) {
+    const inner = tsType.trim().startsWith('Array<')
+            ? tsType.trim().replace(/^Array<\{/, '{').replace(/}>$/, '}')
+            : tsType.trim().replace(/\[\]$/, '');
+    const match = inner.match(/^\{([\s\S]*)\}$/);
+    const body = match ? match[1] : '';
+    const rawFields = body.split(/[,;]\s*/).filter(Boolean);
+    const parsedFields = rawFields.map(f => {
+        const parts = f.split(':');
+        const name = parts[0]?.trim();
+        const type = parts.slice(1).join(':').trim();
+        if (!name || !type) return null;
+        return { name, tsType: type, gqlType: graphqlType(type), nullable: isNullable(type) };
+    }).filter(Boolean);
+%>
+@InputType()
+export class <%= typeName %> {
+<% for (const f of parsedFields) { %>
+    @Field(() => <%= f.gqlType %><%= f.nullable ? ', { nullable: true }' : '' %>)
+    <%= f.name %><%= f.nullable ? '?' : '!' %>: <%= toTsFieldType(f.tsType) %>;
+<% } %>
+}
+<% } %>
 
 @InputType()
-export class <%= pascalCase(commands[0].type) %>Input {
-<% for (const field of commands[0].fields) { -%>
-    @Field(
-    () => <%= graphqlType(field.tsType) %><%= (field.required === false || isNullable(field.tsType)) ? ', { nullable: true }' : '' %>
-    )
-    <%= field.name %><%= field.required === false ? '?' : '' %><%= field.required !== false ? '!' : '' %>: <%- field.tsType %>;
-<% } -%>
+export class <%= pascalCase(cmd.type) %>Input {
+<% for (const field of cmd.fields) {
+    const tsType = field.tsType ?? 'string';
+    const gqlType = graphqlType(tsType);
+    const nestedName = `${pascalCase(cmd.type)}${pascalCase(field.name)}Input`;
+
+if (isInlineObjectArray(tsType)) { %>
+    @Field(() => [<%= nestedName %>]<%= (field.required === false || isNullable(tsType)) ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= field.required === false ? '?' : '!' %>: <%= nestedName %>[];
+<% } else if (isInlineObject(tsType)) { %>
+    @Field(() => <%= nestedName %><%= (field.required === false || isNullable(tsType)) ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= field.required === false ? '?' : '!' %>: <%= nestedName %>;
+<% } else { %>
+    @Field(() => <%= gqlType %><%= (field.required === false || isNullable(tsType)) ? ', { nullable: true }' : '' %>)
+    <%= field.name %><%= field.required === false ? '?' : '!' %>: <%= toTsFieldType(tsType) %>;
+<% } } %>
 }
 
 @Resolver()
-export class <%= pascalCase(commands[0].type) %>Resolver {
+export class <%= pascalCase(cmd.type) %>Resolver {
 @Mutation(() => MutationResponse)
-async <%= camelCase(commands[0].type) %>(
-@Arg('input', () => <%= pascalCase(commands[0].type) %>Input) input: <%= pascalCase(commands[0].type) %>Input,
-@Ctx() ctx: GraphQLContext
+async <%= camelCase(cmd.type) %>(
+@Arg('input', () => <%= pascalCase(cmd.type) %>Input) input: <%= pascalCase(cmd.type) %>Input,
+@Ctx() ctx: GraphQLContext,
 ): Promise<MutationResponse> {
     return await sendCommand(ctx.messageBus, {
-    type: '<%= commands[0].type %>',
+    type: '<%= cmd.type %>',
     kind: 'Command',
     data: { ...input },
     });

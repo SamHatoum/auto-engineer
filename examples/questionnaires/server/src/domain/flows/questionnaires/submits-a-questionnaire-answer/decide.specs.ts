@@ -14,11 +14,11 @@ describe('Questionnaires | submits a questionnaire answer', () => {
   it('should emit QuestionAnswered, QuestionnaireEditRejected for valid AnswerQuestion', () => {
     given([
       {
-        type: 'QuestionnaireSubmitted',
+        type: 'QuestionnaireLinkSent',
         data: {
           questionnaireId: 'q-001',
           participantId: 'participant-abc',
-          submittedAt: new Date('2030-01-01T09:00:00.000Z'),
+          submittedAt: '2030-01-01T09:00:00.000Z',
         },
       },
     ])

@@ -1,10 +1,8 @@
 import { Command } from '@event-driven-io/emmett';
-export type AnswerQuestion = Command<
-  'AnswerQuestion',
+export type SubmitQuestionnaire = Command<
+  'SubmitQuestionnaire',
   {
     questionnaireId: string;
     participantId: string;
-    questionId: string;
-    answer: unknown;
   }
 >;
