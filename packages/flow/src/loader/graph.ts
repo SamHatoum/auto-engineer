@@ -13,47 +13,9 @@ import {
 import { toPosix } from './fs-path';
 import { resolveSpecifier } from './resolver';
 import { integrationExportRegistry } from '../integration-export-registry';
+import { createVfsCompilerHost } from './vfs-compiler-host';
 
 const debug = createDebug('flow:graph');
-
-function createCompilerHost(
-  ts: typeof import('typescript'),
-  compilerOptions: import('typescript').CompilerOptions,
-  sourceFiles: Map<string, import('typescript').SourceFile>,
-): import('typescript').CompilerHost {
-  const defaultHost = ts.createCompilerHost(compilerOptions);
-
-  const caseSensitive: boolean =
-    (typeof defaultHost.useCaseSensitiveFileNames === 'function'
-      ? defaultHost.useCaseSensitiveFileNames()
-      : undefined) ??
-    (() => {
-      const tsWithSys = ts as typeof ts & { sys?: { useCaseSensitiveFileNames?: boolean } };
-      return tsWithSys.sys?.useCaseSensitiveFileNames ?? true;
-    })();
-
-  return {
-    ...defaultHost,
-    getSourceFile: (fileName, languageVersion) => {
-      const posixPath = toPosix(fileName);
-      if (sourceFiles.has(posixPath)) return sourceFiles.get(posixPath);
-      return defaultHost.getSourceFile(fileName, languageVersion);
-    },
-    readFile: (fileName) => {
-      const posixPath = toPosix(fileName);
-      const sourceFile = sourceFiles.get(posixPath);
-      if (sourceFile) return sourceFile.getFullText();
-      return defaultHost.readFile(fileName);
-    },
-    fileExists: (fileName) => {
-      const posixPath = toPosix(fileName);
-      if (sourceFiles.has(posixPath)) return true;
-      return defaultHost.fileExists(fileName);
-    },
-    getDefaultLibFileName: (options) => defaultHost.getDefaultLibFileName(options),
-    useCaseSensitiveFileNames: () => caseSensitive,
-  };
-}
 
 async function collectAllTypings(
   vfs: IFileStore,
@@ -222,8 +184,16 @@ export async function buildGraph(
     checkJs: false,
     skipLibCheck: true,
     esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    jsx: ts.JsxEmit.React,
+    experimentalDecorators: true,
+    emitDecoratorMetadata: true,
+    strict: true,
+    baseUrl: '.',
+    rootDir: rootDir,
+    // outDir: 'dist', // not used with transpileModule
     // Performance optimizations
-    noResolve: false, // We need module resolution for imports
+    noResolve: true,
     skipDefaultLibCheck: true,
     isolatedModules: true, // Faster compilation
     declaration: false,
@@ -231,7 +201,7 @@ export async function buildGraph(
     removeComments: true,
   };
   const sourceFiles = new Map<string, import('typescript').SourceFile>();
-  const host = createCompilerHost(ts, compilerOptions, sourceFiles);
+  const host = createVfsCompilerHost(ts, sourceFiles);
 
   function basePackageOf(spec: string): string {
     if (spec.startsWith('@')) {

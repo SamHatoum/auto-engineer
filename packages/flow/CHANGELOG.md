@@ -1,5 +1,14 @@
 # @auto-engineer/flow
 
+## 0.8.8
+
+### Patch Changes
+
+- compilerHost that works in all environments
+  - @auto-engineer/file-store@0.8.8
+  - @auto-engineer/id@0.8.8
+  - @auto-engineer/message-bus@0.8.8
+
 ## 0.8.7
 
 ### Patch Changes
