@@ -1,5 +1,12 @@
 # @auto-engineer/frontend-react-graphql-generator
 
+## 0.8.11
+
+### Patch Changes
+
+- @auto-engineer/ai-gateway@0.8.11
+- @auto-engineer/message-bus@0.8.11
+
 ## 0.8.10
 
 ### Patch Changes
