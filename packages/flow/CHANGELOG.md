@@ -1,5 +1,14 @@
 # @auto-engineer/flow
 
+## 0.8.12
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/id@0.8.12
+  - @auto-engineer/file-store@0.8.12
+  - @auto-engineer/message-bus@0.8.12
+
 ## 0.8.11
 
 ### Patch Changes

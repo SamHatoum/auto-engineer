@@ -548,7 +548,11 @@ importers:
         specifier: ^1.54.1
         version: 1.55.0
 
-  packages/id: {}
+  packages/id:
+    dependencies:
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
 
   packages/information-architect:
     dependencies:
