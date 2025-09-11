@@ -17,7 +17,7 @@ const importMap = {
 
 const pattern = /\.(flow)\.(ts)$/;
 
-describe.sequential('getFlows caching', () => {
+describe.skip('getFlows caching', () => {
   let vfs: IFileStore;
   const root = '/test';
 

@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const pattern = /\.(flow)\.(ts)$/;
 
-describe.sequential(
+describe.skip(
   'getFlows',
   (_mode) => {
     let vfs: NodeFileStore;

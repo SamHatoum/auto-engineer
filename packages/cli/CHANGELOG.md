@@ -1,5 +1,15 @@
 # @auto-engineer/cli
 
+## 0.8.6
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/flow@0.8.6
+  - @auto-engineer/file-store@0.8.6
+  - @auto-engineer/message-bus@0.8.6
+  - @auto-engineer/message-store@0.8.6
+
 ## 0.8.5
 
 ### Patch Changes
