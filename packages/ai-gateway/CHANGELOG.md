@@ -1,5 +1,7 @@
 # @auto-engineer/ai-gateway
 
+## 0.8.9
+
 ## 0.8.8
 
 ## 0.8.7

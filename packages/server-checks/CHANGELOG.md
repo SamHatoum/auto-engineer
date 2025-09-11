@@ -1,5 +1,11 @@
 # @auto-engineer/server-checks
 
+## 0.8.9
+
+### Patch Changes
+
+- @auto-engineer/message-bus@0.8.9
+
 ## 0.8.8
 
 ### Patch Changes
