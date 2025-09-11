@@ -601,8 +601,6 @@ export function transpileToCjs(ts: typeof import('typescript'), fileName: string
       skipDefaultLibCheck: true,
       isolatedModules: true,
       declaration: false,
-      noEmitHelpers: true,
-      importHelpers: false,
     },
     fileName,
     transformers: {
