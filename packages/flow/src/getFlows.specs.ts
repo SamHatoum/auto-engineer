@@ -9,6 +9,7 @@ import { getFlows } from './getFlows';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const pattern = /\.(flow)\.(ts)$/;
 
 describe('getFlows', (_mode) => {
   let vfs: NodeFileStore;
@@ -20,7 +21,7 @@ describe('getFlows', (_mode) => {
   });
   // eslint-disable-next-line complexity
   it('loads multiple flows and generates correct models', async () => {
-    const flows = await getFlows({ vfs, root: path.resolve(__dirname) });
+    const flows = await getFlows({ vfs, root: path.resolve(__dirname), pattern });
     const schemas = flows.toModel();
 
     const parseResult = modelSchema.safeParse(schemas);
@@ -182,7 +183,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('validates the complete schema with Zod', async () => {
-    const flows = await getFlows({ vfs: vfs, root });
+    const flows = await getFlows({ vfs: vfs, root, pattern: /\.(flow)\.(ts)$/ });
     const schemas = flows.toModel();
     const parsed = modelSchema.parse(schemas);
     expect(parsed.variant).toBe('specs');
@@ -192,7 +193,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should handle flows with integrations', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
     const specsSchema = flows.toModel();
 
     const flowsWithIntegrations = specsSchema.flows.filter((f) =>
@@ -216,7 +217,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should handle react slices correctly', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
     const specsSchema = flows.toModel();
 
     const reactSlices = specsSchema.flows.flatMap((f) => f.slices.filter((s) => s.type === 'react'));
@@ -241,7 +242,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should parse and validate a complete flow with all slice types', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
     const schemas = flows.toModel();
 
     const validationResult = modelSchema.safeParse(schemas);
@@ -266,7 +267,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should have ids for flows and slices that have ids', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
 
     const schemas = flows.toModel();
 
@@ -284,7 +285,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should have ids for command slice rules', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
     const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
@@ -307,7 +308,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should have ids for query slice rules', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
     const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
@@ -325,7 +326,7 @@ describe('getFlows', (_mode) => {
   });
 
   it('should have ids for react slice rules', async () => {
-    const flows = await getFlows({ vfs: vfs, root: root });
+    const flows = await getFlows({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/ });
     const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.flows.find((f) => f.name === 'Test Flow with IDs');
@@ -346,6 +347,7 @@ describe('getFlows', (_mode) => {
     const flows = await getFlows({
       vfs,
       root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app',
+      pattern,
     });
     const model = flows.toModel();
 
@@ -378,6 +380,7 @@ describe('getFlows', (_mode) => {
     const flows = await getFlows({
       vfs,
       root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
+      pattern,
     });
     const model = flows.toModel();
 
@@ -408,7 +411,7 @@ describe('getFlows', (_mode) => {
     const questionnairePath = await createTestFlow();
 
     try {
-      const flows = await getFlows({ vfs, root: path.dirname(questionnairePath) });
+      const flows = await getFlows({ vfs, root: path.dirname(questionnairePath), pattern });
       const model = flows.toModel();
       const questionnaireFlow = model.flows.find((f) => f.name === 'questionnaires-test');
       expect(questionnaireFlow).toBeDefined();
