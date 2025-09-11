@@ -1,49 +1,81 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { hasAllIds, addAutoIds } from './index';
 import { getFlows } from '../getFlows';
-import { NodeFileStore } from '@auto-engineer/file-store';
-import path from 'path';
+import { InMemoryFileStore, type IFileStore } from '@auto-engineer/file-store';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+describe('hasAllIds', () => {
+  let vfs: IFileStore;
+  const root = '/test';
 
-describe.skip('hasAllIds', () => {
-  let vfs: NodeFileStore;
-  let root: string;
+  beforeEach(async () => {
+    vfs = new InMemoryFileStore();
 
-  beforeEach(() => {
-    vfs = new NodeFileStore();
-    root = path.resolve(__dirname, '..');
+    const flowWithoutIds = `
+import { flow, specs, rule, example } from '../flow';
+import { commandSlice } from '../fluent-builder';
+
+flow('Test Flow Without IDs', () => {
+  commandSlice('Test slice without ID')
+    .server(() => {
+      specs('Test specs', () => {
+        rule('Test rule without ID', () => {
+          example('Test example')
+            .when({ test: 'data' })
+            .then({ result: 'success' });
+        });
+      });
+    });
+});`;
+
+    const flowWithIds = `
+import { flow, specs, rule, example } from '../flow';
+import { commandSlice } from '../fluent-builder';
+
+flow('Test Flow with IDs', 'FLOW-001', () => {
+  commandSlice('Test slice with ID', 'SLICE-001')
+    .server(() => {
+      specs('Test specs', () => {
+        rule('Test rule with ID', 'RULE-001', () => {
+          example('Test example')
+            .when({ test: 'data' })
+            .then({ result: 'success' });
+        });
+      });
+    });
+});`;
+
+    const flowContent1 = new TextEncoder().encode(flowWithoutIds);
+    const flowContent2 = new TextEncoder().encode(flowWithIds);
+    await vfs.write('/test/flow-without-ids.flow.ts', flowContent1);
+    await vfs.write('/test/flow-with-ids.flow.ts', flowContent2);
   });
   it('should return false for models without IDs', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
-    const model = flows.toModel();
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const model = result.toModel();
 
-    const flowsWithoutIds = model.flows.filter(
-      (flow) =>
-        flow.id === undefined ||
-        flow.id === '' ||
-        flow.slices.some((slice) => slice.id === undefined || slice.id === ''),
-    );
-    if (flowsWithoutIds.length > 0) {
-      const modelWithoutIds = { ...model, flows: flowsWithoutIds };
+    const flowWithoutIds = model.flows.find((f) => f.name === 'Test Flow Without IDs');
+    expect(flowWithoutIds).toBeDefined();
+
+    if (flowWithoutIds) {
+      const modelWithoutIds = { ...model, flows: [flowWithoutIds] };
       expect(hasAllIds(modelWithoutIds)).toBe(false);
     }
   });
 
   it('should return true for models with complete IDs', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
-    const model = flows.toModel();
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
-
     expect(hasAllIds(modelWithIds)).toBe(true);
   });
 
   it('should return true for flows that already have IDs', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
-    const model = flows.toModel();
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const model = result.toModel();
 
     const testFlowWithIds = model.flows.find((f) => f.name === 'Test Flow with IDs');
+    expect(testFlowWithIds).toBeDefined();
 
     if (testFlowWithIds) {
       const modelWithExistingIds = { ...model, flows: [testFlowWithIds] };
@@ -52,23 +84,25 @@ describe.skip('hasAllIds', () => {
   });
 
   it('should return false if any slice is missing an ID', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
-    const model = flows.toModel();
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
+    expect(modelWithIds.flows.length).toBeGreaterThan(0);
+    expect(modelWithIds.flows[0].slices.length).toBeGreaterThan(0);
 
-    if (modelWithIds.flows.length > 0 && modelWithIds.flows[0].slices.length > 0) {
-      const modifiedModel = structuredClone(modelWithIds);
-      modifiedModel.flows[0].slices[0].id = '';
-      expect(hasAllIds(modifiedModel)).toBe(false);
-    }
+    const modifiedModel = structuredClone(modelWithIds);
+    modifiedModel.flows[0].slices[0].id = '';
+    expect(hasAllIds(modifiedModel)).toBe(false);
   });
 
   it('should return false if any rule is missing an ID', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
-    const model = flows.toModel();
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
+
+    let found = false;
     for (const flow of modelWithIds.flows) {
       for (const slice of flow.slices) {
         if (slice.server?.specs?.rules !== undefined && slice.server.specs.rules.length > 0) {
@@ -78,10 +112,14 @@ describe.skip('hasAllIds', () => {
           if (modifiedSlice?.server?.specs?.rules !== undefined) {
             modifiedSlice.server.specs.rules[0].id = '';
             expect(hasAllIds(modifiedModel)).toBe(false);
-            return;
+            found = true;
+            break;
           }
         }
       }
+      if (found) break;
     }
+
+    expect(found).toBe(true);
   });
 });

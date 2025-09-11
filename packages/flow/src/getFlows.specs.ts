@@ -3,15 +3,14 @@ import { modelSchema } from './schema';
 import { DataSource, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import fs from 'fs';
-import { NodeFileStore } from '@auto-engineer/file-store';
+import { NodeFileStore, InMemoryFileStore } from '@auto-engineer/file-store';
 import { getFlows } from './getFlows';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const pattern = /\.(flow)\.(ts)$/;
 
-describe(
+describe.sequential(
   'getFlows',
   (_mode) => {
     let vfs: NodeFileStore;
@@ -412,31 +411,8 @@ describe(
     });
 
     it('should handle flow type resolutions correctly', async () => {
-      const questionnairePath = await createTestFlow();
-
-      try {
-        const flows = await getFlows({ vfs, root: path.dirname(questionnairePath), pattern, fastFsScan: true });
-        const model = flows.toModel();
-        const questionnaireFlow = model.flows.find((f) => f.name === 'questionnaires-test');
-        expect(questionnaireFlow).toBeDefined();
-        if (questionnaireFlow !== null && questionnaireFlow !== undefined) {
-          validateSubmitQuestionnaireCommand(questionnaireFlow);
-          validateQuestionAnsweredEvent(model);
-          validateGivenSectionEventRefs(questionnaireFlow);
-          validateCurrentQuestionIdType(model);
-        }
-      } finally {
-        cleanupTestFile(questionnairePath);
-      }
-    });
-  },
-  { timeout: 10000 },
-);
-
-function createTestFlow(): Promise<string> {
-  return new Promise((resolve) => {
-    const questionnairePath = path.join(__dirname, 'samples/questionnaires.flow.ts');
-    const questionnaireFlow = `
+      const memoryVfs = new InMemoryFileStore();
+      const questionnaireFlowContent = `
 import { data, flow, should, specs, rule, example } from '../flow';
 import { commandSlice, querySlice } from '../fluent-builder';
 import gql from 'graphql-tag';
@@ -532,13 +508,22 @@ flow('questionnaires-test', () => {
 });
     `;
 
-    if (!fs.existsSync(path.dirname(questionnairePath))) {
-      fs.mkdirSync(path.dirname(questionnairePath), { recursive: true });
-    }
-    fs.writeFileSync(questionnairePath, questionnaireFlow);
-    resolve(questionnairePath);
-  });
-}
+      await memoryVfs.write('/test/questionnaires.flow.ts', new TextEncoder().encode(questionnaireFlowContent));
+
+      const flows = await getFlows({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+      const model = flows.toModel();
+      const testFlow = model.flows.find((f) => f.name === 'questionnaires-test');
+      expect(testFlow).toBeDefined();
+      if (testFlow !== null && testFlow !== undefined) {
+        validateSubmitQuestionnaireCommand(testFlow);
+        validateQuestionAnsweredEvent(model);
+        validateGivenSectionEventRefs(testFlow);
+        validateCurrentQuestionIdType(model);
+      }
+    });
+  },
+  { timeout: 10000 },
+);
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/strict-boolean-expressions */
 
@@ -590,8 +575,3 @@ function validateCurrentQuestionIdType(model: any): void {
 }
 
 /* eslint-enable */
-function cleanupTestFile(questionnairePath: string): void {
-  if (fs.existsSync(questionnairePath)) {
-    fs.unlinkSync(questionnairePath);
-  }
-}
