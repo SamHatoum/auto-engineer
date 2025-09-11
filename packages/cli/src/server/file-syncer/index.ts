@@ -7,7 +7,6 @@ import { resolveSyncFileSet } from './sync/resolveSyncFileSet';
 import { md5, readBase64, statSize } from './utils/hash';
 import { toWirePath, fromWirePath, rebuildWirePathCache } from './utils/path';
 import type { WireChange, WireInitial } from './types/wire';
-import { getFlows, hasAllIds, addAutoIds, modelToFlow } from '@auto-engineer/flow';
 
 const debug = createDebug('cli:file-syncer');
 
@@ -33,48 +32,10 @@ export class FileSyncer {
     this.active = new Map<string, FileMeta>();
   }
 
-  private isFlowFile(filePath: string): boolean {
-    return /\.flow\.(ts|tsx|js|jsx|mjs|cjs)$/.test(filePath);
-  }
-
-  private async processFlowFileContent(filePath: string): Promise<string | null> {
-    try {
-      if (!this.isFlowFile(filePath)) {
-        return null;
-      }
-
-      const flows = await getFlows({ vfs: this.vfs, root: path.dirname(filePath) });
-      const model = flows.toModel();
-
-      if (hasAllIds(model)) {
-        return null;
-      }
-
-      debug('[sync] Processing flow file for ID generation: %s', filePath);
-      const modelWithIds = addAutoIds(model);
-      const updatedContent = await modelToFlow(modelWithIds, {
-        flowImport: '@auto-engineer/flow',
-        integrationImport: '../server/src/integrations',
-      });
-
-      return updatedContent;
-    } catch (err) {
-      debug('[sync] Failed to process flow file %s: %o', filePath, err);
-      return null;
-    }
-  }
-
-  private async getFileContent(filePath: string): Promise<string | null> {
-    const virtualContent = await this.processFlowFileContent(filePath);
-    if (virtualContent !== null) {
-      return Buffer.from(virtualContent).toString('base64');
-    }
-    return await readBase64(this.vfs, filePath);
-  }
-
   start(): void {
     const compute = async () => {
       const now = Date.now();
+      // Cache computeDesiredSet results for 1 second to prevent rapid repeated calls
       if (this.cachedDesiredSet && now - this.lastComputeTime < 1000) {
         return this.cachedDesiredSet;
       }
@@ -94,7 +55,7 @@ export class FileSyncer {
 
       const files: WireInitial['files'] = [];
       for (const abs of desired) {
-        const content = await this.getFileContent(abs);
+        const content = await readBase64(this.vfs, abs);
         if (content === null) {
           console.warn(`[sync] Skipping file due to read failure: ${abs}`);
           continue;
@@ -123,7 +84,7 @@ export class FileSyncer {
         const size = await statSize(this.vfs, abs);
         const prev = this.active.get(abs);
         if (!prev || prev.hash !== hash || prev.size !== size) {
-          const content = await this.getFileContent(abs);
+          const content = await readBase64(this.vfs, abs);
           if (content === null) {
             continue;
           }
