@@ -37,7 +37,7 @@ for (const f of cmd.fields) {
 }
 %>
 import { Mutation, Resolver, Arg, Ctx, Field, InputType<% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
-<% if (usesJSON) { %>import GraphQLJSON from 'graphql-type-json';
+<% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
 <% } %>import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
 <% for (const { typeName, tsType } of embeddedInputs) {

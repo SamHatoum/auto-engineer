@@ -393,6 +393,7 @@ async function writePackage(dest: string): Promise<void> {
     dependencies: resolveDeps([
       '@event-driven-io/emmett',
       'type-graphql',
+      'graphql-type-json',
       'graphql',
       'fast-glob',
       'reflect-metadata',

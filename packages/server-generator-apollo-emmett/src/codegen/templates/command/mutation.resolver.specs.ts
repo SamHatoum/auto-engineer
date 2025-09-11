@@ -77,7 +77,7 @@ describe('mutation.resolver.ts.ejs', () => {
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
       "import { Mutation, Resolver, Arg, Ctx, Field, InputType, GraphQLISODateTime } from 'type-graphql';
-      import GraphQLJSON from 'graphql-type-json';
+      import { GraphQLJSON } from 'graphql-type-json';
       import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
       @InputType()
@@ -228,7 +228,7 @@ describe('mutation.resolver.ts.ejs', () => {
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
       "import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
-      import GraphQLJSON from 'graphql-type-json';
+      import { GraphQLJSON } from 'graphql-type-json';
       import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
       @InputType()
