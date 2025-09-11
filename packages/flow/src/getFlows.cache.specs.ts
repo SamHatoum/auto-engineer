@@ -56,7 +56,7 @@ describe('getFlows caching', () => {
       });
     `,
     );
-    const firstCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const firstCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
     const hash1 = firstCallResult.vfsFiles.sort().join(',');
     fs.writeFileSync(
       helperFile,
@@ -67,7 +67,7 @@ describe('getFlows caching', () => {
     `,
     );
 
-    const secondCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const secondCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     const hash2 = secondCallResult.vfsFiles.sort().join(',');
     expect(hash1).toBe(hash2);
@@ -86,10 +86,10 @@ describe('getFlows caching', () => {
     `,
     );
     const importMap1 = { 'test-module': { default: 'value1' } };
-    const result1 = await getFlows({ vfs, root: testDir, importMap: importMap1, pattern });
+    const result1 = await getFlows({ vfs, root: testDir, importMap: importMap1, pattern, fastFsScan: true });
     const importMap2 = { 'test-module': { default: 'value2' } };
 
-    const result2 = await getFlows({ vfs, root: testDir, importMap: importMap2, pattern });
+    const result2 = await getFlows({ vfs, root: testDir, importMap: importMap2, pattern, fastFsScan: true });
 
     expect(result1.flows.length).toBe(result2.flows.length);
   });
@@ -115,7 +115,7 @@ describe('getFlows caching', () => {
       });
     `,
     );
-    const firstCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const firstCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
     const filesCount1 = firstCallResult.vfsFiles.length;
     fs.writeFileSync(
       transitiveFile,
@@ -136,7 +136,7 @@ describe('getFlows caching', () => {
     `,
     );
 
-    const secondCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const secondCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     const filesCount2 = secondCallResult.vfsFiles.length;
     expect(filesCount2).toBeGreaterThan(filesCount1);
@@ -155,10 +155,10 @@ describe('getFlows caching', () => {
     `,
     );
     fs.writeFileSync(unrelatedFile, 'initial content');
-    const firstCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const firstCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
     fs.writeFileSync(unrelatedFile, 'modified content');
 
-    const secondCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const secondCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     expect(secondCallResult.vfsFiles.some((f) => f.includes('unrelated.txt'))).toBe(false);
     expect(firstCallResult.vfsFiles).toEqual(secondCallResult.vfsFiles);
@@ -187,11 +187,11 @@ describe('getFlows caching', () => {
       });
     `,
     );
-    const fistCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const fistCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
     expect(fistCallResult.flows.length).toBeGreaterThanOrEqual(2);
     fs.unlinkSync(flowFile2);
 
-    const secondCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const secondCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     expect(secondCallResult.flows.length).toBeLessThan(fistCallResult.flows.length);
     expect(secondCallResult.vfsFiles.length).toBeLessThan(fistCallResult.vfsFiles.length);
@@ -208,12 +208,12 @@ describe('getFlows caching', () => {
       });
     `,
     );
-    const firstCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const firstCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
     expect(firstCallResult.vfsFiles.some((f) => f.includes('test.flow.ts'))).toBe(true);
     const renamedFile = path.join(testDir, 'renamed.flow.ts');
     fs.renameSync(flowFile, renamedFile);
 
-    const secondCallResult = await getFlows({ vfs, root: testDir, pattern });
+    const secondCallResult = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     expect(secondCallResult.vfsFiles.some((f) => f.includes('renamed.flow.ts'))).toBe(true);
     expect(secondCallResult.vfsFiles.some((f) => f.includes('test.flow.ts'))).toBe(false);
@@ -240,7 +240,7 @@ describe('getFlows caching', () => {
     `,
     );
 
-    const result = await getFlows({ vfs, root: testDir, pattern });
+    const result = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     expect(result.vfsFiles.some((f) => f.endsWith('.d.ts'))).toBe(false);
   });
@@ -257,10 +257,10 @@ describe('getFlows caching', () => {
     `,
     );
     const importMap1 = { 'module-a': 'value', 'module-b': 'value' };
-    const result1 = await getFlows({ vfs, root: testDir, importMap: importMap1, pattern });
+    const result1 = await getFlows({ vfs, root: testDir, importMap: importMap1, pattern, fastFsScan: true });
     const importMap2 = { 'module-c': 'value', 'module-d': 'value' };
 
-    const result2 = await getFlows({ vfs, root: testDir, importMap: importMap2, pattern });
+    const result2 = await getFlows({ vfs, root: testDir, importMap: importMap2, pattern, fastFsScan: true });
 
     expect(result1.flows).toEqual(result2.flows); // Same flows
   });
@@ -304,7 +304,7 @@ describe('getFlows caching', () => {
     `,
     );
 
-    const result1 = await getFlows({ vfs, root: testDir, pattern });
+    const result1 = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
 
     expect(result1.vfsFiles.some((f) => f.includes('chain1'))).toBe(true);
     expect(result1.vfsFiles.some((f) => f.includes('chain2'))).toBe(true);
@@ -316,7 +316,7 @@ describe('getFlows caching', () => {
     `,
     );
 
-    const result2 = await getFlows({ vfs, root: testDir, pattern });
+    const result2 = await getFlows({ vfs, root: testDir, pattern, fastFsScan: true });
     expect(result2.vfsFiles.length).toBe(result1.vfsFiles.length);
   });
 });

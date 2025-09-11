@@ -42,52 +42,80 @@ export class NodeFileStore implements IExtendedFileStore {
     }
   }
 
-  async listTree(root: string = '/'): Promise<Array<{ path: string; type: 'file' | 'dir'; size: number }>> {
+  async listTree(
+    root: string = '/',
+    opts?: {
+      followSymlinkDirs?: boolean; // default: true
+      includeSizes?: boolean; // default: false
+      filePattern?: RegExp; // optional filter for files
+    },
+  ): Promise<Array<{ path: string; type: 'file' | 'dir'; size: number }>> {
+    const followSymlinkDirs = opts?.followSymlinkDirs ?? true;
+    const includeSizes = opts?.includeSizes ?? false;
+    const filePattern = opts?.filePattern;
+
     const out: Array<{ path: string; type: 'file' | 'dir'; size: number }> = [];
+    const seen = new Set<string>();
+
+    const processSymlink = async (abs: string, posix: string) => {
+      const st = await fsp.stat(abs).catch(() => null);
+      if (!st) return;
+
+      if (st.isDirectory()) {
+        if (followSymlinkDirs) await walk(abs);
+      } else {
+        if (!filePattern || filePattern.test(posix)) {
+          out.push({ path: posix, type: 'file', size: includeSizes ? st.size : 0 });
+        }
+      }
+    };
+
+    const processFile = async (abs: string, posix: string) => {
+      if (!filePattern || filePattern.test(posix)) {
+        if (includeSizes) {
+          const st = await fsp.stat(abs).catch(() => null);
+          out.push({ path: posix, type: 'file', size: st?.size ?? 0 });
+        } else {
+          out.push({ path: posix, type: 'file', size: 0 });
+        }
+      }
+    };
 
     const walk = async (absDir: string) => {
+      const posixDir = toPosix(absDir);
+      if (seen.has(posixDir)) return;
+      seen.add(posixDir);
+
       let entries: Dirent[];
       try {
         entries = await fsp.readdir(absDir, { withFileTypes: true });
       } catch {
         return;
       }
-      out.push({ path: toPosix(absDir), type: 'dir', size: 0 });
+
+      out.push({ path: posixDir, type: 'dir', size: 0 });
+
       for (const e of entries) {
         const abs = path.join(absDir, e.name);
+        const posix = toPosix(abs);
+
         try {
           if (e.isDirectory()) {
             await walk(abs);
           } else if (e.isSymbolicLink()) {
-            // Resolve symlink target
-            const st = await fsp.stat(abs).catch(() => null);
-            if (!st) continue;
-            if (st.isDirectory()) {
-              // Follow symlink to directory
-              await walk(abs);
-            } else {
-              out.push({ path: toPosix(abs), type: 'file', size: st.size });
-            }
+            await processSymlink(abs, posix);
           } else {
-            // Regular file
-            const st = await fsp.stat(abs).catch(() => null);
-            out.push({ path: toPosix(abs), type: 'file', size: st?.size ?? 0 });
+            await processFile(abs, posix);
           }
         } catch {
-          // Ignore broken symlinks, races, permission errors
+          // ignore races / perms / broken symlinks
         }
       }
     };
 
-    const absRoot = toAbs(root);
-    await walk(absRoot);
+    await walk(toAbs(root));
 
-    // Ensure stable ordering: dirs first, then files; both sorted by path
-    out.sort((a, b) => {
-      if (a.type === b.type) return a.path.localeCompare(b.path);
-      return a.type === 'dir' ? -1 : 1;
-    });
-
+    out.sort((a, b) => (a.type === b.type ? a.path.localeCompare(b.path) : a.type === 'dir' ? -1 : 1));
     return out;
   }
 

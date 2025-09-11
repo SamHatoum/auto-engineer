@@ -15,7 +15,7 @@ describe('hasAllIds', () => {
     root = path.resolve(__dirname, '..');
   });
   it('should return false for models without IDs', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/ });
+    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
     const model = flows.toModel();
 
     const flowsWithoutIds = model.flows.filter(
@@ -31,7 +31,7 @@ describe('hasAllIds', () => {
   });
 
   it('should return true for models with complete IDs', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/ });
+    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
     const model = flows.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -40,7 +40,7 @@ describe('hasAllIds', () => {
   });
 
   it('should return true for flows that already have IDs', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/ });
+    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
     const model = flows.toModel();
 
     const testFlowWithIds = model.flows.find((f) => f.name === 'Test Flow with IDs');
@@ -52,7 +52,7 @@ describe('hasAllIds', () => {
   });
 
   it('should return false if any slice is missing an ID', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/ });
+    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
     const model = flows.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -65,7 +65,7 @@ describe('hasAllIds', () => {
   });
 
   it('should return false if any rule is missing an ID', async () => {
-    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/ });
+    const flows = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
     const model = flows.toModel();
 
     const modelWithIds = addAutoIds(model);

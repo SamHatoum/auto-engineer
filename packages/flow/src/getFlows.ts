@@ -41,6 +41,7 @@ export interface GetFlowsOptions {
   root: string;
   pattern?: RegExp;
   importMap?: Record<string, unknown>;
+  fastFsScan?: boolean;
 }
 
 interface CacheEntry {
@@ -59,8 +60,8 @@ interface CacheEntry {
 
 const compilationCache = new Map<string, CacheEntry>();
 
-async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Promise<string[]> {
-  const entries = await vfs.listTree(root);
+async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp, fastScan: boolean): Promise<string[]> {
+  const entries = await vfs.listTree(root, { includeSizes: false, followSymlinkDirs: !fastScan });
   const files = entries
     .filter((e) => e.type === 'file')
     .map((e) => toPosix(e.path))
@@ -89,7 +90,12 @@ export const getFlows = async (
   const normRoot = toPosix(root);
   const projectRoot = dirnamePosix(normRoot);
 
-  const seedFiles = await discoverFiles(vfs, normRoot, pattern);
+  const seedFiles = await discoverFiles(
+    vfs,
+    normRoot,
+    pattern,
+    opts.fastFsScan === undefined ? false : opts.fastFsScan,
+  );
   if (seedFiles.length === 0) {
     throw new Error(`getFlows: no candidate files found. root=${normRoot} pattern=${String(pattern)}`);
   }
