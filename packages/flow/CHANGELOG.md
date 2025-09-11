@@ -1,5 +1,14 @@
 # @auto-engineer/flow
 
+## 0.8.7
+
+### Patch Changes
+
+- fixes browser compatibility
+  - @auto-engineer/file-store@0.8.7
+  - @auto-engineer/id@0.8.7
+  - @auto-engineer/message-bus@0.8.7
+
 ## 0.8.6
 
 ### Patch Changes

@@ -16,6 +16,174 @@ import { integrationExportRegistry } from '../integration-export-registry';
 
 const debug = createDebug('flow:graph');
 
+function createCompilerHost(
+  ts: typeof import('typescript'),
+  compilerOptions: import('typescript').CompilerOptions,
+  sourceFiles: Map<string, import('typescript').SourceFile>,
+): import('typescript').CompilerHost {
+  const defaultHost = ts.createCompilerHost(compilerOptions);
+
+  const caseSensitive: boolean =
+    (typeof defaultHost.useCaseSensitiveFileNames === 'function'
+      ? defaultHost.useCaseSensitiveFileNames()
+      : undefined) ??
+    (() => {
+      const tsWithSys = ts as typeof ts & { sys?: { useCaseSensitiveFileNames?: boolean } };
+      return tsWithSys.sys?.useCaseSensitiveFileNames ?? true;
+    })();
+
+  return {
+    ...defaultHost,
+    getSourceFile: (fileName, languageVersion) => {
+      const posixPath = toPosix(fileName);
+      if (sourceFiles.has(posixPath)) return sourceFiles.get(posixPath);
+      return defaultHost.getSourceFile(fileName, languageVersion);
+    },
+    readFile: (fileName) => {
+      const posixPath = toPosix(fileName);
+      const sourceFile = sourceFiles.get(posixPath);
+      if (sourceFile) return sourceFile.getFullText();
+      return defaultHost.readFile(fileName);
+    },
+    fileExists: (fileName) => {
+      const posixPath = toPosix(fileName);
+      if (sourceFiles.has(posixPath)) return true;
+      return defaultHost.fileExists(fileName);
+    },
+    getDefaultLibFileName: (options) => defaultHost.getDefaultLibFileName(options),
+    useCaseSensitiveFileNames: () => caseSensitive,
+  };
+}
+
+async function collectAllTypings(
+  vfs: IFileStore,
+  externalPkgs: Set<string>,
+  rootDir: string,
+): Promise<Map<string, Set<string>>> {
+  const debug = createDebug('flow:graph');
+  const pkgTypings = new Map<string, Set<string>>();
+  const normRoot = toPosix(rootDir).replace(/\/+$/, '');
+
+  function toTypesAlias(pkg: string): string {
+    if (pkg.startsWith('@')) {
+      const [scope, name] = pkg.split('/');
+      return `@types/${scope.slice(1)}__${name}`;
+    }
+    return `@types/${pkg}`;
+  }
+
+  async function readJsonIfExists(path: string): Promise<Record<string, unknown> | null> {
+    try {
+      const buf = await vfs.read(path);
+      if (!buf) return null;
+      return JSON.parse(new TextDecoder().decode(buf)) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+
+  async function exists(path: string): Promise<boolean> {
+    try {
+      const buf = await vfs.read(path);
+      return !!buf;
+    } catch {
+      return false;
+    }
+  }
+
+  async function nodeModulesRoots(root: string): Promise<string[]> {
+    const roots = new Set<string>();
+    let cur = root;
+    for (let i = 0; i < 8; i++) {
+      const key = toPosix(cur);
+      roots.add(`${key}/node_modules`);
+      const parent = key.replace(/\/+$/, '').split('/').slice(0, -1).join('/') || '/';
+      if (parent === key) break;
+      cur = parent;
+    }
+    roots.add(`${root}/server/node_modules`);
+
+    const out = [...roots].map(toPosix);
+    debug('[typings] nm roots (no crawl): %o', out.slice(0, 5));
+    return [...new Set(out)];
+  }
+
+  async function collectEntryDecl(nmRoot: string, pkg: string, out: Set<string>) {
+    const pkgDir = `${nmRoot}/${pkg}`;
+
+    const pkgJson = await readJsonIfExists(`${pkgDir}/package.json`);
+    if (pkgJson && (typeof pkgJson.types === 'string' || typeof pkgJson.typings === 'string')) {
+      const decl = toPosix(`${pkgDir}/${String(pkgJson.types ?? pkgJson.typings)}`.replace(/\/+/g, '/'));
+      out.add(decl);
+      debug('[typings] %s: package.json -> %s', pkg, decl);
+      return;
+    }
+
+    const idx = `${pkgDir}/index.d.ts`;
+    if (await exists(idx)) {
+      out.add(toPosix(idx));
+      debug('[typings] %s: fallback index.d.ts', pkg);
+      return;
+    }
+  }
+
+  async function tryDirectPackage(pkg: string, nmRoots: string[], out: Set<string>): Promise<boolean> {
+    for (const nm of nmRoots) {
+      await collectEntryDecl(nm, pkg, out);
+      if (out.size) return true;
+    }
+    return false;
+  }
+
+  async function tryTypesAlias(pkg: string, nmRoots: string[], out: Set<string>): Promise<boolean> {
+    const alias = toTypesAlias(pkg);
+    for (const nm of nmRoots) {
+      await collectEntryDecl(nm, alias, out);
+      if (out.size) return true;
+    }
+    return false;
+  }
+
+  async function tryDistFallback(pkg: string, nmRoots: string[], out: Set<string>): Promise<boolean> {
+    for (const nm of nmRoots) {
+      const p = `${nm}/${pkg}/dist/index.d.ts`;
+      if (await exists(p)) {
+        out.add(toPosix(p));
+        debug('[typings] %s: fallback dist/index.d.ts', pkg);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async function collectTypingsForPackage(pkg: string) {
+    if (pkgTypings.has(pkg)) return;
+
+    const out = new Set<string>();
+    const nmRoots = await nodeModulesRoots(normRoot);
+    debug('[typings] probing "%s" in nm roots: %o', pkg, nmRoots);
+
+    const found =
+      (await tryDirectPackage(pkg, nmRoots, out)) ||
+      (await tryTypesAlias(pkg, nmRoots, out)) ||
+      (await tryDistFallback(pkg, nmRoots, out));
+
+    if (found) {
+      pkgTypings.set(pkg, out);
+      debug('[typings] ✅ %s: %d entry d.ts', pkg, out.size);
+    } else {
+      debug('[typings] ⚠ %s: no entry d.ts found (pkg or @types)', pkg);
+    }
+  }
+
+  debug('[typings] packages to probe: %o', [...externalPkgs]);
+  for (const pkg of externalPkgs) {
+    await collectTypingsForPackage(pkg);
+  }
+
+  return pkgTypings;
+}
+
 export type BuildGraphResult = {
   graph: Graph;
   vfsFiles: string[];
@@ -41,7 +209,6 @@ export async function buildGraph(
   const vfsFiles = new Set<string>();
   const externals = new Set<string>();
   const externalPkgs = new Set<string>();
-  const pkgTypings = new Map<string, Set<string>>();
   const globalTypeMap = new Map<string, string>();
   const typesByFile = new Map<string, Map<string, TypeInfo>>();
   const givenTypesByFile = new Map<string, import('./ts-utils').GivenTypeInfo[]>();
@@ -63,38 +230,8 @@ export async function buildGraph(
     sourceMap: false,
     removeComments: true,
   };
-
-  const defaultHost = ts.createCompilerHost(compilerOptions);
   const sourceFiles = new Map<string, import('typescript').SourceFile>();
-
-  const host: import('typescript').CompilerHost = {
-    ...defaultHost,
-    getSourceFile: (fileName: string, languageVersion: import('typescript').ScriptTarget) => {
-      const posixPath = toPosix(fileName);
-      if (sourceFiles.has(posixPath)) {
-        return sourceFiles.get(posixPath);
-      }
-      return defaultHost.getSourceFile(fileName, languageVersion);
-    },
-    readFile: (fileName: string) => {
-      const posixPath = toPosix(fileName);
-      const sourceFile = sourceFiles.get(posixPath);
-      if (sourceFile) {
-        return sourceFile.getFullText();
-      }
-      return defaultHost.readFile(fileName);
-    },
-    fileExists: (fileName: string) => {
-      const posixPath = toPosix(fileName);
-      if (sourceFiles.has(posixPath)) {
-        return true;
-      }
-      return defaultHost.fileExists(fileName);
-    },
-    getDefaultLibFileName: (options: import('typescript').CompilerOptions) =>
-      defaultHost.getDefaultLibFileName(options),
-    useCaseSensitiveFileNames: () => ts.sys.useCaseSensitiveFileNames,
-  };
+  const host = createCompilerHost(ts, compilerOptions, sourceFiles);
 
   function basePackageOf(spec: string): string {
     if (spec.startsWith('@')) {
@@ -180,132 +317,7 @@ export async function buildGraph(
     await buildRec(toPosix(entry));
   }
 
-  const normRoot = toPosix(rootDir).replace(/\/+$/, '');
-
-  function toTypesAlias(pkg: string): string {
-    // @scope/name  -> @types/scope__name
-    // name         -> @types/name
-    if (pkg.startsWith('@')) {
-      const [scope, name] = pkg.split('/');
-      return `@types/${scope.slice(1)}__${name}`;
-    }
-    return `@types/${pkg}`;
-  }
-
-  async function readJsonIfExists(path: string): Promise<Record<string, unknown> | null> {
-    try {
-      const buf = await vfs.read(path);
-      if (!buf) return null;
-      return JSON.parse(new TextDecoder().decode(buf)) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
-
-  async function exists(path: string): Promise<boolean> {
-    try {
-      const buf = await vfs.read(path);
-      return !!buf;
-    } catch {
-      return false;
-    }
-  }
-
-  async function nodeModulesRoots(root: string): Promise<string[]> {
-    const roots = new Set<string>();
-    let cur = root;
-    for (let i = 0; i < 8; i++) {
-      const key = toPosix(cur);
-      roots.add(`${key}/node_modules`);
-      const parent = key.replace(/\/+$/, '').split('/').slice(0, -1).join('/') || '/';
-      if (parent === key) break;
-      cur = parent;
-    }
-    // add server to roots
-    roots.add(`${root}/server/node_modules`);
-
-    // keep as candidates; later probes are cheap reads
-    const out = [...roots].map(toPosix);
-    debug('[typings] nm roots (no crawl): %o', out.slice(0, 5));
-    return [...new Set(out)];
-  }
-
-  async function collectEntryDecl(nmRoot: string, pkg: string, out: Set<string>) {
-    const pkgDir = `${nmRoot}/${pkg}`;
-
-    // 1) package.json types/typings
-    const pkgJson = await readJsonIfExists(`${pkgDir}/package.json`);
-    if (pkgJson && (typeof pkgJson.types === 'string' || typeof pkgJson.typings === 'string')) {
-      const decl = toPosix(`${pkgDir}/${String(pkgJson.types ?? pkgJson.typings)}`.replace(/\/+/g, '/'));
-      out.add(decl);
-      debug('[typings] %s: package.json -> %s', pkg, decl);
-      return;
-    }
-
-    // 2) common fallback: index.d.ts at root
-    const idx = `${pkgDir}/index.d.ts`;
-    if (await exists(idx)) {
-      out.add(toPosix(idx));
-      debug('[typings] %s: fallback index.d.ts', pkg);
-      return;
-    }
-  }
-
-  async function tryDirectPackage(pkg: string, nmRoots: string[], out: Set<string>): Promise<boolean> {
-    for (const nm of nmRoots) {
-      await collectEntryDecl(nm, pkg, out);
-      if (out.size) return true;
-    }
-    return false;
-  }
-
-  async function tryTypesAlias(pkg: string, nmRoots: string[], out: Set<string>): Promise<boolean> {
-    const alias = toTypesAlias(pkg);
-    for (const nm of nmRoots) {
-      await collectEntryDecl(nm, alias, out);
-      if (out.size) return true;
-    }
-    return false;
-  }
-
-  async function tryDistFallback(pkg: string, nmRoots: string[], out: Set<string>): Promise<boolean> {
-    for (const nm of nmRoots) {
-      const p = `${nm}/${pkg}/dist/index.d.ts`;
-      if (await exists(p)) {
-        out.add(toPosix(p));
-        debug('[typings] %s: fallback dist/index.d.ts', pkg);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  async function collectTypingsForPackage(pkg: string) {
-    if (pkgTypings.has(pkg)) return;
-
-    const out = new Set<string>();
-    const nmRoots = await nodeModulesRoots(normRoot);
-    debug('[typings] probing "%s" in nm roots: %o', pkg, nmRoots);
-
-    const found =
-      (await tryDirectPackage(pkg, nmRoots, out)) ||
-      (await tryTypesAlias(pkg, nmRoots, out)) ||
-      (await tryDistFallback(pkg, nmRoots, out));
-
-    if (found) {
-      pkgTypings.set(pkg, out);
-      debug('[typings] ✅ %s: %d entry d.ts', pkg, out.size);
-    } else {
-      debug('[typings] ⚠ %s: no entry d.ts found (pkg or @types)', pkg);
-    }
-  }
-
-  // Kick off typings discovery for all base external packages
-  debug('[typings] packages to probe: %o', [...externalPkgs]);
-  for (const pkg of externalPkgs) {
-    await collectTypingsForPackage(pkg);
-  }
-  // ---------------------------------------------------------------------------
+  const pkgTypings = await collectAllTypings(vfs, externalPkgs, rootDir);
 
   const program = ts.createProgram([...sourceFiles.keys()], compilerOptions, host);
   const checker = program.getTypeChecker();

@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "auto": "node ../../packages/cli/dist/bin/auto.js",
-    "auto:debug": "DEBUG=flow:*,cli:*,auto*,ai*,-*file-syncer,-*flow* node ../../packages/cli/dist/bin/auto.js",
+    "autoDISABLE-": "node ../../packages/cli/dist/bin/auto.js",
+    "auto:debugDISABLE-": "DEBUG=flow:*,cli:*,auto*,ai*,-*file-syncer,-*flow* node ../../packages/cli/dist/bin/auto.js",
     "start": "dotenv -e .env -- pnpm --parallel start"
   },
   "dependencies": {
