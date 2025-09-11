@@ -4,6 +4,7 @@ import type { Flow, Model } from './index';
 import { flowsToModel } from './transformers/flow-to-model';
 import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
+import { createHash } from 'crypto';
 
 const dirnamePosix = (p: string) => {
   const s = p.replace(/\/+$/, '');
@@ -17,6 +18,23 @@ const toPosix = (p: string) => p.replace(/\\/g, '/');
 const DEFAULT_PATTERN = /\.(flow|integration)\.(ts|tsx|js|jsx|mjs|cjs)$/;
 const DEFAULT_IGNORE_DIRS = /(?:^|\/)(?:node_modules|dist|\.turbo|\.git)(?:\/|$)/;
 const DTS_PATTERN = /\.d\.ts$/;
+const CACHE_VERSION = 'v1';
+
+function stableStringify(obj: Record<string, unknown>) {
+  const keys = Object.keys(obj).sort();
+  return JSON.stringify(keys.reduce((a, k) => ((a[k] = obj[k]), a), {} as Record<string, unknown>));
+}
+
+async function hashFiles(vfs: IFileStore, files: string[]): Promise<string> {
+  const hash = createHash('sha256');
+  const sorted = [...new Set(files)].sort();
+  for (const f of sorted) {
+    const buf = await vfs.read(f);
+    hash.update(f);
+    if (buf) hash.update(buf);
+  }
+  return hash.digest('hex');
+}
 
 export interface GetFlowsOptions {
   vfs: IFileStore;
@@ -24,6 +42,22 @@ export interface GetFlowsOptions {
   pattern?: RegExp;
   importMap?: Record<string, unknown>;
 }
+
+interface CacheEntry {
+  result: {
+    flows: Flow[];
+    vfsFiles: string[];
+    externals: string[];
+    typings: Record<string, string[]>;
+    typeMap: Map<string, string>;
+    typesByFile: Map<string, Map<string, unknown>>;
+    givenTypesByFile: Map<string, unknown[]>;
+    toModel: () => Model;
+  };
+  contentHash: string;
+}
+
+const compilationCache = new Map<string, CacheEntry>();
 
 async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp): Promise<string[]> {
   const entries = await vfs.listTree(root);
@@ -55,16 +89,30 @@ export const getFlows = async (
   const normRoot = toPosix(root);
   const projectRoot = dirnamePosix(normRoot);
 
-  const files = await discoverFiles(vfs, normRoot, pattern);
-
-  if (files.length === 0) {
+  const seedFiles = await discoverFiles(vfs, normRoot, pattern);
+  if (seedFiles.length === 0) {
     throw new Error(`getFlows: no candidate files found. root=${normRoot} pattern=${String(pattern)}`);
   }
 
-  const exec = await executeAST(files, vfs, importMap ?? {}, projectRoot);
+  const cacheKey = [CACHE_VERSION, normRoot, String(pattern), stableStringify(importMap)].join('|');
+  const cached = compilationCache.get(cacheKey);
+
+  // --- Phase 1: Use cache if graph files unchanged ---
+  if (cached) {
+    const prevGraphFiles = cached.result.vfsFiles;
+    const prevHash = await hashFiles(vfs, prevGraphFiles);
+    if (prevHash === cached.contentHash) {
+      debug('cache hit (graph unchanged)');
+      return cached.result;
+    }
+    debug('cache invalidated (graph changed)');
+  }
+  registry.clearAll();
+
+  const exec = await executeAST(seedFiles, vfs, importMap, projectRoot);
 
   const flows: Flow[] = registry.getAllFlows();
-  return {
+  const result = {
     flows,
     vfsFiles: exec.vfsFiles, // absolute posix paths of all VFS modules in the graph
     externals: exec.externals, // external specifiers used
@@ -74,4 +122,16 @@ export const getFlows = async (
     givenTypesByFile: exec.givenTypesByFile, // mapping from file path to given type info
     toModel: (): Model => flowsToModel(flows, exec.typesByFile),
   };
+
+  const contentHash = await hashFiles(vfs, exec.vfsFiles);
+
+  compilationCache.set(cacheKey, { result, contentHash });
+  debug('cached compilation result, hash=%s', contentHash.slice(0, 8));
+
+  return result;
+};
+
+export const clearGetFlowsCache = (): void => {
+  compilationCache.clear();
+  debug('cleared compilation cache');
 };
