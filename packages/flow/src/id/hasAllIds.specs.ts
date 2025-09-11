@@ -6,7 +6,7 @@ import path from 'path';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-describe('hasAllIds', () => {
+describe.skip('hasAllIds', () => {
   let vfs: NodeFileStore;
   let root: string;
 

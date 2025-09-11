@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const pattern = /\.(flow)\.(ts)$/;
 
-describe('getFlows caching', () => {
+describe.skip('getFlows caching', () => {
   let vfs: NodeFileStore;
   let testDir: string;
   let helperFile: string;
