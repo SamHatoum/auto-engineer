@@ -61,7 +61,11 @@ interface CacheEntry {
 const compilationCache = new Map<string, CacheEntry>();
 
 async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp, fastScan: boolean): Promise<string[]> {
-  const entries = await vfs.listTree(root, { includeSizes: false, followSymlinkDirs: !fastScan });
+  const entries = await vfs.listTree(root, {
+    includeSizes: false,
+    followSymlinkDirs: !fastScan,
+    pruneDirRegex: DEFAULT_IGNORE_DIRS,
+  });
   const files = entries
     .filter((e) => e.type === 'file')
     .map((e) => toPosix(e.path))

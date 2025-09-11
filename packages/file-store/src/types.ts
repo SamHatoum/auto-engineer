@@ -7,6 +7,7 @@ export interface IFileStore {
     opts?: {
       followSymlinkDirs?: boolean;
       includeSizes?: boolean;
+      pruneDirRegex?: RegExp;
     },
   ): Promise<Array<{ path: string; type: 'file' | 'dir'; size: number }>>;
   remove(path: string): Promise<void>;

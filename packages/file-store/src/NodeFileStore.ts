@@ -45,46 +45,62 @@ export class NodeFileStore implements IExtendedFileStore {
   async listTree(
     root: string = '/',
     opts?: {
-      followSymlinkDirs?: boolean; // default: true
-      includeSizes?: boolean; // default: false
-      filePattern?: RegExp; // optional filter for files
+      followSymlinkDirs?: boolean;
+      includeSizes?: boolean;
+      pruneDirRegex?: RegExp;
     },
   ): Promise<Array<{ path: string; type: 'file' | 'dir'; size: number }>> {
     const followSymlinkDirs = opts?.followSymlinkDirs ?? true;
-    const includeSizes = opts?.includeSizes ?? false;
-    const filePattern = opts?.filePattern;
+    const includeSizes = opts?.includeSizes ?? true;
+    const pruneDirRegex = opts?.pruneDirRegex;
 
     const out: Array<{ path: string; type: 'file' | 'dir'; size: number }> = [];
-    const seen = new Set<string>();
 
-    const processSymlink = async (abs: string, posix: string) => {
+    const shouldPrune = (posixPath: string): boolean => {
+      return Boolean(pruneDirRegex?.test(posixPath));
+    };
+
+    const getFileSize = async (abs: string): Promise<number> => {
+      if (!includeSizes) return 0;
+      const st = await fsp.stat(abs).catch(() => null);
+      return st?.size ?? 0;
+    };
+
+    const processRegularFile = async (abs: string, posixPath: string): Promise<void> => {
+      const size = await getFileSize(abs);
+      out.push({ path: posixPath, type: 'file', size });
+    };
+
+    const processSymlink = async (
+      abs: string,
+      posixPath: string,
+      walk: (dir: string) => Promise<void>,
+    ): Promise<void> => {
       const st = await fsp.stat(abs).catch(() => null);
       if (!st) return;
 
       if (st.isDirectory()) {
-        if (followSymlinkDirs) await walk(abs);
+        if (followSymlinkDirs && !shouldPrune(posixPath)) {
+          await walk(abs);
+        }
       } else {
-        if (!filePattern || filePattern.test(posix)) {
-          out.push({ path: posix, type: 'file', size: includeSizes ? st.size : 0 });
-        }
+        const size = includeSizes ? st.size : 0;
+        out.push({ path: posixPath, type: 'file', size });
       }
     };
 
-    const processFile = async (abs: string, posix: string) => {
-      if (!filePattern || filePattern.test(posix)) {
-        if (includeSizes) {
-          const st = await fsp.stat(abs).catch(() => null);
-          out.push({ path: posix, type: 'file', size: st?.size ?? 0 });
-        } else {
-          out.push({ path: posix, type: 'file', size: 0 });
-        }
+    const processDirectory = async (
+      abs: string,
+      posixPath: string,
+      walk: (dir: string) => Promise<void>,
+    ): Promise<void> => {
+      if (!shouldPrune(posixPath)) {
+        await walk(abs);
       }
     };
 
-    const walk = async (absDir: string) => {
-      const posixDir = toPosix(absDir);
-      if (seen.has(posixDir)) return;
-      seen.add(posixDir);
+    const walk = async (absDir: string): Promise<void> => {
+      if (shouldPrune(toPosix(absDir))) return;
 
       let entries: Dirent[];
       try {
@@ -93,27 +109,28 @@ export class NodeFileStore implements IExtendedFileStore {
         return;
       }
 
-      out.push({ path: posixDir, type: 'dir', size: 0 });
+      out.push({ path: toPosix(absDir), type: 'dir', size: 0 });
 
       for (const e of entries) {
         const abs = path.join(absDir, e.name);
-        const posix = toPosix(abs);
+        const posixPath = toPosix(abs);
 
         try {
           if (e.isDirectory()) {
-            await walk(abs);
+            await processDirectory(abs, posixPath, walk);
           } else if (e.isSymbolicLink()) {
-            await processSymlink(abs, posix);
+            await processSymlink(abs, posixPath, walk);
           } else {
-            await processFile(abs, posix);
+            await processRegularFile(abs, posixPath);
           }
         } catch {
-          // ignore races / perms / broken symlinks
+          // ignore races/perms
         }
       }
     };
 
-    await walk(toAbs(root));
+    const absRoot = toAbs(root);
+    await walk(absRoot);
 
     out.sort((a, b) => (a.type === b.type ? a.path.localeCompare(b.path) : a.type === 'dir' ? -1 : 1));
     return out;
