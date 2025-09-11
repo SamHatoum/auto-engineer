@@ -31,6 +31,12 @@ export class FrontendScaffoldBuilder {
         debugFiles('Entering directory: %s', relPath);
         await this.collectFiles(absPath, relPath);
       } else if (entry.isFile()) {
+        // Skip JavaScript files and map files everywhere - only copy TypeScript and other non-JS files
+        const normalizedPath = relPath.replace(/\\/g, '/');
+        if (normalizedPath.endsWith('.js') || normalizedPath.endsWith('.js.map')) {
+          debugFiles('Skipping JS/map file: %s', relPath);
+          continue;
+        }
         const content = await fs.readFile(absPath);
         this.starterFiles.set(relPath, content);
         debugFiles('Added file: %s (%d bytes)', relPath, content.length);
@@ -190,6 +196,6 @@ export class FrontendScaffoldBuilder {
     }
 
     debugBuild('Build complete - %d files written', filesWritten);
-    console.log(`Build complete. Output at: ${outputDir}`);
+    debugBuild('Build complete. Output at: %s', outputDir);
   }
 }

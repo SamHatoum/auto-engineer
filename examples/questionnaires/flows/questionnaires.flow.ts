@@ -93,7 +93,13 @@ type QuestionnaireProgress = State<
   }
 >;
 
-flow('Questionnaires - Jeff', 'AUTO-Q9m2Kp4Lx', () => {
+flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
+  querySlice('homepage', 'AUTO-V7n8RSee').client(() => {
+    specs('Homepage', () => {
+      should('    show a welcome message');
+      should('    allow the creation of a new questionnaire');
+    });
+  });
   querySlice('views the questionnaire', 'AUTO-V7n8Rq5M')
     .server(() => {
       specs('', () => {

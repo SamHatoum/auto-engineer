@@ -4,6 +4,9 @@ import { Message } from '../../index';
 import { createMessage } from './messages';
 import { preferNewFields } from './normalize';
 import { ExampleShapeHints, collectExampleHintsForData } from './example-shapes';
+import debug from 'debug';
+
+const log = debug('auto:flow:spec-processors');
 
 type TypeResolver = (
   t: string,
@@ -102,7 +105,7 @@ export function processGiven(
       const originalRef = g.stateRef;
       const { resolvedName, typeInfo } = resolveTypeAndInfo(originalRef, 'state', g.exampleData);
 
-      console.log('DEBUG processGiven state resolution:', {
+      log('DEBUG processGiven state resolution:', {
         originalRef,
         resolvedName,
         classification: typeInfo?.classification,
@@ -114,14 +117,14 @@ export function processGiven(
         const eventResult = resolveTypeAndInfo(originalRef, 'event', g.exampleData);
         const commandResult = resolveTypeAndInfo(originalRef, 'command', g.exampleData);
 
-        console.log('DEBUG trying alternatives:', {
+        log('DEBUG trying alternatives:', {
           eventResult: { name: eventResult.resolvedName, classification: eventResult.typeInfo?.classification },
           commandResult: { name: commandResult.resolvedName, classification: commandResult.typeInfo?.classification },
         });
 
         // Prefer event or command if they resolve to non-InferredType and state resolution failed
         if (eventResult.resolvedName !== 'InferredType' && eventResult.typeInfo?.classification === 'event') {
-          console.log('DEBUG converting to eventRef:', eventResult.resolvedName);
+          log('DEBUG converting to eventRef:', eventResult.resolvedName);
           delete g.stateRef;
           g.eventRef = eventResult.resolvedName;
           handleEventRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
@@ -130,7 +133,7 @@ export function processGiven(
           commandResult.resolvedName !== 'InferredType' &&
           commandResult.typeInfo?.classification === 'command'
         ) {
-          console.log('DEBUG converting to commandRef:', commandResult.resolvedName);
+          log('DEBUG converting to commandRef:', commandResult.resolvedName);
           delete g.stateRef;
           g.commandRef = commandResult.resolvedName;
           handleCommandRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
@@ -140,7 +143,7 @@ export function processGiven(
 
       // Original logic: if resolved type has different classification, convert
       if (typeInfo && typeInfo.classification === 'event') {
-        console.log('DEBUG original logic conversion to event:', resolvedName);
+        log('DEBUG original logic conversion to event:', resolvedName);
         delete g.stateRef;
         g.eventRef = resolvedName;
         handleEventRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
@@ -153,7 +156,7 @@ export function processGiven(
       const originalRef = g.eventRef;
       const { resolvedName, typeInfo } = resolveTypeAndInfo(originalRef, 'event', g.exampleData);
 
-      console.log('DEBUG processGiven event resolution:', {
+      log('DEBUG processGiven event resolution:', {
         originalRef,
         resolvedName,
         classification: typeInfo?.classification,
@@ -164,7 +167,7 @@ export function processGiven(
         const stateResult = resolveTypeAndInfo(originalRef, 'state', g.exampleData);
         const commandResult = resolveTypeAndInfo(originalRef, 'command', g.exampleData);
 
-        console.log('DEBUG trying alternatives for event:', {
+        log('DEBUG trying alternatives for event:', {
           eventResult: { name: resolvedName, classification: typeInfo?.classification },
           stateResult: { name: stateResult.resolvedName, classification: stateResult.typeInfo?.classification },
           commandResult: { name: commandResult.resolvedName, classification: commandResult.typeInfo?.classification },
@@ -172,7 +175,7 @@ export function processGiven(
 
         // Prefer state or command if they provide better matches than event
         if (stateResult.resolvedName !== 'InferredType' && stateResult.typeInfo?.classification === 'state') {
-          console.log('DEBUG converting eventRef to stateRef (better match):', stateResult.resolvedName);
+          log('DEBUG converting eventRef to stateRef (better match):', stateResult.resolvedName);
           delete g.eventRef;
           g.stateRef = stateResult.resolvedName;
           handleStateRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
@@ -181,7 +184,7 @@ export function processGiven(
           commandResult.resolvedName !== 'InferredType' &&
           commandResult.typeInfo?.classification === 'command'
         ) {
-          console.log('DEBUG converting eventRef to commandRef (better match):', commandResult.resolvedName);
+          log('DEBUG converting eventRef to commandRef (better match):', commandResult.resolvedName);
           delete g.eventRef;
           g.commandRef = commandResult.resolvedName;
           handleCommandRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
@@ -191,13 +194,13 @@ export function processGiven(
 
       // Original logic: if resolved type has different classification, convert
       if (typeInfo && typeInfo.classification === 'state') {
-        console.log('DEBUG original logic conversion event to state:', resolvedName);
+        log('DEBUG original logic conversion event to state:', resolvedName);
         delete g.eventRef;
         g.stateRef = resolvedName;
         handleStateRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
         return;
       } else if (typeInfo && typeInfo.classification === 'command') {
-        console.log('DEBUG original logic conversion event to command:', resolvedName);
+        log('DEBUG original logic conversion event to command:', resolvedName);
         delete g.eventRef;
         g.commandRef = resolvedName;
         handleCommandRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
