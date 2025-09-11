@@ -10,13 +10,14 @@
   },
   "dependencies": {
     "@auto-engineer/file-store": "workspace:*",
-    "@auto-engineer/message-bus": "workspace:*",
     "@auto-engineer/id": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.3",
     "debug": "^4.4.1",
     "fast-glob": "^3.3.3",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
+    "js-sha256": "^0.11.1",
     "typescript": "^5.9.2",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.3"
@@ -45,5 +46,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.8.9"
+  "version": "0.8.10"
 }

@@ -1,5 +1,12 @@
 # @auto-engineer/frontend-implementer
 
+## 0.8.10
+
+### Patch Changes
+
+- @auto-engineer/ai-gateway@0.8.10
+- @auto-engineer/message-bus@0.8.10
+
 ## 0.8.9
 
 ### Patch Changes

@@ -4,7 +4,7 @@ import type { Flow, Model } from './index';
 import { flowsToModel } from './transformers/flow-to-model';
 import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
-import { createHash } from 'crypto';
+import { sha256 } from 'js-sha256';
 
 const dirnamePosix = (p: string) => {
   const s = p.replace(/\/+$/, '');
@@ -25,15 +25,22 @@ function stableStringify(obj: Record<string, unknown>) {
   return JSON.stringify(keys.reduce((a, k) => ((a[k] = obj[k]), a), {} as Record<string, unknown>));
 }
 
+function toUint8(view: ArrayBuffer | Uint8Array): Uint8Array {
+  return view instanceof Uint8Array ? view : new Uint8Array(view);
+}
+
 async function hashFiles(vfs: IFileStore, files: string[]): Promise<string> {
-  const hash = createHash('sha256');
   const sorted = [...new Set(files)].sort();
+  const hasher = sha256.create();
+  const enc = new TextEncoder();
+
   for (const f of sorted) {
+    hasher.update(enc.encode(f));
     const buf = await vfs.read(f);
-    hash.update(f);
-    if (buf) hash.update(buf);
+    if (buf) hasher.update(toUint8(buf));
   }
-  return hash.digest('hex');
+
+  return hasher.hex();
 }
 
 export interface GetFlowsOptions {
