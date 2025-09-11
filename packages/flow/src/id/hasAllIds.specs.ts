@@ -2,8 +2,21 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { hasAllIds, addAutoIds } from './index';
 import { getFlows } from '../getFlows';
 import { InMemoryFileStore, type IFileStore } from '@auto-engineer/file-store';
+import * as flowApi from '../flow';
+import * as fluent from '../fluent-builder';
+import * as dataBuilders from '../data-flow-builders';
+import * as typesApi from '../types';
+import gql from 'graphql-tag';
 
-describe('hasAllIds', () => {
+const importMap = {
+  '../flow': flowApi,
+  '../fluent-builder': fluent,
+  '../data-flow-builders': dataBuilders,
+  '../types': typesApi,
+  'graphql-tag': gql,
+};
+
+describe.sequential('hasAllIds', () => {
   let vfs: IFileStore;
   const root = '/test';
 
@@ -50,7 +63,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
     await vfs.write('/test/flow-with-ids.flow.ts', flowContent2);
   });
   it('should return false for models without IDs', async () => {
-    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const flowWithoutIds = model.flows.find((f) => f.name === 'Test Flow Without IDs');
@@ -63,7 +76,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
   });
 
   it('should return true for models with complete IDs', async () => {
-    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -71,7 +84,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
   });
 
   it('should return true for flows that already have IDs', async () => {
-    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const testFlowWithIds = model.flows.find((f) => f.name === 'Test Flow with IDs');
@@ -84,7 +97,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
   });
 
   it('should return false if any slice is missing an ID', async () => {
-    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -97,7 +110,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
   });
 
   it('should return false if any rule is missing an ID', async () => {
-    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);

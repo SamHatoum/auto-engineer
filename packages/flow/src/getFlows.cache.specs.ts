@@ -1,10 +1,23 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { getFlows, clearGetFlowsCache } from './getFlows';
 import { InMemoryFileStore, type IFileStore } from '@auto-engineer/file-store';
+import * as flowApi from './flow';
+import * as fluent from './fluent-builder';
+import * as dataBuilders from './data-flow-builders';
+import * as typesApi from './types';
+import gql from 'graphql-tag';
+
+const importMap = {
+  '../flow': flowApi,
+  '../fluent-builder': fluent,
+  '../data-flow-builders': dataBuilders,
+  '../types': typesApi,
+  'graphql-tag': { default: gql, gql },
+};
 
 const pattern = /\.(flow)\.(ts)$/;
 
-describe('getFlows caching', () => {
+describe.sequential('getFlows caching', () => {
   let vfs: IFileStore;
   const root = '/test';
 
@@ -31,7 +44,7 @@ describe('getFlows caching', () => {
     await vfs.write('/test/helper.ts', new TextEncoder().encode(helperContent1));
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
 
-    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
     const hash1 = firstCallResult.vfsFiles.sort().join(',');
 
     const helperContent2 = `
@@ -41,7 +54,7 @@ describe('getFlows caching', () => {
     `;
     await vfs.write('/test/helper.ts', new TextEncoder().encode(helperContent2));
 
-    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     const hash2 = secondCallResult.vfsFiles.sort().join(',');
     expect(hash1).toBe(hash2);
@@ -85,7 +98,7 @@ describe('getFlows caching', () => {
     await vfs.write('/test/helper.ts', new TextEncoder().encode(helperContent1));
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
 
-    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
     const filesCount1 = firstCallResult.vfsFiles.length;
 
     const transitiveContent = `
@@ -104,7 +117,7 @@ describe('getFlows caching', () => {
     await vfs.write('/test/transitive.ts', new TextEncoder().encode(transitiveContent));
     await vfs.write('/test/helper.ts', new TextEncoder().encode(helperContent2));
 
-    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     const filesCount2 = secondCallResult.vfsFiles.length;
     expect(filesCount2).toBeGreaterThan(filesCount1);
@@ -123,11 +136,11 @@ describe('getFlows caching', () => {
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
     await vfs.write('/test/unrelated.txt', new TextEncoder().encode('initial content'));
 
-    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     await vfs.write('/test/unrelated.txt', new TextEncoder().encode('modified content'));
 
-    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     expect(secondCallResult.vfsFiles.some((f) => f.includes('unrelated.txt'))).toBe(false);
     expect(firstCallResult.vfsFiles).toEqual(secondCallResult.vfsFiles);
@@ -152,12 +165,12 @@ describe('getFlows caching', () => {
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent1));
     await vfs.write('/test/test2.flow.ts', new TextEncoder().encode(flowContent2));
 
-    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
     expect(firstCallResult.flows.length).toBeGreaterThanOrEqual(2);
 
     await vfs.remove('/test/test2.flow.ts');
 
-    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const secondCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     expect(secondCallResult.flows.length).toBeLessThan(firstCallResult.flows.length);
     expect(secondCallResult.vfsFiles.length).toBeLessThan(firstCallResult.vfsFiles.length);
@@ -174,7 +187,7 @@ describe('getFlows caching', () => {
 
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
 
-    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const firstCallResult = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
     expect(firstCallResult.vfsFiles.some((f) => f.includes('test.flow.ts'))).toBe(true);
 
     const content = await vfs.read('/test/test.flow.ts');
@@ -206,7 +219,7 @@ describe('getFlows caching', () => {
     await vfs.write('/test/types.d.ts', new TextEncoder().encode(dtsContent));
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
 
-    const result = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const result = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     expect(result.vfsFiles.some((f) => f.endsWith('.d.ts'))).toBe(false);
   });
@@ -257,7 +270,7 @@ describe('getFlows caching', () => {
     await vfs.write('/test/chain1.ts', new TextEncoder().encode(chain1Content));
     await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
 
-    const result1 = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const result1 = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
 
     expect(result1.vfsFiles.some((f) => f.includes('chain1'))).toBe(true);
     expect(result1.vfsFiles.some((f) => f.includes('chain2'))).toBe(true);
@@ -268,7 +281,7 @@ describe('getFlows caching', () => {
     `;
     await vfs.write('/test/chain3.ts', new TextEncoder().encode(modifiedChain3Content));
 
-    const result2 = await getFlows({ vfs, root, pattern, fastFsScan: true });
+    const result2 = await getFlows({ vfs, root, pattern, fastFsScan: true, importMap });
     expect(result2.vfsFiles.length).toBe(result1.vfsFiles.length);
   });
 });
