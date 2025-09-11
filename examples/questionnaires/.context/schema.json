@@ -2,24 +2,26 @@
   "variant": "specs",
   "flows": [
     {
-      "name": "Questionnaires",
+      "name": "Questionnaires - Jeff",
+      "id": "AUTO-Q9m2Kp4Lx",
       "slices": [
         {
           "name": "views the questionnaire",
+          "id": "AUTO-V7n8Rq5M",
           "type": "query",
           "client": {
             "description": "",
             "specs": {
-              "name": "",
+              "name": "Questionnaire Progress",
               "rules": [
-                "focus on the current question based on the progress state",
-                "display the list of answered questions",
-                "display the list of remaining questions",
-                "show a progress indicator that is always visible as the user scrolls"
+                "    focus on the current question based on the progress state",
+                "    display the list of answered questions",
+                "    display the list of remaining questions",
+                "    show a progress indicator that is always visible as the user scrolls"
               ]
             }
           },
-          "request": "query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    status\n    currentQuestionId\n    remainingQuestions\n    answers {\n      questionId\n      value\n    }\n  }\n}",
+          "request": "query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    currentQuestionId\n    remainingQuestions\n    status\n    answers {\n      questionId\n      value\n    }\n  }\n}",
           "server": {
             "description": "",
             "data": [
@@ -39,6 +41,7 @@
               "name": "",
               "rules": [
                 {
+                  "id": "AUTO-r1A3Bp9W",
                   "description": "questionnaires show current progress",
                   "examples": [
                     {
@@ -52,21 +55,17 @@
                             "link": "https://app.example.com/q/q-001?participant=participant-abc",
                             "sentAt": "2030-01-01T09:00:00.000Z"
                           }
-                        },
-                        {
-                          "eventRef": "QuestionAnswered",
-                          "exampleData": {
-                            "questionnaireId": "q-001",
-                            "participantId": "participant-abc",
-                            "questionId": "q1",
-                            "answer": "Yes",
-                            "savedAt": "2030-01-01T09:05:00.000Z"
-                          }
                         }
                       ],
                       "when": {
-                        "exampleData": {},
-                        "eventRef": "QuestionnaireLinkSent"
+                        "exampleData": {
+                          "questionnaireId": "q-001",
+                          "participantId": "participant-abc",
+                          "questionId": "q1",
+                          "answer": "Yes",
+                          "savedAt": "2030-01-01T09:05:00.000Z"
+                        },
+                        "eventRef": "QuestionAnswered"
                       },
                       "then": [
                         {
@@ -76,13 +75,51 @@
                             "participantId": "participant-abc",
                             "status": "in_progress",
                             "currentQuestionId": "q2",
-                            "remainingQuestions": ["q2", "q3"],
+                            "remainingQuestions": [
+                              "q2",
+                              "q3"
+                            ],
                             "answers": [
                               {
                                 "questionId": "q1",
                                 "value": "Yes"
                               }
                             ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "description": "no questions have been answered yet",
+                      "given": [
+                        {
+                          "stateRef": "QuestionnaireLinkSent",
+                          "exampleData": {
+                            "questionnaireId": "q-001",
+                            "participantId": "participant-abc",
+                            "link": "https://app.example.com/q/q-001?participant=participant-abc",
+                            "sentAt": "2030-01-01T09:00:00.000Z"
+                          }
+                        }
+                      ],
+                      "when": {
+                        "commandRef": "InferredType",
+                        "exampleData": {}
+                      },
+                      "then": [
+                        {
+                          "stateRef": "QuestionnaireProgress",
+                          "exampleData": {
+                            "questionnaireId": "q-001",
+                            "participantId": "participant-abc",
+                            "status": "in_progress",
+                            "currentQuestionId": "q1",
+                            "remainingQuestions": [
+                              "q1",
+                              "q2",
+                              "q3"
+                            ],
+                            "answers": []
                           }
                         }
                       ]
@@ -95,14 +132,15 @@
         },
         {
           "name": "submits a questionnaire answer",
+          "id": "AUTO-S4j6Nt8Z",
           "type": "command",
           "client": {
             "description": "",
             "specs": {
-              "name": "",
+              "name": "Submissions",
               "rules": [
-                "display a success message when the answer is submitted",
-                "display an error message when the answer submission is rejected"
+                "    displaysss a success message when the answer is submitted",
+                "    display an error message when the answer submission is rejected"
               ]
             }
           },
@@ -135,6 +173,7 @@
               "name": "",
               "rules": [
                 {
+                  "id": "AUTO-r2D5Eq0Y",
                   "description": "answers are allowed while the questionnaire has not been submitted",
                   "examples": [
                     {
@@ -160,39 +199,6 @@
                           }
                         }
                       ]
-                    },
-                    {
-                      "description": "all questions have already been answered and submitted",
-                      "given": [
-                        {
-                          "eventRef": "QuestionnaireLinkSent",
-                          "exampleData": {
-                            "questionnaireId": "q-001",
-                            "participantId": "participant-abc",
-                            "submittedAt": "2030-01-01T09:00:00.000Z"
-                          }
-                        }
-                      ],
-                      "when": {
-                        "commandRef": "AnswerQuestion",
-                        "exampleData": {
-                          "questionnaireId": "q-001",
-                          "participantId": "participant-abc",
-                          "questionId": "q1",
-                          "answer": "Yes"
-                        }
-                      },
-                      "then": [
-                        {
-                          "eventRef": "QuestionnaireEditRejected",
-                          "exampleData": {
-                            "questionnaireId": "q-001",
-                            "participantId": "participant-abc",
-                            "reason": "Questionnaire already submitted",
-                            "attemptedAt": "2030-01-01T09:05:00.000Z"
-                          }
-                        }
-                      ]
                     }
                   ]
                 }
@@ -202,14 +208,15 @@
         },
         {
           "name": "questionnaire ready for submission",
+          "id": "AUTO-R3f7Hu1X",
           "type": "query",
           "client": {
             "description": "",
             "specs": {
-              "name": "",
+              "name": "Submission Readiness",
               "rules": [
-                "enable the submit button when all questions are answered",
-                "disable the submit button when all questions have not been answered"
+                "    enable the submit button when all questions are answered",
+                "    disable the submit button when all questions have not been answered"
               ]
             }
           },
@@ -243,6 +250,7 @@
               "name": "",
               "rules": [
                 {
+                  "id": "AUTO-r3G8Iv2W",
                   "description": "questionnaire is ready for submission when all questions are answered",
                   "examples": [
                     {
@@ -314,30 +322,15 @@
                     },
                     {
                       "description": "some questions are still unanswered",
-                      "given": [
-                        {
-                          "eventRef": "QuestionAnswered",
-                          "exampleData": {
-                            "questionnaireId": "q-001",
-                            "participantId": "participant-abc",
-                            "link": "https://app.example.com/q/q-001?participant=participant-abc",
-                            "sentAt": "2030-01-01T09:00:00.000Z"
-                          }
-                        },
-                        {
-                          "eventRef": "QuestionAnswered",
-                          "exampleData": {
-                            "questionnaireId": "q-001",
-                            "participantId": "participant-abc",
-                            "questionId": "q1",
-                            "answer": "Yes",
-                            "savedAt": "2030-01-01T09:05:00.000Z"
-                          }
-                        }
-                      ],
                       "when": {
-                        "exampleData": {},
-                        "eventRef": "QuestionnaireLinkSent"
+                        "exampleData": {
+                          "questionnaireId": "q-001",
+                          "participantId": "participant-abc",
+                          "questionId": "q1",
+                          "answer": "Yes",
+                          "savedAt": "2030-01-01T09:05:00.000Z"
+                        },
+                        "eventRef": "QuestionAnswered"
                       },
                       "then": [
                         {
@@ -347,7 +340,10 @@
                             "participantId": "participant-abc",
                             "status": "in_progress",
                             "currentQuestionId": "q2",
-                            "remainingQuestions": ["q2", "q3"],
+                            "remainingQuestions": [
+                              "q2",
+                              "q3"
+                            ],
                             "answers": [
                               {
                                 "questionId": "q1",
@@ -366,12 +362,15 @@
         },
         {
           "name": "submits the questionnaire",
+          "id": "AUTO-T5k9Jw3V",
           "type": "command",
           "client": {
             "description": "",
             "specs": {
-              "name": "",
-              "rules": ["display a confirmation message upon successful submission"]
+              "name": "Submission Confirmation",
+              "rules": [
+                "    display a confirmation message upon successful submission"
+              ]
             }
           },
           "request": "mutation SubmitQuestionnaire($input: SubmitQuestionnaireInput!) {\n  submitQuestionnaire(input: $input) {\n    success\n  }\n}",
@@ -393,6 +392,7 @@
               "name": "",
               "rules": [
                 {
+                  "id": "AUTO-r4H0Lx4U",
                   "description": "questionnaire allowed to be submitted when all questions are answered",
                   "examples": [
                     {
@@ -462,36 +462,6 @@
       }
     },
     {
-      "type": "event",
-      "name": "QuestionnaireLinkSent",
-      "fields": [
-        {
-          "name": "questionnaireId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "participantId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "link",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "sentAt",
-          "type": "Date",
-          "required": true
-        }
-      ],
-      "source": "internal",
-      "metadata": {
-        "version": 1
-      }
-    },
-    {
       "type": "state",
       "name": "QuestionnaireProgress",
       "fields": [
@@ -531,6 +501,15 @@
       }
     },
     {
+      "type": "event",
+      "name": "InferredType",
+      "fields": [],
+      "source": "internal",
+      "metadata": {
+        "version": 1
+      }
+    },
+    {
       "type": "command",
       "name": "AnswerQuestion",
       "fields": [
@@ -560,8 +539,8 @@
       }
     },
     {
-      "type": "event",
-      "name": "QuestionnaireEditRejected",
+      "type": "state",
+      "name": "QuestionnaireConfig",
       "fields": [
         {
           "name": "questionnaireId",
@@ -569,22 +548,11 @@
           "required": true
         },
         {
-          "name": "participantId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "reason",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "attemptedAt",
-          "type": "Date",
+          "name": "numberOfQuestions",
+          "type": "number",
           "required": true
         }
       ],
-      "source": "internal",
       "metadata": {
         "version": 1
       }
@@ -610,25 +578,6 @@
         }
       ],
       "source": "internal",
-      "metadata": {
-        "version": 1
-      }
-    },
-    {
-      "type": "command",
-      "name": "SubmitQuestionnaire",
-      "fields": [
-        {
-          "name": "questionnaireId",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "participantId",
-          "type": "string",
-          "required": true
-        }
-      ],
       "metadata": {
         "version": 1
       }

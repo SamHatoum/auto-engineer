@@ -18,6 +18,7 @@ type QuestionnaireProgressAnswers {
 
 type Mutation {
   answerQuestion(input: AnswerQuestionInput!): MutationResponse!
+  submitQuestionnaire(input: SubmitQuestionnaireInput!): MutationResponse!
 }
 
 type MutationResponse {
@@ -35,4 +36,9 @@ input AnswerQuestionInput {
   participantId: String!
   questionId: String!
   answer: String!
+}
+
+input SubmitQuestionnaireInput {
+  questionnaireId: String!
+  participantId: String!
 }
