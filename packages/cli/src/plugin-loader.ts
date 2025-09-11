@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import { pathToFileURL } from 'url';
 import createJiti from 'jiti';
 import createDebug from 'debug';
-import { stringify } from 'yaml';
 import chalk from 'chalk';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
 import type { CommandHandler, Command, Event, UnifiedCommandHandler } from '@auto-engineer/message-bus';
@@ -681,9 +680,19 @@ export class PluginLoader {
         fieldsArray.forEach(([fieldName]) => {
           const kebabName = fieldName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`).replace(/^-/, '');
           if (options[kebabName] !== undefined) {
-            commandData[fieldName] = options[kebabName];
+            let value = options[kebabName];
+            // Special handling for flowFiles - convert string to array
+            if (fieldName === 'flowFiles' && typeof value === 'string') {
+              value = [value];
+            }
+            commandData[fieldName] = value;
           } else if (options[fieldName] !== undefined) {
-            commandData[fieldName] = options[fieldName];
+            let value = options[fieldName];
+            // Special handling for flowFiles - convert string to array
+            if (fieldName === 'flowFiles' && typeof value === 'string') {
+              value = [value];
+            }
+            commandData[fieldName] = value;
           }
         });
       } else {
@@ -818,34 +827,15 @@ export class PluginLoader {
     } else if (eventType.endsWith('Passed') || eventType.endsWith('Completed')) {
       this.handleSuccessEvent(eventType, event);
     } else {
-      this.displayMessage(event);
+      // For all other command/event types, use minimal display - no verbose data
+      this.displayMinimalMessage(event);
     }
   }
 
-  private displayMessage(message: Event | Command): void {
-    const data = message.data;
-    if (data === null || data === undefined) return;
-    let output = '';
-    // For simple values, display inline
-    if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
-      output = `   ${chalk.cyan(String(data))}`;
-    } else if (typeof data === 'object') {
-      // Strip any ANSI codes that might be in the data values
-      // Clean ANSI codes from data for JSON output
-      JSON.parse(
-        JSON.stringify(data, (_key, value) => {
-          if (typeof value === 'string') {
-            // eslint-disable-next-line no-control-regex
-            return value.replace(/\x1b\[[0-9;]*m/g, '');
-          }
-          return value as unknown;
-        }),
-      );
-      output = stringify(data, {
-        indent: 2,
-        lineWidth: 80,
-      });
-    }
+  private displayMinimalMessage(message: Event | Command): void {
+    // For non-error commands/events, show minimal output (just timestamp and type)
+    // Only show detailed parameters for debug mode
+    debugBus('Event data: %O', message.data);
 
     const date = new Date(message.timestamp || Date.now());
     const timestamp = date.toTimeString().split(' ')[0] + '.' + date.getMilliseconds().toString().padStart(3, '0');
@@ -854,7 +844,11 @@ export class PluginLoader {
     const backgroundColor = isCommand ? '#00CED1' : '#FF6B35';
 
     console.log(chalk.gray(timestamp), chalk.bgHex(backgroundColor).white.bold(` ${message.type} `));
-    console.log(this.highlightYaml(output));
+  }
+
+  private displayMessage(message: Event | Command): void {
+    // Redirect all messages to minimal display - verbose data only available via debug
+    this.displayMinimalMessage(message);
   }
 
   private highlightYaml(yamlStr: string): string {

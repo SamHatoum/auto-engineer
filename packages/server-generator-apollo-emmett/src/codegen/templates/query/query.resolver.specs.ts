@@ -358,7 +358,7 @@ describe('query.resolver.ts.ejs', () => {
 
     expect(queryFile?.contents).toMatchInlineSnapshot(`
       "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID } from 'type-graphql';
-      import GraphQLJSON from 'graphql-type-json';
+      import { GraphQLJSON } from 'graphql-type-json';
       import { type GraphQLContext, ReadModel } from '../../../shared';
 
       @ObjectType()

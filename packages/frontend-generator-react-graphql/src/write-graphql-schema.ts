@@ -1,5 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import createDebug from 'debug';
+
+const debug = createDebug('frontend-generator-react-graphql:schema');
 
 function getSchema(gqlSchemaPath: string): string {
   // gqlSchemaPath should already be an absolute path from the CLI
@@ -12,5 +15,5 @@ export function generateSchemaFile(gqlSchemaPath: string, outputDir: string): vo
   const fullPath = path.join(outputDir, 'schema.graphql');
 
   fs.writeFileSync(fullPath, schemaContent, 'utf-8');
-  console.log(`✅ schema.graphql written to ${fullPath}`);
+  debug('schema.graphql written to %s', fullPath);
 }

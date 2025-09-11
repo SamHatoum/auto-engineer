@@ -50,16 +50,16 @@ export function runCodegen(projectPath: string): void {
   for (const file of filePaths) {
     if (!fs.existsSync(file)) {
       debug('File not found: %s', file);
-      console.warn(`⚠️ File not found, skipping: ${file}`);
+      debug('File not found, skipping: %s', file);
     } else {
       debug('File found: %s', file);
     }
   }
 
   debug('Installing dependencies');
-  console.log('▶ Installing dependencies via `npx pnpm` in', resolvedPath);
+  debug('Installing dependencies via `npx pnpm` in %s', resolvedPath);
   const installOutput = runCommand('npx pnpm install --include=dev', resolvedPath);
-  console.log(installOutput);
+  debug('Install output: %s', installOutput);
   debug('Dependencies installed');
 
   // Fix execute permissions for node_modules/.bin files
@@ -71,17 +71,17 @@ export function runCodegen(projectPath: string): void {
       runCommand('chmod +x node_modules/.bin/*', resolvedPath);
       debug('Permissions fixed');
     } catch (error) {
-      debug('Failed to fix permissions: %O', error);
-      console.warn('⚠️ Could not fix bin permissions:', error);
+      console.error('Failed to fix permissions: %O', error);
+      console.error('Could not fix bin permissions: %O', error);
     }
   } else {
     debug('Bin directory does not exist, skipping permission fix');
   }
 
   debug('Running GraphQL codegen');
-  console.log('\n▶ Running codegen...');
+  debug('Running codegen...');
   const output = runCommand('npx pnpm codegen', resolvedPath);
-  console.log(output);
+  debug('Codegen output: %s', output);
   debug('Codegen completed successfully');
-  console.log('✅ Codegen completed.');
+  debug('Codegen completed.');
 }

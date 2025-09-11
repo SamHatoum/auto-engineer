@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
+import createDebug from 'debug';
+
+const debug = createDebug('frontend-generator-react-graphql:configure');
 
 function runCommand(cmd: string, cwd: string): string {
   try {
@@ -24,7 +27,7 @@ export function configureStarter(figmaVariablesPath: string, projectPath: string
 
   const configureScript = path.join(resolvedPath, 'auto-configure.ts');
   if (!fs.existsSync(configureScript)) {
-    console.log('⚠️ No auto-configure.ts found in starter. Skipping configuration.');
+    debug('No auto-configure.ts found in starter. Skipping configuration.');
     return;
   }
 
@@ -32,11 +35,11 @@ export function configureStarter(figmaVariablesPath: string, projectPath: string
     ? figmaVariablesPath
     : path.resolve(process.cwd(), figmaVariablesPath);
 
-  console.log('FIGMA PATH', absoluteFigmaPath);
+  debug('Figma variables path: %s', absoluteFigmaPath);
 
-  console.log('▶ Running starter configuration in', resolvedPath);
+  debug('Running starter configuration in %s', resolvedPath);
   // const output = runCommand('npx pnpm codegen', resolvedPath);
   const output = runCommand(`npx pnpm auto-configure`, resolvedPath);
-  console.log(output);
-  console.log('✅ Starter configuration completed.');
+  debug('Configuration output: %s', output);
+  debug('Starter configuration completed.');
 }

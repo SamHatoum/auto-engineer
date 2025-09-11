@@ -169,7 +169,7 @@ async function generateAndWriteScaffold(spec: Model, serverDir: string): Promise
 }
 
 async function copyAllFiles(serverDir: string): Promise<void> {
-  const packageRoot = path.resolve(__dirname, '..');
+  const packageRoot = path.resolve(__dirname, '../../../src');
   debugFiles('Package root: %s', packageRoot);
 
   debugFiles('Copying utility files...');
@@ -393,6 +393,7 @@ async function writePackage(dest: string): Promise<void> {
     dependencies: resolveDeps([
       '@event-driven-io/emmett',
       'type-graphql',
+      'graphql-type-json',
       'graphql',
       'fast-glob',
       'reflect-metadata',
@@ -423,6 +424,7 @@ async function writeTsconfig(dest: string): Promise<void> {
       module: 'ESNext',
       moduleResolution: 'bundler',
       strict: true,
+      outDir: './dist',
       skipLibCheck: true,
       emitDecoratorMetadata: true,
       experimentalDecorators: true,

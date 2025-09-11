@@ -4,6 +4,8 @@ import {
   flow,
   should,
   specs,
+  rule,
+  example,
   gql,
   source,
   data,
@@ -11,8 +13,6 @@ import {
   type Command,
   type Event,
   type State,
-  rule,
-  example,
 } from '@auto-engineer/flow';
 
 type QuestionnaireLinkSent = Event<
@@ -45,15 +45,15 @@ type QuestionnaireSubmitted = Event<
   }
 >;
 
-type QuestionnaireEditRejected = Event<
-  'QuestionnaireEditRejected',
-  {
-    questionnaireId: string;
-    participantId: string;
-    reason: string;
-    attemptedAt: Date;
-  }
->;
+// type QuestionnaireEditRejected = Event<
+//   'QuestionnaireEditRejected',
+//   {
+//     questionnaireId: string;
+//     participantId: string;
+//     reason: string;
+//     attemptedAt: Date;
+//   }
+// >;
 
 type AnswerQuestion = Command<
   'AnswerQuestion',
@@ -93,11 +93,17 @@ type QuestionnaireProgress = State<
   }
 >;
 
-flow('Questionnaires', () => {
-  querySlice('views the questionnaire')
+flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
+  querySlice('homepage', 'AUTO-V7n8RSee').client(() => {
+    specs('Homepage', () => {
+      should('    show a welcome message');
+      should('    allow the creation of a new questionnaire');
+    });
+  });
+  querySlice('views the questionnaire', 'AUTO-V7n8Rq5M')
     .server(() => {
-      specs(() => {
-        rule('questionnaires show current progress', () => {
+      specs('', () => {
+        rule('questionnaires show current progress', 'AUTO-r1A3Bp9W', () => {
           example('a question has already been answered')
             .given<QuestionnaireLinkSent>({
               questionnaireId: 'q-001',
@@ -105,14 +111,13 @@ flow('Questionnaires', () => {
               link: 'https://app.example.com/q/q-001?participant=participant-abc',
               sentAt: new Date('2030-01-01T09:00:00Z'),
             })
-            .and<QuestionAnswered>({
+            .when<QuestionAnswered>({
               questionnaireId: 'q-001',
               participantId: 'participant-abc',
               questionId: 'q1',
               answer: 'Yes',
               savedAt: new Date('2030-01-01T09:05:00Z'),
             })
-            .when({})
             .then<QuestionnaireProgress>({
               questionnaireId: 'q-001',
               participantId: 'participant-abc',
@@ -122,6 +127,22 @@ flow('Questionnaires', () => {
               answers: [{ questionId: 'q1', value: 'Yes' }],
             });
         });
+        example('no questions have been answered yet')
+          .given<QuestionnaireLinkSent>({
+            questionnaireId: 'q-001',
+            participantId: 'participant-abc',
+            link: 'https://app.example.com/q/q-001?participant=participant-abc',
+            sentAt: new Date('2030-01-01T09:00:00Z'),
+          })
+          .when({} as Event) // FIX ME
+          .then<QuestionnaireProgress>({
+            questionnaireId: 'q-001',
+            participantId: 'participant-abc',
+            status: 'in_progress',
+            currentQuestionId: 'q1',
+            remainingQuestions: ['q1', 'q2', 'q3'],
+            answers: [],
+          });
       });
       data([source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaire-participantId')]);
     })
@@ -130,9 +151,9 @@ flow('Questionnaires', () => {
         questionnaireProgress(participantId: $participantId) {
           questionnaireId
           participantId
-          status
           currentQuestionId
           remainingQuestions
+          status
           answers {
             questionId
             value
@@ -141,18 +162,18 @@ flow('Questionnaires', () => {
       }
     `)
     .client(() => {
-      specs(() => {
-        should('focus on the current question based on the progress state');
-        should('display the list of answered questions');
-        should('display the list of remaining questions');
-        should('show a progress indicator that is always visible as the user scrolls');
+      specs('Questionnaire Progress', () => {
+        should('    focus on the current question based on the progress state');
+        should('    display the list of answered questions');
+        should('    display the list of remaining questions');
+        should('    show a progress indicator that is always visible as the user scrolls');
       });
     });
 
-  commandSlice('submits a questionnaire answer')
+  commandSlice('submits a questionnaire answer', 'AUTO-S4j6Nt8Z')
     .server(() => {
-      specs(() => {
-        rule('answers are allowed while the questionnaire has not been submitted', () => {
+      specs('', () => {
+        rule('answers are allowed while the questionnaire has not been submitted', 'AUTO-r2D5Eq0Y', () => {
           example('no questions have been answered yet')
             .when<AnswerQuestion>({
               questionnaireId: 'q-001',
@@ -167,24 +188,25 @@ flow('Questionnaires', () => {
               answer: 'Yes',
               savedAt: new Date('2030-01-01T09:05:00Z'),
             });
-          example('all questions have already been answered and submitted')
-            .given<QuestionnaireSubmitted>({
-              questionnaireId: 'q-001',
-              participantId: 'participant-abc',
-              submittedAt: new Date('2030-01-01T09:00:00Z'),
-            })
-            .when<AnswerQuestion>({
-              questionnaireId: 'q-001',
-              participantId: 'participant-abc',
-              questionId: 'q1',
-              answer: 'Yes',
-            })
-            .then<QuestionnaireEditRejected>({
-              questionnaireId: 'q-001',
-              participantId: 'participant-abc',
-              reason: 'Questionnaire already submitted',
-              attemptedAt: new Date('2030-01-01T09:05:00Z'),
-            });
+
+          // example('all questions have already been answered and submitted')
+          //   .given<QuestionnaireSubmitted>({
+          //     questionnaireId: 'q-001',
+          //     participantId: 'participant-abc',
+          //     submittedAt: new Date('2030-01-01T09:00:00Z'),
+          //   })
+          //   .when<AnswerQuestion>({
+          //     questionnaireId: 'q-001',
+          //     participantId: 'participant-abc',
+          //     questionId: 'q1',
+          //     answer: 'Yes',
+          //   })
+          //   .then<QuestionnaireEditRejected>({
+          //     questionnaireId: 'q-001',
+          //     participantId: 'participant-abc',
+          //     reason: 'Questionnaire already submitted',
+          //     attemptedAt: new Date('2030-01-01T09:05:00Z'),
+          //   });
         });
       });
       data([
@@ -200,16 +222,16 @@ flow('Questionnaires', () => {
       }
     `)
     .client(() => {
-      specs(() => {
-        should('display a success message when the answer is submitted');
-        should('display an error message when the answer submission is rejected');
+      specs('Submissions', () => {
+        should('    displaysss a success message when the answer is submitted');
+        should('    display an error message when the answer submission is rejected');
       });
     });
 
-  querySlice('questionnaire ready for submission')
+  querySlice('questionnaire ready for submission', 'AUTO-R3f7Hu1X')
     .server(() => {
-      specs(() => {
-        rule('questionnaire is ready for submission when all questions are answered', () => {
+      specs('', () => {
+        rule('questionnaire is ready for submission when all questions are answered', 'AUTO-r3G8Iv2W', () => {
           example('all questions have been answered')
             .given<QuestionnaireConfig>({
               questionnaireId: 'q-001',
@@ -248,20 +270,19 @@ flow('Questionnaires', () => {
               ],
             });
           example('some questions are still unanswered')
-            .given<QuestionnaireLinkSent>({
-              questionnaireId: 'q-001',
-              participantId: 'participant-abc',
-              link: 'https://app.example.com/q/q-001?participant=participant-abc',
-              sentAt: new Date('2030-01-01T09:00:00Z'),
-            })
-            .and<QuestionAnswered>({
+            // .given<QuestionnaireLinkSent>({
+            //   questionnaireId: 'q-001',
+            //   participantId: 'participant-abc',
+            //   link: 'https://app.example.com/q/q-001?participant=participant-abc',
+            //   sentAt: new Date('2030-01-01T09:00:00Z'),
+            // })
+            .when<QuestionAnswered>({
               questionnaireId: 'q-001',
               participantId: 'participant-abc',
               questionId: 'q1',
               answer: 'Yes',
               savedAt: new Date('2030-01-01T09:05:00Z'),
             })
-            .when({}) // FIX ME
             .then<QuestionnaireProgress>({
               questionnaireId: 'q-001',
               participantId: 'participant-abc',
@@ -293,16 +314,16 @@ flow('Questionnaires', () => {
       }
     `)
     .client(() => {
-      specs(() => {
-        should('enable the submit button when all questions are answered');
-        should('disable the submit button when all questions have not been answered');
+      specs('Submission Readiness', () => {
+        should('    enable the submit button when all questions are answered');
+        should('    disable the submit button when all questions have not been answered');
       });
     });
 
-  commandSlice('submits the questionnaire')
+  commandSlice('submits the questionnaire', 'AUTO-T5k9Jw3V')
     .server(() => {
-      specs(() => {
-        rule('questionnaire allowed to be submitted when all questions are answered', () => {
+      specs('', () => {
+        rule('questionnaire allowed to be submitted when all questions are answered', 'AUTO-r4H0Lx4U', () => {
           example('submits the questionnaire successfully')
             .when<SubmitQuestionnaire>({
               questionnaireId: 'q-001',
@@ -325,8 +346,8 @@ flow('Questionnaires', () => {
       }
     `)
     .client(() => {
-      specs(() => {
-        should('display a confirmation message upon successful submission');
+      specs('Submission Confirmation', () => {
+        should('    display a confirmation message upon successful submission');
       });
     });
 });

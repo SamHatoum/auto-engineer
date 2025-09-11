@@ -49,7 +49,7 @@ for (const field of messageFields) {
 }
 %>
 import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
-<% if (usesJSON) { %>import GraphQLJSON from 'graphql-type-json';
+<% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
 <% } %>import { type GraphQLContext, ReadModel } from '../../../shared';
 
 <% // Emit embedded types FIRST — this matches your snapshot order
