@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { getFs } from './filestore.node.js';
 import createDebug from 'debug';
