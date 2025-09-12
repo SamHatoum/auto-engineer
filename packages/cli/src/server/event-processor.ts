@@ -26,8 +26,7 @@ export class EventProcessor {
 
         // Store event in message store
         try {
-          await this.messageStore.saveMessages('$all-events', [event], undefined, 'event');
-          await this.messageStore.saveMessages(`event-${event.type}`, [event], undefined, 'event');
+          await this.messageStore.saveMessages('$all', [event], undefined, 'event');
           debugBus('Event stored in message store:', event.type);
         } catch (error) {
           debugBus('Error storing event:', error);
@@ -110,6 +109,7 @@ export class EventProcessor {
       ) {
         const enhancedCommand = this.enhanceCommandWithIds(command as Command);
         debugBus('Dispatching command:', enhancedCommand.type);
+        await this.storeCommand(enhancedCommand);
         await this.messageBus.sendCommand(enhancedCommand);
       }
     }
@@ -120,6 +120,7 @@ export class EventProcessor {
     if (actionObj !== null && typeof actionObj === 'object' && 'data' in actionObj) {
       const enhancedCommand = this.enhanceCommandWithIds(action as Command);
       debugBus('Dispatching command from event handler:', enhancedCommand.type);
+      await this.storeCommand(enhancedCommand);
       await this.messageBus.sendCommand(enhancedCommand);
     } else {
       await this.processDispatchAction(action as DispatchAction);
@@ -147,6 +148,7 @@ export class EventProcessor {
     if (action.command) {
       const enhancedCommand = this.enhanceCommandWithIds(action.command);
       debugBus('Dispatching command from dispatch action:', enhancedCommand.type);
+      await this.storeCommand(enhancedCommand);
       await this.messageBus.sendCommand(enhancedCommand);
     }
   }
@@ -155,7 +157,12 @@ export class EventProcessor {
     if (action.commands) {
       debugBus('Dispatching parallel commands from event handler');
       const enhancedCommands = action.commands.map((cmd) => this.enhanceCommandWithIds(cmd));
-      await Promise.all(enhancedCommands.map((cmd) => this.messageBus.sendCommand(cmd)));
+      await Promise.all(
+        enhancedCommands.map(async (cmd) => {
+          await this.storeCommand(cmd);
+          await this.messageBus.sendCommand(cmd);
+        }),
+      );
     }
   }
 
@@ -164,6 +171,7 @@ export class EventProcessor {
       debugBus('Dispatching sequential commands from event handler');
       for (const cmd of action.commands) {
         const enhancedCommand = this.enhanceCommandWithIds(cmd);
+        await this.storeCommand(enhancedCommand);
         await this.messageBus.sendCommand(enhancedCommand);
       }
     }
@@ -175,6 +183,7 @@ export class EventProcessor {
       const commands = Array.isArray(cmds) ? cmds : [cmds];
       for (const cmd of commands) {
         const enhancedCommand = this.enhanceCommandWithIds(cmd);
+        await this.storeCommand(enhancedCommand);
         await this.messageBus.sendCommand(enhancedCommand);
       }
     }
@@ -190,8 +199,7 @@ export class EventProcessor {
   async storeCommand(command: Command): Promise<void> {
     try {
       const enhancedCommand = this.enhanceCommandWithIds(command);
-      await this.messageStore.saveMessages('$all-commands', [enhancedCommand], undefined, 'command');
-      await this.messageStore.saveMessages(`command-${enhancedCommand.type}`, [enhancedCommand], undefined, 'command');
+      await this.messageStore.saveMessages('$all', [enhancedCommand], undefined, 'command');
 
       // Store correlation context for this command's potential events
       if (
@@ -203,6 +211,7 @@ export class EventProcessor {
         enhancedCommand.correlationId !== ''
       ) {
         this.correlationContext.set(enhancedCommand.requestId, enhancedCommand.correlationId);
+        this.cleanupCorrelationContext();
       }
 
       debugBus('Command stored in message store:', enhancedCommand.type);

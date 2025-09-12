@@ -161,7 +161,39 @@ export function setupHttpRoutes(
 
       const count =
         req.query.count !== undefined && req.query.count !== null ? parseInt(req.query.count as string) : 1000;
-      const messages = await config.messageStore.getAllMessages(filter, count);
+      // Read only from the global $all stream to avoid duplicates, but still apply filters
+      const allStreamMessages = await config.messageStore.getMessages('$all', undefined);
+
+      // Apply filters manually since we're not using getAllMessages
+      let filteredMessages = allStreamMessages;
+
+      // Apply message type filter
+      if (filter.messageType) {
+        filteredMessages = filteredMessages.filter((msg) => msg.messageType === filter.messageType);
+      }
+
+      // Apply other filters as needed
+      if (filter.messageNames && filter.messageNames.length > 0) {
+        filteredMessages = filteredMessages.filter((msg) => filter.messageNames!.includes(msg.message.type));
+      }
+
+      if (filter.sessionId !== undefined && filter.sessionId !== null && filter.sessionId !== '') {
+        filteredMessages = filteredMessages.filter((msg) => msg.sessionId === filter.sessionId);
+      }
+
+      if (filter.correlationId !== undefined && filter.correlationId !== null && filter.correlationId !== '') {
+        filteredMessages = filteredMessages.filter((msg) => msg.message.correlationId === filter.correlationId);
+      }
+
+      if (filter.requestId !== undefined && filter.requestId !== null && filter.requestId !== '') {
+        filteredMessages = filteredMessages.filter((msg) => msg.message.requestId === filter.requestId);
+      }
+
+      if (count && count > 0) {
+        filteredMessages = filteredMessages.slice(-count);
+      }
+
+      const messages = filteredMessages;
 
       // Convert BigInt fields to strings for JSON serialization
       const serializedMessages = messages.map((message) => ({
