@@ -73,19 +73,7 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* Tab color indicators */
-        .tab-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-            margin-right: 8px;
-        }
-        
-        .tab-indicator.command { background: var(--brand-primary); }
-        .tab-indicator.event { background: var(--brand-orange); }
-        .tab-indicator.state { background: var(--brand-green); }
-        
+        /* Header */
         .header {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border);
@@ -218,53 +206,45 @@
             color: var(--text-secondary);
         }
         
-        /* New Layout */
+        /* Main layout - split into top and bottom sections */
         .app-layout {
             display: flex;
+            flex-direction: column;
             height: calc(100vh - 56px);
         }
         
-        /* Left sidebar for registry */
-        .sidebar-left {
-            width: 280px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border);
-            overflow-y: auto;
-            transition: background-color 0.3s ease;
-        }
-        
-        /* Center content area */
-        .center-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        /* Request Bar (Postman-like) */
-        .request-bar {
+        /* Top section - Command interface (low profile) */
+        .command-section {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border);
             padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 120px;
+        }
+        
+        /* Command controls row */
+        .command-controls {
             display: flex;
             gap: 12px;
             align-items: center;
         }
         
-        .method-selector {
+        .command-dropdown {
             position: relative;
-            min-width: 200px;
+            min-width: 280px;
         }
         
-        .method-select {
+        .command-select {
             width: 100%;
-            padding: 10px 40px 10px 12px;
+            padding: 8px 36px 8px 12px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
             appearance: none;
             -webkit-appearance: none;
@@ -272,18 +252,29 @@
             transition: all 0.15s ease;
         }
         
-        .method-select:hover {
+        .command-select:hover {
             background: var(--bg-hover);
             border-color: var(--border-light);
         }
         
-        .method-select:focus {
+        .command-select:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
+            box-shadow: 0 0 0 2px rgba(0, 87, 221, 0.1);
         }
         
-        .method-selector::after {
+        .command-select option {
+            padding: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.2;
+            white-space: pre-line;
+            min-height: 60px;
+        }
+        
+        .command-dropdown::after {
             content: '▼';
             position: absolute;
             right: 12px;
@@ -294,49 +285,34 @@
             font-size: 10px;
         }
         
-        .method-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-            margin-right: 8px;
-        }
-        
-        .method-indicator.command { background: var(--brand-primary); }
-        .method-indicator.state { background: var(--brand-green); }
-        
-        .endpoint-input {
-            flex: 1;
-            padding: 10px 14px;
+        .request-id-input {
+            padding: 8px 12px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
-            font-size: 13px;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 12px;
+            width: 200px;
             transition: all 0.15s ease;
         }
         
-        .endpoint-input:focus {
+        .request-id-input:focus {
             outline: none;
             border-color: var(--accent);
             background: var(--bg-secondary);
-            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
+            box-shadow: 0 0 0 2px rgba(0, 87, 221, 0.1);
         }
         
         .send-button {
-            padding: 10px 24px;
+            padding: 8px 20px;
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.15s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -344,11 +320,7 @@
         .send-button:hover:not(:disabled) {
             background: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 87, 221, 0.3);
-        }
-        
-        .send-button:active:not(:disabled) {
-            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 87, 221, 0.3);
         }
         
         .send-button:disabled {
@@ -356,128 +328,92 @@
             cursor: not-allowed;
         }
         
-        /* Request/Response Container */
-        .request-response-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-        
-        /* Request Panel (left half) */
-        .request-panel {
-            flex: 1;
-            background: var(--bg-primary);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .panel-tabs {
-            display: flex;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border);
-            padding: 0 16px;
-        }
-        
-        .panel-tab {
-            padding: 12px 16px;
-            background: transparent;
-            border: none;
-            color: var(--text-tertiary);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.15s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .panel-tab:hover {
-            color: var(--text-secondary);
-        }
-        
-        .panel-tab.active {
-            color: var(--text-primary);
-            border-bottom-color: var(--accent);
-        }
-        
-        .panel-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        /* Response Panel (right half) */
-        .response-panel {
-            flex: 1;
-            background: var(--bg-primary);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .response-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 20px;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border);
-        }
-        
         .response-status {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: var(--text-tertiary);
         }
         
         .status-dot.success {
             background: var(--success);
-            box-shadow: 0 0 8px rgba(94, 199, 45, 0.5);
+            box-shadow: 0 0 6px rgba(94, 199, 45, 0.5);
         }
         
         .status-dot.error {
             background: var(--error);
-            box-shadow: 0 0 8px rgba(236, 63, 74, 0.5);
+            box-shadow: 0 0 6px rgba(236, 63, 74, 0.5);
         }
         
-        .response-time {
-            color: var(--text-tertiary);
-            font-size: 11px;
+        /* Request body row */
+        .request-body-section {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
         }
         
-        .response-content {
+        .request-body {
             flex: 1;
-            padding: 20px;
-            overflow-y: auto;
+            min-height: 40px;
+            max-height: 200px;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            resize: vertical;
+            transition: all 0.15s ease;
         }
         
-        /* Right sidebar for events */
-        .sidebar-right {
-            width: 360px;
+        .request-body:focus {
+            outline: none;
+            border-color: var(--accent);
             background: var(--bg-secondary);
-            border-left: 1px solid var(--border);
+            box-shadow: 0 0 0 2px rgba(0, 87, 221, 0.1);
+        }
+        
+        .response-preview {
+            flex: 1;
+            min-height: 32px;
+            max-height: 200px;
+            padding: 6px 12px;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-left: auto;
+        }
+        
+        /* Bottom section - Messages list */
+        .messages-section {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s ease;
+            overflow: hidden;
+            margin-top: 24px;
+            border-top: 2px solid var(--border);
         }
         
         .messages-header {
-            padding: 16px 20px;
-            background: var(--bg-tertiary);
+            padding: 18px 24px;
+            background: var(--bg-primary);
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
@@ -485,13 +421,25 @@
         }
         
         .messages-title {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
+            gap: 12px;
+        }
+        
+        .messages-title span:last-child {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: normal;
         }
         
         .messages-controls {
@@ -499,426 +447,352 @@
             gap: 8px;
         }
         
-        .message-filters {
-            padding: 12px 20px;
+        .button-small {
+            padding: 6px 12px;
             background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.15s ease;
         }
         
-        .filter-row {
-            display: flex;
-            gap: 8px;
+        .button-small:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
         }
         
-        .filter-row select,
-        .filter-row input,
-        .filter-row textarea {
-            flex: 1;
+        /* Message filters */
+        .message-filters {
+            padding: 16px 24px;
+            background: var(--bg-tertiary);
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-control {
             padding: 6px 8px;
             border: 1px solid var(--border);
             border-radius: 4px;
             background: var(--bg-primary);
             color: var(--text-primary);
             font-size: 11px;
-            font-family: 'SF Mono', 'Monaco', monospace;
-        }
-        
-        .filter-row textarea {
-            resize: vertical;
-            min-height: 32px;
+            min-width: 120px;
         }
         
         .filter-stats {
             font-size: 10px;
             color: var(--text-tertiary);
-            text-align: center;
-            padding: 4px 0;
+            margin-left: auto;
         }
         
+        /* Messages list */
         .messages-list {
             flex: 1;
             overflow-y: auto;
-            padding: 12px;
-        }
-        
-        .message-item {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            margin-bottom: 8px;
-            overflow: hidden;
-            transition: all 0.2s ease;
-        }
-        
-        .message-item:hover {
-            border-color: var(--accent);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .message-header {
-            padding: 8px 12px;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
         }
         
-        .message-type {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .message-type-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-        }
-        
-        .message-type-indicator.command {
-            background: #42c3f7;
-        }
-        
-        .message-type-indicator.event {
-            background: #ff8a1d;
-        }
-        
-        .message-name {
-            font-family: 'SF Mono', 'Monaco', monospace;
+        .messages-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
             font-size: 11px;
+            table-layout: fixed;
+            min-width: 800px;
+        }
+        
+        .messages-header-row {
+            background: var(--bg-tertiary);
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .messages-header-cell {
+            padding: 8px 6px;
+            text-align: left;
             font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .message-timestamp {
-            font-size: 9px;
-            color: var(--text-tertiary);
-            font-family: 'SF Mono', 'Monaco', monospace;
-        }
-        
-        .message-body {
-            padding: 12px;
-        }
-        
-        .message-ids {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 8px;
-            font-size: 9px;
-            color: var(--text-tertiary);
-            font-family: 'SF Mono', 'Monaco', monospace;
-        }
-        
-        .message-id {
-            display: flex;
-            gap: 4px;
-        }
-        
-        .message-id-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: var(--text-secondary);
+            border-right: 1px solid var(--border);
+            position: relative;
+            user-select: none;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        .messages-header-cell:last-child {
+            border-right: none;
+        }
+        
+        
+        .message-details-row {
+            background: var(--code-bg);
+        }
+        
+        .message-details {
+            padding: 16px;
+            background: var(--code-bg);
+            border-top: 1px solid var(--border);
+            font-family: 'SF Mono', 'Monaco', monospace;
         }
         
         .message-data {
             background: var(--bg-primary);
             border: 1px solid var(--border);
             border-radius: 4px;
-            padding: 8px;
-            font-family: 'SF Mono', 'Monaco', monospace;
-            font-size: 10px;
+            padding: 12px;
+            font-size: 11px;
             line-height: 1.4;
             color: var(--text-primary);
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
-        }
-        
-        /* Registry sections in left sidebar */
-        .handlers-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .handlers-header {
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border);
-            transition: background-color 0.3s ease;
-        }
-        
-        .handlers-title {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-secondary);
-        }
-        
-        .handlers-count {
-            font-size: 11px;
-            padding: 3px 8px;
-            background: var(--bg-primary);
-            border-radius: 12px;
-            color: var(--text-tertiary);
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-        }
-        
-        .handlers-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-        }
-        
-        .handler-group {
-            margin: 0;
-        }
-        
-        .handler-group-header {
-            padding: 8px 20px;
-            background: var(--bg-primary);
-            border-bottom: 1px solid var(--border);
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-tertiary);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        
-        .handler-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-secondary);
-            transition: all 0.15s ease;
+            white-space: pre-wrap;
+            word-break: break-word;
             position: relative;
-            cursor: pointer;
         }
         
-        .handler-item.selected {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-        
-        .handler-item.selected::before {
-            background: var(--accent);
-        }
-        
-        .handler-item::before {
-            content: '';
+        .copy-message-btn {
             position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: transparent;
-            transition: background 0.15s ease;
-        }
-        
-        .handler-item:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-        
-        .handler-item:hover::before {
-            background: var(--accent);
-        }
-        
-        .handler-type-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        
-        .handler-type-indicator.command {
-            background: #42c3f7; /* Blue from logo */
-        }
-        
-        .handler-type-indicator.event {
-            background: #ff8a1d; /* Orange from logo */
-        }
-        
-        .handler-type-indicator.state {
-            background: #5ec72d; /* Green from logo */
-        }
-        
-        .handler-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        
-        .handler-name {
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-primary);
-            line-height: 1.2;
-        }
-        
-        .handler-package {
-            font-size: 10px;
-            color: var(--text-tertiary);
-            line-height: 1.2;
-            font-weight: 400;
-        }
-        
-        .empty {
-            padding: 32px;
-            text-align: center;
-            color: var(--text-tertiary);
-            font-size: 12px;
-        }
-        
-        /* Form elements */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-        
-        .input, .textarea {
-            width: 100%;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: var(--text-primary);
-            font-size: 13px;
-            transition: all 0.15s ease;
-        }
-        
-        .input:focus, .textarea:focus {
-            outline: none;
-            border-color: var(--accent);
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
             background: var(--bg-secondary);
-            box-shadow: 0 0 0 3px rgba(0, 87, 221, 0.1);
-        }
-        
-        .textarea {
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 12px;
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        .button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.15s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
         
-        .button:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 87, 221, 0.3);
-        }
-        
-        .button:active {
-            transform: translateY(0);
-        }
-        
-        .button-small {
-            padding: 6px 12px;
-            font-size: 11px;
-        }
-        
-        .button-secondary {
-            background: var(--bg-tertiary);
+        .copy-message-btn:hover {
+            background: var(--bg-hover);
             color: var(--text-primary);
         }
         
-        .button-secondary:hover {
-            background: var(--bg-hover);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .message-row {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.15s ease;
         }
         
-        .code-block {
-            background: var(--code-bg);
+        .message-row:hover {
+            background: var(--bg-hover);
+        }
+        
+        .message-row.expanded {
+            background: var(--bg-tertiary);
+        }
+        
+        .message-cell {
+            padding: 4px 6px;
+            border-right: 1px solid var(--border);
+            vertical-align: top;
+            font-size: 11px;
+            box-sizing: border-box;
+            overflow: hidden;
+            word-wrap: break-word;
+            line-height: 1.3;
+        }
+        
+        .message-cell:last-child {
+            border-right: none;
+        }
+        
+        .expand-cell {
+            width: 30px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .expand-btn {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 12px;
-            line-height: 1.6;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-            transition: background-color 0.3s ease;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.15s ease;
+        }
+        
+        .expand-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .type-cell {
+            width: 80px;
+            text-align: center;
+        }
+        
+        .message-type {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .message-type.command {
+            color: #42c3f7;
+            background: rgba(66, 195, 247, 0.1);
+        }
+        
+        .message-type.event {
+            color: #ff8a1d;
+            background: rgba(255, 138, 29, 0.1);
+        }
+        
+        .name-cell {
+            min-width: 120px;
+            max-width: 150px;
+        }
+        
+        .message-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .id-cell {
+            width: 100px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+        }
+        
+        .position-cell {
+            width: 60px;
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        .time-cell {
+            width: 80px;
+            text-align: right;
+            font-size: 10px;
+            color: var(--text-tertiary);
+        }
+        
+        .message-type-icon {
+            width: 12px;
+            height: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            flex-shrink: 0;
+        }
+        
+        .message-type {
+            min-width: 50px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+        
+        .message-type.command {
+            color: #42c3f7;
+        }
+        
+        .message-type.event {
+            color: #ff8a1d;
+        }
+        
+        .message-name {
+            min-width: 120px;
+            font-weight: 500;
+            color: var(--text-primary);
+            flex-shrink: 0;
+        }
+        
+        .message-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 10px;
+            color: var(--text-tertiary);
             flex: 1;
         }
         
-        .response-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
+        .message-timestamp {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            min-width: 80px;
+            text-align: right;
+            flex-shrink: 0;
         }
         
-        .response-status {
+        .message-details {
+            display: none;
+            padding: 16px;
+            background: var(--code-bg);
+            border-top: 1px solid var(--border);
+        }
+        
+        .message-item.expanded .message-details {
+            display: block;
+        }
+        
+        .message-ids {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .message-id {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .message-id-label {
+            color: var(--text-secondary);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--text-tertiary);
-        }
-        
-        .status-dot.success {
-            background: var(--success);
-            box-shadow: 0 0 8px rgba(94, 199, 45, 0.5);
-        }
-        
-        .status-dot.error {
-            background: var(--error);
-            box-shadow: 0 0 8px rgba(236, 63, 74, 0.5);
-        }
-        
-        .response-time {
-            color: var(--text-tertiary);
+        .message-data {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'SF Mono', 'Monaco', monospace;
             font-size: 11px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
         
         .empty {
@@ -926,102 +800,12 @@
             text-align: center;
             color: var(--text-tertiary);
             font-size: 12px;
-        }
-        
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: 20px 0;
-        }
-        
-        .keyboard-shortcut {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            padding: 2px 6px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 10px;
-            color: var(--text-tertiary);
-            font-family: 'SF Mono', monospace;
-        }
-        
-        /* Event items in right sidebar */
-        .event-item {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            transition: all 0.15s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .event-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--brand-orange);
-            opacity: 0.5;
-            transition: opacity 0.15s ease;
-        }
-        
-        .event-item:hover {
-            background: var(--bg-hover);
-            border-color: var(--border-light);
-        }
-        
-        .event-item:hover::before {
-            opacity: 1;
-        }
-        
-        .event-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .event-type {
-            font-weight: 600;
-            color: var(--accent);
-            font-size: 12px;
-        }
-        
-        .event-time {
-            color: var(--text-tertiary);
-            font-size: 10px;
-        }
-        
-        .event-data {
-            background: var(--code-bg);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 8px;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 10px;
-            color: var(--text-secondary);
-            white-space: pre-wrap;
-            word-break: break-word;
-            max-height: 100px;
-            overflow-y: auto;
-            transition: background-color 0.3s ease;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
         
         /* Scrollbar styling */
         ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
         }
         
         ::-webkit-scrollbar-track {
@@ -1030,23 +814,11 @@
         
         ::-webkit-scrollbar-thumb {
             background: var(--border-light);
-            border-radius: 5px;
+            border-radius: 4px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
             background: var(--text-tertiary);
-        }
-        
-        @media (max-width: 1200px) {
-            .sidebar-left {
-                display: none;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar-right {
-                display: none;
-            }
         }
     </style>
 </head>
@@ -1091,134 +863,145 @@
     </div>
     
     <div class="app-layout">
-        <!-- Left Sidebar: Registry -->
-        <div class="sidebar-left">
-            <div class="handlers-section">
-                <div class="handlers-header">
-                    <span class="handlers-title">Commands</span>
-                    <span class="handlers-count" id="totalHandlersCount">0</span>
+        <!-- Top section: Command interface -->
+        <div class="command-section">
+            <!-- Command controls row -->
+            <div class="command-controls">
+                <div class="command-dropdown">
+                    <select class="command-select" id="commandSelect" onchange="selectCommand(this.value)">
+                        <option value="">Select a command...</option>
+                    </select>
                 </div>
-                <div class="handlers-list" id="handlersList">
-                    <div class="empty">No handlers registered</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Center Content -->
-        <div class="center-content">
-            <!-- Request Bar -->
-            <div class="request-bar">
-                <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
-                    <span style="color: var(--text-tertiary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Selected Command:</span>
-                    <span id="selectedCommand" style="font-family: 'SF Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text-primary);">None</span>
-                </div>
-                <input type="text" class="endpoint-input" id="requestIdInput" placeholder="Request ID (optional)" style="max-width: 200px;" />
+                
+                <input type="text" class="request-id-input" id="requestIdInput" placeholder="Request ID (optional)" />
+                
                 <button class="send-button" onclick="sendRequest()" id="sendButton" disabled>
                     Send
-                    <span class="keyboard-shortcut">⌘ ↵</span>
                 </button>
-            </div>
-            
-            <!-- Request/Response Container -->
-            <div class="request-response-container">
-                <!-- Request Panel -->
-                <div class="request-panel">
-                    <div class="panel-content" style="display: flex; flex-direction: column; gap: 20px; padding: 20px;">
-                        <div id="paramsSection">
-                            <div class="section-header" style="background: transparent; padding: 0 0 12px 0; border-bottom: 1px solid var(--border);">
-                                <span class="section-title">Parameters</span>
-                            </div>
-                            <div id="paramsContainer" style="padding-top: 12px;">
-                                <div class="empty" id="emptyParams">No parameters required</div>
-                                <!-- Parameters will be added dynamically -->
-                            </div>
-                        </div>
-                        <div id="bodySection">
-                            <div class="section-header" style="background: transparent; padding: 0 0 12px 0; border-bottom: 1px solid var(--border);">
-                                <span class="section-title">Request Body (JSON)</span>
-                            </div>
-                            <div style="padding-top: 12px;">
-                                <textarea class="textarea" id="requestBody" style="min-height: 200px; font-family: 'SF Mono', monospace; width: 100%;">{}</textarea>
-                            </div>
-                        </div>
-                    </div>
+                
+                <div class="response-status">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Ready</span>
+                    <span id="responseTime"></span>
                 </div>
                 
-                <!-- Response Panel -->
-                <div class="response-panel">
-                    <div class="response-header">
-                        <div class="response-status">
-                            <div class="status-dot" id="statusDot"></div>
-                            <span id="statusText">Ready</span>
-                        </div>
-                        <span class="response-time" id="responseTime"></span>
-                    </div>
-                    <div class="response-content">
-                        <div class="code-block" id="responseContent" style="height: 100%;">No response yet</div>
-                    </div>
-                </div>
+                <div class="response-preview" id="responsePreview">No response yet</div>
+            </div>
+            
+            <!-- Request body row -->
+            <div class="request-body-section">
+                <textarea class="request-body" id="requestBody" placeholder='Request body (JSON)&#10;Example: {"key": "value"}'>{}</textarea>
             </div>
         </div>
         
-        <!-- Right Sidebar: Messages -->
-        <div class="sidebar-right">
+        <!-- Bottom section: Messages list -->
+        <div class="messages-section">
             <div class="messages-header">
                 <div class="messages-title">
-                    <span class="tab-indicator message"></span>
-                    Messages
+                    <span>Messages</span>
+                    <span id="messageCount">0</span>
                 </div>
                 <div class="messages-controls">
-                    <button class="button button-small button-secondary" onclick="loadMessages()">↻</button>
-                    <button class="button button-small button-secondary" onclick="clearMessageFilters()">Clear Filters</button>
+                    <button class="button-small" onclick="clearFilters()">Clear Filters</button>
                 </div>
             </div>
             
-            <!-- Message Filters -->
             <div class="message-filters">
-                <div class="filter-row">
-                    <select id="messageTypeFilter" onchange="applyMessageFilters()">
-                        <option value="">All Types</option>
-                        <option value="command">Commands</option>
-                        <option value="event">Events</option>
-                    </select>
-                    
-                    <select id="sessionFilter" onchange="applyMessageFilters()">
-                        <option value="">All Sessions</option>
-                    </select>
-                </div>
+                <select class="filter-control" id="messageTypeFilter" onchange="applyFilters()">
+                    <option value="">All Types</option>
+                    <option value="command">Commands</option>
+                    <option value="event">Events</option>
+                </select>
                 
-                <div class="filter-row">
-                    <input type="text" id="messageNameFilter" placeholder="Message name..." onchange="applyMessageFilters()" />
-                    <input type="text" id="correlationIdFilter" placeholder="Correlation ID..." onchange="applyMessageFilters()" />
-                </div>
+                <select class="filter-control" id="sessionFilter" onchange="applyFilters()">
+                    <option value="">All Sessions</option>
+                </select>
                 
-                <div class="filter-row">
-                    <textarea id="jsonFilter" placeholder='JSON Filter (e.g., {"userId": "123"})' 
-                              onchange="applyMessageFilters()" rows="2"></textarea>
-                </div>
+                <input type="text" class="filter-control" id="messageNameFilter" placeholder="Message name..." onchange="applyFilters()" />
+                
+                <input type="text" class="filter-control" id="correlationIdFilter" placeholder="Correlation ID..." onchange="applyFilters()" />
                 
                 <div class="filter-stats" id="filterStats">
                     Showing all messages
                 </div>
             </div>
             
-            <div class="messages-list" id="messagesContainer">
-                <div class="empty">No messages yet</div>
+            <div class="messages-list" id="messagesList">
+                <table class="messages-table">
+                    <colgroup>
+                        <col style="width: 40px;">
+                        <col style="width: 80px;">
+                        <col style="width: 180px;">
+                        <col style="width: 120px;">
+                        <col style="width: 120px;">
+                        <col style="width: 120px;">
+                        <col style="width: 60px;">
+                        <col style="width: 90px;">
+                    </colgroup>
+                    <thead>
+                        <tr class="messages-header-row">
+                            <th class="messages-header-cell expand-cell" data-column="expand">
+                            </th>
+                            <th class="messages-header-cell type-cell" data-column="type">
+                                Type
+                            </th>
+                            <th class="messages-header-cell name-cell" data-column="name">
+                                Message
+                            </th>
+                            <th class="messages-header-cell id-cell" data-column="requestId">
+                                Request ID
+                            </th>
+                            <th class="messages-header-cell id-cell" data-column="correlationId">
+                                Correlation ID
+                            </th>
+                            <th class="messages-header-cell id-cell" data-column="sessionId">
+                                Session ID
+                            </th>
+                            <th class="messages-header-cell position-cell" data-column="position">
+                                Pos
+                            </th>
+                            <th class="messages-header-cell time-cell" data-column="time">
+                                Time
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesTableBody">
+                        <tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-tertiary);">No messages yet</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
     
     <script>
         const API_BASE = window.location.origin;
-        let currentState = {};
+        let availableCommands = [];
         let currentMessages = [];
         let filteredMessages = [];
         let availableSessions = [];
+        let currentCommand = null;
         let responseStartTime;
-        let availableCommands = [];
-        let currentCommand = localStorage.getItem('lastCommand') || null;
+        let expandedMessages = new Set();
+        let isResizing = false;
+        let currentColumn = null;
+        let startX = 0;
+        let startWidth = 0;
         
-        // Logo SVGs - exact content from logo files  
+        // Default column widths (percentages for better responsive behavior)
+        const defaultColumnWidths = {
+            expand: 40,
+            type: 80,
+            name: 180,
+            requestId: 120,
+            correlationId: 120, 
+            sessionId: 120,
+            position: 60,
+            time: 90
+        };
+        
+        let columnWidths = { ...defaultColumnWidths };
+        
+        // Logo SVGs
         const logoLight = `<svg width="637" height="637" viewBox="0 0 637 637" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clip-path="url(#clip0_1042_573)">
             <rect width="637" height="637"/>
@@ -1274,16 +1057,6 @@
             return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         
-        function updateFavicon(theme) {
-            const favicon = document.getElementById('favicon');
-            if (favicon) {
-                const isDark = theme === 'dark';
-                const bgColor = isDark ? '%231A1A1A' : '%23ffffff';
-                const fgColor = isDark ? '%23ffffff' : '%231A1A1A';
-                favicon.href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='${bgColor}'/><rect x='20' y='20' width='20' height='20' fill='%23ec3f4a'/><rect x='40' y='20' width='20' height='20' fill='%23ff8a1d'/><rect x='20' y='40' width='20' height='20' fill='%235ec72d'/><rect x='40' y='40' width='20' height='20' fill='%2342c3f7'/><rect x='60' y='40' width='20' height='20' fill='${fgColor}'/><rect x='20' y='60' width='20' height='20' fill='${fgColor}'/></svg>`;
-            }
-        }
-        
         function applyTheme(theme) {
             if (theme === 'system') {
                 theme = getSystemTheme();
@@ -1295,9 +1068,6 @@
             if (logoMark) {
                 logoMark.innerHTML = theme === 'dark' ? logoDark : logoLight;
             }
-            
-            // Update favicon based on theme
-            updateFavicon(theme);
         }
         
         function getThemeIcon(theme) {
@@ -1355,30 +1125,24 @@
             }
         });
         
+        // Command selection
         function selectCommand(command) {
+            if (!command) return;
+            
             currentCommand = command;
             localStorage.setItem('lastCommand', command);
-            
-            // Update selected command display
-            document.getElementById('selectedCommand').textContent = command;
-            
-            // Update sidebar selection
-            document.querySelectorAll('.handler-item').forEach(item => {
-                item.classList.toggle('selected', item.dataset.command === command);
-            });
             
             // Enable send button
             document.getElementById('sendButton').disabled = false;
             
             // Clear response
-            document.getElementById('responseContent').textContent = 'No response yet';
+            document.getElementById('responsePreview').textContent = 'No response yet';
             document.getElementById('statusDot').className = 'status-dot';
             document.getElementById('statusText').textContent = 'Ready';
             document.getElementById('responseTime').textContent = '';
         }
         
-        // Tab switching function removed - no longer needed
-        
+        // Send request
         async function sendRequest() {
             if (!currentCommand) {
                 alert('Please select a command first');
@@ -1386,6 +1150,10 @@
             }
             
             responseStartTime = Date.now();
+            
+            // Update status to sending
+            document.getElementById('statusDot').className = 'status-dot';
+            document.getElementById('statusText').textContent = 'Sending...';
             
             try {
                 const requestId = document.getElementById('requestIdInput').value;
@@ -1413,7 +1181,7 @@
                 const responseTime = Date.now() - responseStartTime;
                 const result = await response.json();
                 
-                document.getElementById('responseContent').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('responsePreview').textContent = JSON.stringify(result, null, 2);
                 document.getElementById('responseTime').textContent = `${responseTime}ms`;
                 
                 const statusDot = document.getElementById('statusDot');
@@ -1424,20 +1192,16 @@
                     statusText.textContent = 'Success';
                 } else {
                     statusDot.className = 'status-dot error';
-                    statusText.textContent = response.status === 404 ? 'Command Not Found' : 'Error';
-                    
-                    // Show available commands if provided
-                    if (result.availableCommands) {
-                        const availableCommands = result.availableCommands.length > 0 
-                            ? `Available commands: ${result.availableCommands.join(', ')}`
-                            : 'No command handlers registered';
-                        result.availableCommands = availableCommands;
-                    }
+                    statusText.textContent = response.status === 404 ? 'Not Found' : 'Error';
                 }
+                
+                // Auto refresh messages after sending
+                setTimeout(loadMessages, 500);
+                
             } catch (error) {
                 const responseTime = Date.now() - responseStartTime;
                 
-                document.getElementById('responseContent').textContent = error.message;
+                document.getElementById('responsePreview').textContent = error.message;
                 document.getElementById('responseTime').textContent = `${responseTime}ms`;
                 
                 document.getElementById('statusDot').className = 'status-dot error';
@@ -1445,62 +1209,43 @@
             }
         }
         
+        // Load registry and populate command dropdown
         async function loadRegistry() {
             try {
                 const response = await fetch(`${API_BASE}/registry`);
                 const data = await response.json();
                 
-                const eventHandlers = data.eventHandlers || [];
-                const folds = data.folds || [];
                 const commandHandlers = data.commandHandlers || [];
                 const commandsWithMetadata = data.commandsWithMetadata || [];
                 
-                // Update count in sidebar (only commands now)
-                document.getElementById('totalHandlersCount').textContent = commandHandlers.length;
-                
-                // Build unified handlers list
-                const handlersListEl = document.getElementById('handlersList');
-                
-                if (commandHandlers.length === 0) {
-                    handlersListEl.innerHTML = '<div class="empty">No handlers registered</div>';
-                } else {
-                    let html = '';
-                    
-                    // Show commands with metadata (required)
-                    html += '<div class="handler-group">';
-                    commandsWithMetadata.forEach(cmd => {
-                        const packageInfo = cmd.package && cmd.package !== 'unknown' ? cmd.package : '';
-                        const versionInfo = cmd.version ? `v${cmd.version}` : '';
-                        const tooltip = packageInfo ? `${packageInfo} ${versionInfo}`.trim() : cmd.name;
-                        
-                        // Split package name at '/' to display on separate lines
-                        let packageDisplay = '';
-                        if (packageInfo && packageInfo.includes('/')) {
-                            const parts = packageInfo.split('/');
-                            packageDisplay = `${parts[0]}/<br/>${parts[1]}`;
-                        } else {
-                            packageDisplay = packageInfo;
-                        }
-                        
-                        html += `<div class="handler-item" onclick="selectCommand('${cmd.name}')" data-command="${cmd.name}" title="${tooltip}">
-                            <div class="handler-type-indicator command"></div>
-                            <div class="handler-content">
-                                <div class="handler-name">${cmd.alias}</div>
-                                <div class="handler-package">${packageDisplay}</div>
-                            </div>
-                        </div>`;
-                    });
-                    html += '</div>';
-                    
-                    handlersListEl.innerHTML = html;
-                }
-                
-                // Store available commands
                 availableCommands = commandHandlers;
                 
-                // Restore last selected command if it's still available
+                // Populate command dropdown with detailed 3-line format
+                const commandSelect = document.getElementById('commandSelect');
+                commandSelect.innerHTML = '<option value="">Select a command...</option>';
+                
+                commandsWithMetadata.forEach(cmd => {
+                    const option = document.createElement('option');
+                    option.value = cmd.name;
+                    
+                    // Create 3-line format: command name, org, package
+                    const packageParts = (cmd.package || 'core').split('/');
+                    const org = packageParts.length > 1 ? packageParts[0] : '@auto-engineer';
+                    const packageName = packageParts.length > 1 ? packageParts[1] : packageParts[0];
+                    
+                    // Format as 3 lines
+                    const displayText = `${cmd.name}\n${org}\n${packageName}`;
+                    
+                    option.textContent = displayText;
+                    option.title = `${cmd.name}\n\nOrganization: ${org}\nPackage: ${packageName}\nType: ${cmd.type || 'command'}\n\nDescription: ${cmd.description || 'No description available'}`;
+                    
+                    commandSelect.appendChild(option);
+                });
+                
+                // Restore last selected command
                 const lastCommand = localStorage.getItem('lastCommand');
                 if (lastCommand && commandHandlers.includes(lastCommand)) {
+                    commandSelect.value = lastCommand;
                     selectCommand(lastCommand);
                 }
                 
@@ -1509,18 +1254,9 @@
             }
         }
         
-        async function loadState() {
-            try {
-                const response = await fetch(`${API_BASE}/state`);
-                currentState = await response.json();
-            } catch (error) {
-                console.error('Failed to load state:', error);
-            }
-        }
-        
+        // Load messages
         async function loadMessages() {
             try {
-                // Load all messages
                 const messagesResponse = await fetch(`${API_BASE}/messages?count=500`);
                 currentMessages = await messagesResponse.json();
                 
@@ -1529,13 +1265,14 @@
                 availableSessions = await sessionsResponse.json();
                 updateSessionFilter();
                 
-                applyMessageFilters();
+                applyFilters();
             } catch (error) {
                 console.error('Failed to load messages:', error);
-                document.getElementById('messagesContainer').innerHTML = '<div class="empty">Failed to load messages</div>';
+                document.getElementById('messagesList').innerHTML = '<div class="empty">Failed to load messages</div>';
             }
         }
         
+        // Update session filter dropdown
         function updateSessionFilter() {
             const sessionFilter = document.getElementById('sessionFilter');
             const currentValue = sessionFilter.value;
@@ -1548,7 +1285,7 @@
                     const startTime = new Date(session.startedAt).toLocaleString();
                     const option = document.createElement('option');
                     option.value = session.sessionId;
-                    option.textContent = `${session.sessionId} (${startTime})`;
+                    option.textContent = `${session.sessionId.substr(0, 12)}... (${startTime})`;
                     sessionFilter.appendChild(option);
                 });
             
@@ -1556,21 +1293,12 @@
             sessionFilter.value = currentValue;
         }
         
-        function applyMessageFilters() {
+        // Apply message filters
+        function applyFilters() {
             const messageTypeFilter = document.getElementById('messageTypeFilter').value;
             const sessionFilter = document.getElementById('sessionFilter').value;
             const messageNameFilter = document.getElementById('messageNameFilter').value.toLowerCase();
             const correlationIdFilter = document.getElementById('correlationIdFilter').value.toLowerCase();
-            const jsonFilterText = document.getElementById('jsonFilter').value.trim();
-            
-            let jsonFilterObj = null;
-            if (jsonFilterText) {
-                try {
-                    jsonFilterObj = JSON.parse(jsonFilterText);
-                } catch (error) {
-                    console.warn('Invalid JSON filter:', error);
-                }
-            }
             
             filteredMessages = currentMessages.filter(message => {
                 // Message type filter
@@ -1596,108 +1324,292 @@
                     }
                 }
                 
-                // JSON filter
-                if (jsonFilterObj) {
-                    if (!matchesJsonFilter(message.message.data, jsonFilterObj)) {
-                        return false;
-                    }
-                }
-                
                 return true;
             });
             
             displayMessages();
         }
         
-        function matchesJsonFilter(data, filterObj) {
-            for (const [key, expectedValue] of Object.entries(filterObj)) {
-                if (data[key] !== expectedValue) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        
+        // Display messages with preserved expansion state
         function displayMessages() {
-            const container = document.getElementById('messagesContainer');
+            const tableBody = document.getElementById('messagesTableBody');
+            const countElement = document.getElementById('messageCount');
             const statsElement = document.getElementById('filterStats');
             
             if (filteredMessages.length === 0) {
-                container.innerHTML = '<div class="empty">No messages match the current filters</div>';
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 32px; color: var(--text-tertiary);">No messages match the current filters</td></tr>';
+                countElement.textContent = '0';
                 statsElement.textContent = `Showing 0 of ${currentMessages.length} messages`;
                 return;
             }
             
-            // Update stats
+            // Update count and stats
+            countElement.textContent = filteredMessages.length;
             const commandCount = filteredMessages.filter(m => m.messageType === 'command').length;
             const eventCount = filteredMessages.filter(m => m.messageType === 'event').length;
             statsElement.textContent = `Showing ${filteredMessages.length} of ${currentMessages.length} messages (${commandCount} commands, ${eventCount} events)`;
             
-            // Display messages in reverse chronological order (newest first)
+            // Display messages in chronological order (oldest first)
             const messagesHtml = filteredMessages
                 .slice()
-                .reverse()
+                .sort((a, b) => parseInt(a.position) - parseInt(b.position))
                 .map((message) => {
-                    const time = new Date(message.timestamp).toLocaleTimeString();
-                    const date = new Date(message.timestamp).toLocaleDateString();
+                    const timeObj = new Date(message.timestamp);
+                    const time = timeObj.toLocaleTimeString('en-US', { 
+                        hour12: false, 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                    }) + '.' + timeObj.getMilliseconds().toString().padStart(3, '0');
+                    const isExpanded = expandedMessages.has(String(message.position));
                     
                     const correlationId = message.message.correlationId || 'none';
                     const requestId = message.message.requestId || 'none';
                     const sessionId = message.sessionId || 'none';
                     
-                    return `
-                        <div class="message-item">
-                            <div class="message-header">
-                                <div class="message-type">
-                                    <div class="message-type-indicator ${message.messageType}"></div>
-                                    <div class="message-name">${message.message.type}</div>
-                                </div>
-                                <div class="message-timestamp">${date} ${time}</div>
-                            </div>
-                            <div class="message-body">
-                                <div class="message-ids">
-                                    <div class="message-id">
-                                        <span class="message-id-label">Session:</span>
-                                        <span>${sessionId.substring(0, 8)}...</span>
-                                    </div>
-                                    <div class="message-id">
-                                        <span class="message-id-label">Correlation:</span>
-                                        <span>${correlationId.substring(0, 8)}...</span>
-                                    </div>
-                                    <div class="message-id">
-                                        <span class="message-id-label">Request:</span>
-                                        <span>${requestId.substring(0, 8)}...</span>
-                                    </div>
-                                </div>
-                                <div class="message-data">${JSON.stringify(message.message.data, null, 2)}</div>
-                            </div>
-                        </div>
+                    let rowsHtml = `
+                        <tr class="message-row ${isExpanded ? 'expanded' : ''}" data-position="${message.position}">
+                            <td class="message-cell expand-cell">
+                                <span class="expand-btn">${isExpanded ? '-' : '+'}</span>
+                            </td>
+                            <td class="message-cell type-cell">
+                                <span class="message-type ${message.messageType}">${message.messageType.toUpperCase()}</span>
+                            </td>
+                            <td class="message-cell name-cell" title="${message.message.type}">
+                                <span class="message-name">${message.message.type}</span>
+                            </td>
+                            <td class="message-cell id-cell" title="${requestId}">
+                                ${requestId.length > 35 ? requestId.substring(0, 35) + '...' : requestId}
+                            </td>
+                            <td class="message-cell id-cell" title="${correlationId}">
+                                ${correlationId.length > 35 ? correlationId.substring(0, 35) + '...' : correlationId}
+                            </td>
+                            <td class="message-cell id-cell" title="${sessionId}">
+                                ${sessionId.length > 35 ? sessionId.substring(0, 35) + '...' : sessionId}
+                            </td>
+                            <td class="message-cell position-cell">${message.position}</td>
+                            <td class="message-cell time-cell">${time}</td>
+                        </tr>
                     `;
+                    
+                    if (isExpanded) {
+                        const messageDataJson = JSON.stringify(message.message.data, null, 2);
+                        rowsHtml += `
+                            <tr class="message-details-row" style="background: #1a202c;">
+                                <td colspan="8" style="padding: 16px; border-top: 1px solid #4a5568;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <span style="color: #a0aec0; font-size: 12px; font-weight: 600;">MESSAGE DATA</span>
+                                        <pre style="background: #2d3748; color: #e2e8f0; padding: 16px; border-radius: 6px; font-family: 'SF Mono', Monaco, monospace; font-size: 12px; line-height: 1.4; overflow-x: auto; border: 1px solid #4a5568; margin: 0;">${messageDataJson}</pre>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    return rowsHtml;
                 })
                 .join('');
             
-            container.innerHTML = messagesHtml;
+            // Always update to ensure expanded content shows properly
+            tableBody.innerHTML = messagesHtml;
+            autoScrollToBottom();
         }
         
-        function clearMessageFilters() {
+        // Toggle message details (like CloudWatch)
+        function toggleMessage(position) {
+            console.log('toggleMessage called with position:', position, 'type:', typeof position);
+            console.log('Current expandedMessages:', Array.from(expandedMessages));
+            
+            // Ensure position is a string for consistency
+            const positionStr = String(position);
+            
+            if (expandedMessages.has(positionStr)) {
+                expandedMessages.delete(positionStr);
+                console.log('Collapsed message', positionStr);
+            } else {
+                expandedMessages.add(positionStr);
+                console.log('Expanded message', positionStr);
+            }
+            
+            console.log('New expandedMessages:', Array.from(expandedMessages));
+            displayMessages();
+        }
+        
+        // Handle click events on table for expansion
+        document.addEventListener('click', (e) => {
+            // Check if click is on expand button or expand cell (but not resize handle)
+            const expandBtn = e.target.closest('.expand-btn');
+            const expandCell = e.target.closest('.expand-cell');
+            const resizeHandle = e.target.closest('.resize-handle');
+            
+            if ((expandBtn || expandCell) && !resizeHandle) {
+                const row = e.target.closest('tr[data-position]');
+                if (row) {
+                    const position = row.getAttribute('data-position');
+                    if (position) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        console.log('Toggling message position:', position);
+                        toggleMessage(position);
+                    }
+                }
+            }
+        });
+        
+        // Column resizing functionality
+        function initColumnResize() {
+            const table = document.querySelector('.messages-table');
+            if (!table) return;
+            
+            // Mouse down on resize handle
+            document.addEventListener('mousedown', (e) => {
+                if (!e.target.classList.contains('resize-handle')) return;
+                
+                e.preventDefault();
+                isResizing = true;
+                
+                const headerCell = e.target.parentElement;
+                const column = headerCell.dataset.column;
+                
+                currentColumn = column;
+                startX = e.clientX;
+                startWidth = parseInt(getComputedStyle(headerCell).width);
+                
+                document.body.classList.add('resizing');
+                table.classList.add('resizing');
+            });
+            
+            // Mouse move during resize
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing || !currentColumn) return;
+                
+                const deltaX = e.clientX - startX;
+                const newWidth = Math.max(30, startWidth + deltaX);
+                
+                columnWidths[currentColumn] = newWidth;
+                updateColumnWidths();
+            });
+            
+            // Mouse up to end resize
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    currentColumn = null;
+                    
+                    document.body.classList.remove('resizing');
+                    const table = document.querySelector('.messages-table');
+                    if (table) table.classList.remove('resizing');
+                    
+                    // Save column widths to localStorage
+                    localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
+                }
+            });
+        }
+        
+        // Update column widths in the table
+        function updateColumnWidths() {
+            const headers = document.querySelectorAll('.messages-header-cell');
+            headers.forEach((cell, index) => {
+                const column = cell.dataset.column;
+                if (column && columnWidths[column]) {
+                    cell.style.width = columnWidths[column] + 'px';
+                    cell.style.minWidth = columnWidths[column] + 'px';
+                    cell.style.maxWidth = columnWidths[column] + 'px';
+                }
+            });
+            
+            // Apply to colgroup if it exists
+            const colgroup = document.querySelector('.messages-table colgroup');
+            if (colgroup) {
+                const cols = colgroup.querySelectorAll('col');
+                headers.forEach((cell, index) => {
+                    const column = cell.dataset.column;
+                    if (column && columnWidths[column] && cols[index]) {
+                        cols[index].style.width = columnWidths[column] + 'px';
+                    }
+                });
+            }
+        }
+        
+        // Load saved column widths
+        function loadColumnWidths() {
+            const saved = localStorage.getItem('columnWidths');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    columnWidths = { ...defaultColumnWidths, ...parsed };
+                } catch (e) {
+                    columnWidths = { ...defaultColumnWidths };
+                }
+            }
+        }
+        
+        // Copy message data to request body field
+        function copyMessageData(position, messageData) {
+            try {
+                const requestBodyField = document.getElementById('requestBody');
+                if (requestBodyField) {
+                    // Parse and re-stringify to ensure proper formatting
+                    const parsed = JSON.parse(messageData);
+                    requestBodyField.value = JSON.stringify(parsed, null, 2);
+                    
+                    // Visual feedback
+                    const copyBtn = window.event ? window.event.target : null;
+                    if (copyBtn) {
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Copied!';
+                        copyBtn.style.background = 'var(--success)';
+                        copyBtn.style.color = 'white';
+                        
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                            copyBtn.style.background = '';
+                            copyBtn.style.color = '';
+                        }, 1500);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to copy message data:', error);
+                
+                // Error feedback
+                const copyBtn = window.event ? window.event.target : null;
+                if (copyBtn) {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Error';
+                    copyBtn.style.background = 'var(--error)';
+                    copyBtn.style.color = 'white';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = '';
+                        copyBtn.style.color = '';
+                    }, 1500);
+                }
+            }
+        }
+        
+        // Auto-scroll to bottom when new messages arrive
+        let lastMessageCount = 0;
+        function autoScrollToBottom() {
+            if (currentMessages.length > lastMessageCount) {
+                const messagesContainer = document.querySelector('.messages-list');
+                if (messagesContainer) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+                lastMessageCount = currentMessages.length;
+            }
+        }
+        
+        // Clear filters
+        function clearFilters() {
             document.getElementById('messageTypeFilter').value = '';
             document.getElementById('sessionFilter').value = '';
             document.getElementById('messageNameFilter').value = '';
             document.getElementById('correlationIdFilter').value = '';
-            document.getElementById('jsonFilter').value = '';
-            applyMessageFilters();
+            applyFilters();
         }
         
-        // Event search removed - no longer needed
-        // document.getElementById('eventSearch').addEventListener('input', displayEvents);
-        
-        // Legacy function - no longer needed with new message system
-        async function clearEvents() {
-            console.log('clearEvents is deprecated - use clearMessageFilters instead');
-        }
-        
-        
-        // Keyboard shortcut for send
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 sendRequest();
@@ -1709,19 +1621,16 @@
         
         ws.onopen = () => {
             console.log('WebSocket connected');
-            // WebSocket status elements removed from UI
         };
         
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             if (message.type === 'event' || message.type === 'state') {
-                // Reload state when events occur
-                loadState();
-                // Also reload messages
+                // Reload messages when events occur
                 loadMessages();
             } else if (message.type === 'commandError') {
                 // Show command error in response
-                document.getElementById('responseContent').textContent = JSON.stringify({
+                document.getElementById('responsePreview').textContent = JSON.stringify({
                     status: 'error',
                     commandId: message.commandId,
                     error: message.error,
@@ -1735,25 +1644,25 @@
         
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);
-            // WebSocket status elements removed from UI
         };
         
         ws.onclose = () => {
             console.log('WebSocket disconnected');
-            // WebSocket status elements removed from UI
         };
         
         // Initial load
+        loadColumnWidths();
         loadRegistry();
-        loadState();
         loadMessages();
         
-        // Initial command will be restored when registry loads
+        // Initialize column resize functionality
+        setTimeout(() => {
+            initColumnResize();
+            updateColumnWidths();
+        }, 100);
         
-        // Refresh registry every 5 seconds
+        // Auto-refresh
         setInterval(loadRegistry, 5000);
-        
-        // Auto-refresh messages every 2 seconds
         setInterval(loadMessages, 2000);
     </script>
 </body>
