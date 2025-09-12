@@ -3,7 +3,7 @@
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -30,6 +30,7 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
 
     /* Paths / Aliases */
     "baseUrl": ".",
@@ -37,6 +38,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "vite.config.ts", "codegen.ts", "eslint.config.ts", "auto-configure.ts"],
+  "include": ["src/**/*", "vite.config.ts", "codegen.ts", "eslint.config.ts", "auto-configure.ts", "postcss.config.ts"],
   "exclude": ["node_modules/**", "dist"]
 }
