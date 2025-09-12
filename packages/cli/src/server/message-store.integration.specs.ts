@@ -181,15 +181,15 @@ describe('Message Store Integration', async () => {
     expect(streamsResponse.ok).toBe(true);
     const streams = (await streamsResponse.json()) as string[];
     expect(Array.isArray(streams)).toBe(true);
-    expect(streams).toContain('$all-commands');
-    expect(streams).toContain('$all-events');
-    expect(streams).toContain('command-test-command');
-    expect(streams).toContain('event-test-event');
+    expect(streams).toContain('$all');
+    expect(streams.some((stream) => stream.startsWith('session-'))).toBe(true); // session stream exists
 
-    const commandStreamResponse = await fetch(`${baseUrl}/streams/$all-commands`);
-    expect(commandStreamResponse.ok).toBe(true);
-    const commandStreamMessages = (await commandStreamResponse.json()) as HttpPositionalMessage[];
-    expect(commandStreamMessages.every((m: HttpPositionalMessage) => m.messageType === 'command')).toBe(true);
+    // Test the single $all stream contains both commands and events
+    const allStreamResponse = await fetch(`${baseUrl}/streams/$all`);
+    expect(allStreamResponse.ok).toBe(true);
+    const allStreamMessages = (await allStreamResponse.json()) as HttpPositionalMessage[];
+    expect(allStreamMessages.some((m: HttpPositionalMessage) => m.messageType === 'command')).toBe(true);
+    expect(allStreamMessages.some((m: HttpPositionalMessage) => m.messageType === 'event')).toBe(true);
 
     const statsResponse = await fetch(`${baseUrl}/stats`);
     expect(statsResponse.ok).toBe(true);
@@ -343,10 +343,8 @@ describe('Message Store Integration', async () => {
     expect(messagesResponse.ok).toBe(true);
     const messages = (await messagesResponse.json()) as HttpPositionalMessage[];
 
-    const sessionMessages = messages.filter(
-      (m: HttpPositionalMessage) =>
-        m.streamId.startsWith('session-') && !m.streamId.includes('-commands') && !m.streamId.includes('-events'),
-    );
+    // In the new architecture, all messages are in the $all stream, so we filter by sessionId
+    const sessionMessages = messages.filter((m: HttpPositionalMessage) => m.streamId === '$all');
 
     sessionMessages.sort((a, b) => parseInt(a.position) - parseInt(b.position));
 

@@ -180,6 +180,10 @@ on<ClientGeneratedEvent>('ClientGenerated', (event) =>
 // );
 
 /*
+rm -rf server
+pnpm auto export:schema
+pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts
+pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
 pnpm auto generate:client --starter-dir=/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter  --target-dir=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client  --ia-schema-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/auto-ia-scheme.json  --gql-schema-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.graphql  --figma-variables-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/figma-variables.json
 pnpm auto implement:client --project-dir=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client --ia-scheme-dir=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context --design-system-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/design-system.md
 */

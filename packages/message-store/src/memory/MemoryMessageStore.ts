@@ -157,21 +157,8 @@ export class MemoryMessageStore implements ILocalMessageStore {
         }
       }
 
-      // Also store in session stream
-      if (sessionId !== 'no-session') {
-        const sessionStreamId = `session-${sessionId}`;
-        const sessionStream = this.streams.get(sessionStreamId);
-        if (sessionStream) {
-          sessionStream.revision++;
-          const sessionMessage: PositionalMessage = {
-            ...positionalMessage,
-            streamId: sessionStreamId,
-            revision: sessionStream.revision,
-          };
-          sessionStream.messages.push(sessionMessage);
-          sessionStream.lastUpdated = now;
-        }
-      }
+      // Note: Removed automatic session stream duplication to avoid message duplicates
+      // Session information is tracked via sessionId field in the message itself
     }
 
     debug(

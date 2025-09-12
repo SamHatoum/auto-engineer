@@ -9,6 +9,7 @@ export default defineConfig({
       '**/.tmp/**',
       '**/node_modules/**',
       '**/dist/**',
+      '**/examples/**',
       '**/create-auto-app/templates/**',
       '**/*-starter/**',
       '**/vite.config.ts',
