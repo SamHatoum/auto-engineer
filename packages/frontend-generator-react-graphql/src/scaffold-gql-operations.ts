@@ -1,15 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  parse,
-  print,
-  DocumentNode,
-  OperationDefinitionNode,
-  SelectionSetNode,
-  FieldNode,
-  VariableDefinitionNode,
-  Kind,
-} from 'graphql';
+import { parse, print, DocumentNode, OperationDefinitionNode, SelectionSetNode, FieldNode, Kind } from 'graphql';
 import { IAScheme } from './types';
 
 interface GqlOperation {
@@ -45,10 +36,10 @@ function isValidDataRequirement(req: unknown): req is DataRequirement {
 }
 
 function processDataRequirements(record: Record<string, unknown>, operations: GqlOperation[]): void {
-  const dataReqs = record['data_requirements'];
-  if (!Array.isArray(dataReqs)) return;
+  const dataRequirements = record['data_requirements'];
+  if (!Array.isArray(dataRequirements)) return;
 
-  for (const req of dataReqs) {
+  for (const req of dataRequirements) {
     if (isValidDataRequirement(req)) {
       operations.push({
         operationType: req.type,
@@ -81,13 +72,34 @@ function extractGqlOperationsFromIAScheme(schema: IAScheme): GqlOperation[] {
   return operations;
 }
 
+function getFieldKey(selection: FieldNode): string {
+  return selection.alias?.value ?? selection.name.value;
+}
+
+function processFieldSelection(fieldMap: Map<string, FieldNode>, selection: FieldNode): void {
+  const key = getFieldKey(selection);
+  const existing = fieldMap.get(key);
+
+  if (existing !== undefined && existing.selectionSet !== undefined && selection.selectionSet !== undefined) {
+    // Merge nested selection sets
+    const mergedSelectionSet = mergeSelectionSets(existing.selectionSet, selection.selectionSet);
+    fieldMap.set(key, {
+      ...existing,
+      selectionSet: mergedSelectionSet,
+    });
+  } else if (existing === undefined) {
+    // Add new field
+    fieldMap.set(key, selection);
+  }
+}
+
 function mergeSelectionSets(selectionSet1: SelectionSetNode, selectionSet2: SelectionSetNode): SelectionSetNode {
   const fieldMap = new Map<string, FieldNode>();
 
   // Process first selection set
   for (const selection of selectionSet1.selections) {
     if (selection.kind === 'Field') {
-      const key = selection.alias?.value || selection.name.value;
+      const key = getFieldKey(selection);
       fieldMap.set(key, selection);
     }
   }
@@ -95,20 +107,7 @@ function mergeSelectionSets(selectionSet1: SelectionSetNode, selectionSet2: Sele
   // Process second selection set, merging nested selections
   for (const selection of selectionSet2.selections) {
     if (selection.kind === 'Field') {
-      const key = selection.alias?.value || selection.name.value;
-      const existing = fieldMap.get(key);
-
-      if (existing && existing.selectionSet && selection.selectionSet) {
-        // Merge nested selection sets
-        const mergedSelectionSet = mergeSelectionSets(existing.selectionSet, selection.selectionSet);
-        fieldMap.set(key, {
-          ...existing,
-          selectionSet: mergedSelectionSet,
-        });
-      } else if (!existing) {
-        // Add new field
-        fieldMap.set(key, selection);
-      }
+      processFieldSelection(fieldMap, selection);
     }
   }
 
@@ -122,11 +121,14 @@ function mergeOperations(
   operation1: OperationDefinitionNode,
   operation2: OperationDefinitionNode,
 ): OperationDefinitionNode {
-  if (!operation1.selectionSet || !operation2.selectionSet) {
+  const selectionSet1 = operation1.selectionSet;
+  const selectionSet2 = operation2.selectionSet;
+
+  if (selectionSet1 === undefined || selectionSet2 === undefined) {
     throw new Error('Operations must have selection sets');
   }
 
-  const mergedSelectionSet = mergeSelectionSets(operation1.selectionSet, operation2.selectionSet);
+  const mergedSelectionSet = mergeSelectionSets(selectionSet1, selectionSet2);
 
   return {
     ...operation1,
@@ -135,9 +137,10 @@ function mergeOperations(
 }
 
 function getOperationSignature(operation: OperationDefinitionNode): string {
-  const name = operation.name?.value || 'Anonymous';
-  const variables =
-    operation.variableDefinitions?.map((v) => `${v.variable.name.value}: ${print(v.type)}`).join(', ') || '';
+  const name = operation.name?.value ?? 'Anonymous';
+  const variables = operation.variableDefinitions
+    ? operation.variableDefinitions.map((v) => `${v.variable.name.value}: ${print(v.type)}`).join(', ')
+    : '';
   return `${operation.operation}:${name}:(${variables})`;
 }
 
@@ -155,7 +158,7 @@ export function mergeGraphQLQueries(operations: GqlOperation[]): GqlOperation[] 
         operationGroups.set(signature, []);
       }
       operationGroups.get(signature)!.push(op);
-    } catch (error) {
+    } catch {
       // If parsing fails, keep the original operation
       const fallbackSignature = `${op.operationType}:${op.operationName}:fallback:${Math.random()}`;
       operationGroups.set(fallbackSignature, [op]);
@@ -165,7 +168,7 @@ export function mergeGraphQLQueries(operations: GqlOperation[]): GqlOperation[] 
   const mergedOperations: GqlOperation[] = [];
 
   // Merge operations within each group
-  for (const [signature, group] of operationGroups) {
+  for (const [, group] of operationGroups) {
     if (group.length === 1) {
       mergedOperations.push(group[0]);
     } else {
@@ -195,7 +198,7 @@ export function mergeGraphQLQueries(operations: GqlOperation[]): GqlOperation[] 
           operationName: group[0].operationName,
           raw: mergedRaw,
         });
-      } catch (error) {
+      } catch {
         // If merging fails, keep the first operation from the group
         mergedOperations.push(group[0]);
       }
