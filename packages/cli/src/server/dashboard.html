@@ -216,12 +216,11 @@
         /* Top section - Command interface (low profile) */
         .command-section {
             background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
             padding: 16px 24px;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            min-height: 120px;
+            min-height: 60px;
         }
         
         /* Command controls row */
@@ -233,10 +232,10 @@
         
         .command-dropdown {
             position: relative;
-            min-width: 280px;
+            min-width: 320px;
         }
         
-        .command-select {
+        .command-trigger {
             width: 100%;
             padding: 8px 36px 8px 12px;
             background: var(--bg-tertiary);
@@ -246,43 +245,120 @@
             font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
             transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 36px;
         }
         
-        .command-select:hover {
+        .command-trigger:hover {
             background: var(--bg-hover);
             border-color: var(--border-light);
         }
         
-        .command-select:focus {
-            outline: none;
+        .command-trigger.open {
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(0, 87, 221, 0.1);
         }
         
-        .command-select option {
-            padding: 12px;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 11px;
-            line-height: 1.2;
-            white-space: pre-line;
-            min-height: 60px;
+        .command-trigger-text {
+            color: var(--text-secondary);
         }
         
-        .command-dropdown::after {
-            content: '▼';
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
+        .command-trigger.selected .command-trigger-text {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .command-dropdown-icon {
             color: var(--text-tertiary);
             font-size: 10px;
+            transition: transform 0.15s ease;
+        }
+        
+        .command-trigger.open .command-dropdown-icon {
+            transform: rotate(180deg);
+        }
+        
+        .command-options {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-4px);
+            transition: all 0.15s ease;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        
+        .command-options.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .command-option {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 12px 12px 20px;
+            margin: 2px 0;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            width: 100%;
+            text-align: left;
+            gap: 2px;
+            position: relative;
+        }
+        
+        .command-option::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: #42c3f7;
+            border-radius: 2px;
+        }
+        
+        .command-option:hover {
+            background: var(--bg-hover);
+        }
+        
+        .command-option.selected {
+            background: var(--bg-tertiary);
+        }
+        
+        .command-option-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+        }
+        
+        .command-option-org {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .command-option-package {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            font-weight: 400;
         }
         
         .request-id-input {
@@ -293,6 +369,8 @@
             color: var(--text-primary);
             font-size: 12px;
             width: 200px;
+            height: 36px;
+            box-sizing: border-box;
             transition: all 0.15s ease;
         }
         
@@ -312,6 +390,8 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
+            height: 36px;
+            box-sizing: border-box;
             transition: all 0.15s ease;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -355,17 +435,11 @@
             box-shadow: 0 0 6px rgba(236, 63, 74, 0.5);
         }
         
-        /* Request body row */
-        .request-body-section {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-        
         .request-body {
             flex: 1;
-            min-height: 40px;
-            max-height: 200px;
+            height: 36px;
+            min-height: 36px;
+            max-height: 120px;
             padding: 8px 12px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
@@ -374,6 +448,7 @@
             font-size: 12px;
             font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
             resize: vertical;
+            box-sizing: border-box;
             transition: all 0.15s ease;
         }
         
@@ -384,22 +459,6 @@
             box-shadow: 0 0 0 2px rgba(0, 87, 221, 0.1);
         }
         
-        .response-preview {
-            flex: 1;
-            min-height: 32px;
-            max-height: 200px;
-            padding: 6px 12px;
-            background: var(--code-bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-            font-size: 11px;
-            color: var(--text-secondary);
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
-            margin-left: auto;
-        }
         
         /* Bottom section - Messages list */
         .messages-section {
@@ -868,10 +927,16 @@
             <!-- Command controls row -->
             <div class="command-controls">
                 <div class="command-dropdown">
-                    <select class="command-select" id="commandSelect" onchange="selectCommand(this.value)">
-                        <option value="">Select a command...</option>
-                    </select>
+                    <div class="command-trigger" id="commandTrigger" onclick="toggleCommandDropdown()">
+                        <span class="command-trigger-text">Select a command...</span>
+                        <span class="command-dropdown-icon">▼</span>
+                    </div>
+                    <div class="command-options" id="commandOptions">
+                        <!-- Command options will be populated by JavaScript -->
+                    </div>
                 </div>
+                
+                <textarea class="request-body" id="requestBody" placeholder='Request body (JSON)&#10;Example: {"key": "value"}'>{}</textarea>
                 
                 <input type="text" class="request-id-input" id="requestIdInput" placeholder="Request ID (optional)" />
                 
@@ -884,13 +949,6 @@
                     <span id="statusText">Ready</span>
                     <span id="responseTime"></span>
                 </div>
-                
-                <div class="response-preview" id="responsePreview">No response yet</div>
-            </div>
-            
-            <!-- Request body row -->
-            <div class="request-body-section">
-                <textarea class="request-body" id="requestBody" placeholder='Request body (JSON)&#10;Example: {"key": "value"}'>{}</textarea>
             </div>
         </div>
         
@@ -1135,12 +1193,61 @@
             // Enable send button
             document.getElementById('sendButton').disabled = false;
             
-            // Clear response
-            document.getElementById('responsePreview').textContent = 'No response yet';
+            // Clear response status
             document.getElementById('statusDot').className = 'status-dot';
             document.getElementById('statusText').textContent = 'Ready';
             document.getElementById('responseTime').textContent = '';
         }
+        
+        // Toggle command dropdown
+        function toggleCommandDropdown() {
+            const trigger = document.getElementById('commandTrigger');
+            const options = document.getElementById('commandOptions');
+            
+            const isOpen = trigger.classList.contains('open');
+            
+            if (isOpen) {
+                trigger.classList.remove('open');
+                options.classList.remove('open');
+            } else {
+                trigger.classList.add('open');
+                options.classList.add('open');
+            }
+        }
+        
+        // Select command from custom dropdown
+        function selectCommandFromDropdown(command) {
+            // Update trigger text
+            const trigger = document.getElementById('commandTrigger');
+            const triggerText = trigger.querySelector('.command-trigger-text');
+            
+            // Mark trigger as selected
+            trigger.classList.add('selected');
+            triggerText.textContent = command;
+            
+            // Update option selection states
+            document.querySelectorAll('.command-option').forEach(option => {
+                option.classList.toggle('selected', option.getAttribute('data-command') === command);
+            });
+            
+            // Close dropdown
+            trigger.classList.remove('open');
+            document.getElementById('commandOptions').classList.remove('open');
+            
+            // Call original select command logic
+            selectCommand(command);
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.querySelector('.command-dropdown');
+            if (!dropdown.contains(e.target)) {
+                const trigger = document.getElementById('commandTrigger');
+                const options = document.getElementById('commandOptions');
+                trigger.classList.remove('open');
+                options.classList.remove('open');
+            }
+        });
         
         // Send request
         async function sendRequest() {
@@ -1181,19 +1288,17 @@
                 const responseTime = Date.now() - responseStartTime;
                 const result = await response.json();
                 
-                document.getElementById('responsePreview').textContent = JSON.stringify(result, null, 2);
-                document.getElementById('responseTime').textContent = `${responseTime}ms`;
-                
                 const statusDot = document.getElementById('statusDot');
                 const statusText = document.getElementById('statusText');
                 
                 if (response.ok && result.status === 'ack') {
                     statusDot.className = 'status-dot success';
-                    statusText.textContent = 'Success';
+                    statusText.textContent = 'ACK';
                 } else {
                     statusDot.className = 'status-dot error';
-                    statusText.textContent = response.status === 404 ? 'Not Found' : 'Error';
+                    statusText.textContent = 'ERROR';
                 }
+                document.getElementById('responseTime').textContent = `${responseTime}ms`;
                 
                 // Auto refresh messages after sending
                 setTimeout(loadMessages, 500);
@@ -1201,11 +1306,9 @@
             } catch (error) {
                 const responseTime = Date.now() - responseStartTime;
                 
-                document.getElementById('responsePreview').textContent = error.message;
                 document.getElementById('responseTime').textContent = `${responseTime}ms`;
-                
                 document.getElementById('statusDot').className = 'status-dot error';
-                document.getElementById('statusText').textContent = 'Error';
+                document.getElementById('statusText').textContent = 'ERROR';
             }
         }
         
@@ -1221,32 +1324,34 @@
                 availableCommands = commandHandlers;
                 
                 // Populate command dropdown with detailed 3-line format
-                const commandSelect = document.getElementById('commandSelect');
-                commandSelect.innerHTML = '<option value="">Select a command...</option>';
+                const commandOptions = document.getElementById('commandOptions');
+                commandOptions.innerHTML = '';
                 
                 commandsWithMetadata.forEach(cmd => {
-                    const option = document.createElement('option');
-                    option.value = cmd.name;
+                    const option = document.createElement('button');
+                    option.className = 'command-option';
+                    option.setAttribute('data-command', cmd.name);
+                    option.onclick = () => selectCommandFromDropdown(cmd.name);
                     
                     // Create 3-line format: command name, org, package
                     const packageParts = (cmd.package || 'core').split('/');
                     const org = packageParts.length > 1 ? packageParts[0] : '@auto-engineer';
                     const packageName = packageParts.length > 1 ? packageParts[1] : packageParts[0];
                     
-                    // Format as 3 lines
-                    const displayText = `${cmd.name}\n${org}\n${packageName}`;
-                    
-                    option.textContent = displayText;
+                    option.innerHTML = `
+                        <div class="command-option-name">${cmd.name}</div>
+                        <div class="command-option-org">${org}</div>
+                        <div class="command-option-package">${packageName}</div>
+                    `;
                     option.title = `${cmd.name}\n\nOrganization: ${org}\nPackage: ${packageName}\nType: ${cmd.type || 'command'}\n\nDescription: ${cmd.description || 'No description available'}`;
                     
-                    commandSelect.appendChild(option);
+                    commandOptions.appendChild(option);
                 });
                 
                 // Restore last selected command
                 const lastCommand = localStorage.getItem('lastCommand');
                 if (lastCommand && commandHandlers.includes(lastCommand)) {
-                    commandSelect.value = lastCommand;
-                    selectCommand(lastCommand);
+                    selectCommandFromDropdown(lastCommand);
                 }
                 
             } catch (error) {
