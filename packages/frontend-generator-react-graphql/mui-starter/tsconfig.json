@@ -3,13 +3,12 @@
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-
     /* Type Safety */
     "strict": false,
     "strictNullChecks": false,
@@ -19,7 +18,6 @@
     "noImplicitAny": false,
     "noImplicitThis": false,
     //    "alwaysStrict": true,
-
     /* Quality Checks */
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -31,7 +29,6 @@
     "skipDefaultLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-
     /* Paths / Aliases */
     "baseUrl": ".",
     "paths": {
