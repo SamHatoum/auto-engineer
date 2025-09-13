@@ -1,8 +1,7 @@
 import {
   command,
   query,
-  decide, // alias for command
-  evolve, // alias for query
+  experience,
   flow,
   should,
   specs,
@@ -96,7 +95,14 @@ type QuestionnaireProgress = State<
 >;
 
 flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
-  command('views the questionnaire', 'AUTO-V7n8Rq5M')
+  experience('Homepage', 'AUTO-H1a4Bn6Cy').interaction(() => {
+    specs(() => {
+      should('show a hero section with a welcome message');
+      should('allow user to start the questionnaire');
+    });
+  });
+
+  query('views the questionnaire', 'AUTO-V7n8Rq5M')
     .server(() => {
       specs(() => {
         rule('questionnaires show current progress', 'AUTO-r1A3Bp9W', () => {
@@ -122,23 +128,23 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               remainingQuestions: ['q2', 'q3'],
               answers: [{ questionId: 'q1', value: 'Yes' }],
             });
+          example('no questions have been answered yet')
+            .given<QuestionnaireLinkSent>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              link: 'https://app.example.com/q/q-001?participant=participant-abc',
+              sentAt: new Date('2030-01-01T09:00:00Z'),
+            })
+            .when({})
+            .then<QuestionnaireProgress>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              status: 'in_progress',
+              currentQuestionId: 'q1',
+              remainingQuestions: ['q1', 'q2', 'q3'],
+              answers: [],
+            });
         });
-        example('no questions have been answered yet')
-          .given<QuestionnaireLinkSent>({
-            questionnaireId: 'q-001',
-            participantId: 'participant-abc',
-            link: 'https://app.example.com/q/q-001?participant=participant-abc',
-            sentAt: new Date('2030-01-01T09:00:00Z'),
-          })
-          .when({} as Event) // FIX ME
-          .then<QuestionnaireProgress>({
-            questionnaireId: 'q-001',
-            participantId: 'participant-abc',
-            status: 'in_progress',
-            currentQuestionId: 'q1',
-            remainingQuestions: ['q1', 'q2', 'q3'],
-            answers: [],
-          });
       });
       data([source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaire-participantId')]);
     })

@@ -16,7 +16,7 @@ const importMap = {
   'graphql-tag': gql,
 };
 
-describe.skip('hasAllIds', () => {
+describe('hasAllIds', () => {
   let vfs: IFileStore;
   const root = '/test';
 
@@ -118,11 +118,11 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
     let found = false;
     for (const flow of modelWithIds.flows) {
       for (const slice of flow.slices) {
-        if (slice.server?.specs?.rules !== undefined && slice.server.specs.rules.length > 0) {
+        if ('server' in slice && slice.server?.specs?.rules !== undefined && slice.server.specs.rules.length > 0) {
           const modifiedModel = structuredClone(modelWithIds);
           const modifiedFlow = modifiedModel.flows.find((f) => f.name === flow.name);
           const modifiedSlice = modifiedFlow?.slices.find((s) => s.name === slice.name);
-          if (modifiedSlice?.server?.specs?.rules !== undefined) {
+          if (modifiedSlice && 'server' in modifiedSlice && modifiedSlice.server?.specs?.rules !== undefined) {
             modifiedSlice.server.specs.rules[0].id = '';
             expect(hasAllIds(modifiedModel)).toBe(false);
             found = true;

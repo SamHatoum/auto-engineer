@@ -22,6 +22,21 @@ import {
   extractMessagesFromSpecs,
   extractProjectionName,
 } from './extract';
+
+function extractGwtSpecs(slice: Slice) {
+  if (!('server' in slice)) return [];
+  const specs = slice.server?.specs;
+  const rules = specs?.rules;
+  return Array.isArray(rules) && rules.length > 0
+    ? rules.flatMap((rule) =>
+        rule.examples.map((example) => ({
+          given: example.given,
+          when: example.when,
+          then: example.then,
+        })),
+      )
+    : [];
+}
 import { Message, MessageDefinition, GwtCondition } from './types';
 import { parseGraphQlRequest } from './extract/graphql';
 import { getStreamFromSink } from './extract/data-sink';
@@ -298,30 +313,34 @@ function annotateEventSources(
   }
 }
 
+function hasEventInGwtSpecs(gwtSpecs: ReturnType<typeof extractGwtSpecs>, eventType: string): boolean {
+  return gwtSpecs.some((g) =>
+    g.then.some(
+      (t) =>
+        typeof t === 'object' && t !== null && 'eventRef' in t && (t as { eventRef: string }).eventRef === eventType,
+    ),
+  );
+}
+
+function canSliceProduceEvent(slice: Slice): boolean {
+  return ['command', 'react'].includes(slice.type) && 'server' in slice && Boolean(slice.server?.specs);
+}
+
 function findEventSource(flows: Flow[], eventType: string): { flowName: string; sliceName: string } | null {
   debugSlice('Finding source for event: %s', eventType);
+
   for (const flow of flows) {
     for (const slice of flow.slices) {
-      if (!['command', 'react'].includes(slice.type)) continue;
+      if (!canSliceProduceEvent(slice)) continue;
 
-      const specs = slice.server?.specs;
-      const rules = specs?.rules;
-      const gwtSpecs =
-        Array.isArray(rules) && rules.length > 0
-          ? rules.flatMap((rule) =>
-              rule.examples.map((example) => ({
-                given: example.given,
-                when: example.when,
-                then: example.then,
-              })),
-            )
-          : [];
-      if (gwtSpecs.some((g) => g.then.some((t) => 'eventRef' in t && t.eventRef === eventType))) {
+      const gwtSpecs = extractGwtSpecs(slice);
+      if (hasEventInGwtSpecs(gwtSpecs, eventType)) {
         debugSlice('  Found event source in flow: %s, slice: %s', flow.name, slice.name);
         return { flowName: flow.name, sliceName: slice.name };
       }
     }
   }
+
   debugSlice('  No source found for event: %s', eventType);
   return null;
 }

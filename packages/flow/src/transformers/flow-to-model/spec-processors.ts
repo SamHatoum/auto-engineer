@@ -267,20 +267,56 @@ export function processWhen(
     }
   } else if (Array.isArray(when)) {
     // when (array)
-    when.forEach((ev) => {
-      const { resolvedName, typeInfo } = resolveTypeAndInfo(ev.eventRef, 'event', ev.exampleData);
-      ev.eventRef = resolvedName;
+    when.forEach((item) => {
+      if ('commandRef' in item) {
+        // Handle commandRef in array items
+        if (item.commandRef === '') {
+          return;
+        }
 
-      // collect example shapes for when (array)
-      if (ev.exampleData !== undefined) {
-        collectExampleHintsForData(resolvedName, ev.exampleData, exampleShapeHints);
-      }
+        const expected = slice.type === 'command' ? 'command' : 'event';
+        const { resolvedName, typeInfo } = resolveTypeAndInfo(item.commandRef, expected, item.exampleData);
 
-      const messageType = typeInfo?.classification || 'event';
-      const msg = createMessage(resolvedName, typeInfo, messageType);
-      const existing = messages.get(resolvedName);
-      if (!existing || preferNewFields(msg.fields, existing.fields)) {
-        messages.set(resolvedName, msg);
+        // Fix ref type if resolved type has different classification
+        if (typeInfo && typeInfo.classification !== 'command') {
+          if (typeInfo.classification === 'event') {
+            delete item.commandRef;
+            item.eventRef = resolvedName;
+          } else if (typeInfo.classification === 'state') {
+            delete item.commandRef;
+            item.stateRef = resolvedName;
+          }
+        } else {
+          item.commandRef = resolvedName;
+        }
+
+        // collect example shapes for when (array commandRef)
+        if (item.exampleData !== undefined) {
+          collectExampleHintsForData(resolvedName, item.exampleData, exampleShapeHints);
+        }
+
+        const messageType = typeInfo?.classification || 'command';
+        const msg = createMessage(resolvedName, typeInfo, messageType);
+        const existing = messages.get(resolvedName);
+        if (!existing || preferNewFields(msg.fields, existing.fields)) {
+          messages.set(resolvedName, msg);
+        }
+      } else if ('eventRef' in item) {
+        // Handle eventRef in array items (existing logic)
+        const { resolvedName, typeInfo } = resolveTypeAndInfo(item.eventRef, 'event', item.exampleData);
+        item.eventRef = resolvedName;
+
+        // collect example shapes for when (array eventRef)
+        if (item.exampleData !== undefined) {
+          collectExampleHintsForData(resolvedName, item.exampleData, exampleShapeHints);
+        }
+
+        const messageType = typeInfo?.classification || 'event';
+        const msg = createMessage(resolvedName, typeInfo, messageType);
+        const existing = messages.get(resolvedName);
+        if (!existing || preferNewFields(msg.fields, existing.fields)) {
+          messages.set(resolvedName, msg);
+        }
       }
     });
   }

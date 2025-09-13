@@ -1,4 +1,4 @@
-import { Slice, CommandExample, EventExample, StateExample } from '@auto-engineer/flow';
+import { Slice, CommandExample, EventExample, StateExample, Example } from '@auto-engineer/flow';
 import { GwtCondition } from '../types';
 
 export function buildCommandGwtMapping(slice: Slice): Record<string, (GwtCondition & { failingFields?: string[] })[]> {
@@ -12,11 +12,12 @@ export function buildCommandGwtMapping(slice: Slice): Record<string, (GwtConditi
 }
 
 function extractGwtSpecs(slice: Slice) {
+  if (!('server' in slice)) return [];
   const specs = slice.server?.specs;
   const rules = specs?.rules;
   return Array.isArray(rules) && rules.length > 0
     ? rules.flatMap((rule) =>
-        rule.examples.map((example) => ({
+        rule.examples.map((example: Example) => ({
           given: example.given,
           when: example.when,
           then: example.then,

@@ -30,8 +30,13 @@ export const get = (strings: TemplateStringsArray, ...values: unknown[]) => {
 };
 
 // Fluent API
-export type { FluentCommandSliceBuilder, FluentQuerySliceBuilder, FluentReactionSliceBuilder } from './fluent-builder';
-export { command, query, react, decide, evolve } from './fluent-builder';
+export type {
+  FluentCommandSliceBuilder,
+  FluentQuerySliceBuilder,
+  FluentReactionSliceBuilder,
+  FluentExperienceSliceBuilder,
+} from './fluent-builder';
+export { command, query, react, experience, decide, evolve } from './fluent-builder';
 
 // Data flow builders
 export { sink, source } from './data-flow-builders';
@@ -65,6 +70,7 @@ export {
   CommandSliceSchema,
   QuerySliceSchema,
   ReactSliceSchema,
+  ExperienceSliceSchema,
   SliceSchema,
   FlowSchema,
   modelSchema,
@@ -85,6 +91,7 @@ import {
   StateExampleSchema,
   QuerySliceSchema,
   ReactSliceSchema,
+  ExperienceSliceSchema,
   MessageSchema,
   CommandSliceSchema,
   ExampleSchema,
@@ -101,6 +108,7 @@ export type ErrorExample = z.infer<typeof ErrorExampleSchema>;
 export type QuerySlice = z.infer<typeof QuerySliceSchema>;
 export type ReactSlice = z.infer<typeof ReactSliceSchema>;
 export type CommandSlice = z.infer<typeof CommandSliceSchema>;
+export type ExperienceSlice = z.infer<typeof ExperienceSliceSchema>;
 export type Message = z.infer<typeof MessageSchema>;
 export type Example = z.infer<typeof ExampleSchema>;
 export type Rule = z.infer<typeof RuleSchema>;

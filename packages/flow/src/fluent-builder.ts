@@ -5,9 +5,11 @@ import {
   endClientBlock,
   startServerBlock,
   endServerBlock,
+  startInteractionBlock,
+  endInteractionBlock,
   getCurrentSlice,
 } from './flow-context';
-import { CommandSlice, QuerySlice, ReactSlice } from './index';
+import { CommandSlice, QuerySlice, ReactSlice, ExperienceSlice } from './index';
 import { print, ASTNode } from 'graphql';
 import createDebug from 'debug';
 
@@ -27,6 +29,10 @@ const debugReact = createDebug('flow:fluent-builder:react');
 if ('color' in debugReact && typeof debugReact === 'object') {
   (debugReact as { color: string }).color = '2';
 } // green
+const debugExperience = createDebug('flow:fluent-builder:experience');
+if ('color' in debugExperience && typeof debugExperience === 'object') {
+  (debugExperience as { color: string }).color = '5';
+} // magenta
 
 export interface FluentCommandSliceBuilder {
   stream(name: string): FluentCommandSliceBuilder;
@@ -52,6 +58,11 @@ export interface FluentReactionSliceBuilder {
   server(description: string, fn: () => void): FluentReactionSliceBuilder;
   via(integration: Integration | Integration[]): FluentReactionSliceBuilder;
   retries(count: number): FluentReactionSliceBuilder;
+}
+
+export interface FluentExperienceSliceBuilder {
+  interaction(fn: () => void): FluentExperienceSliceBuilder;
+  interaction(description: string, fn: () => void): FluentExperienceSliceBuilder;
 }
 
 class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
@@ -302,6 +313,44 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   }
 }
 
+class ExperienceSliceBuilderImpl implements FluentExperienceSliceBuilder {
+  private slice: ExperienceSlice;
+
+  constructor(name: string, id?: string) {
+    debugExperience('Creating experience slice: %s', name);
+    this.slice = {
+      type: 'experience',
+      name,
+      id,
+      interaction: { specs: { name: '', rules: [] } },
+    };
+    addSlice(this.slice);
+    debugExperience('Experience slice added to flow: %s', name);
+  }
+
+  interaction(fn: () => void): FluentExperienceSliceBuilder;
+  interaction(description: string, fn: () => void): FluentExperienceSliceBuilder;
+  interaction(descriptionOrFn: string | (() => void), fn?: () => void): FluentExperienceSliceBuilder {
+    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
+    const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
+
+    debugExperience('Adding interaction block to slice %s, description: "%s"', this.slice.name, description);
+
+    if (callback) {
+      const slice = getCurrentSlice();
+      if (slice) {
+        debugExperience('Starting interaction block execution');
+        startInteractionBlock(slice, description);
+        callback();
+        endInteractionBlock();
+        debugExperience('Interaction block execution completed');
+      }
+    }
+
+    return this;
+  }
+}
+
 export const command = (name: string, id?: string): FluentCommandSliceBuilder => {
   debug('Creating command slice: %s', name);
   return new CommandSliceBuilderImpl(name, id);
@@ -315,6 +364,11 @@ export const query = (name: string, id?: string): FluentQuerySliceBuilder => {
 export const react = (name: string, id?: string): FluentReactionSliceBuilder => {
   debug('Creating react slice: %s', name);
   return new ReactionSliceBuilderImpl(name, id);
+};
+
+export const experience = (name: string, id?: string): FluentExperienceSliceBuilder => {
+  debug('Creating experience slice: %s', name);
+  return new ExperienceSliceBuilderImpl(name, id);
 };
 
 export const decide = (name: string, id?: string): FluentCommandSliceBuilder => {

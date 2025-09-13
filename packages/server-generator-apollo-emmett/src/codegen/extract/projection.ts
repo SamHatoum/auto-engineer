@@ -24,6 +24,7 @@ function isProjectionOrigin(origin: unknown): origin is ProjectionOrigin {
 }
 
 function extractProjectionField<K extends keyof ProjectionOrigin>(slice: Slice, fieldName: K): string | undefined {
+  if (!('server' in slice)) return undefined;
   const dataSource = slice.server?.data?.[0];
   if (!hasOrigin(dataSource)) return undefined;
 

@@ -87,12 +87,7 @@ function buildInitialChain(
   );
 }
 
-function addDestinationToChain(
-  ts: typeof import('typescript'),
-  f: tsNS.NodeFactory,
-  chain: tsNS.Expression,
-  destination: Destination,
-): tsNS.Expression {
+function addDestinationToChain(f: tsNS.NodeFactory, chain: tsNS.Expression, destination: Destination): tsNS.Expression {
   switch (destination.type) {
     case 'stream':
       return f.createCallExpression(
@@ -246,7 +241,7 @@ function buildSingleDataItem(
 
   if ('destination' in it) {
     const sinkItem = it;
-    chain = addDestinationToChain(ts, f, chain, sinkItem.destination);
+    chain = addDestinationToChain(f, chain, sinkItem.destination);
 
     if (sinkItem._withState) {
       const stateCall = buildStateCall(ts, f, sinkItem._withState.origin, sinkItem._withState.target.name);
@@ -320,7 +315,6 @@ function addClientToChain(
 }
 
 function addRequestToChain(
-  ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   chain: tsNS.Expression,
   slice: CommandSlice | QuerySlice | ReactSlice,
@@ -361,12 +355,15 @@ function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' |
   if (example.when !== null && example.when !== undefined) {
     if (Array.isArray(example.when)) {
       // Array of events for react slices
-      gwtBlock.when = example.when.map((when) => {
+      const mappedWhen = example.when.map((when) => {
         if ('eventRef' in when) {
           return { eventRef: when.eventRef, exampleData: when.exampleData };
+        } else if ('commandRef' in when) {
+          return { commandRef: when.commandRef, exampleData: when.exampleData };
         }
         return when;
       });
+      gwtBlock.when = mappedWhen;
     } else {
       // Single object - could be command (command slices) or event (query slices)
       if ('commandRef' in example.when) {
@@ -487,7 +484,7 @@ function buildSlice(
   ]);
 
   chain = addClientToChain(ts, f, chain, slice);
-  chain = addRequestToChain(ts, f, chain, slice);
+  chain = addRequestToChain(f, chain, slice);
   chain = addServerToChain(ts, f, chain, slice);
 
   return f.createExpressionStatement(chain);

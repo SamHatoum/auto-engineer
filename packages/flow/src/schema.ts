@@ -177,7 +177,7 @@ const ExampleSchema = z
       .optional()
       .describe('Given conditions'),
     when: z
-      .union([CommandExampleSchema, EventExampleSchema, z.array(EventExampleSchema)])
+      .union([CommandExampleSchema, EventExampleSchema, z.array(CommandExampleSchema), z.array(EventExampleSchema)])
       .describe('When action or events occur'),
     then: z
       .array(z.union([EventExampleSchema, StateExampleSchema, CommandExampleSchema, ErrorExampleSchema]))
@@ -252,7 +252,20 @@ const ReactSliceSchema = BaseSliceSchema.extend({
   }),
 }).describe('React slice for automated responses to events');
 
-const SliceSchema = z.discriminatedUnion('type', [CommandSliceSchema, QuerySliceSchema, ReactSliceSchema]);
+const ExperienceSliceSchema = BaseSliceSchema.extend({
+  type: z.literal('experience'),
+  interaction: z.object({
+    description: z.string().optional(),
+    specs: SpecSchema.describe('Experience specifications with rules and examples'),
+  }),
+}).describe('Experience slice for user interactions and UI behavior');
+
+const SliceSchema = z.discriminatedUnion('type', [
+  CommandSliceSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+  ExperienceSliceSchema,
+]);
 
 const FlowSchema = z
   .object({
@@ -365,6 +378,7 @@ export {
   CommandSliceSchema,
   QuerySliceSchema,
   ReactSliceSchema,
+  ExperienceSliceSchema,
   SliceSchema,
   FlowSchema,
   ExampleSchema,

@@ -180,10 +180,47 @@ on<ClientGeneratedEvent>('ClientGenerated', (event) =>
 // );
 
 /*
-rm -rf server
+
+rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json 
 pnpm auto export:schema
-pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts
+pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/questionnaires.flow.ts
 pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
-pnpm auto generate:client --starter-dir=/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter  --target-dir=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client  --ia-schema-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/auto-ia-scheme.json  --gql-schema-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.graphql  --figma-variables-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/figma-variables.json
-pnpm auto implement:client --project-dir=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client --ia-scheme-dir=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context --design-system-path=/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/design-system.md
+pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+pnpm auto implement:client --project-dir=./questionnaires/client --ia-scheme-dir=./questionnaires/.context --design-system-path=./questionnaires/.context/design-system.md
+
+
+// make this emit one slice at a time
+pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
+
+// TODO remove the AI part and make it mathematical
+pnpm auto generate:client --starter-dir=/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter  --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+
+// run this per slice in parallel
+pnpm auto implement:slice --slice-path=./questionnaires/server/src/domain/flows/questionnaires/submits-the-questionnaire
+// add checks
+// add retry logic tore-implement failed slices with a retry count
+
+// slice these up
+pnpm auto implement:client --project-dir=./questionnaires/client --ia-scheme-dir=./questionnaires/.context --design-system-path=./questionnaires/.context/design-system.md
+
+
+// implement atoms in parallel - how do I know all atoms are done?
+// implement molecules in parallel - how do I know all molecules are done?
+// implement organisms in parallel - how do I know all organisms are done?
+// implement pages in parallel - how do I know all pages are done?
+
+
+// generate slice > implement slice > check slice > retry failure 3 times > 
+// generate slice > implement slice > check slice > retry failure 3 times > 
+// generate slice > implement slice > check slice > retry failure 3 times > 
+
+cd ~/WebstormProjects/top/auto-engineer/examples/questionnaires &&\
+pnpm -w build &&\
+rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json &&\
+DEBUG=* pnpm auto export:schema &&\
+DEBUG=* pnpm auto generate:server --schema-path=./.context/schema.json --destination=. &&\
+DEBUG=* pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/questionnaires.flow.ts &&\
+DEBUG=* pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+
+
 */

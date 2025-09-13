@@ -50,6 +50,7 @@ function extractExampleDataFromSpecs(
 }
 
 function extractGwtSpecs(slice: Slice) {
+  if (!('server' in slice)) return [];
   const specs = slice.server?.specs;
   const rules = specs?.rules;
   return Array.isArray(rules) && rules.length > 0
@@ -89,6 +90,7 @@ function processStreamSink(item: unknown, exampleData: Record<string, unknown>) 
 }
 
 export function getStreamFromSink(slice: Slice): { streamPattern?: string; streamId?: string } {
+  if (!('server' in slice)) return {};
   const gwtSpecs = extractGwtSpecs(slice);
   const exampleData = extractExampleDataFromSpecs(slice, gwtSpecs);
   const serverData = slice.server?.data;

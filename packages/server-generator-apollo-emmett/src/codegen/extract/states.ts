@@ -10,14 +10,18 @@ function createStateMessage(stateName: string, allMessages: MessageDefinition[])
 }
 
 export function extractStatesFromTarget(slice: Slice, allMessages: MessageDefinition[]): Message[] {
-  const targets = slice.server?.data?.map((d) => d.target?.name).filter(Boolean) as string[];
+  if (!('server' in slice) || !slice.server?.data) {
+    return [];
+  }
+
+  const targets = slice.server.data.map((d) => d.target?.name).filter((name): name is string => Boolean(name));
   const uniqueTargets = Array.from(new Set(targets));
 
   return uniqueTargets.map((name) => createStateMessage(name, allMessages));
 }
 
 export function extractStatesFromData(slice: Slice, allMessages: MessageDefinition[]): Message[] {
-  if (!slice.server?.data) {
+  if (!('server' in slice) || !slice.server?.data) {
     return [];
   }
 

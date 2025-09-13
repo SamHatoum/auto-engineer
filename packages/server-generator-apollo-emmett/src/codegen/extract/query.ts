@@ -23,7 +23,7 @@ export function buildQueryGwtMapping(slice: Slice): QueryGwtCondition[] {
       : [];
 
   return gwtSpecs.map((gwt) => ({
-    given: gwt.given,
+    given: gwt.given.filter((item): item is EventExample => 'eventRef' in item),
     then: gwt.then.filter(
       (item): item is { stateRef: string; exampleData: Record<string, unknown> } => 'stateRef' in item,
     ),

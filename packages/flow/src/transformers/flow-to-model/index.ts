@@ -1,4 +1,4 @@
-import { Flow, Message, Model } from '../../index';
+import { Flow, Message, Model, Slice } from '../../index';
 import { globalIntegrationRegistry } from '../../integration-registry';
 import { integrationExportRegistry } from '../../integration-export-registry';
 import { TypeInfo } from '../../loader/ts-utils';
@@ -9,6 +9,12 @@ import { extractMessagesFromIntegrations, processDataItemIntegrations } from './
 import { matchesFlowPattern } from './strings';
 import { assembleSpecs } from './assemble';
 import { processGiven, processWhen, processThen } from './spec-processors';
+
+type TypeResolver = (
+  t: string,
+  expected?: 'command' | 'event' | 'state',
+  exampleData?: unknown,
+) => { resolvedName: string; typeInfo: TypeInfo | undefined };
 
 function buildUnionTypes(typesByFile?: Map<string, Map<string, TypeInfo>>): Map<string, TypeInfo> | undefined {
   if (!typesByFile) return undefined;
@@ -123,6 +129,95 @@ function createTypeResolver(
   };
 }
 
+function getSliceSpecs(slice: Slice) {
+  if ('server' in slice && slice.server?.specs !== undefined) {
+    return slice.server.specs;
+  } else if ('client' in slice && slice.client?.specs !== undefined) {
+    return slice.client.specs;
+  } else if ('interaction' in slice && slice.interaction?.specs !== undefined) {
+    return slice.interaction.specs;
+  }
+  return undefined;
+}
+
+function processSliceSpecs(
+  slice: Slice,
+  resolveTypeAndInfo: TypeResolver,
+  messages: Map<string, Message>,
+  exampleShapeHints: ExampleShapeHints,
+): void {
+  const spec = getSliceSpecs(slice);
+
+  if (spec !== undefined && Array.isArray(spec.rules)) {
+    spec.rules.forEach((rule: unknown) => {
+      // Only process rule objects (server/interaction specs), not string rules (client specs)
+      if (
+        typeof rule === 'object' &&
+        rule !== null &&
+        'examples' in rule &&
+        Array.isArray((rule as { examples: unknown[] }).examples)
+      ) {
+        const ruleObj = rule as { examples: { given?: unknown; when?: unknown; then?: unknown }[] };
+        ruleObj.examples.forEach((example) => {
+          if (example.given !== undefined && example.given !== null) {
+            const givenArray = Array.isArray(example.given) ? example.given : [example.given];
+            processGiven(givenArray, resolveTypeAndInfo, messages, exampleShapeHints);
+          }
+          if (example.when !== undefined && example.when !== null) {
+            const whenArray = Array.isArray(example.when) ? example.when : [example.when];
+            processWhen(whenArray, slice, resolveTypeAndInfo, messages, exampleShapeHints);
+          }
+          if (example.then !== undefined && example.then !== null) {
+            const thenArray = Array.isArray(example.then) ? example.then : [example.then];
+            processThen(thenArray, resolveTypeAndInfo, messages, exampleShapeHints);
+          }
+        });
+      }
+    });
+  }
+}
+
+function processSliceIntegrations(
+  slice: Slice,
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+  messages: Map<string, Message>,
+): void {
+  // Integrations: from data & via
+  if ('server' in slice && slice.server?.data !== undefined) {
+    slice.server.data.forEach((d: unknown) => {
+      processDataItemIntegrations(d, integrations, messages);
+    });
+  }
+  if ('via' in slice && slice.via) {
+    slice.via.forEach((integrationName: string) => {
+      if (!integrations.has(integrationName)) {
+        integrations.set(integrationName, {
+          name: integrationName,
+          description: `${integrationName} integration`,
+          source: `@auto-engineer/${integrationName.toLowerCase()}-integration`,
+        });
+      }
+    });
+  }
+}
+
+function processFlow(
+  flow: Flow,
+  getFlowSpecificTypes: (flow: Flow) => Map<string, TypeInfo> | undefined,
+  unionTypes: Map<string, TypeInfo> | undefined,
+  messages: Map<string, Message>,
+  integrations: Map<string, { name: string; description?: string; source: string }>,
+  exampleShapeHints: ExampleShapeHints,
+): void {
+  const flowSpecificTypes = getFlowSpecificTypes(flow);
+  const resolveTypeAndInfo = createTypeResolver(flowSpecificTypes, unionTypes);
+
+  flow.slices.forEach((slice) => {
+    processSliceSpecs(slice, resolveTypeAndInfo, messages, exampleShapeHints);
+    processSliceIntegrations(slice, integrations, messages);
+  });
+}
+
 export const flowsToModel = (flows: Flow[], typesByFile?: Map<string, Map<string, TypeInfo>>): Model => {
   const messages = new Map<string, Message>();
   const integrations = new Map<
@@ -150,42 +245,9 @@ export const flowsToModel = (flows: Flow[], typesByFile?: Map<string, Map<string
     return getTypesForFlow(flow, typesByFile);
   };
 
-  flows.forEach((flow) => {
-    const flowSpecificTypes = getFlowSpecificTypes(flow);
-    const resolveTypeAndInfo = createTypeResolver(flowSpecificTypes, unionTypes);
-    flow.slices.forEach((slice) => {
-      // Extract messages from server specs (Given/When/Then)
-      if ('server' in slice && slice.server?.specs !== undefined) {
-        const spec = slice.server.specs;
-        spec.rules.forEach((rule) => {
-          rule.examples.forEach((example) => {
-            if (example.given) {
-              processGiven(example.given, resolveTypeAndInfo, messages, exampleShapeHints);
-            }
-            processWhen(example.when, slice, resolveTypeAndInfo, messages, exampleShapeHints);
-            processThen(example.then, resolveTypeAndInfo, messages, exampleShapeHints);
-          });
-        });
-      }
-      // Integrations: from data & via
-      if ('server' in slice && slice.server?.data !== undefined) {
-        slice.server.data.forEach((d) => {
-          processDataItemIntegrations(d, integrations, messages);
-        });
-      }
-      if ('via' in slice && slice.via) {
-        slice.via.forEach((integrationName) => {
-          if (!integrations.has(integrationName)) {
-            integrations.set(integrationName, {
-              name: integrationName,
-              description: `${integrationName} integration`,
-              source: `@auto-engineer/${integrationName.toLowerCase()}-integration`,
-            });
-          }
-        });
-      }
-    });
-  });
+  flows.forEach((flow) =>
+    processFlow(flow, getFlowSpecificTypes, unionTypes, messages, integrations, exampleShapeHints),
+  );
   // Ensure all registered integrations are listed
   for (const integration of registeredIntegrations) {
     const exportName = integrationExportRegistry.getExportNameForIntegration(integration);

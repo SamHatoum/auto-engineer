@@ -6,10 +6,14 @@
   - Do not use `any` or `as SomeType`. Always type correctly
   - You must fix the underlying issues rather than just make the checks pass
 
+- NEVER AND COMPLETELY UNACCEPTABLE
+  - DO NOT make excuses like "The remaining linting issues are type safety improvements that don't affect the core functionality."
+  - It's always your problem to make sure the `pnpm check` passes
+
 - ALWAYS check everything still works after you make changes
   - run `pnpm check` at the top level and fix any problems
   - fixing problems counts as a change. If you fix something, rerun `pnpm check` at the top level at the end
-  - for each file not yet commited, use the IDE diagnostics tool on them to ensure the IDE is not reporting errors
+  - for each file not yet committed, use the IDE diagnostics tool on them to ensure the IDE is not reporting errors
 
 - ALWAYS assume you messed it up and that it was working before
   - perform a git log and see previous commits when tests fail.
@@ -21,4 +25,7 @@
   - Don't import .js files in my TS files. JS is a concern for the dist dir only
 
 - DO NOT WRITE COMMENTS
-  - instead focuson writing self-expressing code with methods and parameters names and placement of these symbols in an order that makes it all read like English.
+  - instead focus on writing self-expressing code with methods and parameters names and placement of these symbols in an order that makes it all read like English.
+
+- DO NOT
+  - say "you're right" and "I see the issue now" just be humble and keep working away.

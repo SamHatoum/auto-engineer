@@ -23,7 +23,10 @@ export type GWTBlock = {
   when?:
     | { commandRef: string; exampleData: Record<string, unknown> }
     | { eventRef: string; exampleData: Record<string, unknown> }
-    | Array<{ eventRef: string; exampleData: Record<string, unknown> }>;
+    | Array<
+        | { commandRef: string; exampleData: Record<string, unknown> }
+        | { eventRef: string; exampleData: Record<string, unknown> }
+      >;
   then: Array<
     | { eventRef: string; exampleData: Record<string, unknown> }
     | { commandRef: string; exampleData: Record<string, unknown> }
