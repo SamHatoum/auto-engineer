@@ -1,5 +1,5 @@
 import { flow, specs, rule, example } from '../flow';
-import { commandSlice, querySlice, reactSlice } from '../fluent-builder';
+import { command, query, react } from '../fluent-builder';
 import { type Event, type Command, type State } from '../types';
 
 type TestItemCreated = Event<
@@ -28,7 +28,7 @@ type TestItemState = State<
 >;
 
 flow('Test Flow with IDs', 'FLOW-001', () => {
-  commandSlice('Create test item', 'SLICE-001')
+  command('Create test item', 'SLICE-001')
     .client(() => {})
     .server(() => {
       specs('Test item creation specs', () => {
@@ -61,7 +61,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
       });
     });
 
-  querySlice('Get test items', 'SLICE-002')
+  query('Get test items', 'SLICE-002')
     .client(() => {})
     .server(() => {
       specs('Test item retrieval specs', () => {
@@ -80,7 +80,7 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
       });
     });
 
-  reactSlice('React to test event', 'SLICE-003').server(() => {
+  react('React to test event', 'SLICE-003').server(() => {
     specs('Test event reaction specs', () => {
       rule('System should react to test item creation', 'RULE-004', () => {
         example('Notification sent when test item is created')

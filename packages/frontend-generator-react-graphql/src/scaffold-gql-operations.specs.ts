@@ -27,21 +27,6 @@ describe('GraphQL Query Field Merging', () => {
       }
     `;
 
-    const expected = `
-      query QuestionnaireProgress($participantId: ID!) {
-        questionnaireProgress(participantId: $participantId) {
-          questionnaireId
-          participantId
-          status
-          currentQuestionId
-          answers {
-            questionId
-            value
-          }
-        }
-      }
-    `;
-
     const operations = [
       {
         operationType: 'query' as const,

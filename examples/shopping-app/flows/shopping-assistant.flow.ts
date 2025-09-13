@@ -1,7 +1,7 @@
 import {
-  commandSlice,
-  querySlice,
-  reactSlice,
+  command,
+  query,
+  react,
   flow,
   should,
   specs,
@@ -75,7 +75,7 @@ type AddItemsToCart = Command<
 >;
 
 flow('Seasonal Assistant', () => {
-  commandSlice('enters shopping criteria into assistant')
+  command('enters shopping criteria into assistant')
     .client(() => {
       specs('Assistant Chat Interface', () => {
         should('allow shopper to describe their shopping needs in natural language');
@@ -116,7 +116,7 @@ flow('Seasonal Assistant', () => {
       });
     });
 
-  reactSlice('creates a chat session').server(() => {
+  react('creates a chat session').server(() => {
     specs('When shopping criteria are entered, request wishlist creation', () => {
       rule('Shopping criteria should trigger item suggestion', () => {
         example('Criteria entered triggers wishlist creation')
@@ -134,7 +134,7 @@ flow('Seasonal Assistant', () => {
     });
   });
 
-  commandSlice('selects items relevant to the shopping criteria').server(() => {
+  command('selects items relevant to the shopping criteria').server(() => {
     data([
       sink()
         .command('SuggestShoppingItems')
@@ -223,7 +223,7 @@ flow('Seasonal Assistant', () => {
     });
   });
 
-  querySlice('views suggested items')
+  query('views suggested items')
     .request(gql`
       query GetSuggestedItems($sessionId: ID!) {
         suggestedItems(sessionId: $sessionId) {
@@ -312,7 +312,7 @@ flow('Seasonal Assistant', () => {
       });
     });
 
-  commandSlice('accepts items and adds to their cart')
+  command('accepts items and adds to their cart')
     .client(() => {
       specs('Suggested Items Screen', () => {
         should('allow selecting specific items to add');

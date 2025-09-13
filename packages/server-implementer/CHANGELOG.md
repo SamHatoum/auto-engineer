@@ -1,5 +1,14 @@
 # @auto-engineer/server-implementer
 
+## 0.8.14
+
+### Patch Changes
+
+- Update flow to not require slice
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.8.14
+  - @auto-engineer/message-bus@0.8.14
+
 ## 0.8.13
 
 ### Patch Changes

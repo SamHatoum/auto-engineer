@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.8.14
+
+### Patch Changes
+
+- Update flow to not require slice
+
 ## 0.8.13
 
 ## 0.8.12

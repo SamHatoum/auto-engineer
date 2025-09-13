@@ -414,7 +414,7 @@ describe.skip(
       const memoryVfs = new InMemoryFileStore();
       const questionnaireFlowContent = `
 import { data, flow, should, specs, rule, example } from '../flow';
-import { commandSlice, querySlice } from '../fluent-builder';
+import { command, query } from '../fluent-builder';
 import gql from 'graphql-tag';
 import { source } from '../data-flow-builders';
 import { type Event, type Command, type State } from '../types';
@@ -461,7 +461,7 @@ type QuestionnaireProgress = State<
 >;
 
 flow('questionnaires-test', () => {
-  querySlice('views progress')
+  query('views progress')
     .server(() => {
       specs('Questionnaire progress display', () => {
         rule('shows answered questions', () => {
@@ -486,7 +486,7 @@ flow('questionnaires-test', () => {
       });
     });
   
-  commandSlice('submits questionnaire')
+  command('submits questionnaire')
     .server(() => {
       specs('Questionnaire submission', () => {
         rule('allows submission when ready', () => {

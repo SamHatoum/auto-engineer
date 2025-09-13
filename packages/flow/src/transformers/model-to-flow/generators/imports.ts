@@ -11,9 +11,9 @@ export function buildImports(
 
   // Flow value and type imports in one statement as expected
   const flowValueNames = [
-    'commandSlice',
-    'querySlice',
-    'reactSlice',
+    'command',
+    'query',
+    'react',
     'flow',
     'should',
     'specs',

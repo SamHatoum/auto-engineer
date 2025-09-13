@@ -31,7 +31,7 @@ export const get = (strings: TemplateStringsArray, ...values: unknown[]) => {
 
 // Fluent API
 export type { FluentCommandSliceBuilder, FluentQuerySliceBuilder, FluentReactionSliceBuilder } from './fluent-builder';
-export { commandSlice, querySlice, reactSlice } from './fluent-builder';
+export { command, query, react, decide, evolve } from './fluent-builder';
 
 // Data flow builders
 export { sink, source } from './data-flow-builders';

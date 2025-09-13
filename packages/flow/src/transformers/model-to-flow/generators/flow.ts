@@ -480,7 +480,7 @@ function buildSlice(
   f: tsNS.NodeFactory,
   slice: CommandSlice | QuerySlice | ReactSlice,
 ): tsNS.Statement {
-  const sliceCtor = slice.type === 'command' ? 'commandSlice' : slice.type === 'query' ? 'querySlice' : 'reactSlice';
+  const sliceCtor = slice.type === 'command' ? 'command' : slice.type === 'query' ? 'query' : 'react';
 
   let chain: tsNS.Expression = f.createCallExpression(f.createIdentifier(sliceCtor), undefined, [
     f.createStringLiteral(slice.name),

@@ -25,10 +25,10 @@ describe.skip('hasAllIds', () => {
 
     const flowWithoutIds = `
 import { flow, specs, rule, example } from '../flow';
-import { commandSlice } from '../fluent-builder';
+import { command } from '../fluent-builder';
 
 flow('Test Flow Without IDs', () => {
-  commandSlice('Test slice without ID')
+  command('Test slice without ID')
     .server(() => {
       specs('Test specs', () => {
         rule('Test rule without ID', () => {
@@ -42,10 +42,10 @@ flow('Test Flow Without IDs', () => {
 
     const flowWithIds = `
 import { flow, specs, rule, example } from '../flow';
-import { commandSlice } from '../fluent-builder';
+import { command } from '../fluent-builder';
 
 flow('Test Flow with IDs', 'FLOW-001', () => {
-  commandSlice('Test slice with ID', 'SLICE-001')
+  command('Test slice with ID', 'SLICE-001')
     .server(() => {
       specs('Test specs', () => {
         rule('Test rule with ID', 'RULE-001', () => {

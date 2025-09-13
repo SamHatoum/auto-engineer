@@ -1,6 +1,8 @@
 import {
-  commandSlice,
-  querySlice,
+  command,
+  query,
+  decide, // alias for command
+  evolve, // alias for query
   flow,
   should,
   specs,
@@ -94,7 +96,7 @@ type QuestionnaireProgress = State<
 >;
 
 flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
-  querySlice('views the questionnaire', 'AUTO-V7n8Rq5M')
+  command('views the questionnaire', 'AUTO-V7n8Rq5M')
     .server(() => {
       specs(() => {
         rule('questionnaires show current progress', 'AUTO-r1A3Bp9W', () => {
@@ -164,7 +166,7 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       });
     });
 
-  commandSlice('submits a questionnaire answer', 'AUTO-S4j6Nt8Z')
+  command('submits a questionnaire answer', 'AUTO-S4j6Nt8Z')
     .server(() => {
       specs(() => {
         rule('answers are allowed while the questionnaire has not been submitted', 'AUTO-r2D5Eq0Y', () => {
@@ -222,7 +224,7 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       });
     });
 
-  querySlice('questionnaire ready for submission', 'AUTO-R3f7Hu1X')
+  query('questionnaire ready for submission', 'AUTO-R3f7Hu1X')
     .server(() => {
       specs(() => {
         rule('questionnaire is ready for submission when all questions are answered', 'AUTO-r3G8Iv2W', () => {
@@ -314,7 +316,7 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       });
     });
 
-  commandSlice('submits the questionnaire', 'AUTO-T5k9Jw3V')
+  command('submits the questionnaire', 'AUTO-T5k9Jw3V')
     .server(() => {
       specs(() => {
         rule('questionnaire allowed to be submitted when all questions are answered', 'AUTO-r4H0Lx4U', () => {

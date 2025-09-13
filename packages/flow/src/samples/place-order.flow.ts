@@ -1,5 +1,5 @@
 import { flow, should, specs, rule, example } from '../flow';
-import { commandSlice } from '../fluent-builder';
+import { command } from '../fluent-builder';
 
 export interface OrderPlaced {
   type: 'OrderPlaced';
@@ -29,7 +29,7 @@ export interface OrderSummary {
 }
 
 flow('Place order', () => {
-  commandSlice('Submit order')
+  command('Submit order')
     .stream('order-${orderId}')
     .client(() => {
       specs('Order submission form', () => {

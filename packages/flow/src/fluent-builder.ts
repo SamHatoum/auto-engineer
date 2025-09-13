@@ -302,17 +302,27 @@ class ReactionSliceBuilderImpl implements FluentReactionSliceBuilder {
   }
 }
 
-export const commandSlice = (name: string, id?: string): FluentCommandSliceBuilder => {
-  debug('Creating command slice via factory: %s', name);
+export const command = (name: string, id?: string): FluentCommandSliceBuilder => {
+  debug('Creating command slice: %s', name);
   return new CommandSliceBuilderImpl(name, id);
 };
 
-export const querySlice = (name: string, id?: string): FluentQuerySliceBuilder => {
-  debug('Creating query slice via factory: %s', name);
+export const query = (name: string, id?: string): FluentQuerySliceBuilder => {
+  debug('Creating query slice: %s', name);
   return new QuerySliceBuilderImpl(name, id);
 };
 
-export const reactSlice = (name: string, id?: string): FluentReactionSliceBuilder => {
-  debug('Creating reaction slice via factory: %s', name);
+export const react = (name: string, id?: string): FluentReactionSliceBuilder => {
+  debug('Creating react slice: %s', name);
   return new ReactionSliceBuilderImpl(name, id);
+};
+
+export const decide = (name: string, id?: string): FluentCommandSliceBuilder => {
+  debug('Creating command slice via decide alias: %s', name);
+  return new CommandSliceBuilderImpl(name, id);
+};
+
+export const evolve = (name: string, id?: string): FluentQuerySliceBuilder => {
+  debug('Creating query slice via evolve alias: %s', name);
+  return new QuerySliceBuilderImpl(name, id);
 };

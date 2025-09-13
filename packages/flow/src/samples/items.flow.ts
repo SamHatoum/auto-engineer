@@ -1,5 +1,5 @@
 import { data, flow, should, specs, rule, example } from '../flow';
-import { commandSlice, querySlice } from '../fluent-builder';
+import { command, query } from '../fluent-builder';
 import gql from 'graphql-tag';
 import { source } from '../data-flow-builders';
 import { type Event, type Command, type State } from '../types';
@@ -30,7 +30,7 @@ type AvailableItems = State<
 >;
 
 flow('items', () => {
-  commandSlice('Create item')
+  command('Create item')
     .stream('item-${id}')
     .client(() => {
       specs('A form that allows users to add items', () => {
@@ -54,7 +54,7 @@ flow('items', () => {
       });
     });
 
-  querySlice('view items')
+  query('view items')
     .request(gql`
       query items($itemId: String!) {
         items(itemId: $itemId) {
