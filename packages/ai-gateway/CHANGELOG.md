@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.9.0
+
+### Minor Changes
+
+- add a new experience slice type
+
 ## 0.8.14
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @auto-engineer/frontend-react-graphql-generator
 
+## 0.9.0
+
+### Minor Changes
+
+- add a new experience slice type
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/ai-gateway@0.9.0
+  - @auto-engineer/message-bus@0.9.0
+
 ## 0.8.14
 
 ### Patch Changes

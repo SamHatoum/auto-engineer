@@ -1,5 +1,17 @@
 # @auto-engineer/server-generator-apollo-emmett
 
+## 0.9.0
+
+### Minor Changes
+
+- add a new experience slice type
+
+### Patch Changes
+
+- Updated dependencies
+  - @auto-engineer/flow@0.9.0
+  - @auto-engineer/message-bus@0.9.0
+
 ## 0.8.14
 
 ### Patch Changes
