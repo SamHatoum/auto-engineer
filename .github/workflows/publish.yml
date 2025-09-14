@@ -65,31 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Get Published Packages
-        if: success()
-        id: get_packages
+      - name: Print Published Packages
+        if: steps.changesets.outputs.published == 'true'
         run: |
-          # Get packages that were published in this release
-          PACKAGES=$(find .changeset -name "*.md" -type f -exec cat {} \; | grep -o '"@auto-engineer/[^"]*"' | sort -u | sed 's/"//g')
-          echo "packages<<EOF" >> $GITHUB_OUTPUT
-          echo "$PACKAGES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Configure Git
-        if: success()
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "github-actions@github.com"
-
-      - name: Create Tags
-        if: success()
-        run: |
-          COMMIT=$(git rev-parse HEAD)
-          while IFS= read -r package; do
-            if [[ $package == @auto-engineer/* ]]; then
-              version=$(pnpm list $package --json | jq -r '.[0].version')
-              tag="${package#@auto-engineer/}-v${version}"
-              git tag -a "$tag" -m "Release $package@$version" $COMMIT
-              git push origin "$tag"
-            fi
-          done <<< "${{ steps.get_packages.outputs.packages }}"
+          echo "Packages published: ${{ steps.changesets.outputs.publishedPackages }}"
