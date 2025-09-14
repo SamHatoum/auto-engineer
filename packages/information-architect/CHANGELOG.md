@@ -1,5 +1,21 @@
 # @auto-engineer/information-architect
 
+## 0.9.3
+
+### Patch Changes
+
+- [`7c6fcef`](https://github.com/SamHatoum/auto-engineer/commit/7c6fcef7dfdad827a1b4b74bc1a11a3c727dcead) Thanks [@SamHatoum](https://github.com/SamHatoum)! - fix: restore Git tag creation to enable GitHub releases
+
+  Restores the custom Git tag creation logic that was working in v0.8.3. The createGithubReleases setting needs actual Git tags to exist before it can create GitHub releases. This adds back the tag creation steps that were accidentally removed, ensuring that both npm publishing and GitHub releases work correctly.
+
+- [`14b1ba8`](https://github.com/SamHatoum/auto-engineer/commit/14b1ba8c689edaad586acce0d4defb9647f7cad1) Thanks [@SamHatoum](https://github.com/SamHatoum)! - test: verify that Git tag creation and GitHub releases work
+
+  This changeset tests that our restored Git tag creation logic from v0.8.3 successfully creates both Git tags and GitHub releases when packages are published.
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
 ## 0.9.2
 
 ### Patch Changes
