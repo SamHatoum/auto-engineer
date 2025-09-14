@@ -1,0 +1,72 @@
+name: Test Publish (Fast)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test-publish:
+    runs-on: ubuntu-latest
+    if: github.repository == 'SamHatoum/auto-engineer'
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+          commit: 'chore(global): version packages'
+          title: 'chore(global): version packages'
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Print Published Packages
+        run: echo '${{ steps.changesets.outputs.publishedPackages }}'
+
+      - name: Get Published Packages for Tagging
+        id: packages
+        run: echo "packages=${{ steps.changesets.outputs.publishedPackages }}" >> $GITHUB_OUTPUT
+
+      - name: Configure Git for Tagging
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Tags and Push
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          COMMIT=$(git rev-parse HEAD)
+          echo "Creating tags for commit: $COMMIT"
+          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -c '.[]' | while read -r package; do
+            name=$(echo $package | jq -r '.name')
+            version=$(echo $package | jq -r '.version')
+            if [[ $name == @auto-engineer/* ]]; then
+              tag="${name}@${version}"
+              echo "Creating tag: $tag"
+              git tag -a "$tag" -m "Release $name@$version" $COMMIT
+              git push origin "$tag"
+              echo "✅ Created and pushed tag: $tag"
+            fi
+          done
