@@ -1,6 +1,6 @@
 {
   "name": "create-auto-app",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Create Auto Engineer apps with no configuration",
   "type": "module",
   "bin": {
