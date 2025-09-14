@@ -1,5 +1,14 @@
 # @auto-engineer/flow
 
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.2
+  - @auto-engineer/id@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
 ## 0.9.1
 
 ### Patch Changes
