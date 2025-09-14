@@ -1,5 +1,19 @@
 # @auto-engineer/information-architect
 
+## 0.9.1
+
+### Patch Changes
+
+- [`e789ce5`](https://github.com/SamHatoum/auto-engineer/commit/e789ce5edd6d94987cf431d674b9a85b942bc396) Thanks [@SamHatoum](https://github.com/SamHatoum)! - fix: remove unused import causing lint failure in CI
+
+- [`70e5920`](https://github.com/SamHatoum/auto-engineer/commit/70e59201f8fbbc5c6f454bab7d2deb738f6e8ee6) Thanks [@SamHatoum](https://github.com/SamHatoum)! - test: trigger release to verify fixed GitHub workflow
+
+  This is a test changeset to verify that the GitHub workflow now correctly creates tags and releases after fixing the conflicting tag creation logic.
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.1
+  - @auto-engineer/message-bus@0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
