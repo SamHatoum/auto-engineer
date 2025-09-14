@@ -1,5 +1,17 @@
 # @auto-engineer/information-architect
 
+## 0.9.2
+
+### Patch Changes
+
+- [`1060b10`](https://github.com/SamHatoum/auto-engineer/commit/1060b103eb8b99bc3b1f7ed29bdede9d3b0b445b) Thanks [@SamHatoum](https://github.com/SamHatoum)! - test: verify GitHub releases creation works in v0.9.2
+
+  This changeset tests that the createGithubReleases functionality works properly after our configuration fixes. Should create GitHub releases and tags when published.
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
 ## 0.9.1
 
 ### Patch Changes
