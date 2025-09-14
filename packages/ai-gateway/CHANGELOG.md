@@ -1,5 +1,7 @@
 # @auto-engineer/ai-gateway
 
+## 0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
