@@ -66,12 +66,12 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Print Published Packages
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.publishedPackages != '' && steps.changesets.outputs.publishedPackages != '[]'
         run: |
           echo "Packages published: ${{ steps.changesets.outputs.publishedPackages }}"
 
       - name: Get Published Packages for Tagging
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.publishedPackages != '' && steps.changesets.outputs.publishedPackages != '[]'
         id: get_packages
         run: |
           echo "Getting package information from publishedPackages output..."
@@ -81,13 +81,13 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Configure Git for Tagging
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.publishedPackages != '' && steps.changesets.outputs.publishedPackages != '[]'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create Tags and Push
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.publishedPackages != '' && steps.changesets.outputs.publishedPackages != '[]'
         run: |
           COMMIT=$(git rev-parse HEAD)
           echo "Creating tags for commit: $COMMIT"
