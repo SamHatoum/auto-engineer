@@ -69,3 +69,43 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         run: |
           echo "Packages published: ${{ steps.changesets.outputs.publishedPackages }}"
+
+      - name: Get Published Packages for Tagging
+        if: steps.changesets.outputs.published == 'true'
+        id: get_packages
+        run: |
+          echo "Getting package information from publishedPackages output..."
+          echo "${{ steps.changesets.outputs.publishedPackages }}" | jq -r '.[] | .name' > /tmp/packages.txt
+          echo "packages<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/packages.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Configure Git for Tagging
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Tags and Push
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          COMMIT=$(git rev-parse HEAD)
+          echo "Creating tags for commit: $COMMIT"
+
+          # Parse the publishedPackages JSON to get name and version
+          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -c '.[]' | while read -r package; do
+            name=$(echo $package | jq -r '.name')
+            version=$(echo $package | jq -r '.version')
+
+            if [[ $name == @auto-engineer/* ]]; then
+              # Create tag in format: package-name@version (e.g., @auto-engineer/flow@0.9.2)
+              tag="${name}@${version}"
+              echo "Creating tag: $tag"
+              git tag -a "$tag" -m "Release $name@$version" $COMMIT
+              git push origin "$tag"
+
+              echo "✅ Created and pushed tag: $tag"
+            else
+              echo "⏭️  Skipping non-auto-engineer package: $name"
+            fi
+          done
