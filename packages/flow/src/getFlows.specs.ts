@@ -344,7 +344,7 @@ describe.skip(
       expect(rule4?.id).toBe('RULE-004');
     });
 
-    it.skip('handles shopping-app Products state classification correctly', async () => {
+    it('handles shopping-app Products state classification correctly', async () => {
       const flows = await getFlows({
         vfs,
         root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app',
@@ -378,7 +378,7 @@ describe.skip(
       }
     });
 
-    it.skip('handles real questionnaires example correctly', async () => {
+    it('handles real questionnaires example correctly', async () => {
       const flows = await getFlows({
         vfs,
         root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
@@ -408,6 +408,121 @@ describe.skip(
           }
         }
       }
+    });
+
+    it('should handle experience slice with client specs', async () => {
+      const memoryVfs = new InMemoryFileStore();
+      const flowWithExperienceContent = `
+import { flow, experience, should, specs } from '@auto-engineer/flow';
+
+flow('Test Experience Flow', () => {
+  experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {
+    specs(() => {
+      should('show a hero section with a welcome message');
+      should('allow user to start the questionnaire');
+    });
+  });
+});
+      `;
+
+      await memoryVfs.write('/test/experience.flow.ts', new TextEncoder().encode(flowWithExperienceContent));
+
+      const flows = await getFlows({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+      const model = flows.toModel();
+
+      const experienceFlow = model.flows.find((f) => f.name === 'Test Experience Flow');
+      expect(experienceFlow).toBeDefined();
+
+      if (experienceFlow) {
+        const homepageSlice = experienceFlow.slices.find((s) => s.name === 'Homepage');
+        expect(homepageSlice).toBeDefined();
+        expect(homepageSlice?.type).toBe('experience');
+
+        if (homepageSlice?.type === 'experience') {
+          expect(homepageSlice.client).toBeDefined();
+          expect(homepageSlice.client.specs).toBeDefined();
+          expect(homepageSlice.client.specs?.rules).toBeDefined();
+          expect(homepageSlice.client.specs?.rules).toHaveLength(2);
+
+          const rules = homepageSlice.client.specs?.rules;
+          if (rules && Array.isArray(rules)) {
+            expect(rules).toHaveLength(2);
+            expect(rules[0]).toBe('show a hero section with a welcome message');
+            expect(rules[1]).toBe('allow user to start the questionnaire');
+          }
+        }
+      }
+    });
+
+    it('simulates browser execution with transpiled CommonJS code', async () => {
+      const memoryVfs = new InMemoryFileStore();
+      const flowContent = `
+import { flow, experience, should, specs } from '@auto-engineer/flow';
+
+flow('Browser Test Flow', () => {
+  experience('HomePage').client(() => {
+    specs(() => {
+      should('render correctly');
+    });
+  });
+});
+      `;
+
+      await memoryVfs.write('/browser/test.flow.ts', new TextEncoder().encode(flowContent));
+
+      const { executeAST } = await import('./loader');
+      const { registry } = await import('./flow-registry');
+
+      registry.clearAll();
+
+      await executeAST(['/browser/test.flow.ts'], memoryVfs, {}, '/browser');
+
+      const flows = registry.getAllFlows();
+      expect(flows).toHaveLength(1);
+      expect(flows[0].name).toBe('Browser Test Flow');
+      expect(flows[0].slices).toHaveLength(1);
+
+      const slice = flows[0].slices[0];
+      expect(slice.type).toBe('experience');
+      expect(slice.name).toBe('HomePage');
+
+      if (slice.type === 'experience') {
+        expect(slice.client).toBeDefined();
+        expect(slice.client.specs).toBeDefined();
+        expect(slice.client.specs?.rules).toHaveLength(1);
+        expect(slice.client.specs?.rules?.[0]).toBe('render correctly');
+      }
+    });
+
+    it('handles experience slice with ES module interop correctly', async () => {
+      const memoryVfs = new InMemoryFileStore();
+
+      const { executeAST } = await import('./loader');
+      const { registry } = await import('./flow-registry');
+
+      const flowContent = `
+import { flow, experience } from '@auto-engineer/flow';
+
+flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
+  experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {});
+});
+      `;
+
+      await memoryVfs.write('/browser/questionnaires.flow.ts', new TextEncoder().encode(flowContent));
+
+      registry.clearAll();
+
+      // This should work correctly with our ES module interop fix
+      await expect(executeAST(['/browser/questionnaires.flow.ts'], memoryVfs, {}, '/browser')).resolves.toBeDefined();
+
+      const flows = registry.getAllFlows();
+      expect(flows).toHaveLength(1);
+      expect(flows[0].name).toBe('Questionnaires');
+      expect(flows[0].slices).toHaveLength(1);
+
+      const slice = flows[0].slices[0];
+      expect(slice.type).toBe('experience');
+      expect(slice.name).toBe('Homepage');
     });
 
     it('should handle flow type resolutions correctly', async () => {

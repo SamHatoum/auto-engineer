@@ -1,5 +1,26 @@
 import createDebug from 'debug';
 
+function ensureESModuleInterop(mod: unknown): unknown {
+  const m = mod as Record<string, unknown> | null;
+  if (m !== null && typeof m === 'object') {
+    if ('default' in m && Object.keys(m).length === 1) {
+      return m.default ?? m;
+    }
+
+    const interopMod = { ...m };
+    if (!('__esModule' in m)) {
+      Object.defineProperty(interopMod, '__esModule', {
+        value: true,
+        enumerable: false,
+        writable: false,
+        configurable: false,
+      });
+    }
+    return interopMod;
+  }
+  return m;
+}
+
 export async function createEnhancedImportMap(base: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
   // internal modules used by flows
   const [
@@ -29,18 +50,18 @@ export async function createEnhancedImportMap(base: Record<string, unknown> = {}
 
   return {
     ...base,
-    '../flow': flowMod,
-    '../fluent-builder': fluentMod,
-    '../testing': testingMod,
-    '../data-flow-builders': dataFlowMod,
-    '../flow-registry': flowReg,
-    '../integration-registry': intReg,
-    './flow': flowMod,
-    './fluent-builder': fluentMod,
-    './testing': testingMod,
-    './data-flow-builders': dataFlowMod,
-    '@auto-engineer/flow': selfEntry,
-    zod,
+    '../flow': ensureESModuleInterop(flowMod),
+    '../fluent-builder': ensureESModuleInterop(fluentMod),
+    '../testing': ensureESModuleInterop(testingMod),
+    '../data-flow-builders': ensureESModuleInterop(dataFlowMod),
+    '../flow-registry': ensureESModuleInterop(flowReg),
+    '../integration-registry': ensureESModuleInterop(intReg),
+    './flow': ensureESModuleInterop(flowMod),
+    './fluent-builder': ensureESModuleInterop(fluentMod),
+    './testing': ensureESModuleInterop(testingMod),
+    './data-flow-builders': ensureESModuleInterop(dataFlowMod),
+    '@auto-engineer/flow': ensureESModuleInterop(selfEntry),
+    zod: ensureESModuleInterop(zod),
     'graphql-tag': (gqlTag as { default?: unknown }).default ?? gqlTag,
     debug: { default: (debugMod as { default?: unknown }).default ?? createDebug },
   };
