@@ -89,6 +89,11 @@ export function setupHttpRoutes(
     res.sendFile(join(__dirname, 'dashboard.html'));
   });
 
+  app.get('/landing', (_req, res) => {
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    res.sendFile(join(__dirname, 'canvas-landing.html'));
+  });
+
   // Get registry information
   app.get('/registry', (_req, res) => {
     // Sort commands alphabetically by alias
