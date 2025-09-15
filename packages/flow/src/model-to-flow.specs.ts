@@ -407,4 +407,73 @@ flow('Test Experience Flow', () => {
 });
 `);
   });
+
+  it('should correctly resolve Date types in messages', async () => {
+    const modelWithDateTypes: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Questionnaire Flow',
+          id: 'QUEST-001',
+          slices: [],
+        },
+      ],
+      messages: [
+        {
+          type: 'event',
+          name: 'QuestionnaireLinkSent',
+          fields: [
+            { name: 'questionnaireId', type: 'string', required: true },
+            { name: 'participantId', type: 'string', required: true },
+            { name: 'link', type: 'string', required: true },
+            { name: 'sentAt', type: 'Date', required: true },
+          ],
+          source: 'external',
+          metadata: { version: 1 },
+        },
+        {
+          type: 'event',
+          name: 'QuestionAnswered',
+          fields: [
+            { name: 'questionnaireId', type: 'string', required: true },
+            { name: 'participantId', type: 'string', required: true },
+            { name: 'questionId', type: 'string', required: true },
+            { name: 'answer', type: 'unknown', required: true },
+            { name: 'savedAt', type: 'Date', required: true },
+          ],
+          source: 'external',
+          metadata: { version: 1 },
+        },
+      ],
+      integrations: [],
+    };
+
+    const code = await modelToFlow(modelWithDateTypes);
+
+    expect(code).toEqual(`import { flow, type Event } from '@auto-engineer/flow';
+
+type QuestionAnswered = Event<
+  'QuestionAnswered',
+  {
+    questionnaireId: string;
+    participantId: string;
+    questionId: string;
+    answer: unknown;
+    savedAt: Date;
+  }
+>;
+
+type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
+  {
+    questionnaireId: string;
+    participantId: string;
+    link: string;
+    sentAt: Date;
+  }
+>;
+
+flow('Questionnaire Flow', () => {});
+`);
+  });
 });

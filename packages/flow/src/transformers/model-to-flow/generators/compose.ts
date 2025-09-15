@@ -51,10 +51,24 @@ export function generateTypeScriptCode(schema: Model, opts: { flowImport: string
   // Type integrations should be filtered based on usedTypes, not usedIntegrations
   const usedTypeIntegrationNames = allTypeIntegrationNames.filter((name) => usageAnalysis.usedTypes.has(name));
   const usedValueIntegrationNames = allValueIntegrationNames.filter((name) => usageAnalysis.usedIntegrations.has(name));
+
+  // Include messages that are either:
+  // 1. Used in flows, or
+  // 2. Present in model but not referenced in flows (standalone message definitions)
   // Exclude types that are imported from integrations - don't generate local type definitions for them
-  const usedMessages = messages.filter(
-    (msg) => usageAnalysis.usedTypes.has(msg.name) && !usedTypeIntegrationNames.includes(msg.name),
-  );
+  const usedMessages = messages.filter((msg) => {
+    const isImportedFromIntegration = usedTypeIntegrationNames.includes(msg.name);
+    const isUsedInFlow = usageAnalysis.usedTypes.has(msg.name);
+    const hasEmptyFlowSlices = flows.length === 0 || flows.every((flow) => flow.slices.length === 0);
+
+    // Don't generate local definitions for types imported from integrations
+    if (isImportedFromIntegration) {
+      return false;
+    }
+
+    // Include if used in flow OR if flows have no slices (standalone messages)
+    return isUsedInFlow || hasEmptyFlowSlices;
+  });
 
   // Generate final statements with filtered imports
   const statements = buildStatements(

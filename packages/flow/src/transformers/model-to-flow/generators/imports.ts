@@ -9,7 +9,7 @@ export function buildImports(
 ) {
   const f = ts.factory;
 
-  // Flow value and type imports in one statement as expected
+  // Import all flow value functions - usage analysis will filter them later
   const flowValueNames = [
     'command',
     'query',
@@ -26,7 +26,17 @@ export function buildImports(
     'sink',
   ];
 
-  const flowTypeNames = ['Command', 'Event', 'State'];
+  // Determine which flow types are actually needed based on the messages
+  const usedMessageTypes = new Set(messages.map((msg) => msg.type));
+  const typeMapping: Record<string, string> = {
+    command: 'Command',
+    event: 'Event',
+    state: 'State',
+  };
+
+  const flowTypeNames = Array.from(usedMessageTypes)
+    .map((type) => typeMapping[type])
+    .filter(Boolean);
 
   // Create combined flow import with values first, then types
   const importFlowCombined = f.createImportDeclaration(

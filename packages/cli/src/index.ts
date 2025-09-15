@@ -488,7 +488,7 @@ const startMessageBusServer = async (): Promise<void> => {
     wsPort: await getPort({ port: portNumbers(5551, 6000) }),
     enableFileSync: true,
     fileSyncDir: process.cwd(),
-    fileSyncExtensions: ['.js', '.ts', '.tsx', '.jsx', '.html', '.css'],
+    fileSyncExtensions: ['.js', '.ts', '.tsx', '.jsx', '.html', '.css', 'auto.config'],
   });
 
   // Load message bus configuration if it exists
