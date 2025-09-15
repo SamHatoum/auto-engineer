@@ -254,9 +254,15 @@ const ReactSliceSchema = BaseSliceSchema.extend({
 
 const ExperienceSliceSchema = BaseSliceSchema.extend({
   type: z.literal('experience'),
-  interaction: z.object({
+  client: z.object({
     description: z.string().optional(),
-    specs: SpecSchema.describe('Experience specifications with rules and examples'),
+    specs: z
+      .object({
+        name: z.string().describe('Spec group name'),
+        rules: z.array(z.string()).describe('UI specifications (should statements)'),
+      })
+      .optional()
+      .describe('Client-side specifications'),
   }),
 }).describe('Experience slice for user interactions and UI behavior');
 

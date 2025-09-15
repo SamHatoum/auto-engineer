@@ -134,8 +134,6 @@ function getSliceSpecs(slice: Slice) {
     return slice.server.specs;
   } else if ('client' in slice && slice.client?.specs !== undefined) {
     return slice.client.specs;
-  } else if ('interaction' in slice && slice.interaction?.specs !== undefined) {
-    return slice.interaction.specs;
   }
   return undefined;
 }
@@ -150,7 +148,7 @@ function processSliceSpecs(
 
   if (spec !== undefined && Array.isArray(spec.rules)) {
     spec.rules.forEach((rule: unknown) => {
-      // Only process rule objects (server/interaction specs), not string rules (client specs)
+      // Only process rule objects (server specs), not string rules (client specs)
       if (
         typeof rule === 'object' &&
         rule !== null &&
@@ -183,7 +181,7 @@ function processSliceIntegrations(
   messages: Map<string, Message>,
 ): void {
   // Integrations: from data & via
-  if ('server' in slice && slice.server?.data !== undefined) {
+  if ('server' in slice && slice.server != null && 'data' in slice.server && slice.server.data !== undefined) {
     slice.server.data.forEach((d: unknown) => {
       processDataItemIntegrations(d, integrations, messages);
     });

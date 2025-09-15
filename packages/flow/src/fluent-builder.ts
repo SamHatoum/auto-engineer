@@ -5,8 +5,6 @@ import {
   endClientBlock,
   startServerBlock,
   endServerBlock,
-  startInteractionBlock,
-  endInteractionBlock,
   getCurrentSlice,
 } from './flow-context';
 import { CommandSlice, QuerySlice, ReactSlice, ExperienceSlice } from './index';
@@ -61,8 +59,8 @@ export interface FluentReactionSliceBuilder {
 }
 
 export interface FluentExperienceSliceBuilder {
-  interaction(fn: () => void): FluentExperienceSliceBuilder;
-  interaction(description: string, fn: () => void): FluentExperienceSliceBuilder;
+  client(fn: () => void): FluentExperienceSliceBuilder;
+  client(description: string, fn: () => void): FluentExperienceSliceBuilder;
 }
 
 class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
@@ -322,28 +320,30 @@ class ExperienceSliceBuilderImpl implements FluentExperienceSliceBuilder {
       type: 'experience',
       name,
       id,
-      interaction: { specs: { name: '', rules: [] } },
+      client: { description: '', specs: undefined },
     };
     addSlice(this.slice);
     debugExperience('Experience slice added to flow: %s', name);
   }
 
-  interaction(fn: () => void): FluentExperienceSliceBuilder;
-  interaction(description: string, fn: () => void): FluentExperienceSliceBuilder;
-  interaction(descriptionOrFn: string | (() => void), fn?: () => void): FluentExperienceSliceBuilder {
+  client(fn: () => void): FluentExperienceSliceBuilder;
+  client(description: string, fn: () => void): FluentExperienceSliceBuilder;
+  client(descriptionOrFn: string | (() => void), fn?: () => void): FluentExperienceSliceBuilder {
     const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    debugExperience('Adding interaction block to slice %s, description: "%s"', this.slice.name, description);
+    debugExperience('Adding client block to slice %s, description: "%s"', this.slice.name, description);
 
     if (callback) {
       const slice = getCurrentSlice();
       if (slice) {
-        debugExperience('Starting interaction block execution');
-        startInteractionBlock(slice, description);
+        debugExperience('Starting client block execution');
+        startClientBlock(slice, description);
         callback();
-        endInteractionBlock();
-        debugExperience('Interaction block execution completed');
+        endClientBlock();
+        debugExperience('Client block execution completed');
+      } else {
+        debugExperience('WARNING: No current slice found for client block');
       }
     }
 

@@ -9,13 +9,13 @@ function hasServerSpecIds(slice: Slice): boolean {
   return slice.server.specs.rules.every(hasValidId);
 }
 
-function hasInteractionSpecIds(slice: Slice): boolean {
-  if (!('interaction' in slice) || slice.interaction?.specs?.rules === undefined) return true;
-  return slice.interaction.specs.rules.every(hasValidId);
+function hasClientSpecIds(_slice: Slice): boolean {
+  // Client specs use string rules (no IDs needed), so always valid
+  return true;
 }
 
 function hasSliceIds(slice: Slice): boolean {
-  return hasValidId(slice) && hasServerSpecIds(slice) && hasInteractionSpecIds(slice);
+  return hasValidId(slice) && hasServerSpecIds(slice) && hasClientSpecIds(slice);
 }
 
 export function hasAllIds(specs: Model): boolean {

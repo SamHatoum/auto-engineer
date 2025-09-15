@@ -8,7 +8,7 @@ const debug = createDebug('flow:context:given-types');
 interface FlowContext {
   flow: Flow;
   currentSliceIndex: number | null;
-  currentSpecTarget: 'client' | 'server' | 'interaction' | null;
+  currentSpecTarget: 'client' | 'server' | null;
   currentSpecIndex: number | null;
   currentRuleIndex: number | null;
   currentExampleIndex: number | null;
@@ -78,15 +78,6 @@ function getServerSpecs(
   return undefined;
 }
 
-function getInteractionSpecs(
-  slice: Slice,
-): { name: string; rules: { id?: string; description: string; examples: Example[] }[] } | undefined {
-  if (slice.type === 'experience') {
-    return slice.interaction?.specs;
-  }
-  return undefined;
-}
-
 function getCurrentSpecs(
   slice: Slice,
 ): { name: string; rules: string[] | { id?: string; description: string; examples: Example[] }[] } | undefined {
@@ -97,8 +88,6 @@ function getCurrentSpecs(
       return getClientSpecs(slice);
     case 'server':
       return getServerSpecs(slice);
-    case 'interaction':
-      return getInteractionSpecs(slice);
     default:
       return undefined;
   }
@@ -117,8 +106,8 @@ function getCurrentExample(slice: Slice): Example | undefined {
   const spec = getCurrentSpecs(slice);
   if (!spec) return undefined;
 
-  // Only server and interaction specs have object rules with examples
-  if (context.currentSpecTarget === 'server' || context.currentSpecTarget === 'interaction') {
+  // Only server specs have object rules with examples
+  if (context.currentSpecTarget === 'server') {
     const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
     return objectRules[context.currentRuleIndex]?.examples[context.currentExampleIndex];
   }
@@ -132,6 +121,12 @@ export function startClientBlock(slice: Slice, description: string = ''): void {
   if (slice.type === 'command' || slice.type === 'query') {
     slice.client = {
       description,
+      specs: undefined,
+    };
+    context.currentSpecTarget = 'client';
+  } else if (slice.type === 'experience') {
+    slice.client = {
+      description: description || undefined,
       specs: undefined,
     };
     context.currentSpecTarget = 'client';
@@ -176,26 +171,16 @@ export function endServerBlock(): void {
   }
 }
 
-export function startInteractionBlock(slice: Slice, description: string = ''): void {
-  if (!context) throw new Error('No active flow context');
-
-  if (slice.type === 'experience') {
-    slice.interaction = {
-      description: description || undefined,
-      specs: { name: '', rules: [] },
-    };
-    context.currentSpecTarget = 'interaction';
-  }
-}
-
-export function endInteractionBlock(): void {
-  if (context) {
-    context.currentSpecTarget = null;
-  }
-}
-
 function initializeClientSpecs(slice: Slice, description: string): void {
   if (slice.type === 'command' || slice.type === 'query') {
+    slice.client.specs = {
+      name: description,
+      rules: [],
+    };
+  } else if (slice.type === 'experience') {
+    if (slice.client == null) {
+      slice.client = { description: '', specs: undefined };
+    }
     slice.client.specs = {
       name: description,
       rules: [],
@@ -204,18 +189,8 @@ function initializeClientSpecs(slice: Slice, description: string): void {
 }
 
 function initializeServerSpecs(slice: Slice, description: string): void {
-  if ('server' in slice) {
+  if ('server' in slice && slice.server != null) {
     slice.server.specs = {
-      name: description,
-      rules: [],
-    };
-    if (context) context.currentSpecIndex = 0;
-  }
-}
-
-function initializeInteractionSpecs(slice: Slice, description: string): void {
-  if (slice.type === 'experience') {
-    slice.interaction.specs = {
       name: description,
       rules: [],
     };
@@ -235,16 +210,13 @@ export function pushSpec(description: string): void {
     case 'server':
       initializeServerSpecs(slice, description);
       break;
-    case 'interaction':
-      initializeInteractionSpecs(slice, description);
-      break;
   }
 }
 
 export function recordShouldBlock(description?: string): void {
   if (typeof description === 'string' && context?.currentSpecTarget === 'client') {
     const slice = getCurrentSlice();
-    if (slice && (slice.type === 'command' || slice.type === 'query')) {
+    if (slice && (slice.type === 'command' || slice.type === 'query' || slice.type === 'experience')) {
       if (!slice.client.specs) {
         slice.client.specs = {
           name: '',
@@ -295,8 +267,8 @@ export function recordRule(description: string, id?: string): void {
   const spec = getCurrentSpecs(slice);
   if (!spec) throw new Error('No active specs for current slice');
 
-  // Only server and interaction specs have object rules with examples
-  if (context.currentSpecTarget === 'server' || context.currentSpecTarget === 'interaction') {
+  // Only server specs have object rules with examples
+  if (context.currentSpecTarget === 'server') {
     const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
     objectRules.push({
       id,
@@ -317,8 +289,8 @@ export function recordExample(description: string): void {
   const spec = getCurrentSpecs(slice);
   if (!spec) throw new Error('No active specs for current slice');
 
-  // Only server and interaction specs have object rules with examples
-  if (context.currentSpecTarget === 'server' || context.currentSpecTarget === 'interaction') {
+  // Only server specs have object rules with examples
+  if (context.currentSpecTarget === 'server') {
     const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
     const rule = objectRules[context.currentRuleIndex];
     rule.examples.push({

@@ -95,7 +95,7 @@ type QuestionnaireProgress = State<
 >;
 
 flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
-  experience('Homepage', 'AUTO-H1a4Bn6Cy').interaction(() => {
+  experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {
     specs(() => {
       should('show a hero section with a welcome message');
       should('allow user to start the questionnaire');

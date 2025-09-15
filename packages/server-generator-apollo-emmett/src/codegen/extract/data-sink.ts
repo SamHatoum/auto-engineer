@@ -93,11 +93,10 @@ export function getStreamFromSink(slice: Slice): { streamPattern?: string; strea
   if (!('server' in slice)) return {};
   const gwtSpecs = extractGwtSpecs(slice);
   const exampleData = extractExampleDataFromSpecs(slice, gwtSpecs);
-  const serverData = slice.server?.data;
-
-  if (!Array.isArray(serverData)) {
+  if (!('server' in slice) || slice.server == null || !('data' in slice.server) || !Array.isArray(slice.server.data)) {
     return {};
   }
+  const serverData = slice.server.data;
 
   for (const item of serverData) {
     const result = processStreamSink(item, exampleData);

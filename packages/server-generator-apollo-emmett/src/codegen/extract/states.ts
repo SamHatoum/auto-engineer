@@ -2,6 +2,13 @@ import { Slice } from '@auto-engineer/flow';
 import { Message, MessageDefinition } from '../types';
 import { extractFieldsFromMessage } from './fields';
 
+interface DataItem {
+  origin?: unknown;
+  target?: {
+    name?: string;
+  };
+}
+
 function createStateMessage(stateName: string, allMessages: MessageDefinition[]): Message {
   return {
     type: stateName,
@@ -9,19 +16,31 @@ function createStateMessage(stateName: string, allMessages: MessageDefinition[])
   };
 }
 
+function hasServerData(slice: Slice): slice is Slice & { server: { data: unknown[] } } {
+  return (
+    'server' in slice &&
+    Boolean(slice.server) &&
+    'data' in slice.server &&
+    Array.isArray(slice.server.data) &&
+    slice.server.data.length > 0
+  );
+}
+
 export function extractStatesFromTarget(slice: Slice, allMessages: MessageDefinition[]): Message[] {
-  if (!('server' in slice) || !slice.server?.data) {
+  if (!hasServerData(slice)) {
     return [];
   }
 
-  const targets = slice.server.data.map((d) => d.target?.name).filter((name): name is string => Boolean(name));
+  const targets = slice.server.data
+    .map((d) => (d as DataItem).target?.name)
+    .filter((name): name is string => typeof name === 'string');
   const uniqueTargets = Array.from(new Set(targets));
 
   return uniqueTargets.map((name) => createStateMessage(name, allMessages));
 }
 
 export function extractStatesFromData(slice: Slice, allMessages: MessageDefinition[]): Message[] {
-  if (!('server' in slice) || !slice.server?.data) {
+  if (!hasServerData(slice)) {
     return [];
   }
 
@@ -29,11 +48,12 @@ export function extractStatesFromData(slice: Slice, allMessages: MessageDefiniti
   const seenStates = new Set<string>();
 
   for (const dataItem of slice.server.data) {
-    if (!('origin' in dataItem) || !dataItem.target?.name) {
+    const item = dataItem as DataItem;
+    if (!('origin' in item) || typeof item.target?.name !== 'string') {
       continue;
     }
 
-    const stateName = dataItem.target.name;
+    const stateName = item.target.name;
     if (seenStates.has(stateName)) {
       continue;
     }

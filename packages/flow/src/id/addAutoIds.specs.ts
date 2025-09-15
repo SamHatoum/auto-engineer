@@ -86,12 +86,12 @@ describe('addAutoIds', () => {
     const slice0 = result.flows[0].slices[0];
     const slice1 = result.flows[1].slices[0];
 
-    if ('server' in slice0 && Boolean(slice0.server?.specs?.rules)) {
+    if ('server' in slice0 && slice0.server?.specs?.rules != null) {
       expect(slice0.server.specs.rules[0].id).toMatch(AUTO_ID_REGEX);
       expect(slice0.server.specs.rules[1].id).toBe('EXISTING-RULE-001');
     }
 
-    if ('server' in slice1 && Boolean(slice1.server?.specs?.rules)) {
+    if ('server' in slice1 && slice1.server?.specs?.rules != null) {
       expect(slice1.server.specs.rules[0].id).toMatch(AUTO_ID_REGEX);
     }
   });
@@ -120,7 +120,7 @@ describe('addAutoIds', () => {
     expect(result.flows[0].slices[1].id).toBe('EXISTING-SLICE-001');
 
     const testSlice = result.flows[0].slices[0];
-    if ('server' in testSlice && Boolean(testSlice.server?.specs?.rules)) {
+    if ('server' in testSlice && testSlice.server?.specs?.rules != null) {
       expect(testSlice.server.specs.rules[1].id).toBe('EXISTING-RULE-001');
     }
   });
@@ -165,7 +165,7 @@ describe('addAutoIds', () => {
     expect(result1.flows[0].slices[0].id).not.toBe(result2.flows[0].slices[0].id);
   });
 
-  it('should assign IDs to experience slices and their interaction rules', () => {
+  it('should assign IDs to experience slices', () => {
     const modelWithExperienceSlice: Model = {
       variant: 'specs',
       flows: [
@@ -175,21 +175,11 @@ describe('addAutoIds', () => {
             {
               type: 'experience',
               name: 'User Onboarding Experience',
-              interaction: {
-                description: 'User onboarding interaction',
+              client: {
+                description: 'User onboarding client',
                 specs: {
                   name: 'Onboarding Specs',
-                  rules: [
-                    {
-                      description: 'User should see welcome message',
-                      examples: [],
-                    },
-                    {
-                      id: 'EXISTING-EXPERIENCE-RULE-001',
-                      description: 'User should complete profile setup',
-                      examples: [],
-                    },
-                  ],
+                  rules: ['User should see welcome message', 'User should complete profile setup'],
                 },
               },
             },
@@ -197,16 +187,11 @@ describe('addAutoIds', () => {
               type: 'experience',
               name: 'Checkout Experience',
               id: 'EXISTING-EXPERIENCE-SLICE-001',
-              interaction: {
-                description: 'Checkout interaction',
+              client: {
+                description: 'Checkout client',
                 specs: {
                   name: 'Checkout Specs',
-                  rules: [
-                    {
-                      description: 'User should review cart items',
-                      examples: [],
-                    },
-                  ],
+                  rules: ['User should review cart items'],
                 },
               },
             },
@@ -226,17 +211,6 @@ describe('addAutoIds', () => {
     expect(result.flows[0].slices[0].id).toMatch(AUTO_ID_REGEX);
     expect(result.flows[0].slices[1].id).toBe('EXISTING-EXPERIENCE-SLICE-001');
 
-    const experienceSlice1 = result.flows[0].slices[0];
-    const experienceSlice2 = result.flows[0].slices[1];
-
-    // Verify interaction rules get auto IDs
-    if ('interaction' in experienceSlice1 && Boolean(experienceSlice1.interaction?.specs?.rules)) {
-      expect(experienceSlice1.interaction.specs.rules[0].id).toMatch(AUTO_ID_REGEX);
-      expect(experienceSlice1.interaction.specs.rules[1].id).toBe('EXISTING-EXPERIENCE-RULE-001');
-    }
-
-    if ('interaction' in experienceSlice2 && Boolean(experienceSlice2.interaction?.specs?.rules)) {
-      expect(experienceSlice2.interaction.specs.rules[0].id).toMatch(AUTO_ID_REGEX);
-    }
+    // Experience slices only have client specs (no server specs to test)
   });
 });

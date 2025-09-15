@@ -28,21 +28,16 @@ function processServerSpecs(slice: Slice): Slice {
   return modifiedSlice;
 }
 
-function processInteractionSpecs(slice: Slice): Slice {
-  if (!('interaction' in slice) || slice.interaction?.specs?.rules === undefined) return slice;
-
-  const modifiedSlice = structuredClone(slice);
-  if ('interaction' in modifiedSlice && modifiedSlice.interaction?.specs?.rules !== undefined) {
-    (modifiedSlice.interaction.specs as { rules: unknown[] }).rules = addRuleIds(modifiedSlice.interaction.specs.rules);
-  }
-  return modifiedSlice;
+function processClientSpecs(slice: Slice): Slice {
+  // Client specs use string rules (no IDs needed), so nothing to process
+  return slice;
 }
 
 function processSlice(slice: Slice): Slice {
   let sliceCopy = { ...slice };
   ensureId(sliceCopy);
   sliceCopy = processServerSpecs(sliceCopy);
-  sliceCopy = processInteractionSpecs(sliceCopy);
+  sliceCopy = processClientSpecs(sliceCopy);
   return sliceCopy;
 }
 
