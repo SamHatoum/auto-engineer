@@ -20,3 +20,9 @@ export interface FoldRegistration<S = unknown, E = Event> {
 }
 
 export type DslRegistration = EventRegistration | DispatchAction | FoldRegistration;
+
+export interface ConfigDefinition {
+  plugins: string[];
+  aliases?: Record<string, unknown>;
+  pipeline?: () => void;
+}

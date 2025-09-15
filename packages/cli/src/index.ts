@@ -15,7 +15,7 @@ import { PluginLoader } from './plugin-loader';
 import getPort, { portNumbers } from 'get-port';
 
 // Export DSL functions for use in auto.config.ts
-export { on, dispatch, fold } from './dsl/index';
+export { on, dispatch, fold, autoConfig } from './dsl/index';
 
 const debug = Debug('auto-engineer:cli');
 

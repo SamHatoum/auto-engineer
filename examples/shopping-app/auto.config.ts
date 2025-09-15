@@ -1,4 +1,4 @@
-import { on, dispatch, fold } from '@auto-engineer/cli';
+import { autoConfig, on, dispatch, fold } from '@auto-engineer/cli';
 import type { Command, Event } from '@auto-engineer/message-bus';
 import { type ExportSchemaCommand, type SchemaExportedEvent, type SchemaExportFailedEvent } from '@auto-engineer/flow';
 import {
@@ -31,8 +31,7 @@ import {
 } from '@auto-engineer/frontend-implementer';
 import { type GenerateClientCommand } from '@auto-engineer/frontend-generator-react-graphql';
 
-// Plugin configuration
-export default {
+export default autoConfig({
   plugins: [
     '@auto-engineer/server-checks',
     '@auto-engineer/design-system-importer',
@@ -44,144 +43,90 @@ export default {
     '@auto-engineer/frontend-generator-react-graphql',
     '@auto-engineer/server-implementer',
   ],
-
   aliases: {
     // Resolve command name conflicts between packages
     // 'test:types': checkTypesCommandHandler,
   },
-};
+  pipeline: () => {
+    // State management: Track pipeline status
+    const pipelineStatus = fold<string, Event>(
+      '*', // Listen to all events
+      (state = 'idle', event) => {
+        switch (event.type) {
+          case 'SchemaExported':
+            return 'schema-exported';
+          case 'ServerGenerated':
+            return 'server-generated';
+          case 'ServerImplemented':
+            return 'server-implemented';
+          case 'TypeCheckPassed':
+            return 'checks-passed';
+          case 'TypeCheckFailed':
+            return 'checks-failed';
+          case 'IAGenerated':
+            return 'ia-generated';
+          case 'ClientImplemented':
+            return 'client-implemented';
+          default:
+            return state;
+        }
+      },
+    );
 
-// ===== Pipeline Orchestration with DSL =====
+    // State: Track last error
+    const lastError = fold<any, Event>('*', (state = null, event) => {
+      if (event.type.endsWith('Failed') || event.type.endsWith('Error')) {
+        return {
+          type: event.type,
+          data: event.data,
+          timestamp: new Date().toISOString(),
+        };
+      }
+      return state;
+    });
 
-// State management: Track pipeline status
-const pipelineStatus = fold<string, Event>(
-  '*', // Listen to all events
-  (state = 'idle', event) => {
-    switch (event.type) {
-      case 'SchemaExported':
-        return 'schema-exported';
-      case 'ServerGenerated':
-        return 'server-generated';
-      case 'ServerImplemented':
-        return 'server-implemented';
-      case 'TypeCheckPassed':
-        return 'checks-passed';
-      case 'TypeCheckFailed':
-        return 'checks-failed';
-      case 'IAGenerated':
-        return 'ia-generated';
-      case 'ClientImplemented':
-        return 'client-implemented';
-      default:
-        return state;
-    }
+    // State: Track completed operations
+    const completedOperations = fold<string[], Event>('*', (state = [], event) => {
+      if (event.type.endsWith('Passed') || event.type.endsWith('Generated') || event.type.endsWith('Implemented')) {
+        return [...state, event.type];
+      }
+      return state;
+    });
+
+    on<SchemaExportedEvent>('SchemaExported', (event) =>
+      dispatch<GenerateServerCommand>({
+        type: 'GenerateServer',
+        data: {
+          schemaPath: event.data.outputPath,
+          destination: event.data.outputPath.replace('/.context/schema.json', '/server'),
+        },
+      }),
+    );
+
+    on<ServerGeneratedEvent>('ServerGenerated', (event) =>
+      dispatch.parallel<ImplementServerCommand | GenerateIACommand>([
+        { type: 'ImplementServer', data: { serverDirectory: event.data.serverDir } },
+        {
+          type: 'GenerateIA',
+          data: { outputDir: event.data.destination + '/.context', flowFiles: [event.data.schemaPath] },
+        },
+      ]),
+    );
+
+    on<SchemaExportedEvent>('SchemaExported', (event) =>
+      dispatch<GenerateClientCommand>({
+        type: 'GenerateClient',
+        data: {
+          starterDir:
+            '/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter',
+          targetDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/client',
+          iaSchemaPath:
+            '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/auto-ia-scheme.json',
+          gqlSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/schema.graphql',
+          figmaVariablesPath:
+            '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/figma-variables.json',
+        },
+      }),
+    );
   },
-);
-
-// State: Track last error
-const lastError = fold<any, Event>('*', (state = null, event) => {
-  if (event.type.endsWith('Failed') || event.type.endsWith('Error')) {
-    return {
-      type: event.type,
-      data: event.data,
-      timestamp: new Date().toISOString(),
-    };
-  }
-  return state;
 });
-
-// State: Track completed operations
-const completedOperations = fold<string[], Event>('*', (state = [], event) => {
-  if (event.type.endsWith('Passed') || event.type.endsWith('Generated') || event.type.endsWith('Implemented')) {
-    return [...state, event.type];
-  }
-  return state;
-});
-
-on<SchemaExportedEvent>('SchemaExported', (event) =>
-  dispatch<GenerateServerCommand>({
-    type: 'GenerateServer',
-    data: {
-      schemaPath: event.data.outputPath,
-      destination: event.data.outputPath.replace('/.context/schema.json', '/server'),
-    },
-  }),
-);
-
-on<ServerGeneratedEvent>('ServerGenerated', (event) =>
-  dispatch.parallel<ImplementServerCommand | GenerateIACommand>([
-    { type: 'ImplementServer', data: { serverDirectory: event.data.serverDir } },
-    {
-      type: 'GenerateIA',
-      data: { outputDir: event.data.destination + '/.context', flowFiles: [event.data.schemaPath] },
-    },
-  ]),
-);
-
-// on<ServerImplementedEvent>('ServerImplemented', (event) =>
-//   dispatch.parallel<CheckTypesCommand | CheckTestsCommand | CheckLintCommand>([
-//     { type: 'CheckTypes', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
-//     { type: 'CheckTests', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
-//     { type: 'CheckLint', data: { targetDirectory: event.data.serverDirectory, scope: 'project' } },
-//   ]),
-// );
-
-on<SchemaExportedEvent>('SchemaExported', (event) =>
-  dispatch<GenerateClientCommand>({
-    type: 'GenerateClient',
-    data: {
-      starterDir:
-        '/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter',
-      targetDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/client',
-      iaSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/auto-ia-scheme.json',
-      gqlSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/schema.graphql',
-      figmaVariablesPath:
-        '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/figma-variables.json',
-    },
-  }),
-);
-
-// on<ClientImplementedEvent>('ClientImplemented', (event) =>
-//   dispatch<CheckClientCommand>({ type: 'CheckClient', data: { clientDirectory: './client', skipBrowserChecks: true } }),
-// );
-
-// on<ClientImplementationFailedEvent>('ClientImplementationFailed', (event) =>
-//   dispatch<ImplementClientCommand>({
-//     type: 'ImplementClient',
-//     data: {
-//       projectDir: event.data.projectDir || './client',
-//       iaSchemeDir: './.context',
-//       designSystemPath: './.context/design-system.md',
-//     },
-//   })
-// );
-
-// on<TypeCheckFailedEvent>('TypeCheckFailed', (event) =>
-//   dispatch<ImplementServerCommand>({
-//     type: 'ImplementServer',
-//     data: {
-//       serverDirectory: event.data.targetDirectory,
-//     },
-//   })
-// );
-
-// let retryCount = 0;
-// on<TypeCheckFailedEvent>('TypeCheckFailed', (event) => {
-//   retryCount++;
-//   if (retryCount > 3) {
-//     retryCount = 0;
-//     // Regenerate server from scratch
-//     return dispatch<GenerateServerCommand>({
-//       type: 'GenerateServer',
-//       data: {
-//         schemaPath: event.data.targetDirectory.replace('/server', '') + '/schema.json',
-//         destination: event.data.targetDirectory.replace('/server', ''),
-//       },
-//     });
-//   }
-// });
-
-// // Reset retry count on success
-// on<TypeCheckPassedEvent>('TypeCheckPassed', () => {
-//   retryCount = 0;
-// });

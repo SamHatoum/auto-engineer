@@ -1,5 +1,5 @@
 import type { Command, Event } from '@auto-engineer/message-bus';
-import type { EventRegistration, DispatchAction, FoldRegistration, DslRegistration } from './types';
+import type { EventRegistration, DispatchAction, FoldRegistration, DslRegistration, ConfigDefinition } from './types';
 
 // Track registrations when DSL functions are called
 let registrations: DslRegistration[] = [];
@@ -128,4 +128,11 @@ export function getPendingDispatches(): DispatchAction[] {
   const result = [...pendingDispatches];
   pendingDispatches = [];
   return result;
+}
+
+/**
+ * Create an Auto configuration with plugins and pipeline
+ */
+export function autoConfig(config: ConfigDefinition): ConfigDefinition {
+  return config;
 }

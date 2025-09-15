@@ -36,6 +36,7 @@ export interface CliCommand {
 export interface PluginConfig {
   plugins: string[];
   aliases?: Record<string, unknown>; // Map custom aliases to command handlers: { 'my-alias': importedHandler }
+  pipeline?: () => void; // Pipeline function containing DSL registrations
 }
 
 export class PluginLoader {
