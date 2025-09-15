@@ -1,5 +1,15 @@
 # @auto-engineer/cli
 
+## 0.9.7
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.7
+  - @auto-engineer/file-store@0.9.7
+  - @auto-engineer/message-bus@0.9.7
+  - @auto-engineer/message-store@0.9.7
+
 ## 0.9.6
 
 ### Patch Changes

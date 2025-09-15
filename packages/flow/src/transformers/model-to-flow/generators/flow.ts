@@ -47,6 +47,7 @@ type Example = z.infer<typeof ExampleSchema>;
 
 type Flow = {
   name: string;
+  id?: string;
   slices: Array<CommandSlice | QuerySlice | ReactSlice | ExperienceSlice>;
 };
 
@@ -426,10 +427,14 @@ function buildServerStatements(
     for (const rule of server.specs.rules) {
       for (const example of rule.examples) {
         const gwtBlock = convertExampleToGWT(example, sliceType);
-        // Add metadata to the GWT block
-        (gwtBlock as { ruleDescription?: string; exampleDescription?: string }).ruleDescription = rule.description;
-        (gwtBlock as { ruleDescription?: string; exampleDescription?: string }).exampleDescription =
+        // Add metadata to the GWT block, including the rule ID
+        (gwtBlock as { ruleDescription?: string; exampleDescription?: string; ruleId?: string }).ruleDescription =
+          rule.description;
+        (gwtBlock as { ruleDescription?: string; exampleDescription?: string; ruleId?: string }).exampleDescription =
           example.description;
+        (gwtBlock as { ruleDescription?: string; exampleDescription?: string; ruleId?: string }).ruleId = rule.id;
+
+        // buildGwtSpecBlock already creates the rule() call with the ID, so we don't wrap it again
         allRuleStatements.push(buildGwtSpecBlock(ts, f, gwtBlock, sliceType));
       }
     }
@@ -518,8 +523,11 @@ export function buildFlowStatements(ts: typeof import('typescript'), flow: Flow)
 
   const body = (flow.slices ?? []).map((sl) => buildSlice(ts, f, sl));
 
-  const flowExpr = f.createCallExpression(f.createIdentifier('flow'), undefined, [
-    f.createStringLiteral(flow.name),
+  const flowArgs: tsNS.Expression[] = [f.createStringLiteral(flow.name)];
+  if (flow.id !== null && flow.id !== undefined) {
+    flowArgs.push(f.createStringLiteral(flow.id));
+  }
+  flowArgs.push(
     f.createArrowFunction(
       undefined,
       undefined,
@@ -528,7 +536,9 @@ export function buildFlowStatements(ts: typeof import('typescript'), flow: Flow)
       f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
       f.createBlock(body, true),
     ),
-  ]);
+  );
+
+  const flowExpr = f.createCallExpression(f.createIdentifier('flow'), undefined, flowArgs);
 
   return [f.createExpressionStatement(flowExpr)];
 }

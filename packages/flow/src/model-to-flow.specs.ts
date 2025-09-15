@@ -397,11 +397,223 @@ flow('Seasonal Assistant', () => {
     const code = await modelToFlow(experienceModel);
 
     expect(code).toEqual(`import { experience, flow, should, specs } from '@auto-engineer/flow';
-flow('Test Experience Flow', () => {
+flow('Test Experience Flow', 'TEST-001', () => {
   experience('Homepage', 'EXP-001').client(() => {
     specs('', () => {
       should('show a hero section with a welcome message');
       should('allow user to start the questionnaire');
+    });
+  });
+});
+`);
+  });
+
+  it('should handle flows and slices without IDs', async () => {
+    const modelWithoutIds: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Test Flow without IDs',
+          // id: undefined - no ID
+          slices: [
+            {
+              name: 'Homepage',
+              // id: undefined - no ID
+              type: 'experience',
+              client: {
+                specs: {
+                  name: 'Homepage specs',
+                  rules: ['show welcome message', 'display navigation'],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [],
+      integrations: [],
+    };
+
+    const code = await modelToFlow(modelWithoutIds);
+
+    expect(code).toEqual(`import { experience, flow, should, specs } from '@auto-engineer/flow';
+flow('Test Flow without IDs', () => {
+  experience('Homepage').client(() => {
+    specs('Homepage specs', () => {
+      should('show welcome message');
+      should('display navigation');
+    });
+  });
+});
+`);
+  });
+
+  it('should include flow and slice IDs in generated code', async () => {
+    const modelWithIds: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Test Flow with IDs',
+          id: 'FLOW-123',
+          slices: [
+            {
+              name: 'Homepage',
+              id: 'SLICE-ABC',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: 'Homepage specs',
+                  rules: ['show welcome message', 'display navigation'],
+                },
+              },
+            },
+            {
+              name: 'view products',
+              id: 'SLICE-XYZ',
+              type: 'query',
+              client: {
+                description: 'Product query client',
+                specs: {
+                  name: 'Product list specs',
+                  rules: ['display all products', 'allow filtering'],
+                },
+              },
+              server: {
+                description: 'Product query server',
+                specs: {
+                  name: 'Product data specs',
+                  rules: [],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [],
+      integrations: [],
+    };
+
+    const code = await modelToFlow(modelWithIds);
+
+    expect(code).toEqual(`import { experience, flow, query, should, specs } from '@auto-engineer/flow';
+flow('Test Flow with IDs', 'FLOW-123', () => {
+  experience('Homepage', 'SLICE-ABC').client(() => {
+    specs('Homepage specs', () => {
+      should('show welcome message');
+      should('display navigation');
+    });
+  });
+  query('view products', 'SLICE-XYZ')
+    .client(() => {
+      specs('Product list specs', () => {
+        should('display all products');
+        should('allow filtering');
+      });
+    })
+    .server(() => {});
+});
+`);
+  });
+
+  it('should include rule IDs in server specs when present', async () => {
+    const modelWithRuleIds: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Test Flow with Rule IDs',
+          id: 'FLOW-456',
+          slices: [
+            {
+              name: 'process command',
+              id: 'SLICE-789',
+              type: 'command',
+              client: {
+                description: 'Command processing client',
+              },
+              server: {
+                description: 'Command processing server',
+                specs: {
+                  name: 'Command Processing',
+                  rules: [
+                    {
+                      id: 'RULE-ABC',
+                      description: 'Valid commands should be processed',
+                      examples: [
+                        {
+                          description: 'User submits valid command',
+                          when: {
+                            commandRef: 'ProcessCommand',
+                            exampleData: { id: 'cmd-123', action: 'create' },
+                          },
+                          then: [
+                            {
+                              eventRef: 'CommandProcessed',
+                              exampleData: { id: 'cmd-123', status: 'success' },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'ProcessCommand',
+          fields: [
+            { name: 'id', type: 'string', required: true },
+            { name: 'action', type: 'string', required: true },
+          ],
+          metadata: { version: 1 },
+        },
+        {
+          type: 'event',
+          name: 'CommandProcessed',
+          fields: [
+            { name: 'id', type: 'string', required: true },
+            { name: 'status', type: 'string', required: true },
+          ],
+          source: 'external',
+          metadata: { version: 1 },
+        },
+      ],
+      integrations: [],
+    };
+
+    const code = await modelToFlow(modelWithRuleIds);
+
+    expect(code)
+      .toEqual(`import { command, example, flow, rule, specs, type Command, type Event } from '@auto-engineer/flow';
+
+type CommandProcessed = Event<
+  'CommandProcessed',
+  {
+    id: string;
+    status: string;
+  }
+>;
+
+type ProcessCommand = Command<
+  'ProcessCommand',
+  {
+    id: string;
+    action: string;
+  }
+>;
+
+flow('Test Flow with Rule IDs', 'FLOW-456', () => {
+  command('process command', 'SLICE-789').server(() => {
+    specs('Command Processing', () => {
+      rule('Valid commands should be processed', 'RULE-ABC', () => {
+        example('User submits valid command')
+          .when<ProcessCommand>({ id: 'cmd-123', action: 'create' })
+          .then<CommandProcessed>({ id: 'cmd-123', status: 'success' });
+      });
     });
   });
 });
@@ -473,7 +685,7 @@ type QuestionnaireLinkSent = Event<
   }
 >;
 
-flow('Questionnaire Flow', () => {});
+flow('Questionnaire Flow', 'QUEST-001', () => {});
 `);
   });
 });

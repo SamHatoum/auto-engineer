@@ -186,7 +186,7 @@ function addThenToChain(
 export function buildGwtSpecBlock(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
-  g: GWTBlock & { description?: string; ruleDescription?: string; exampleDescription?: string },
+  g: GWTBlock & { description?: string; ruleDescription?: string; exampleDescription?: string; ruleId?: string },
   sliceKind: 'command' | 'react' | 'query' | 'experience',
 ): tsNS.Statement {
   const { ruleDesc, exampleDesc } = getDescriptions(g);
@@ -206,8 +206,14 @@ export function buildGwtSpecBlock(
   exampleChain = addThenToChain(ts, f, exampleChain, g);
 
   // Create the rule() call containing the example
-  const ruleCall = f.createCallExpression(f.createIdentifier('rule'), undefined, [
-    f.createStringLiteral(ruleDesc),
+  const ruleArgs: tsNS.Expression[] = [f.createStringLiteral(ruleDesc)];
+
+  // Add rule ID if provided
+  if (g.ruleId !== null && g.ruleId !== undefined) {
+    ruleArgs.push(f.createStringLiteral(g.ruleId));
+  }
+
+  ruleArgs.push(
     f.createArrowFunction(
       undefined,
       undefined,
@@ -216,8 +222,8 @@ export function buildGwtSpecBlock(
       f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
       f.createBlock([f.createExpressionStatement(exampleChain)], true),
     ),
-  ]);
+  );
 
-  // Return just the rule() call - the specs() wrapper is handled by the flow generator
+  const ruleCall = f.createCallExpression(f.createIdentifier('rule'), undefined, ruleArgs);
   return f.createExpressionStatement(ruleCall);
 }

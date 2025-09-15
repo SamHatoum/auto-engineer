@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.9.7
+
+### Patch Changes
+
+- handles ids in modelToFlow
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.7
+  - @auto-engineer/id@0.9.7
+  - @auto-engineer/message-bus@0.9.7
+
 ## 0.9.6
 
 ### Patch Changes
