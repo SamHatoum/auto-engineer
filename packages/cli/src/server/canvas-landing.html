@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>On Auto — Canvas Server</title>
+    <meta name="onauto:hosted-url" content="" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg width='637' height='637' viewBox='0 0 637 637' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_1042_512)'%3E%3Crect width='637' height='637'/%3E%3Cpath d='M693.161 -427.743L-623.632 1532.31L-591.107 1552.06L725.686 -407.988L693.161 -427.743Z' fill='%23EC3F4A'/%3E%3Cpath d='M725.695 -407.962L-591.097 1552.09L-571.511 1563.98L745.281 -396.066L725.695 -407.962Z' fill='%231A1A1A'/%3E%3Cpath d='M745.281 -396.071L-571.511 1563.98L-538.986 1583.73L777.807 -376.315L745.281 -396.071Z' fill='%23FF8A1D'/%3E%3Cpath d='M777.815 -376.302L-538.978 1583.75L-519.391 1595.64L797.402 -364.406L777.815 -376.302Z' fill='%231A1A1A'/%3E%3Cpath d='M797.394 -364.425L-519.399 1595.62L-486.874 1615.38L829.919 -344.67L797.394 -364.425Z' fill='%235EC72D'/%3E%3Cpath d='M829.913 -344.684L-486.879 1615.37L-467.293 1627.26L849.499 -332.787L829.913 -344.684Z' fill='%231A1A1A'/%3E%3Cpath d='M849.467 -332.791L-467.326 1627.26L-434.801 1647.01L881.992 -313.035L849.467 -332.791Z' fill='%2342C3F7'/%3E%3Cpath d='M882 -313.038L-434.792 1647.01L-415.206 1658.91L901.587 -301.142L882 -313.038Z' fill='%231A1A1A'/%3E%3Cpath d='M673.55 -439.635L-643.242 1520.42L-623.656 1532.31L693.136 -427.738L673.55 -439.635Z' fill='%231A1A1A'/%3E%3Cpath d='M512.644 100H121.718C109.652 100 100 109.667 100 121.751V513.277C100 525.361 109.652 535.028 121.718 535.028H512.644C524.71 535.028 534.362 525.361 534.362 513.277V121.751C534.362 109.667 524.71 100 512.644 100Z' fill='white'/%3E%3Cpath d='M413.706 481.86C451.11 481.86 481.274 451.649 481.274 414.189C481.274 376.728 451.11 346.518 413.706 346.518C376.303 346.518 346.139 376.728 346.139 414.189C346.139 451.649 376.303 481.86 413.706 481.86Z' fill='%231A1A1A'/%3E%3Cpath d='M153.089 347.968C153.089 347.243 153.813 346.518 154.537 346.518H287.017C287.741 346.518 288.465 347.243 288.465 347.968V412.98C288.465 413.705 287.741 414.43 287.017 414.43H257.095C256.371 414.43 255.647 415.155 255.647 415.88V480.893C255.647 481.618 254.923 482.343 254.199 482.343H188.321C187.597 482.343 186.873 481.618 186.873 480.893V415.88C186.873 415.155 186.149 414.43 185.425 414.43H154.296C153.572 414.43 152.848 413.705 152.848 412.98V347.968H153.089Z' fill='%231A1A1A'/%3E%3Cpath d='M347.587 153.17C346.863 153.17 346.139 153.895 346.139 154.621V223.017C346.139 259.269 376.303 288.513 413.706 288.513C451.11 288.513 481.274 259.269 481.274 223.017V154.621C481.274 153.895 480.55 153.17 479.826 153.17H347.345H347.587Z' fill='%231A1A1A'/%3E%3Cpath d='M153.33 286.339C152.848 287.306 153.33 288.272 154.537 288.272H286.776C287.742 288.272 288.465 287.306 287.983 286.339L221.863 154.139C221.381 153.172 219.933 153.172 219.45 154.139L153.33 286.339Z' fill='%231A1A1A'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_1042_512'%3E%3Crect width='637' height='637' fill='white'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      :root {
+        --brand-red: #ec3f4a;
+        --brand-orange: #ff8a1d;
+        --brand-green: #5ec72d;
+        --brand-blue: #42c3f7;
+        --brand-primary: #0057dd;
+      }
+
+      .landing-root {
+        width: 100%;
+        height: 100%;
+        color: #e6e9ef;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Ubuntu,
+          Cantarell,
+          Noto Sans,
+          Helvetica Neue,
+          Arial,
+          'Apple Color Emoji',
+          'Segoe UI Emoji';
+        position: relative;
+        overflow: hidden;
+        background-image:
+          linear-gradient(180deg, rgba(5, 7, 13, 0.65), rgba(3, 4, 10, 0.85)),
+          url('https://framerusercontent.com/images/KkJqJ4krjg5tkwq9wtHeMXjKaMU.png?width=1440&height=780');
+        background-size: cover;
+        background-position: center;
+      }
+
+      .landing-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .content-grid {
+        width: 100%;
+        max-width: 1120px;
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        align-items: center;
+        gap: 36px;
+      }
+
+      .left {
+        display: flex;
+        justify-content: center;
+      }
+
+      .right {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(0, 87, 221, 0.18);
+        color: #c9d8ff;
+        font-weight: 600;
+        font-size: 12px;
+        letter-spacing: 0.2px;
+        border: 1px solid rgba(0, 87, 221, 0.35);
+      }
+
+      .headline {
+        margin: 0;
+        font-size: 36px;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      .subhead {
+        margin: 0;
+        color: #b9c3d6;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 6px;
+        justify-content: center;
+      }
+
+      button.primary {
+        appearance: none;
+        border: none;
+        border-radius: 10px;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, var(--brand-primary) 0%, #1b73ff 100%);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button.primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #a5adba;
+        user-select: none;
+        margin-top: 6px;
+      }
+
+      .footer-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #7d8696;
+      }
+
+      .footer-links a {
+        color: #aab4c6;
+        text-decoration: none;
+      }
+
+      .footer-links a:hover {
+        color: #d3dcf0;
+      }
+
+      .preview-wrap {
+        width: 100%;
+        max-width: 720px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        transform: translateZ(0);
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(6px) saturate(120%);
+      }
+
+      .preview-image {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      @media (max-width: 960px) {
+        .content-grid {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        .left {
+          order: 2;
+        }
+
+        .right {
+          order: 1;
+        }
+
+        .hero {
+          text-align: left;
+          align-items: flex-start;
+        }
+
+        .actions {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="landing-root">
+      <div class="landing-container">
+        <div class="content-grid">
+          <div class="left">
+            <div class="hero">
+              <span class="badge">Local Canvas Server</span>
+              <h1 class="headline">Your SDLC, On Auto</h1>
+              <p class="subhead">Spec-driven canvas, connected to your components and APIs.</p>
+              <div class="actions">
+                <button class="primary" id="openBtn">Open Canvas</button>
+                <div class="hint" id="hint" style="color: #aab4c6; font-size: 12px; display: none"></div>
+              </div>
+              <label class="checkbox">
+                <input type="checkbox" id="dontShowAgain" />
+                <span>Don’t show this again</span>
+              </label>
+            </div>
+          </div>
+          <div class="right">
+            <div class="preview-wrap">
+              <img
+                class="preview-image"
+                src="https://framerusercontent.com/images/CNWTnnzKDAguGscqMJ0TuHvDvM.png?scale-down-to=2048"
+                alt="Canvas preview"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <a href="https://on.auto/" target="_blank" rel="noreferrer">Website</a>
+          <span>·</span>
+          <a href="https://on.auto/" target="_blank" rel="noreferrer">Docs</a>
+          <span>·</span>
+          <a href="https://github.com/onauto" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var STORAGE_KEY = 'onauto_shell_skipLanding';
+
+        var hostedUrl = 'https://sandbox.on.auto';
+        var skip = false;
+        try {
+          skip = localStorage.getItem(STORAGE_KEY) === 'true';
+        } catch (e) {}
+
+        if (skip) {
+          window.location.replace(hostedUrl);
+          return;
+        }
+
+        var openBtn = document.getElementById('openBtn');
+        var hint = document.getElementById('hint');
+        var dontShowAgain = document.getElementById('dontShowAgain');
+
+        openBtn.addEventListener('click', function () {
+          try {
+            if (dontShowAgain && dontShowAgain.checked) {
+              localStorage.setItem(STORAGE_KEY, 'true');
+              window.location.replace(hostedUrl);
+              return;
+            }
+          } catch (e) {}
+          window.location.assign(hostedUrl);
+        });
+      })();
+    </script>
+  </body>
+</html>
