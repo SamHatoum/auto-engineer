@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.9.5
+
+### Patch Changes
+
+- modelToFlow support for experience
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.5
+  - @auto-engineer/id@0.9.5
+  - @auto-engineer/message-bus@0.9.5
+
 ## 0.9.4
 
 ### Patch Changes
