@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.9.6
+
+### Patch Changes
+
+- fixes modelToFlow not inferring unused fields in types correctly
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.6
+  - @auto-engineer/id@0.9.6
+  - @auto-engineer/message-bus@0.9.6
+
 ## 0.9.5
 
 ### Patch Changes

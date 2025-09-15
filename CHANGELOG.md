@@ -2,6 +2,8 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.9.6
+
 ## 0.9.5
 
 ## 0.9.4
@@ -149,6 +151,16 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.6
+  - @auto-engineer/file-store@0.9.6
+  - @auto-engineer/message-bus@0.9.6
+  - @auto-engineer/message-store@0.9.6
 
 ## 0.9.5
 
@@ -621,6 +633,8 @@
 
 # create-auto-app
 
+## 0.9.6
+
 ## 0.9.5
 
 ## 0.9.4
@@ -698,6 +712,13 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -1017,6 +1038,8 @@
 
 # @auto-engineer/file-store
 
+## 0.9.6
+
 ## 0.9.5
 
 ## 0.9.4
@@ -1118,6 +1141,17 @@
 - version bump
 
 # @auto-engineer/flow
+
+## 0.9.6
+
+### Patch Changes
+
+- fixes modelToFlow not inferring unused fields in types correctly
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.6
+  - @auto-engineer/id@0.9.6
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -1531,6 +1565,13 @@
 
 # @auto-engineer/frontend-checks
 
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.6
+
 ## 0.9.5
 
 ### Patch Changes
@@ -1807,6 +1848,14 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.6
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -2149,6 +2198,14 @@
   - @auto-engineer/message-bus@0.0.2
 
 # @auto-engineer/frontend-implementer
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.6
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -2493,6 +2550,8 @@
 
 # @auto-engineer/id
 
+## 0.9.6
+
 ## 0.9.5
 
 ## 0.9.4
@@ -2536,6 +2595,14 @@
 ## 0.8.6
 
 # @auto-engineer/information-architect
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.6
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -2879,6 +2946,8 @@
 
 # @auto-engineer/message-bus
 
+## 0.9.6
+
 ## 0.9.5
 
 ## 0.9.4
@@ -3032,6 +3101,13 @@
 
 # @auto-engineer/message-store
 
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.6
+
 ## 0.9.5
 
 ### Patch Changes
@@ -3135,6 +3211,13 @@
 - @auto-engineer/message-bus@0.8.6
 
 # @auto-engineer/server-checks
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -3338,6 +3421,14 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.6
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
@@ -3682,6 +3773,14 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.6
+  - @auto-engineer/message-bus@0.9.6
 
 ## 0.9.5
 
