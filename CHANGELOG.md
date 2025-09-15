@@ -2,6 +2,14 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.9.4
+
+## 0.9.3
+
+## 0.9.2
+
+## 0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -139,6 +147,46 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.4
+  - @auto-engineer/file-store@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+  - @auto-engineer/message-store@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.3
+  - @auto-engineer/flow@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+  - @auto-engineer/message-store@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.2
+  - @auto-engineer/flow@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+  - @auto-engineer/message-store@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.1
+  - @auto-engineer/flow@0.9.1
+  - @auto-engineer/message-bus@0.9.1
+  - @auto-engineer/message-store@0.9.1
 
 ## 0.9.0
 
@@ -561,6 +609,14 @@
 
 # create-auto-app
 
+## 0.9.4
+
+## 0.9.3
+
+## 0.9.2
+
+## 0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -628,6 +684,34 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -912,6 +996,14 @@
 
 # @auto-engineer/file-store
 
+## 0.9.4
+
+## 0.9.3
+
+## 0.9.2
+
+## 0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -1003,6 +1095,44 @@
 - version bump
 
 # @auto-engineer/flow
+
+## 0.9.4
+
+### Patch Changes
+
+- bump version up
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.4
+  - @auto-engineer/id@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.3
+  - @auto-engineer/id@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.2
+  - @auto-engineer/id@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.1
+  - @auto-engineer/id@0.9.1
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -1367,6 +1497,34 @@
 
 # @auto-engineer/frontend-checks
 
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -1608,6 +1766,38 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.1
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -1910,6 +2100,38 @@
   - @auto-engineer/message-bus@0.0.2
 
 # @auto-engineer/frontend-implementer
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.1
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -2214,6 +2436,14 @@
 
 # @auto-engineer/id
 
+## 0.9.4
+
+## 0.9.3
+
+## 0.9.2
+
+## 0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -2247,6 +2477,56 @@
 ## 0.8.6
 
 # @auto-engineer/information-architect
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- [`7c6fcef`](https://github.com/SamHatoum/auto-engineer/commit/7c6fcef7dfdad827a1b4b74bc1a11a3c727dcead) Thanks [@SamHatoum](https://github.com/SamHatoum)! - fix: restore Git tag creation to enable GitHub releases
+
+  Restores the custom Git tag creation logic that was working in v0.8.3. The createGithubReleases setting needs actual Git tags to exist before it can create GitHub releases. This adds back the tag creation steps that were accidentally removed, ensuring that both npm publishing and GitHub releases work correctly.
+
+- [`14b1ba8`](https://github.com/SamHatoum/auto-engineer/commit/14b1ba8c689edaad586acce0d4defb9647f7cad1) Thanks [@SamHatoum](https://github.com/SamHatoum)! - test: verify that Git tag creation and GitHub releases work
+
+  This changeset tests that our restored Git tag creation logic from v0.8.3 successfully creates both Git tags and GitHub releases when packages are published.
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- [`1060b10`](https://github.com/SamHatoum/auto-engineer/commit/1060b103eb8b99bc3b1f7ed29bdede9d3b0b445b) Thanks [@SamHatoum](https://github.com/SamHatoum)! - test: verify GitHub releases creation works in v0.9.2
+
+  This changeset tests that the createGithubReleases functionality works properly after our configuration fixes. Should create GitHub releases and tags when published.
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- [`e789ce5`](https://github.com/SamHatoum/auto-engineer/commit/e789ce5edd6d94987cf431d674b9a85b942bc396) Thanks [@SamHatoum](https://github.com/SamHatoum)! - fix: remove unused import causing lint failure in CI
+
+- [`70e5920`](https://github.com/SamHatoum/auto-engineer/commit/70e59201f8fbbc5c6f454bab7d2deb738f6e8ee6) Thanks [@SamHatoum](https://github.com/SamHatoum)! - test: trigger release to verify fixed GitHub workflow
+
+  This is a test changeset to verify that the GitHub workflow now correctly creates tags and releases after fixing the conflicting tag creation logic.
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.1
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -2532,6 +2812,14 @@
 
 # @auto-engineer/message-bus
 
+## 0.9.4
+
+## 0.9.3
+
+## 0.9.2
+
+## 0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -2675,6 +2963,34 @@
 
 # @auto-engineer/message-store
 
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.1
+
 ## 0.9.0
 
 ### Minor Changes
@@ -2743,6 +3059,34 @@
 - @auto-engineer/message-bus@0.8.6
 
 # @auto-engineer/server-checks
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -2911,6 +3255,38 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.1
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
@@ -3215,6 +3591,38 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.4
+  - @auto-engineer/message-bus@0.9.4
+
+## 0.9.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.3
+  - @auto-engineer/message-bus@0.9.3
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.2
+  - @auto-engineer/message-bus@0.9.2
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.1
+  - @auto-engineer/message-bus@0.9.1
 
 ## 0.9.0
 
