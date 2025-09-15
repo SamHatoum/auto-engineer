@@ -3,12 +3,9 @@ import schema from './samples/seasonal-assistant.schema.json';
 import { modelToFlow } from './transformers/model-to-flow';
 import { Model } from './index';
 
-describe('schemaToFlow', () => {
+describe('modelToFlow', () => {
   it('should create a full flow DSL from a model', async () => {
-    const code = await modelToFlow(schema as Model, {
-      flowImport: '@auto-engineer/flow',
-      integrationImport: '../server/src/integrations',
-    });
+    const code = await modelToFlow(schema as Model);
 
     expect(code).toEqual(`import {
   command,
@@ -367,6 +364,46 @@ flow('Seasonal Assistant', () => {
         });
       });
     });
+});
+`);
+  });
+
+  it('should handle experience slices in model to flow conversion', async () => {
+    const experienceModel: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Test Experience Flow',
+          id: 'TEST-001',
+          slices: [
+            {
+              name: 'Homepage',
+              id: 'EXP-001',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['show a hero section with a welcome message', 'allow user to start the questionnaire'],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [],
+      integrations: [],
+    };
+
+    const code = await modelToFlow(experienceModel);
+
+    expect(code).toEqual(`import { experience, flow, should, specs } from '@auto-engineer/flow';
+flow('Test Experience Flow', () => {
+  experience('Homepage', 'EXP-001').client(() => {
+    specs('', () => {
+      should('show a hero section with a welcome message');
+      should('allow user to start the questionnaire');
+    });
+  });
 });
 `);
   });

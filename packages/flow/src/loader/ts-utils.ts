@@ -79,8 +79,9 @@ export interface TypeInfo {
 }
 
 export interface IntegrationExport {
-  exportName: string; // The variable name used in export (e.g., "ProductCatalog")
-  integrationName: string; // The internal integration name (e.g., "product-catalog")
+  exportName: string; // The variable name used in export
+  integrationName: string; // The internal integration name
+  sourcePath?: string; // The import path where this integration was imported from
 }
 
 export interface GivenTypeInfo {
@@ -268,21 +269,17 @@ function extractDataFields(
   return dataFields;
 }
 
-// Helper to infer message classification from string literal naming patterns
 function inferClassificationFromName(stringLiteral: string): 'command' | 'event' | 'state' | undefined {
-  // Check for common event patterns (past tense)
   const eventPatterns = ['ed', 'Created', 'Updated', 'Deleted', 'Placed', 'Added', 'Removed', 'Changed'];
   if (eventPatterns.some((pattern) => stringLiteral.endsWith(pattern))) {
     return 'event';
   }
 
-  // Check for command patterns (imperative)
   const commandPatterns = ['Create', 'Update', 'Delete', 'Place', 'Add', 'Remove', 'Enter', 'Submit', 'Suggest'];
   if (commandPatterns.some((pattern) => stringLiteral.startsWith(pattern))) {
     return 'command';
   }
 
-  // Check for state patterns (nouns)
   const statePatterns = ['Summary', 'View', 'Items', 'List', 'Data', 'Info'];
   if (statePatterns.some((pattern) => stringLiteral.endsWith(pattern))) {
     return 'state';
@@ -291,7 +288,6 @@ function inferClassificationFromName(stringLiteral: string): 'command' | 'event'
   return undefined;
 }
 
-// Helper to process interface members and extract type/data information
 function processInterfaceMembers(
   ts: typeof import('typescript'),
   members: readonly import('typescript').TypeElement[],
@@ -315,7 +311,6 @@ function processInterfaceMembers(
   return { stringLiteral, dataFields };
 }
 
-// Helper to process interface declarations
 function processInterface(
   ts: typeof import('typescript'),
   node: import('typescript').InterfaceDeclaration,
@@ -429,6 +424,37 @@ export function parseIntegrationExports(
 
   visitNode(sf);
   return integrations;
+}
+
+/**
+ * Parse import statements and match integration imports to their source paths
+ */
+export function parseIntegrationImports(
+  ts: typeof import('typescript'),
+  fileName: string,
+  source: string,
+): Map<string, string> {
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.ES2020, true, ts.ScriptKind.TSX);
+  const integrationToImportPath = new Map<string, string>();
+
+  const visitNode = (node: import('typescript').Node) => {
+    if (ts.isImportDeclaration(node)) {
+      if (ts.isStringLiteral(node.moduleSpecifier) && node.importClause?.namedBindings) {
+        const importPath = node.moduleSpecifier.text;
+
+        if (ts.isNamedImports(node.importClause.namedBindings)) {
+          for (const element of node.importClause.namedBindings.elements) {
+            const importedName = element.name.text;
+            integrationToImportPath.set(importedName, importPath);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visitNode);
+  };
+
+  visitNode(sf);
+  return integrationToImportPath;
 }
 
 function classifyBaseGeneric(

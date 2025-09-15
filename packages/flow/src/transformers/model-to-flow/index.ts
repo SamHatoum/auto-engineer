@@ -10,13 +10,18 @@ import { Model } from '../../index';
  * and flow specifications.
  *
  * @param model The complete schema specification conforming to SpecsSchema
- * @param opts Configuration options for import paths
  * @returns Promise resolving to formatted TypeScript code string
  */
-export async function modelToFlow(
-  model: Model,
-  opts: { flowImport: string; integrationImport: string },
-): Promise<string> {
-  const rawCode = generateTypeScriptCode(model, opts);
+export async function modelToFlow(model: Model): Promise<string> {
+  const flowImport = '@auto-engineer/flow';
+  const integrationImport = extractIntegrationImportFromModel(model);
+  const rawCode = generateTypeScriptCode(model, { flowImport, integrationImport });
   return await formatWithPrettier(rawCode);
+}
+
+function extractIntegrationImportFromModel(model: Model): string {
+  if (model.integrations && model.integrations.length > 0) {
+    return model.integrations[0].source;
+  }
+  return '';
 }

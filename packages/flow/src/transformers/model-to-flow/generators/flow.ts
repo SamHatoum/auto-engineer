@@ -2,7 +2,13 @@ import type tsNS from 'typescript';
 import type { z } from 'zod';
 import { jsonToExpr } from '../ast/emit-helpers';
 import { buildGwtSpecBlock, type GWTBlock } from './gwt';
-import { CommandSliceSchema, QuerySliceSchema, ReactSliceSchema, ExampleSchema } from '../../../schema';
+import {
+  CommandSliceSchema,
+  QuerySliceSchema,
+  ReactSliceSchema,
+  ExperienceSliceSchema,
+  ExampleSchema,
+} from '../../../schema';
 
 type Destination =
   | { type: 'stream'; pattern: string }
@@ -36,11 +42,12 @@ type DataSourceItem = {
 type CommandSlice = z.infer<typeof CommandSliceSchema>;
 type QuerySlice = z.infer<typeof QuerySliceSchema>;
 type ReactSlice = z.infer<typeof ReactSliceSchema>;
+type ExperienceSlice = z.infer<typeof ExperienceSliceSchema>;
 type Example = z.infer<typeof ExampleSchema>;
 
 type Flow = {
   name: string;
-  slices: Array<CommandSlice | QuerySlice | ReactSlice>;
+  slices: Array<CommandSlice | QuerySlice | ReactSlice | ExperienceSlice>;
 };
 
 function buildClientSpecs(
@@ -297,7 +304,7 @@ function addClientToChain(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   chain: tsNS.Expression,
-  slice: CommandSlice | QuerySlice | ReactSlice,
+  slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
 ): tsNS.Expression {
   if ('client' in slice && slice.client !== null && slice.client !== undefined && slice.client.specs) {
     return f.createCallExpression(f.createPropertyAccessExpression(chain, f.createIdentifier('client')), undefined, [
@@ -317,7 +324,7 @@ function addClientToChain(
 function addRequestToChain(
   f: tsNS.NodeFactory,
   chain: tsNS.Expression,
-  slice: CommandSlice | QuerySlice | ReactSlice,
+  slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
 ): tsNS.Expression {
   if ('request' in slice && slice.request !== null && slice.request !== undefined) {
     const gqlTpl = f.createNoSubstitutionTemplateLiteral(slice.request);
@@ -331,7 +338,7 @@ function addRequestToChain(
 /**
  * Convert schema example structure to GWT format expected by buildGwtSpecBlock
  */
-function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' | 'react'): GWTBlock {
+function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' | 'react' | 'experience'): GWTBlock {
   const gwtBlock: GWTBlock = {
     then: [],
   };
@@ -403,7 +410,7 @@ function buildServerStatements(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   server: CommandSlice['server'] | QuerySlice['server'] | ReactSlice['server'],
-  sliceType: 'command' | 'query' | 'react',
+  sliceType: 'command' | 'query' | 'react' | 'experience',
 ): tsNS.Statement[] {
   const statements: tsNS.Statement[] = [];
 
@@ -453,10 +460,16 @@ function addServerToChain(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   chain: tsNS.Expression,
-  slice: CommandSlice | QuerySlice | ReactSlice,
+  slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
 ): tsNS.Expression {
   if ('server' in slice && slice.server !== null && slice.server !== undefined) {
-    const serverStatements = buildServerStatements(ts, f, slice.server, slice.type);
+    const sliceType = slice.type as 'command' | 'query' | 'react' | 'experience';
+    const serverStatements = buildServerStatements(
+      ts,
+      f,
+      slice.server,
+      sliceType === 'experience' ? 'react' : sliceType,
+    );
 
     return f.createCallExpression(f.createPropertyAccessExpression(chain, f.createIdentifier('server')), undefined, [
       f.createArrowFunction(
@@ -475,13 +488,23 @@ function addServerToChain(
 function buildSlice(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
-  slice: CommandSlice | QuerySlice | ReactSlice,
+  slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
 ): tsNS.Statement {
-  const sliceCtor = slice.type === 'command' ? 'command' : slice.type === 'query' ? 'query' : 'react';
+  const sliceCtor =
+    slice.type === 'command'
+      ? 'command'
+      : slice.type === 'query'
+        ? 'query'
+        : slice.type === 'experience'
+          ? 'experience'
+          : 'react';
 
-  let chain: tsNS.Expression = f.createCallExpression(f.createIdentifier(sliceCtor), undefined, [
-    f.createStringLiteral(slice.name),
-  ]);
+  const args: tsNS.Expression[] = [f.createStringLiteral(slice.name)];
+  if (slice.id !== null && slice.id !== undefined) {
+    args.push(f.createStringLiteral(slice.id));
+  }
+
+  let chain: tsNS.Expression = f.createCallExpression(f.createIdentifier(sliceCtor), undefined, args);
 
   chain = addClientToChain(ts, f, chain, slice);
   chain = addRequestToChain(f, chain, slice);

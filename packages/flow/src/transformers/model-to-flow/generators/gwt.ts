@@ -141,7 +141,7 @@ function addWhenToChain(
   f: tsNS.NodeFactory,
   exampleChain: tsNS.Expression,
   g: GWTBlock,
-  sliceKind: 'command' | 'react' | 'query',
+  sliceKind: 'command' | 'react' | 'query' | 'experience',
 ): tsNS.Expression {
   if (sliceKind === 'command' && isWhenCommand(g.when)) {
     return addCommandWhenToChain(ts, f, exampleChain, g.when);
@@ -187,7 +187,7 @@ export function buildGwtSpecBlock(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   g: GWTBlock & { description?: string; ruleDescription?: string; exampleDescription?: string },
-  sliceKind: 'command' | 'react' | 'query',
+  sliceKind: 'command' | 'react' | 'query' | 'experience',
 ): tsNS.Statement {
   const { ruleDesc, exampleDesc } = getDescriptions(g);
 

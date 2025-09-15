@@ -189,11 +189,14 @@ function processSliceIntegrations(
   if ('via' in slice && slice.via) {
     slice.via.forEach((integrationName: string) => {
       if (!integrations.has(integrationName)) {
-        integrations.set(integrationName, {
-          name: integrationName,
-          description: `${integrationName} integration`,
-          source: `@auto-engineer/${integrationName.toLowerCase()}-integration`,
-        });
+        const sourcePath = integrationExportRegistry.getSourcePath(integrationName);
+        if (sourcePath !== null && sourcePath !== undefined && sourcePath !== '') {
+          integrations.set(integrationName, {
+            name: integrationName,
+            description: `${integrationName} integration`,
+            source: sourcePath,
+          });
+        }
       }
     });
   }
@@ -250,11 +253,14 @@ export const flowsToModel = (flows: Flow[], typesByFile?: Map<string, Map<string
   for (const integration of registeredIntegrations) {
     const exportName = integrationExportRegistry.getExportNameForIntegration(integration);
     if (!integrations.has(exportName)) {
-      integrations.set(exportName, {
-        name: exportName,
-        description: `${exportName} integration`,
-        source: `@auto-engineer/${exportName.toLowerCase()}-integration`,
-      });
+      const sourcePath = integrationExportRegistry.getSourcePath(exportName);
+      if (sourcePath !== null && sourcePath !== undefined && sourcePath !== '') {
+        integrations.set(exportName, {
+          name: exportName,
+          description: `${exportName} integration`,
+          source: sourcePath,
+        });
+      }
     }
   }
   // Apply example-driven structural shapes (e.g., Array<Product> -> Array<{ ... }>)

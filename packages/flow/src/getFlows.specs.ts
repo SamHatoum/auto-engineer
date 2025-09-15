@@ -378,6 +378,29 @@ describe.skip(
       }
     });
 
+    it('extracts correct integration import paths from AST', async () => {
+      const flows = await getFlows({
+        vfs,
+        root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app',
+        pattern,
+        fastFsScan: true,
+      });
+      const model = flows.toModel();
+      expect(model.integrations).toBeDefined();
+      expect(Array.isArray(model.integrations)).toBe(true);
+      expect((model.integrations?.length ?? 0) > 0).toBe(true);
+      const aiIntegration = model.integrations?.find((i) => i.name === 'AI');
+      const productCatalogIntegration = model.integrations?.find((i) => i.name === 'ProductCatalog');
+
+      if (aiIntegration) {
+        expect(aiIntegration.source).toBe('../server/src/integrations');
+      }
+
+      if (productCatalogIntegration) {
+        expect(productCatalogIntegration.source).toBe('../server/src/integrations');
+      }
+    });
+
     it('handles real questionnaires example correctly', async () => {
       const flows = await getFlows({
         vfs,

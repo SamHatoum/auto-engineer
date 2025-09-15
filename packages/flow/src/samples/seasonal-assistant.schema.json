@@ -159,6 +159,7 @@
                       "description": "Product catalog with matching items generates suggestions",
                       "given": [
                         {
+                          "stateRef": "Products",
                           "exampleData": {
                             "products": [
                               {
@@ -194,8 +195,7 @@
                                 "imageUrl": "https://example.com/mtg-starter.jpg"
                               }
                             ]
-                          },
-                          "stateRef": "Products"
+                          }
                         }
                       ],
                       "when": {
@@ -726,17 +726,12 @@
     {
       "name": "AI",
       "description": "AI integration",
-      "source": "@auto-engineer/ai-integration"
+      "source": "../server/src/integrations"
     },
     {
       "name": "ProductCatalog",
       "description": "ProductCatalog integration",
-      "source": "@auto-engineer/productcatalog-integration"
-    },
-    {
-      "name": "Cart",
-      "description": "Cart integration",
-      "source": "@auto-engineer/cart-integration"
+      "source": "../server/src/integrations"
     }
   ]
 }

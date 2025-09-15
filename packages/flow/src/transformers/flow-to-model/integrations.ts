@@ -4,17 +4,31 @@ import { zodSchemaToFields } from './zod-adapter';
 import { debugIntegrations } from './debug';
 import { hasDestination, hasOrigin, hasWithState, isValidIntegration } from './guards';
 import { processDestinationMessage } from './messages';
+import { integrationExportRegistry } from '../../integration-export-registry';
+
+const integrationImportPaths = new Map<string, string>();
+
+export function addIntegrationImportPath(integrationName: string, importPath: string): void {
+  integrationImportPaths.set(integrationName, importPath);
+}
 
 export function addIntegrationToMap(
   integrations: Map<string, { name: string; description?: string; source: string }>,
   system: string,
 ): void {
   if (!integrations.has(system)) {
-    integrations.set(system, {
-      name: system,
-      description: `${system} integration`,
-      source: `@auto-engineer/${system.toLowerCase()}-integration`,
-    });
+    let sourcePath = integrationImportPaths.get(system);
+    if (sourcePath === null || sourcePath === undefined || sourcePath === '') {
+      sourcePath = integrationExportRegistry.getSourcePath(system);
+    }
+
+    if (sourcePath !== null && sourcePath !== undefined && sourcePath !== '') {
+      integrations.set(system, {
+        name: system,
+        description: `${system} integration`,
+        source: sourcePath,
+      });
+    }
   }
 }
 

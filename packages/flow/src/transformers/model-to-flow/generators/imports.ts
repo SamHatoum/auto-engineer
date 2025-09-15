@@ -14,6 +14,7 @@ export function buildImports(
     'command',
     'query',
     'react',
+    'experience',
     'flow',
     'should',
     'specs',

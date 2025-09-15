@@ -2,19 +2,23 @@ import { Integration } from './types';
 import { IntegrationExport } from './loader/ts-utils';
 
 /**
- * Global registry to map integration internal names to their export names
+ * Global registry to map integration internal names to their export names and source paths
  */
 class IntegrationExportRegistry {
   private integrationNameToExportName = new Map<string, string>();
   private exportNameToIntegrationName = new Map<string, string>();
+  private exportNameToSourcePath = new Map<string, string>();
 
   /**
    * Register integration exports from AST parsing
    */
   registerIntegrationExports(integrationExports: IntegrationExport[]): void {
-    for (const { exportName, integrationName } of integrationExports) {
+    for (const { exportName, integrationName, sourcePath } of integrationExports) {
       this.integrationNameToExportName.set(integrationName, exportName);
       this.exportNameToIntegrationName.set(exportName, integrationName);
+      if (sourcePath !== null && sourcePath !== undefined && sourcePath !== '') {
+        this.exportNameToSourcePath.set(exportName, sourcePath);
+      }
     }
   }
 
@@ -30,6 +34,13 @@ class IntegrationExportRegistry {
    */
   getIntegrationName(exportName: string): string | undefined {
     return this.exportNameToIntegrationName.get(exportName);
+  }
+
+  /**
+   * Get the source path for an export name
+   */
+  getSourcePath(exportName: string): string | undefined {
+    return this.exportNameToSourcePath.get(exportName);
   }
 
   /**
@@ -53,6 +64,7 @@ class IntegrationExportRegistry {
   clear(): void {
     this.integrationNameToExportName.clear();
     this.exportNameToIntegrationName.clear();
+    this.exportNameToSourcePath.clear();
   }
 
   /**

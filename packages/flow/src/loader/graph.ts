@@ -5,6 +5,7 @@ import {
   parseImports,
   parseTypeDefinitions,
   parseIntegrationExports,
+  parseIntegrationImports,
   parseGivenTypeArguments,
   patchImportMeta,
   transpileToCjs,
@@ -275,8 +276,17 @@ export async function buildGraph(
     const imports = parseImports(ts, path, source);
     const typeMap = parseTypeDefinitions(ts, path, source);
     const integrationExports = parseIntegrationExports(ts, path, source);
+    const integrationImports = parseIntegrationImports(ts, path, source);
+    for (const [integrationName, importPath] of integrationImports) {
+      const { addIntegrationImportPath } = await import('../transformers/flow-to-model/integrations');
+      addIntegrationImportPath(integrationName, importPath);
+    }
+    const correlatedIntegrationExports = integrationExports.map((export_) => {
+      const sourcePath = integrationImports.get(export_.exportName);
+      return { ...export_, sourcePath };
+    });
 
-    processTypesAndIntegrations(path, typeMap, integrationExports);
+    processTypesAndIntegrations(path, typeMap, correlatedIntegrationExports);
     const resolved = await processImports(imports, path);
 
     const js = transpileToCjs(ts, path, source);
