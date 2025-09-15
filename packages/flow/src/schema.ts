@@ -17,7 +17,7 @@ export const MessageTargetSchema = z
   })
   .describe('Target message with optional field selection');
 
-const DestinationSchema = z
+export const DestinationSchema = z
   .discriminatedUnion('type', [
     z.object({
       type: z.literal('stream'),
@@ -44,7 +44,7 @@ const DestinationSchema = z
   ])
   .describe('Destination for outbound data');
 
-const OriginSchema = z
+export const OriginSchema = z
   .discriminatedUnion('type', [
     z.object({
       type: z.literal('projection'),
@@ -72,7 +72,7 @@ const OriginSchema = z
   ])
   .describe('Origin for inbound data');
 
-export const DataSinkSchema = z
+const DataSinkSchema = z
   .object({
     target: MessageTargetSchema,
     destination: DestinationSchema,
@@ -85,7 +85,7 @@ export const DataSinkSchema = z
   })
   .describe('Data sink configuration for outbound data flow');
 
-export const DataSourceSchema = z
+const DataSourceSchema = z
   .object({
     target: MessageTargetSchema,
     origin: OriginSchema,
@@ -390,4 +390,6 @@ export {
   ExampleSchema,
   RuleSchema,
   SpecSchema,
+  DataSinkSchema,
+  DataSourceSchema,
 };

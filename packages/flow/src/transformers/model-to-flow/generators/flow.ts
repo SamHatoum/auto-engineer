@@ -8,48 +8,23 @@ import {
   ReactSliceSchema,
   ExperienceSliceSchema,
   ExampleSchema,
+  FlowSchema,
+  DataSinkSchema,
+  DataSourceSchema,
+  DestinationSchema,
+  OriginSchema,
 } from '../../../schema';
 
-type Destination =
-  | { type: 'stream'; pattern: string }
-  | { type: 'integration'; systems: string[]; message?: { name: string; type: 'command' | 'query' | 'reaction' } }
-  | { type: 'database'; collection: string }
-  | { type: 'topic'; name: string };
-
-type Origin =
-  | { type: 'projection'; name: string; idField: string }
-  | { type: 'readModel'; name: string }
-  | { type: 'database'; collection: string; query?: unknown }
-  | { type: 'api'; endpoint: string; method?: string }
-  | { type: 'integration'; systems: string[] };
-
-type DataSinkItem = {
-  target: { type: 'Event' | 'Command' | 'State'; name: string };
-  destination: Destination;
-  transform?: string;
-  _additionalInstructions?: string;
-  _withState?: { target: { type: 'State'; name: string }; origin: Origin };
-};
-
-type DataSourceItem = {
-  target: { type: 'State'; name: string };
-  origin: Origin;
-  transform?: string;
-  _additionalInstructions?: string;
-};
-
-// Use existing schema types instead of duplicating
 type CommandSlice = z.infer<typeof CommandSliceSchema>;
 type QuerySlice = z.infer<typeof QuerySliceSchema>;
 type ReactSlice = z.infer<typeof ReactSliceSchema>;
 type ExperienceSlice = z.infer<typeof ExperienceSliceSchema>;
 type Example = z.infer<typeof ExampleSchema>;
-
-type Flow = {
-  name: string;
-  id?: string;
-  slices: Array<CommandSlice | QuerySlice | ReactSlice | ExperienceSlice>;
-};
+type Flow = z.infer<typeof FlowSchema>;
+type DataSinkItem = z.infer<typeof DataSinkSchema>;
+type DataSourceItem = z.infer<typeof DataSourceSchema>;
+type Destination = z.infer<typeof DestinationSchema>;
+type Origin = z.infer<typeof OriginSchema>;
 
 function buildClientSpecs(
   ts: typeof import('typescript'),
@@ -80,7 +55,7 @@ function buildClientSpecs(
 function buildInitialChain(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
-  target: { type: 'Event' | 'Command' | 'State'; name: string },
+  target: DataSinkItem['target'] | DataSourceItem['target'],
 ): tsNS.Expression {
   const op = target.type === 'Event' ? 'event' : target.type === 'Command' ? 'command' : 'state';
   return f.createCallExpression(
@@ -363,7 +338,7 @@ function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' |
   if (example.when !== null && example.when !== undefined) {
     if (Array.isArray(example.when)) {
       // Array of events for react slices
-      const mappedWhen = example.when.map((when) => {
+      gwtBlock.when = example.when.map((when) => {
         if ('eventRef' in when) {
           return { eventRef: when.eventRef, exampleData: when.exampleData };
         } else if ('commandRef' in when) {
@@ -371,7 +346,6 @@ function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' |
         }
         return when;
       });
-      gwtBlock.when = mappedWhen;
     } else {
       // Single object - could be command (command slices) or event (query slices)
       if ('commandRef' in example.when) {
