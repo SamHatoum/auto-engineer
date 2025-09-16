@@ -86,7 +86,7 @@ export function setupHttpRoutes(
   // Serve landing page
   app.get('/', (_req, res) => {
     const __dirname = dirname(fileURLToPath(import.meta.url));
-    res.sendFile(join(__dirname, 'canvas-landing.html'));
+    res.sendFile(join(__dirname, 'sandbox-landing-page.html'));
   });
 
   // Get registry information
