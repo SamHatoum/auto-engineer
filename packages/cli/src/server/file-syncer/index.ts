@@ -4,6 +4,7 @@ import type { Server as SocketIOServer } from 'socket.io';
 import createDebug from 'debug';
 import { NodeFileStore } from '@auto-engineer/file-store';
 import { resolveSyncFileSet } from './sync/resolveSyncFileSet';
+import { loadAutoConfig } from '../config-loader';
 import { md5, readBase64, statSize } from './utils/hash';
 import { toWirePath, fromWirePath, rebuildWirePathCache } from './utils/path';
 import type { WireChange, WireInitial } from './types/wire';
@@ -20,9 +21,12 @@ export class FileSyncer {
   private active: Map<string, FileMeta>;
   private watcher?: chokidar.FSWatcher;
   private debounce: NodeJS.Timeout | null = null;
+  private autoConfigDebounce: NodeJS.Timeout | null = null;
   private lastComputeTime: number = 0;
   private cachedDesiredSet: Set<string> | null = null;
   private pendingInitialFiles: Promise<WireInitial> | null = null;
+  private autoConfigHash: string | null = null;
+  private autoConfigContent: unknown = null;
 
   constructor(io: SocketIOServer, watchDir = '.', _extensions?: string[]) {
     this.io = io;
@@ -33,6 +37,24 @@ export class FileSyncer {
   }
 
   start(): void {
+    const serializeConfig = (cfg: unknown) =>
+      JSON.stringify(
+        cfg,
+        (key: string, value: unknown) => {
+          if (typeof value === 'function') {
+            const funcName = (value as { name?: string }).name;
+            return `[Function: ${funcName != null ? funcName : 'anonymous'}]`;
+          }
+          return value;
+        },
+        2,
+      );
+
+    const getVirtualConfigWirePath = () => {
+      const virtualPath = path.join(this.watchDir, 'auto.config.json');
+      return toWirePath(virtualPath, this.projectRoot);
+    };
+
     const compute = async () => {
       const now = Date.now();
       // Cache computeDesiredSet results for 1 second to prevent rapid repeated calls
@@ -52,7 +74,6 @@ export class FileSyncer {
 
     const initialFiles = async (): Promise<WireInitial> => {
       const desired = await compute();
-
       const files: WireInitial['files'] = [];
       for (const abs of desired) {
         const content = await readBase64(this.vfs, abs);
@@ -69,6 +90,11 @@ export class FileSyncer {
         }
         this.active.set(abs, { hash, size });
         files.push({ path: wire, content });
+      }
+      if (this.autoConfigContent !== null) {
+        const virtualContent = Buffer.from(serializeConfig(this.autoConfigContent), 'utf8').toString('base64');
+        files.push({ path: getVirtualConfigWirePath(), content: virtualContent });
+        debug('Added virtual auto.config.json to initial sync');
       }
       files.sort((a, b) => a.path.localeCompare(b.path));
       return { files, directory: path.resolve(this.watchDir) };
@@ -158,16 +184,85 @@ export class FileSyncer {
       }, 100);
     };
 
-    this.watcher = chokidar.watch([this.watchDir], { ignoreInitial: true, persistent: true });
+    const checkAndSyncAutoConfig = async () => {
+      try {
+        const autoConfigPath = await this.findAutoConfigFile();
+        if (autoConfigPath === null) {
+          if (this.autoConfigContent !== null) {
+            debug('Auto config removed, emitting delete');
+            // Create the virtual auto.config.json path relative to watchDir like regular files
+            const virtualPath = path.join(this.watchDir, 'auto.config.json');
+            const virtualWirePath = toWirePath(virtualPath, this.projectRoot);
+            this.io.emit('file-change', { event: 'delete', path: virtualWirePath });
+            this.autoConfigContent = null;
+            this.autoConfigHash = null;
+          }
+          return;
+        }
+
+        const currentHash = await md5(this.vfs, autoConfigPath);
+        if (currentHash === null || currentHash === this.autoConfigHash) {
+          return;
+        }
+
+        debug('Auto config changed, executing and syncing');
+        const config = await loadAutoConfig(autoConfigPath);
+        const wasPresent = this.autoConfigContent !== null; // <-- capture before overwriting
+        this.autoConfigContent = config;
+        this.autoConfigHash = currentHash;
+        const virtualContent = Buffer.from(serializeConfig(config), 'utf8').toString('base64');
+        const virtualWirePath = getVirtualConfigWirePath();
+        const eventType: WireChange['event'] = wasPresent ? 'change' : 'add';
+        this.io.emit('file-change', {
+          event: eventType,
+          path: virtualWirePath,
+          content: virtualContent,
+        });
+      } catch (error) {
+        console.error('[sync] auto-config error:', error);
+      }
+    };
+
+    const scheduleAutoConfigSync = () => {
+      if (this.autoConfigDebounce) clearTimeout(this.autoConfigDebounce);
+      this.autoConfigDebounce = setTimeout(() => {
+        this.autoConfigDebounce = null;
+        checkAndSyncAutoConfig().catch((err) => console.error('[sync] auto-config error', err));
+      }, 100);
+    };
+
+    const isAutoConfigFile = (filePath: string): boolean => {
+      const fileName = path.basename(filePath);
+      return fileName === 'auto.config.ts' || fileName === 'auto.config.js';
+    };
+
+    this.watcher = chokidar.watch([this.watchDir], {
+      ignoreInitial: true,
+      persistent: true,
+      ignored: ['**/node_modules/**', '**/.git/**', '**/.DS_Store'],
+      awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
+    });
     this.watcher
-      .on('add', (_filePath) => {
+      .on('add', (filePath) => {
         scheduleRebuild();
+        if (isAutoConfigFile(filePath)) {
+          debug('Auto config file added: %s', filePath);
+          scheduleAutoConfigSync();
+        }
       })
-      .on('change', (_filePath) => {
+      .on('change', (filePath) => {
         scheduleRebuild();
+        if (isAutoConfigFile(filePath)) {
+          debug('Auto config file changed: %s', filePath);
+          scheduleAutoConfigSync();
+        }
       })
-      .on('unlink', (_filePath) => {
+      .on('unlink', (filePath) => {
         scheduleRebuild();
+        if (isAutoConfigFile(filePath)) {
+          debug('Auto config file removed: %s', filePath);
+          scheduleAutoConfigSync();
+        }
       })
       .on('addDir', (_dirPath) => {
         scheduleRebuild();
@@ -177,36 +272,59 @@ export class FileSyncer {
       })
       .on('error', (err) => console.error('[watcher]', err));
 
+    // Initial auto.config.ts sync
+    scheduleAutoConfigSync();
+
     this.io.on('connection', async (socket) => {
+      debug('New WebSocket client connected, preparing initial sync');
+
       try {
-        // Deduplicate concurrent initialFiles calls by reusing pending promise
-        if (this.pendingInitialFiles) {
-          const init = await this.pendingInitialFiles;
-          socket.emit('initial-sync', init);
-          return;
+        // Create once, reuse while in-flight, and auto-clear on settle
+        let wasFresh = false;
+        if (!this.pendingInitialFiles) {
+          this.pendingInitialFiles = initialFiles().finally(() => {
+            this.pendingInitialFiles = null;
+          });
+          wasFresh = true;
         }
 
-        this.pendingInitialFiles = initialFiles();
         const init = await this.pendingInitialFiles;
-        this.pendingInitialFiles = null; // Clear after completion
 
-        // Rebuild wire path cache for external mappings to support reconnection
-        const files = Array.from(this.active.keys()).map((abs) => ({ abs, projectRoot: this.projectRoot }));
-        rebuildWirePathCache(files);
+        if (wasFresh) {
+          // Rebuild wire path cache for external mappings to support reconnection
+          const files = Array.from(this.active.keys()).map((abs) => ({ abs, projectRoot: this.projectRoot }));
+          rebuildWirePathCache(files);
+        }
 
         socket.emit('initial-sync', init);
+        debug(`Sent ${wasFresh ? 'fresh' : 'cached'} initial-sync to client`);
       } catch (e) {
         console.error('[sync] initial-sync failed:', e);
         this.pendingInitialFiles = null; // Clear on error
       }
 
       socket.on('client-file-change', async (msg: { event: 'write' | 'delete'; path: string; content?: string }) => {
-        // Use fromWirePath to handle virtual paths correctly
         const abs = fromWirePath(msg.path, this.projectRoot);
+        // Block client edits to the virtual auto.config.json (one-way TS -> JSON)
+        const virtualAbs = path.join(this.watchDir, 'auto.config.json');
+        if (path.resolve(abs) === path.resolve(virtualAbs)) {
+          debug('[sync] ignoring client attempt to modify virtual auto.config.json (%s)', msg.event);
+          return;
+        }
+        const allowedRoot = path.resolve(this.watchDir) + path.sep;
+        const normalizedAbs = path.resolve(abs);
+        if (!normalizedAbs.startsWith(allowedRoot)) {
+          console.warn('[sync] blocked client write outside watchDir:', {
+            requested: msg.path,
+            resolved: normalizedAbs,
+          });
+          return;
+        }
+
         try {
           if (msg.event === 'delete') {
-            await this.vfs.remove(abs);
-            this.active.delete(abs);
+            await this.vfs.remove(normalizedAbs);
+            this.active.delete(normalizedAbs);
           } else {
             const contentStr = msg.content;
             if (contentStr === undefined) {
@@ -214,7 +332,7 @@ export class FileSyncer {
               return;
             }
             const content = Buffer.from(contentStr, 'base64');
-            await this.vfs.write(abs, new Uint8Array(content));
+            await this.vfs.write(normalizedAbs, new Uint8Array(content));
           }
         } catch (e) {
           console.error('[sync] client-file-change failed:', e);
@@ -225,12 +343,32 @@ export class FileSyncer {
     });
   }
 
+  private async findAutoConfigFile(): Promise<string | null> {
+    const candidates = [path.join(this.watchDir, 'auto.config.ts'), path.join(this.watchDir, 'auto.config.js')];
+
+    for (const candidate of candidates) {
+      try {
+        const exists = await this.vfs.exists(candidate);
+        if (exists) {
+          return candidate;
+        }
+      } catch {
+        // Ignore errors and try next candidate
+      }
+    }
+
+    return null;
+  }
+
   stop(): void {
     if (this.watcher) {
       void this.watcher.close();
     }
     if (this.debounce) {
       clearTimeout(this.debounce);
+    }
+    if (this.autoConfigDebounce) {
+      clearTimeout(this.autoConfigDebounce);
     }
   }
 }

@@ -7,17 +7,12 @@ export const posix = (p: string) => p.split(path.sep).join('/');
 
 export function toWirePath(abs: string, projectRoot: string) {
   const rel = path.relative(projectRoot, abs);
-
-  // If path is outside project root (starts with ..), remap to virtual path
   if (rel.startsWith('..')) {
     debug('toWirePath: abs is outside projectRoot. abs=%s', abs);
-
-    // Check if it's in node_modules
     const nodeModulesMatch = abs.match(/.*\/node_modules\/(.*)/);
     if (nodeModulesMatch) {
       // Remap to virtual /.external/node_modules/ path to avoid traversal error
       let modulePath = nodeModulesMatch[1];
-
       // Normalize path by removing redundant ./  segments
       modulePath = modulePath.replace(/\/\.\//g, '/').replace(/^\.\//, '');
 
@@ -48,7 +43,18 @@ export function sample<T>(arr: T[], n = 5) {
 }
 
 export function logArray(label: string, arr: string[], _n = 5) {
-  // Utility function for debugging - kept for potential future use
+  if (arr.length === 0) {
+    debug(`${label}: (empty)`);
+    return;
+  }
+  debug(`${label}: ${arr.length} items`);
+  const sampled = sample(arr, _n);
+  for (let i = 0; i < sampled.length; i++) {
+    debug(`  ${i + 1}. ${sampled[i]}`);
+  }
+  if (arr.length > _n) {
+    debug(`  ... and ${arr.length - _n} more`);
+  }
 }
 
 export function uniq<T>(arr: T[]): T[] {
