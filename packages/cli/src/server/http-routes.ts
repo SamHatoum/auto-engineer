@@ -83,13 +83,8 @@ export function setupHttpRoutes(
     });
   });
 
-  // Serve dashboard
+  // Serve landing page
   app.get('/', (_req, res) => {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    res.sendFile(join(__dirname, 'dashboard.html'));
-  });
-
-  app.get('/landing', (_req, res) => {
     const __dirname = dirname(fileURLToPath(import.meta.url));
     res.sendFile(join(__dirname, 'canvas-landing.html'));
   });
