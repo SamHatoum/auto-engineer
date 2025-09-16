@@ -35,6 +35,8 @@ export type TypeCheckFailedEvent = Event<
   }
 >;
 
+export type CheckTypesEvents = TypeCheckPassedEvent | TypeCheckFailedEvent;
+
 export const commandHandler = defineCommandHandler<CheckTypesCommand>({
   name: 'CheckTypes',
   alias: 'check:types',

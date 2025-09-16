@@ -41,6 +41,8 @@ export type IAGenerationFailedEvent = Event<
   }
 >;
 
+export type GenerateIAEvents = IAGeneratedEvent | IAGenerationFailedEvent;
+
 export const commandHandler = defineCommandHandler<GenerateIACommand>({
   name: 'GenerateIA',
   alias: 'generate:ia',

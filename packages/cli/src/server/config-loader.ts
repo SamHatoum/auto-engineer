@@ -22,7 +22,7 @@ let configLoading = false;
 export async function loadAutoConfig(configPath: string): Promise<AutoConfig> {
   if (configLoading) {
     debug('Config already loading, returning empty config');
-    return { plugins: [] };
+    return { fileId: '', plugins: [] };
   }
 
   try {

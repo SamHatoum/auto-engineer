@@ -81,6 +81,7 @@ export const COMMANDS = [generateClientHandler, copyExampleHandler];
 export {
   commandHandler as generateClientCommandHandler,
   type GenerateClientCommand,
+  type GenerateClientEvents,
   type ClientGeneratedEvent,
   type ClientGenerationFailedEvent,
 } from './commands/generate-client';

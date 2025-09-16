@@ -39,6 +39,8 @@ export type ClientGenerationFailedEvent = Event<
   }
 >;
 
+export type GenerateClientEvents = ClientGeneratedEvent | ClientGenerationFailedEvent;
+
 export const commandHandler = defineCommandHandler<GenerateClientCommand>({
   name: 'GenerateClient',
   alias: 'generate:client',

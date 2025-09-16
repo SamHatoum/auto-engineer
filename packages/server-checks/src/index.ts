@@ -6,18 +6,21 @@ export const COMMANDS = [checkTypesHandler, checkLintHandler, checkTestsHandler]
 export {
   commandHandler as checkTypesCommandHandler,
   type CheckTypesCommand,
+  type CheckTypesEvents,
   type TypeCheckPassedEvent,
   type TypeCheckFailedEvent,
 } from './commands/check-types';
 export {
   commandHandler as checkTestsCommandHandler,
   type CheckTestsCommand,
+  type CheckTestsEvents,
   type TestsCheckPassedEvent,
   type TestsCheckFailedEvent,
 } from './commands/check-tests';
 export {
   commandHandler as checkLintCommandHandler,
   type CheckLintCommand,
+  type CheckLintEvents,
   type LintCheckPassedEvent,
   type LintCheckFailedEvent,
 } from './commands/check-lint';

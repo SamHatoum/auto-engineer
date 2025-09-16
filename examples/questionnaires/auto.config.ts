@@ -1,37 +1,22 @@
 import { autoConfig, on, dispatch, fold } from '@auto-engineer/cli';
-import type { Command, Event } from '@auto-engineer/message-bus';
-import { type ExportSchemaCommand, type SchemaExportedEvent, type SchemaExportFailedEvent } from '@auto-engineer/flow';
-import {
-  type GenerateServerCommand,
-  type ServerGeneratedEvent,
-  type ServerGenerationFailedEvent,
-} from '@auto-engineer/server-generator-apollo-emmett';
-import {
-  type ImplementServerCommand,
-  type ServerImplementedEvent,
-  type ServerImplementationFailedEvent,
-} from '@auto-engineer/server-implementer';
-import {
-  type CheckTypesCommand,
-  type TypeCheckPassedEvent,
-  type TypeCheckFailedEvent,
+import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
+import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
+import type { ImplementServerCommand, ImplementServerEvents } from '@auto-engineer/server-implementer';
+import type {
   CheckTestsCommand,
+  CheckTestsEvents,
+  CheckTypesCommand,
+  CheckTypesEvents,
   CheckLintCommand,
+  CheckLintEvents,
 } from '@auto-engineer/server-checks';
-import { CheckClientCommand } from '@auto-engineer/frontend-checks';
-import {
-  type GenerateIACommand,
-  type IAGeneratedEvent,
-  type IAGenerationFailedEvent,
-} from '@auto-engineer/information-architect';
-import {
-  type ImplementClientCommand,
-  type ClientImplementedEvent,
-  type ClientImplementationFailedEvent,
-} from '@auto-engineer/frontend-implementer';
-import { ClientGeneratedEvent, type GenerateClientCommand } from '@auto-engineer/frontend-generator-react-graphql';
+import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/information-architect';
+import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engineer/frontend-implementer';
+import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
 
 export default autoConfig({
+  fileId: 'a1b2c3d4e', // unique 9-character base62 canvas file id where all flows in this project will be shown
+
   plugins: [
     '@auto-engineer/server-checks',
     '@auto-engineer/design-system-importer',
@@ -48,101 +33,100 @@ export default autoConfig({
     // 'test:types': checkTypesCommandHandler,
   },
   pipeline: () => {
-    // State management: Track pipeline status
-    const pipelineStatus = fold<string, Event>(
-      '*', // Listen to all events
-      (state = 'idle', event) => {
-        switch (event.type) {
-          case 'SchemaExported':
-            return 'schema-exported';
-          case 'ServerGenerated':
-            return 'server-generated';
-          case 'ServerImplemented':
-            return 'server-implemented';
-          case 'TypeCheckPassed':
-            return 'checks-passed';
-          case 'TypeCheckFailed':
-            return 'checks-failed';
-          case 'IAGenerated':
-            return 'ia-generated';
-          case 'ClientImplemented':
-            return 'client-implemented';
-          default:
-            return state;
-        }
-      },
-    );
-
-    // State: Track last error
-    const lastError = fold<any, Event>('*', (state: string = 'None', event) => {
-      if (event.type.endsWith('Failed') || event.type.endsWith('Error')) {
-        return {
-          type: event.type,
-          data: event.data,
-          timestamp: new Date().toISOString(),
-        };
-      }
-      return state;
-    });
-
-    // State: Track completed operations
-    const completedOperations = fold<string[], Event>('*', (state = [], event) => {
-      if (event.type.endsWith('Passed') || event.type.endsWith('Generated') || event.type.endsWith('Implemented')) {
-        return [...state, event.type];
-      }
-      return state;
-    });
-
-    on<SchemaExportedEvent>('SchemaExported', () =>
+    on<ExportSchemaEvents>('SchemaExported', () =>
       dispatch<GenerateServerCommand>({
         type: 'GenerateServer',
         data: {
-          schemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.json',
-          destination: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires',
+          schemaPath: './.context/schema.json',
+          destination: '.',
         },
       }),
     );
 
-    on<ServerGeneratedEvent>('ServerGenerated', () =>
+    on<GenerateServerEvents>('ServerGenerated', () =>
       dispatch<GenerateIACommand>({
         type: 'GenerateIA',
         data: {
-          outputDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context',
-          flowFiles: [
-            '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts',
-          ],
+          outputDir: './.context',
+          flowFiles: ['./flows/questionnaires.flow.ts'],
         },
       }),
     );
 
-    on<IAGeneratedEvent>('IAGenerated', () =>
+    on<GenerateIAEvents>('IAGenerated', () =>
       dispatch<GenerateClientCommand>({
         type: 'GenerateClient',
         data: {
-          starterDir:
-            '/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter',
-          targetDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client',
-          iaSchemaPath:
-            '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/auto-ia-scheme.json',
-          gqlSchemaPath:
-            '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/schema.graphql',
-          figmaVariablesPath:
-            '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/figma-variables.json',
+          starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
+          targetDir: './client',
+          iaSchemaPath: './.context/auto-ia-scheme.json',
+          gqlSchemaPath: './.context/schema.graphql',
+          figmaVariablesPath: './.context/figma-variables.json',
         },
       }),
     );
 
-    on<ClientGeneratedEvent>('ClientGenerated', () =>
+    on<GenerateClientEvents>('ClientGenerated', () =>
       dispatch<ImplementClientCommand>({
         type: 'ImplementClient',
         data: {
-          projectDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/client',
-          iaSchemeDir: '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context',
-          designSystemPath:
-            '/Users/sam/WebstormProjects/top/auto-engineer/examples/questionnaires/.context/design-system.md',
+          projectDir: './client',
+          iaSchemeDir: './.context',
+          designSystemPath: './.context/design-system.md',
         },
       }),
     );
+
+    on<ImplementServerEvents>('SliceImplemented', () => {
+      dispatch<CheckTestsCommand>({
+        type: 'CheckTests',
+        data: {
+          targetDirectory: 'sds',
+          scope: 'slice',
+        },
+      });
+    });
+
+    on<ImplementServerEvents>('SliceImplemented', () => {
+      dispatch<CheckTypesCommand>({
+        type: 'CheckTypes',
+        data: {
+          targetDirectory: 'sds',
+          scope: 'slice',
+        },
+      });
+    });
+
+    on<ImplementServerEvents>('SliceImplemented', () => {
+      dispatch<CheckLintCommand>({
+        type: 'CheckLint',
+        data: {
+          targetDirectory: 'sds',
+          scope: 'slice',
+          fix: true,
+        },
+      });
+    });
+
+    // on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
+    //   ['CheckTests', 'CheckTypes', 'CheckLint'],
+    //   ([checkTestsEvents, checkTypesEvents, checkLintEvents]:
+    //     [CheckTestsEvents, CheckTypesEvents, CheckLintEvents]) => {
+    //     if (checkTestsEvents.type === 'TestsCheckFailed' ||
+    //       checkTypesEvents.type === 'TypeCheckFailed' ||
+    //       checkLintEvents.type === 'LintCheckFailed') {
+    //       dispatch<ImplementClientCommand>({
+    //         type: 'ImplementClient',
+    //         data: {
+    //           projectDir: 'some/where',
+    //           iaSchemeDir: '/',
+    //           designSystemPath: '',
+    //           failures: []
+    //         }
+    //       });
+    //     }
+    //   }
+    // );
   },
 });
 

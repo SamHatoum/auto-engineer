@@ -163,6 +163,7 @@ interface ProjectContext {
   graphqlOperations: Record<string, string>;
   userPreferences: string;
   theme: string;
+  failures: string[];
 }
 
 // eslint-disable-next-line complexity
@@ -267,11 +268,13 @@ async function getProjectContext(
   iaSchemeDir: string,
   userPreferences: string,
   designSystem: string,
+  failures: string[],
 ): Promise<ProjectContext> {
   debugContext('Building project context for: %s', projectDir);
   debugContext('IA scheme directory: %s', iaSchemeDir);
   debugContext('User preferences length: %d', userPreferences.length);
   debugContext('Design system length: %d', designSystem.length);
+  debugContext('Failures: %d', failures.length);
 
   const files = await listFiles(projectDir);
   debugContext('Found %d files in project', files.length);
@@ -297,6 +300,7 @@ async function getProjectContext(
     graphqlOperations,
     userPreferences,
     theme,
+    failures,
   };
 }
 
@@ -340,12 +344,15 @@ function makeBasePrompt(ctx: ProjectContext): string {
   return `
 You are Auto, an expert AI frontend engineer specializing in scalable, clean, production-grade React applications using modern TypeScript, and GraphQL via Apollo Client.
 
-Your task: Analyze the current project and generate a complete plan to implement a well-structured, schema-compliant React app using atomic design and integrated GraphQL operations. You must ensure code clarity, maintainability, and adherence to project styling conventions.
+Your task: Analyze the current project and generate a complete plan to implement a well-structured, schema-compliant React app using atomic design and integrated GraphQL operations. You must ensure code clarity, maintainability, and adherence to project styling conventions. 
+You must also fix any Failures that were encountered in previous runs.
+
+Failures: [${ctx.failures.join(',')}]
 
 User Preferences: ${ctx.userPreferences}
 
 IMPLEMENTATION MUST:
-- DONT EVER CHANGE THE THEME TOKENS BY YOURSELF
+- DON'T EVER CHANGE THE THEME TOKENS BY YOURSELF
 - If there are any page templates in the user preferences make sure to use that layout for pages.
 
 Component Design & Structure:
@@ -818,9 +825,14 @@ async function fixErrorsLoop(ctx: ProjectContext, projectDir: string) {
 }
 */
 
-export async function runAIAgent(projectDir: string, iaSchemeDir: string, designSystemPath: string) {
+export async function runAIAgent(
+  projectDir: string,
+  iaSchemeDir: string,
+  designSystemPath: string,
+  failures: string[],
+) {
   debug('='.repeat(80));
-  debug('Starting AI agent');
+  debug('Starting FE implementer agent');
   debug('Project directory: %s', projectDir);
   debug('IA scheme directory: %s', iaSchemeDir);
   debug('Design system path: %s', designSystemPath);
@@ -836,7 +848,7 @@ export async function runAIAgent(projectDir: string, iaSchemeDir: string, design
   debug('Design system loaded, size: %d bytes', designSystem.length);
 
   debug('Building project context...');
-  const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem);
+  const ctx = await getProjectContext(projectDir, iaSchemeDir, userPreferences, designSystem, failures);
   debug('Project context created successfully');
 
   debug('Planning project implementation...');

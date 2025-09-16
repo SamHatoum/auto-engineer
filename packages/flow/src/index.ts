@@ -117,6 +117,7 @@ export type Spec = z.infer<typeof SpecSchema>;
 export {
   commandHandler as exportSchemaCommandHandler,
   type ExportSchemaCommand,
+  type ExportSchemaEvents,
   type SchemaExportedEvent,
   type SchemaExportFailedEvent,
 } from './commands/export-schema';

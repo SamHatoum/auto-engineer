@@ -69,6 +69,8 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
+export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent;
+
 export const commandHandler = defineCommandHandler<GenerateServerCommand>({
   name: 'GenerateServer',
   alias: 'generate:server',

@@ -30,6 +30,8 @@ export type SchemaExportFailedEvent = Event<
   }
 >;
 
+export type ExportSchemaEvents = SchemaExportedEvent | SchemaExportFailedEvent;
+
 export const commandHandler = defineCommandHandler<ExportSchemaCommand>({
   name: 'ExportSchema',
   alias: 'export:schema',

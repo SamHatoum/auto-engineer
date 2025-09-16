@@ -39,6 +39,8 @@ export type LintCheckFailedEvent = Event<
   }
 >;
 
+export type CheckLintEvents = LintCheckPassedEvent | LintCheckFailedEvent;
+
 export const commandHandler = defineCommandHandler<CheckLintCommand>({
   name: 'CheckLint',
   alias: 'check:lint',

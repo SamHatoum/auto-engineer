@@ -32,6 +32,8 @@ export type ServerImplementationFailedEvent = Event<
   }
 >;
 
+export type ImplementServerEvents = ServerImplementedEvent | ServerImplementationFailedEvent;
+
 export const commandHandler = defineCommandHandler<ImplementServerCommand>({
   name: 'ImplementServer',
   alias: 'implement:server',

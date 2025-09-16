@@ -5,7 +5,7 @@ import fg from 'fast-glob';
 import { access } from 'fs/promises';
 import createDebug from 'debug';
 
-const debug = createDebug('bacserverkend-checks:tests');
+const debug = createDebug('server-checks:tests');
 const debugHandler = createDebug('server-checks:tests:handler');
 const debugProcess = createDebug('server-checks:tests:process');
 const debugResult = createDebug('server-checks:tests:result');
@@ -37,6 +37,8 @@ export type TestsCheckFailedEvent = Event<
     testsFailed: number;
   }
 >;
+
+export type CheckTestsEvents = TestsCheckPassedEvent | TestsCheckFailedEvent;
 
 export const commandHandler = defineCommandHandler<CheckTestsCommand>({
   name: 'CheckTests',

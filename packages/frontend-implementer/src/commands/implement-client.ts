@@ -10,6 +10,7 @@ export type ImplementClientCommand = Command<
     projectDir: string;
     iaSchemeDir: string;
     designSystemPath: string;
+    failures?: string[];
   }
 >;
 
@@ -28,6 +29,8 @@ export type ClientImplementationFailedEvent = Event<
   }
 >;
 
+export type ImplementClientEvents = ClientImplementedEvent | ClientImplementationFailedEvent;
+
 export const commandHandler = defineCommandHandler<ImplementClientCommand>({
   name: 'ImplementClient',
   alias: 'implement:client',
@@ -45,6 +48,10 @@ export const commandHandler = defineCommandHandler<ImplementClientCommand>({
     designSystemPath: {
       description: 'Design system file',
       required: true,
+    },
+    failures: {
+      description: 'Any failures from previous implementations',
+      required: false,
     },
   },
   examples: [
@@ -66,11 +73,10 @@ export const commandHandler = defineCommandHandler<ImplementClientCommand>({
 async function handleImplementClientCommandInternal(
   command: ImplementClientCommand,
 ): Promise<ClientImplementedEvent | ClientImplementationFailedEvent> {
-  const { projectDir, iaSchemeDir, designSystemPath } = command.data;
+  const { projectDir, iaSchemeDir, designSystemPath, failures = [] } = command.data;
 
   try {
-    // Run the AI agent with absolute paths
-    await runAIAgent(projectDir, iaSchemeDir, designSystemPath);
+    await runAIAgent(projectDir, iaSchemeDir, designSystemPath, failures);
 
     debug('AI project implementation complete!');
 

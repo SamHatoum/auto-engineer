@@ -38,6 +38,8 @@ export type SliceImplementationFailedEvent = Event<
   }
 >;
 
+export type ImplementSliceEvents = SliceImplementedEvent | SliceImplementationFailedEvent;
+
 export const commandHandler = defineCommandHandler<ImplementSliceCommand>({
   name: 'ImplementSlice',
   alias: 'implement:slice',

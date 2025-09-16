@@ -4,4 +4,9 @@ export type { UXSchema, AIAgentOutput } from './types.js';
 
 import { commandHandler as generateIAHandler } from './commands/generate-ia';
 export const COMMANDS = [generateIAHandler];
-export { type GenerateIACommand, type IAGeneratedEvent, type IAGenerationFailedEvent } from './commands/generate-ia';
+export type {
+  GenerateIACommand,
+  GenerateIAEvents,
+  IAGeneratedEvent,
+  IAGenerationFailedEvent,
+} from './commands/generate-ia';
