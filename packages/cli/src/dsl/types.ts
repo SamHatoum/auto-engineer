@@ -1,23 +1,5 @@
 import type { Command, Event } from '@auto-engineer/message-bus';
 
-// Type utilities for automatic event extraction from command handlers
-export type ExtractHandlerEvents<T> = T extends { handle: (...args: unknown[]) => Promise<infer R> } ? R : never;
-
-// Global command handler registry interface - completely abstract
-// This interface is intentionally empty and will be augmented by external packages
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface CommandHandlerRegistry {}
-
-// Automatic event mapping from registered handlers
-export type AutoCommandEventMap = {
-  [K in keyof CommandHandlerRegistry]: ExtractHandlerEvents<CommandHandlerRegistry[K]>;
-};
-
-// Type for automatically extracting events from commands
-export type AutoSettledEvents<T extends readonly Command[]> = {
-  [K in T[number]['type']]: K extends keyof AutoCommandEventMap ? AutoCommandEventMap[K][] : Event[];
-};
-
 export interface EventRegistration {
   type: 'on';
   eventType: string;

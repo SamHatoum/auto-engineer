@@ -7,12 +7,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
-    },
-    "./cli-types": "./cli-types.d.ts"
+    }
   },
   "files": [
     "dist",
-    "cli-types.d.ts",
     "README.md",
     "CHANGELOG.md"
   ],

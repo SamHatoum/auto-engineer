@@ -6,7 +6,6 @@ import type {
   DslRegistration,
   ConfigDefinition,
   SettledRegistration,
-  AutoSettledEvents,
 } from './types';
 
 // Track registrations when DSL functions are called
@@ -65,19 +64,17 @@ function settled<
             ? [T['type'], U['type'], V['type'], W['type'], X['type']]
             : never,
   callback: (
-    events: AutoSettledEvents<
-      [T, U, V, W, X] extends [Command, never, never, never, never]
-        ? [T]
-        : [T, U, V, W, X] extends [Command, Command, never, never, never]
-          ? [T, U]
-          : [T, U, V, W, X] extends [Command, Command, Command, never, never]
-            ? [T, U, V]
-            : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
-              ? [T, U, V, W]
-              : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
-                ? [T, U, V, W, X]
-                : never
-    >,
+    events: [T, U, V, W, X] extends [Command, never, never, never, never]
+      ? { [K in T['type']]: Event[] }
+      : [T, U, V, W, X] extends [Command, Command, never, never, never]
+        ? { [K in T['type'] | U['type']]: Event[] }
+        : [T, U, V, W, X] extends [Command, Command, Command, never, never]
+          ? { [K in T['type'] | U['type'] | V['type']]: Event[] }
+          : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
+            ? { [K in T['type'] | U['type'] | V['type'] | W['type']]: Event[] }
+            : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
+              ? { [K in T['type'] | U['type'] | V['type'] | W['type'] | X['type']]: Event[] }
+              : never,
   ) => void,
 ): SettledRegistration {
   const registration: SettledRegistration = {
