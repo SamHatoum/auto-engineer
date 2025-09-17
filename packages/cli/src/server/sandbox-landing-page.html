@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>On Auto — Sandbox Server</title>
   <meta name="onauto:hosted-url" content="" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg width='637' height='637' viewBox='0 0 637 637' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_1042_512)'%3E%3Crect width='637' height='637'/%3E%3Cpath d='M693.161 -427.743L-623.632 1532.31L-591.107 1552.06L725.686 -407.988L693.161 -427.743Z' fill='%23EC3F4A'/%3E%3Cpath d='M725.695 -407.962L-591.097 1552.09L-571.511 1563.98L745.281 -396.066L725.695 -407.962Z' fill='%231A1A1A'/%3E%3Cpath d='M745.281 -396.071L-571.511 1563.98L-538.986 1583.73L777.807 -376.315L745.281 -396.071Z' fill='%23FF8A1D'/%3E%3Cpath d='M777.815 -376.302L-538.978 1583.75L-519.391 1595.64L797.402 -364.406L777.815 -376.302Z' fill='%231A1A1A'/%3E%3Cpath d='M797.394 -364.425L-519.399 1595.62L-486.874 1615.38L829.919 -344.67L797.394 -364.425Z' fill='%235EC72D'/%3E%3Cpath d='M829.913 -344.684L-486.879 1615.37L-467.293 1627.26L849.499 -332.787L829.913 -344.684Z' fill='%231A1A1A'/%3E%3Cpath d='M849.467 -332.791L-467.326 1627.26L-434.801 1647.01L881.992 -313.035L849.467 -332.791Z' fill='%2342C3F7'/%3E%3Cpath d='M882 -313.038L-434.792 1647.01L-415.206 1658.91L901.587 -301.142L882 -313.038Z' fill='%231A1A1A'/%3E%3Cpath d='M673.55 -439.635L-643.242 1520.42L-623.656 1532.31L693.136 -427.738L673.55 -439.635Z' fill='%231A1A1A'/%3E%3Cpath d='M512.644 100H121.718C109.652 100 100 109.667 100 121.751V513.277C100 525.361 109.652 535.028 121.718 535.028H512.644C524.71 535.028 534.362 525.361 534.362 513.277V121.751C534.362 109.667 524.71 100 512.644 100Z' fill='white'/%3E%3Cpath d='M413.706 481.86C451.11 481.86 481.274 451.649 481.274 414.189C481.274 376.728 451.11 346.518 413.706 346.518C376.303 346.518 346.139 376.728 346.139 414.189C346.139 451.649 376.303 481.86 413.706 481.86Z' fill='%231A1A1A'/%3E%3Cpath d='M153.089 347.968C153.089 347.243 153.813 346.518 154.537 346.518H287.017C287.741 346.518 288.465 347.243 288.465 347.968V412.98C288.465 413.705 287.741 414.43 287.017 414.43H257.095C256.371 414.43 255.647 415.155 255.647 415.88V480.893C255.647 481.618 254.923 482.343 254.199 482.343H188.321C187.597 482.343 186.873 481.618 186.873 480.893V415.88C186.873 415.155 186.149 414.43 185.425 414.43H154.296C153.572 414.43 152.848 413.705 152.848 412.98V347.968H153.089Z' fill='%231A1A1A'/%3E%3Cpath d='M347.587 153.17C346.863 153.17 346.139 153.895 346.139 154.621V223.017C346.139 259.269 376.303 288.513 413.706 288.513C451.11 288.513 481.274 259.269 481.274 223.017V154.621C481.274 153.895 480.55 153.17 479.826 153.17H347.345H347.587Z' fill='%231A1A1A'/%3E%3Cpath d='M153.33 286.339C152.848 287.306 153.33 288.272 154.537 288.272H286.776C287.742 288.272 288.465 287.306 287.983 286.339L221.863 154.139C221.381 153.172 219.933 153.172 219.45 154.139L153.33 286.339Z' fill='%231A1A1A'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_1042_512'%3E%3Crect width='637' height='637' fill='white'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E" />
   <style>
@@ -270,11 +271,19 @@
                 </defs>
               </svg>
             </div>
-            <span class="badge">Local Sandbox Server</span>
-            <h1 class="headline">Your SDLC, On Auto</h1>
-            <p class="subhead">Spec-driven sandbox, connected to your components and APIs.</p>
+            <span class="badge" id="hostnameBadge"></span>
+            <script>
+              document.addEventListener('DOMContentLoaded', function () {
+                var badge = document.getElementById('hostnameBadge');
+                badge.textContent = window.location.hostname + ':' + window.location.port
+              });
+            </script>
+            <h1 class="headline">Visualize & Collaborate</h1>
+            <p class="subhead">A free sandbox for you to collaborate with others, visualize your flows, pipelines, and
+              more.
+            </p>
             <div class="actions">
-              <button class="primary" id="openBtn">Open Sandbox</button>
+              <button class="primary" id="openBtn">Access Sandbox</button>
               <div class="hint" id="hint" style="color: #aab4c6; font-size: 12px; display: none"></div>
             </div>
             <label class="checkbox">
@@ -285,12 +294,14 @@
         </div>
       </div>
 
-      <div class="footer-links">
-        <a href="https://on.auto/" target="_blank" rel="noreferrer">Website</a>
+      <div class="footer-links" style="position: absolute; bottom: 16px; left: auto;">
+        <a href="https://on.auto/docs" target="_blank" rel="noreferrer">
+          <i class="fab fa-readme"></i> Docs
+        </a>
         <span>·</span>
-        <a href="https://on.auto/docs" target="_blank" rel="noreferrer">Docs</a>
-        <span>·</span>
-        <a href="https://github.com/SamHatoum/auto-engineer" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://github.com/SamHatoum/auto-engineer" target="_blank" rel="noreferrer">
+          <i class="fab fa-github"></i> GitHub
+        </a>
       </div>
     </div>
   </div>
