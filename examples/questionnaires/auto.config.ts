@@ -113,9 +113,9 @@ export default autoConfig({
       ['CheckTests', 'CheckTypes', 'CheckLint'],
       (events) => {
         const hasFailures =
-          events.CheckTests.some((e) => e.type === 'TestsCheckFailed') ||
-          events.CheckTypes.some((e) => e.type === 'TypeCheckFailed') ||
-          events.CheckLint.some((e) => e.type === 'LintCheckFailed');
+          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
+          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
+          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
 
         if (hasFailures) {
           dispatch<ImplementClientCommand>({
