@@ -20,6 +20,15 @@ function checkIdentifierReference(node: ts.Node, valueIntegrationNames: string[]
   }
 }
 
+function checkFlowFunctionReference(node: ts.Node, flowFunctionNames: string[], usedFlowFunctions: Set<string>): void {
+  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+    const functionName = node.expression.text;
+    if (flowFunctionNames.includes(functionName)) {
+      usedFlowFunctions.add(functionName);
+    }
+  }
+}
+
 function checkCallExpressionTypes(node: ts.Node, typeNames: string[], usedTypes: Set<string>): void {
   if (ts.isCallExpression(node) && node.typeArguments) {
     for (const typeArg of node.typeArguments) {
@@ -72,9 +81,11 @@ export function analyzeCodeUsage(
   typeNames: string[],
   _typeIntegrationNames: string[],
   valueIntegrationNames: string[],
+  flowFunctionNames: string[] = [],
 ) {
   const usedTypes = new Set<string>();
   const usedIntegrations = new Set<string>();
+  const usedFlowFunctions = new Set<string>();
 
   // Extract only the flow code (exclude type declarations) for analysis
   const flowCode = extractFlowCode(code);
@@ -87,6 +98,7 @@ export function analyzeCodeUsage(
     // Check for various type references
     checkTypeReference(node, typeNames, usedTypes);
     checkIdentifierReference(node, valueIntegrationNames, usedIntegrations);
+    checkFlowFunctionReference(node, flowFunctionNames, usedFlowFunctions);
     checkCallExpressionTypes(node, typeNames, usedTypes);
     checkAsExpression(node, typeNames, usedTypes);
     checkStringLiteralReferences(node, typeNames, usedTypes);
@@ -95,5 +107,5 @@ export function analyzeCodeUsage(
   }
 
   visit(sourceFile);
-  return { usedTypes, usedIntegrations };
+  return { usedTypes, usedIntegrations, usedFlowFunctions };
 }

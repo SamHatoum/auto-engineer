@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { buildImports } from './imports';
+import { buildImports, ALL_FLOW_FUNCTION_NAMES } from './imports';
 import { buildTypeAliases } from './types';
 import { buildFlowStatements } from './flow';
 import { extractTypeIntegrationNames } from '../utils/integration-extractor';
@@ -13,17 +13,17 @@ export function generateTypeScriptCode(schema: Model, opts: { flowImport: string
   const flows = schema.flows ?? [];
   const integrations = schema.integrations ?? [];
 
-  // Generate a preliminary version of the code to analyze which types and integrations are used
   const allTypeIntegrationNames = extractTypeIntegrationNames(flows);
   const allValueIntegrationNames = integrations.map((integration) => integrationNameToPascalCase(integration.name));
 
-  // Generate preliminary code with all imports to analyze
+  const allFlowFunctionNames = [...ALL_FLOW_FUNCTION_NAMES];
   const preliminaryStatements = buildStatements(
     ts,
     opts,
     messages,
     allTypeIntegrationNames,
     allValueIntegrationNames,
+    allFlowFunctionNames,
     flows,
   );
   const preliminaryFile = f.createSourceFile(
@@ -45,12 +45,14 @@ export function generateTypeScriptCode(schema: Model, opts: { flowImport: string
     allTypeNames,
     allTypeIntegrationNames,
     allValueIntegrationNames,
+    allFlowFunctionNames,
   );
 
   // Filter to only used types and integrations
   // Type integrations should be filtered based on usedTypes, not usedIntegrations
   const usedTypeIntegrationNames = allTypeIntegrationNames.filter((name) => usageAnalysis.usedTypes.has(name));
   const usedValueIntegrationNames = allValueIntegrationNames.filter((name) => usageAnalysis.usedIntegrations.has(name));
+  const usedFlowFunctionNames = Array.from(usageAnalysis.usedFlowFunctions);
 
   // Include messages that are either:
   // 1. Used in flows, or
@@ -66,17 +68,16 @@ export function generateTypeScriptCode(schema: Model, opts: { flowImport: string
       return false;
     }
 
-    // Include if used in flow OR if flows have no slices (standalone messages)
     return isUsedInFlow || hasEmptyFlowSlices;
   });
 
-  // Generate final statements with filtered imports
   const statements = buildStatements(
     ts,
     opts,
     usedMessages,
     usedTypeIntegrationNames,
     usedValueIntegrationNames,
+    usedFlowFunctionNames,
     flows,
   );
 
@@ -92,18 +93,19 @@ function buildStatements(
   messages: Model['messages'],
   typeIntegrationNames: string[],
   valueIntegrationNames: string[],
+  usedFlowFunctionNames: string[],
   flows: Model['flows'],
 ): ts.Statement[] {
   const statements: ts.Statement[] = [];
 
   // Add imports
-  const imports = buildImports(ts, opts, messages, typeIntegrationNames, valueIntegrationNames);
+  const imports = buildImports(ts, opts, messages, typeIntegrationNames, valueIntegrationNames, usedFlowFunctionNames);
   statements.push(imports.importFlowValues);
   if (imports.importFlowTypes !== null) statements.push(imports.importFlowTypes);
   if (imports.importIntegrationValues !== null) statements.push(imports.importIntegrationValues);
   if (imports.importIntegrationTypes !== null) statements.push(imports.importIntegrationTypes);
 
-  // Add type definitions
+  // Type definitions
   const adaptedMessages = messages.map((msg) => ({
     type: msg.type,
     name: msg.name,
@@ -115,7 +117,7 @@ function buildStatements(
   }));
   statements.push(...buildTypeAliases(ts, adaptedMessages));
 
-  // Add flows
+  // Flows
 
   if (flows.length > 0) {
     statements.push(...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1]));

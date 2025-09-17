@@ -1,30 +1,33 @@
 type BuildImportsOpts = { flowImport: string; integrationImport: string };
 
+export const ALL_FLOW_FUNCTION_NAMES = [
+  'command',
+  'query',
+  'react',
+  'experience',
+  'flow',
+  'should',
+  'specs',
+  'rule',
+  'example',
+  'gql',
+  'source',
+  'data',
+  'sink',
+] as const;
+
 export function buildImports(
   ts: typeof import('typescript'),
   opts: BuildImportsOpts,
   messages: Array<{ type: string; name: string }>,
   typeIntegrationNames: string[],
   valueIntegrationNames: string[] = [],
+  usedFlowFunctionNames: string[] = [],
 ) {
   const f = ts.factory;
 
-  // Import all flow value functions - usage analysis will filter them later
-  const flowValueNames = [
-    'command',
-    'query',
-    'react',
-    'experience',
-    'flow',
-    'should',
-    'specs',
-    'rule',
-    'example',
-    'gql',
-    'source',
-    'data',
-    'sink',
-  ];
+  const flowValueNames =
+    usedFlowFunctionNames.length > 0 ? [...usedFlowFunctionNames].sort() : [...ALL_FLOW_FUNCTION_NAMES].sort();
 
   // Determine which flow types are actually needed based on the messages
   const usedMessageTypes = new Set(messages.map((msg) => msg.type));
@@ -36,7 +39,8 @@ export function buildImports(
 
   const flowTypeNames = Array.from(usedMessageTypes)
     .map((type) => typeMapping[type])
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort();
 
   // Create combined flow import with values first, then types
   const importFlowCombined = f.createImportDeclaration(
@@ -54,7 +58,7 @@ export function buildImports(
     f.createStringLiteral(opts.flowImport),
   );
 
-  // Integration imports - completely derived from schema data
+  // Integration imports - derived from schema data
   const hasIntegrationImports = valueIntegrationNames.length > 0 || typeIntegrationNames.length > 0;
 
   const importIntegrationCombined = hasIntegrationImports
