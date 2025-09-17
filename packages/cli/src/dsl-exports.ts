@@ -6,4 +6,5 @@ export type {
   FoldRegistration,
   DslRegistration,
   ConfigDefinition,
+  CommandHandlerRegistry,
 } from './dsl/types';

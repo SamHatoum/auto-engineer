@@ -247,9 +247,6 @@ importers:
       '@auto-engineer/file-store':
         specifier: workspace:*
         version: link:../file-store
-      '@auto-engineer/flow':
-        specifier: workspace:*
-        version: link:../flow
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../message-bus
@@ -448,6 +445,9 @@ importers:
         specifier: ^3.22.3
         version: 3.24.6(zod@3.25.76)
     devDependencies:
+      '@auto-engineer/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.11
@@ -600,6 +600,9 @@ importers:
 
   packages/server-checks:
     dependencies:
+      '@auto-engineer/cli':
+        specifier: workspace:*
+        version: link:../cli
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../message-bus
@@ -612,10 +615,6 @@ importers:
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
-    devDependencies:
-      '@auto-engineer/cli':
-        specifier: workspace:*
-        version: link:../cli
 
   packages/server-generator-apollo-emmett:
     dependencies:

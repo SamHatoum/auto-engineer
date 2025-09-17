@@ -25,6 +25,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@auto-engineer/cli": "workspace:*",
     "@auto-engineer/message-bus": "workspace:*",
     "debug": "^4.4.1",
     "execa": "^9.5.2",

@@ -9,5 +9,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.specs.ts"],
-  "references": [{ "path": "../message-bus" }]
+  "references": [{ "path": "../message-bus" }, { "path": "../cli" }]
 }

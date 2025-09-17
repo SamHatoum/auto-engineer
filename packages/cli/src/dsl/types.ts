@@ -3,12 +3,11 @@ import type { Command, Event } from '@auto-engineer/message-bus';
 // Type utilities for automatic event extraction from command handlers
 export type ExtractHandlerEvents<T> = T extends { handle: (...args: unknown[]) => Promise<infer R> } ? R : never;
 
-// Global command handler registry interface with known command-event mappings
+// Global command handler registry interface - completely abstract
+// This interface is intentionally empty and will be augmented by external packages
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CommandHandlerRegistry {
-  // Import types from server-checks for the registry
-  CheckTests: { handle: () => Promise<import('@auto-engineer/server-checks').CheckTestsEvents> };
-  CheckTypes: { handle: () => Promise<import('@auto-engineer/server-checks').CheckTypesEvents> };
-  CheckLint: { handle: () => Promise<import('@auto-engineer/server-checks').CheckLintEvents> };
+  // Augmented by external packages via module augmentation
 }
 
 // Automatic event mapping from registered handlers

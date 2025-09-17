@@ -55,6 +55,12 @@
     },
     {
       "path": "./packages/frontend-generator-react-graphql"
+    },
+    {
+      "path": "./packages/server-checks"
+    },
+    {
+      "path": "./packages/server-implementer"
     }
   ]
 }
