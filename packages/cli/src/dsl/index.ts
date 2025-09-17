@@ -1,5 +1,12 @@
 import type { Command, Event } from '@auto-engineer/message-bus';
-import type { EventRegistration, DispatchAction, FoldRegistration, DslRegistration, ConfigDefinition } from './types';
+import type {
+  EventRegistration,
+  DispatchAction,
+  FoldRegistration,
+  DslRegistration,
+  ConfigDefinition,
+  SettledRegistration,
+} from './types';
 
 // Track registrations when DSL functions are called
 let registrations: DslRegistration[] = [];
@@ -34,6 +41,52 @@ export function on<T extends Event>(
     return registration;
   }
 }
+
+/**
+ * Wait for all specified commands to settle and collect their events
+ */
+function settled<
+  T extends Command,
+  U extends Command = never,
+  V extends Command = never,
+  W extends Command = never,
+  X extends Command = never,
+>(
+  commandTypes: [T, U, V, W, X] extends [Command, never, never, never, never]
+    ? [T['type']]
+    : [T, U, V, W, X] extends [Command, Command, never, never, never]
+      ? [T['type'], U['type']]
+      : [T, U, V, W, X] extends [Command, Command, Command, never, never]
+        ? [T['type'], U['type'], V['type']]
+        : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
+          ? [T['type'], U['type'], V['type'], W['type']]
+          : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
+            ? [T['type'], U['type'], V['type'], W['type'], X['type']]
+            : never,
+  callback: (
+    events: [T, U, V, W, X] extends [Command, never, never, never, never]
+      ? { [K in T['type']]: Event[] }
+      : [T, U, V, W, X] extends [Command, Command, never, never, never]
+        ? { [K in T['type'] | U['type']]: Event[] }
+        : [T, U, V, W, X] extends [Command, Command, Command, never, never]
+          ? { [K in T['type'] | U['type'] | V['type']]: Event[] }
+          : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
+            ? { [K in T['type'] | U['type'] | V['type'] | W['type']]: Event[] }
+            : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
+              ? { [K in T['type'] | U['type'] | V['type'] | W['type'] | X['type']]: Event[] }
+              : never,
+  ) => void,
+): SettledRegistration {
+  const registration: SettledRegistration = {
+    type: 'on-settled',
+    commandTypes: commandTypes as readonly string[],
+    handler: callback as (events: Record<string, Event[]>) => void,
+  };
+  registrations.push(registration as unknown as DslRegistration);
+  return registration;
+}
+
+on.settled = settled;
 
 /**
  * Dispatch a command to the message bus

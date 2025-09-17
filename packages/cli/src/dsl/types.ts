@@ -19,7 +19,13 @@ export interface FoldRegistration<S = unknown, E = Event> {
   reducer: (state: S, event: E) => S;
 }
 
-export type DslRegistration = EventRegistration | DispatchAction | FoldRegistration;
+export interface SettledRegistration {
+  type: 'on-settled';
+  commandTypes: readonly string[];
+  handler: (events: Record<string, Event[]>) => void;
+}
+
+export type DslRegistration = EventRegistration | DispatchAction | FoldRegistration | SettledRegistration;
 
 export interface ConfigDefinition {
   fileId: string;

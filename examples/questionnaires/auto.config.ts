@@ -108,25 +108,27 @@ export default autoConfig({
       });
     });
 
-    // on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
-    //   ['CheckTests', 'CheckTypes', 'CheckLint'],
-    //   ([checkTestsEvents, checkTypesEvents, checkLintEvents]:
-    //     [CheckTestsEvents, CheckTypesEvents, CheckLintEvents]) => {
-    //     if (checkTestsEvents.type === 'TestsCheckFailed' ||
-    //       checkTypesEvents.type === 'TypeCheckFailed' ||
-    //       checkLintEvents.type === 'LintCheckFailed') {
-    //       dispatch<ImplementClientCommand>({
-    //         type: 'ImplementClient',
-    //         data: {
-    //           projectDir: 'some/where',
-    //           iaSchemeDir: '/',
-    //           designSystemPath: '',
-    //           failures: []
-    //         }
-    //       });
-    //     }
-    //   }
-    // );
+    on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
+      ['CheckTests', 'CheckTypes', 'CheckLint'],
+      (events) => {
+        const hasFailures =
+          events.CheckTests.some((e) => e.type === 'TestsCheckFailed') ||
+          events.CheckTypes.some((e) => e.type === 'TypeCheckFailed') ||
+          events.CheckLint.some((e) => e.type === 'LintCheckFailed');
+
+        if (hasFailures) {
+          dispatch<ImplementClientCommand>({
+            type: 'ImplementClient',
+            data: {
+              projectDir: 'some/where',
+              iaSchemeDir: '/',
+              designSystemPath: '',
+              failures: [],
+            },
+          });
+        }
+      },
+    );
   },
 });
 
