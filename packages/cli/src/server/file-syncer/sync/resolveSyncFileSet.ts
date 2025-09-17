@@ -1,4 +1,3 @@
-import { getFlows } from '@auto-engineer/flow';
 import { NodeFileStore } from '@auto-engineer/file-store';
 import { collectBareImportsFromFiles } from '../discovery/bareImports';
 import { nmRootsForBases, probeEntryDtsForPackagesFromRoots } from '../discovery/dts';
@@ -32,18 +31,35 @@ function stableCandidateNmRoots(projectRoot: string): string[] {
 export async function resolveSyncFileSet(opts: { vfs: NodeFileStore; watchDir: string; projectRoot: string }) {
   const { vfs, watchDir, projectRoot } = opts;
   try {
-    const flows = await getFlows({ vfs, root: watchDir });
-    const files = flattenPaths(flows.vfsFiles);
+    // Try to dynamically import flow package - it may not be available
+    interface FlowResult {
+      vfsFiles?: string[] | Record<string, string[]>;
+      externals?: string[];
+      typings?: string[] | Record<string, string[]>;
+    }
+
+    let flows: FlowResult | null = null;
+    try {
+      const flowPackage = '@auto-engineer/flow';
+      const flowModule = (await import(flowPackage)) as {
+        getFlows: (opts: { vfs: NodeFileStore; root: string }) => Promise<FlowResult>;
+      };
+      flows = await flowModule.getFlows({ vfs, root: watchDir });
+    } catch {
+      console.warn('[sync] @auto-engineer/flow not available, using fallback mode');
+    }
+
+    const files = flows !== null ? flattenPaths(flows.vfsFiles) : [];
     const baseDirs = uniq([projectRoot, ...files.map(dirOf)]);
     const dynamicRoots = nmRootsForBases(baseDirs);
     const fallbackRoots = stableCandidateNmRoots(projectRoot);
     const nmRoots = uniq([...dynamicRoots, ...fallbackRoots]);
 
     // Gather externals from flow graph + bare imports in source files
-    const externalsFromFlows = flows.externals ?? [];
+    const externalsFromFlows = flows?.externals ?? [];
     const extraPkgs = await collectBareImportsFromFiles(files, vfs);
     const externals = Array.from(new Set([...externalsFromFlows, ...extraPkgs]));
-    const dtsFromGraph = flattenPaths(flows.typings);
+    const dtsFromGraph = flows !== null ? flattenPaths(flows.typings) : [];
     const dtsFromProbe = await probeEntryDtsForPackagesFromRoots(vfs, nmRoots, externals);
 
     // Merge & prefer non-.pnpm & shorter paths for stability
@@ -55,24 +71,28 @@ export async function resolveSyncFileSet(opts: { vfs: NodeFileStore; watchDir: s
       return a.length - b.length;
     });
 
-    // Keep only ONE entry .d.ts per npm package (choose best-scoring path)
-    const bestByPkg = new Map<string, string>();
-    for (const p of allDts) {
-      const pkg = pkgNameFromPath(p);
-      if (pkg === null) continue;
-      const prev = bestByPkg.get(pkg);
-      if (prev === undefined || scorePathForDedupe(p) < scorePathForDedupe(prev)) {
-        bestByPkg.set(pkg, p);
-      }
-    }
-    const dts = [...bestByPkg.values()];
+    const dts = dedupeTypeDefinitionsByPackage(allDts);
 
     logArray('files', files);
     logArray('dts', dts);
     logArray('externals', externals);
     return new Set<string>([...files, ...dts]);
   } catch (err) {
-    console.error('[sync] getFlows FAILED:', err);
+    console.error('[sync] resolveSyncFileSet FAILED:', err);
     return new Set<string>();
   }
+}
+
+function dedupeTypeDefinitionsByPackage(allDts: string[]): string[] {
+  // Keep only ONE entry .d.ts per npm package (choose best-scoring path)
+  const bestByPkg = new Map<string, string>();
+  for (const p of allDts) {
+    const pkg = pkgNameFromPath(p);
+    if (pkg === null) continue;
+    const prev = bestByPkg.get(pkg);
+    if (prev === undefined || scorePathForDedupe(p) < scorePathForDedupe(prev)) {
+      bestByPkg.set(pkg, p);
+    }
+  }
+  return [...bestByPkg.values()];
 }

@@ -6,9 +6,7 @@ export type ExtractHandlerEvents<T> = T extends { handle: (...args: unknown[]) =
 // Global command handler registry interface - completely abstract
 // This interface is intentionally empty and will be augmented by external packages
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface CommandHandlerRegistry {
-  // Augmented by external packages via module augmentation
-}
+export interface CommandHandlerRegistry {}
 
 // Automatic event mapping from registered handlers
 export type AutoCommandEventMap = {

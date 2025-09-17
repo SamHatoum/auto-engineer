@@ -1,4 +1,6 @@
 import { autoConfig, on, dispatch, fold } from '@auto-engineer/cli';
+// Import CLI type augmentation to enable type-safe DSL
+import '@auto-engineer/server-checks/cli-types';
 import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
 import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
 import type { ImplementServerCommand, ImplementServerEvents } from '@auto-engineer/server-implementer';
