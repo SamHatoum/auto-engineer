@@ -26,6 +26,7 @@ export class CommandMetadataService {
         package: unifiedHandler.package?.name ?? 'unknown',
         version: unifiedHandler.package?.version,
         category: unifiedHandler.category,
+        icon: unifiedHandler.icon,
       });
     }
   }

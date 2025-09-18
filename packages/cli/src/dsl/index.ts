@@ -9,6 +9,9 @@ import type {
   SettledHandlerConfig,
 } from './types';
 import type { CommandMetadataService } from '../server/command-metadata-service';
+import createDebug from 'debug';
+
+const debug = createDebug('auto-engineer:dsl:pipeline-graph');
 
 let registrations: DslRegistration[] = [];
 let pendingDispatches: DispatchAction[] = [];
@@ -265,9 +268,59 @@ export function autoConfig(config: ConfigDefinition): ConfigDefinition {
 }
 
 /**
+ * Convert camelCase/PascalCase to title case with spaces
+ * E.g., "GenerateServer" -> "Generate Server", "checkTypes" -> "Check Types", "GenerateHTML" -> "Generate HTML"
+ */
+function camelCaseToTitleCase(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (match) => match.toUpperCase())
+    .trim();
+}
+
+/**
+ * Extract the source command from an event type name
+ * E.g., "SchemaExported" -> "ExportSchema"
+ */
+function getCommandFromEventType(eventType: string): string | null {
+  // Map known event types to their source commands
+  const eventToCommandMap: Record<string, string> = {
+    SchemaExported: 'ExportSchema',
+    ServerGenerated: 'GenerateServer',
+    IAGenerated: 'GenerateIA',
+    ClientGenerated: 'GenerateClient',
+    SliceImplemented: 'ImplementSlice',
+  };
+
+  return eventToCommandMap[eventType] || null;
+}
+
+/**
+ * Get target commands that are typically dispatched for an event type
+ * Based on the pipeline configuration in auto.config.ts
+ */
+function getTargetCommandsFromEventType(eventType: string): string[] {
+  // Map event types to their typical target commands
+  const eventToTargetsMap: Record<string, string[]> = {
+    SchemaExported: ['GenerateServer'],
+    ServerGenerated: ['GenerateIA'],
+    IAGenerated: ['GenerateClient'],
+    ClientGenerated: ['ImplementClient'],
+    SliceImplemented: ['CheckTests', 'CheckTypes', 'CheckLint'],
+  };
+
+  return eventToTargetsMap[eventType] ?? [];
+}
+
+/**
  * Generate pipeline graph from current registrations
  */
-export function getPipelineGraph(metadataService?: CommandMetadataService): {
+export function getPipelineGraph(
+  metadataService?: CommandMetadataService,
+  eventHandlers?: Map<string, Array<(event: Event) => void>>,
+): {
   nodes: Array<{
     id: string;
     title: string;
@@ -283,25 +336,63 @@ export function getPipelineGraph(metadataService?: CommandMetadataService): {
   const commandNodes = new Set<string>();
   const edges: Array<{ from: string; to: string }> = [];
 
-  // Process event registrations to find command connections
-  registrations.forEach((registration) => {
-    if (registration.type === 'on') {
-      processEventRegistration(registration, commandNodes, edges);
-    }
+  debug(
+    'Called with metadataService=%s eventHandlers=%s eventHandlers size=%s',
+    !!metadataService,
+    !!eventHandlers,
+    eventHandlers?.size,
+  );
 
-    if (registration.type === 'on-settled') {
-      processSettledRegistration(registration, commandNodes, edges);
+  // If eventHandlers are provided, use them instead of DSL registrations
+  if (eventHandlers) {
+    debug('Using event handlers, found %d handlers', eventHandlers.size);
+    // For now, we need to reconstruct the pipeline from the event handlers
+    // This is a simplified approach that may need enhancement
+    for (const [eventType, handlers] of eventHandlers) {
+      debug('Processing event type %s with %d handlers', eventType, handlers.length);
+      // Extract command relationships from event type names
+      // This is based on the naming convention in auto.config.ts
+      const sourceCommand = getCommandFromEventType(eventType);
+      debug('Source command for %s = %s', eventType, sourceCommand);
+      if (sourceCommand !== null && sourceCommand !== '') {
+        commandNodes.add(sourceCommand);
+
+        // For each handler, try to extract target commands
+        // This would need the actual dispatch functions to be analyzed
+        // For now, we'll use a simplified mapping based on known patterns
+        const targetCommands = getTargetCommandsFromEventType(eventType);
+        debug('Target commands for %s = %o', eventType, targetCommands);
+        targetCommands.forEach((targetCommand: string) => {
+          commandNodes.add(targetCommand);
+          edges.push({ from: sourceCommand, to: targetCommand });
+        });
+      }
     }
-  });
+    debug('Final nodes: %o', Array.from(commandNodes));
+    debug('Final edges: %o', edges);
+  } else {
+    // Fallback to DSL registrations (original behavior)
+    registrations.forEach((registration) => {
+      if (registration.type === 'on') {
+        processEventRegistration(registration, commandNodes, edges);
+      }
+
+      if (registration.type === 'on-settled') {
+        processSettledRegistration(registration, commandNodes, edges);
+      }
+    });
+  }
 
   const nodes = Array.from(commandNodes).map((id) => {
-    const baseNode = { id, title: id };
+    const baseNode = { id, title: camelCaseToTitleCase(id) };
 
     if (metadataService) {
       const metadata = metadataService.getCommandMetadata(id);
       if (metadata) {
         return {
           ...baseNode,
+          id: `${metadata.package}/${metadata.alias}`,
+          title: camelCaseToTitleCase(id),
           alias: metadata.alias,
           description: metadata.description,
           package: metadata.package,

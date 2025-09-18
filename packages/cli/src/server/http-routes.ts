@@ -4,6 +4,8 @@ import { dirname, join } from 'path';
 import type { MessageBus, Command, Event } from '@auto-engineer/message-bus';
 import type { IMessageStore, MessageFilter } from '@auto-engineer/message-store';
 import type { StateManager, FoldFunction } from './state-manager';
+import { getPipelineGraph } from '../dsl';
+import type { CommandMetadataService } from './command-metadata-service';
 import createDebug from 'debug';
 
 const debugHttp = createDebug('auto-engineer:server:http');
@@ -14,6 +16,7 @@ export interface HttpRoutesConfig {
     string,
     { alias: string; description: string; package: string; version?: string; category?: string; icon?: string }
   >;
+  commandMetadataService: CommandMetadataService;
   eventHandlers: Map<string, Array<(event: Event) => void>>;
   foldRegistry: Map<string, FoldFunction<Record<string, unknown>>>;
   messageStore: IMessageStore;
@@ -70,11 +73,13 @@ function mapCommandToMetadata(cmd: {
   icon: string;
 } {
   const metadata = cmd.metadata ?? {};
+  const packageName = metadata.package ?? 'unknown';
+  const baseAlias = metadata.alias ?? cmd.name;
   return {
-    name: cmd.name,
-    alias: metadata.alias ?? cmd.name,
+    name: `${packageName}/${baseAlias}`,
+    alias: baseAlias,
     description: metadata.description ?? 'No description',
-    package: metadata.package ?? 'unknown',
+    package: packageName,
     version: metadata.version,
     category: metadata.category,
     icon: metadata.icon ?? 'terminal',
@@ -140,6 +145,13 @@ export function setupHttpRoutes(
       commandHandlers: sortedCommands.map((cmd) => cmd.name),
       commandsWithMetadata: sortedCommands.map(mapCommandToMetadata),
     });
+  });
+
+  // Get pipeline graph with command metadata and icons
+  // This endpoint will be polled frequently for status updates
+  app.get('/pipeline', (_req, res) => {
+    const graph = getPipelineGraph(config.commandMetadataService, config.eventHandlers);
+    res.json(graph);
   });
 
   // Get all messages with filtering

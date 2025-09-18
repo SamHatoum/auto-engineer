@@ -136,11 +136,11 @@ describe('Pipeline Graph Generation', () => {
 
     // Should have the command nodes
     const nodeIds = graph.nodes.map((n) => n.id);
-    expect(nodeIds).toContain('ExportSchema');
-    expect(nodeIds).toContain('GenerateServer');
-    expect(nodeIds).toContain('GenerateIA');
-    expect(nodeIds).toContain('GenerateClient');
-    expect(nodeIds).toContain('ImplementClient');
+    expect(nodeIds).toContain('@auto-engineer/flow/export:schema');
+    expect(nodeIds).toContain('@auto-engineer/server-generator-apollo-emmett/generate:server');
+    expect(nodeIds).toContain('@auto-engineer/information-architect/generate:ia');
+    expect(nodeIds).toContain('@auto-engineer/frontend-generator-react-graphql/generate:client');
+    expect(nodeIds).toContain('@auto-engineer/frontend-implementer/implement:client');
 
     // Should have the correct edges
     const edgeStrings = graph.edges.map((e) => `${e.from}->${e.to}`);
@@ -173,10 +173,10 @@ describe('Pipeline Graph Generation', () => {
 
     // Should have all the check commands as nodes
     const nodeIds = graph.nodes.map((n) => n.id);
-    expect(nodeIds).toContain('CheckTests');
-    expect(nodeIds).toContain('CheckTypes');
-    expect(nodeIds).toContain('CheckLint');
-    expect(nodeIds).toContain('ImplementClient');
+    expect(nodeIds).toContain('@auto-engineer/server-checks/check:tests');
+    expect(nodeIds).toContain('@auto-engineer/server-checks/check:types');
+    expect(nodeIds).toContain('@auto-engineer/server-checks/check:lint');
+    expect(nodeIds).toContain('@auto-engineer/frontend-implementer/implement:client');
 
     // Should have edges from check commands to ImplementClient
     const edgeStrings = graph.edges.map((e) => `${e.from}->${e.to}`);
@@ -218,8 +218,8 @@ describe('Pipeline Graph Generation', () => {
     const expectedGraph = {
       nodes: [
         {
-          id: 'ExportSchema',
-          title: 'ExportSchema',
+          id: '@auto-engineer/flow/export:schema',
+          title: 'Export Schema',
           alias: 'export:schema',
           description: 'Export flow schemas to context directory',
           package: '@auto-engineer/flow',
@@ -227,8 +227,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'download',
         },
         {
-          id: 'GenerateServer',
-          title: 'GenerateServer',
+          id: '@auto-engineer/server-generator-apollo-emmett/generate:server',
+          title: 'Generate Server',
           alias: 'generate:server',
           description: 'Generate server from schema.json',
           package: '@auto-engineer/server-generator-apollo-emmett',
@@ -236,8 +236,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'server',
         },
         {
-          id: 'GenerateIA',
-          title: 'GenerateIA',
+          id: '@auto-engineer/information-architect/generate:ia',
+          title: 'Generate IA',
           alias: 'generate:ia',
           description: 'Generate Information Architecture',
           package: '@auto-engineer/information-architect',
@@ -245,8 +245,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'building',
         },
         {
-          id: 'GenerateClient',
-          title: 'GenerateClient',
+          id: '@auto-engineer/frontend-generator-react-graphql/generate:client',
+          title: 'Generate Client',
           alias: 'generate:client',
           description: 'Generate React client app',
           package: '@auto-engineer/frontend-generator-react-graphql',
@@ -254,8 +254,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'monitor',
         },
         {
-          id: 'ImplementClient',
-          title: 'ImplementClient',
+          id: '@auto-engineer/frontend-implementer/implement:client',
+          title: 'Implement Client',
           alias: 'implement:client',
           description: 'AI implements client',
           package: '@auto-engineer/frontend-implementer',
@@ -263,8 +263,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'code',
         },
         {
-          id: 'CheckTests',
-          title: 'CheckTests',
+          id: '@auto-engineer/server-checks/check:tests',
+          title: 'Check Tests',
           alias: 'check:tests',
           description: 'Run Vitest test suites',
           package: '@auto-engineer/server-checks',
@@ -272,8 +272,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'flask-conical',
         },
         {
-          id: 'CheckTypes',
-          title: 'CheckTypes',
+          id: '@auto-engineer/server-checks/check:types',
+          title: 'Check Types',
           alias: 'check:types',
           description: 'TypeScript type checking',
           package: '@auto-engineer/server-checks',
@@ -281,8 +281,8 @@ describe('Pipeline Graph Generation', () => {
           icon: 'shield-check',
         },
         {
-          id: 'CheckLint',
-          title: 'CheckLint',
+          id: '@auto-engineer/server-checks/check:lint',
+          title: 'Check Lint',
           alias: 'check:lint',
           description: 'ESLint with optional auto-fix',
           package: '@auto-engineer/server-checks',

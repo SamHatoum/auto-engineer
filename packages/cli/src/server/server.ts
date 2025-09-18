@@ -92,6 +92,7 @@ export class MessageBusServer {
     setupHttpRoutes(this.app, this.messageBus, this.stateManager, {
       commandHandlerNames: this.commandRegistry.getCommandHandlerNames(),
       commandMetadata: this.commandRegistry.getCommandMetadata(),
+      commandMetadataService: this.commandRegistry.getMetadataService(),
       eventHandlers: this.eventProcessor.getEventHandlers(),
       foldRegistry: this.commandRegistry.getFoldRegistry(),
       messageStore: this.messageStore,
