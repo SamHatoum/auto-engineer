@@ -8,24 +8,19 @@ import type {
   SettledRegistration,
   SettledHandlerConfig,
 } from './types';
+import type { CommandMetadataService } from '../server/command-metadata-service';
 
-// Track registrations when DSL functions are called
 let registrations: DslRegistration[] = [];
 let pendingDispatches: DispatchAction[] = [];
 
-/**
- * Register an event handler that will execute when the specified event occurs
- */
 export function on<T extends Event>(
   eventType: string | ((event: T) => void),
   handler?: (event: T) => Command | Command[] | DispatchAction | void,
 ): EventRegistration | void {
-  // Support both forms: on('EventName', handler) and on((event: EventType) => ...)
   if (typeof eventType === 'function') {
-    // Extract event type from function parameter type (will be handled by config parser)
     const registration: EventRegistration = {
       type: 'on',
-      eventType: '', // Will be inferred from type
+      eventType: '',
       handler: eventType as (event: Event) => Command | Command[] | DispatchAction | void,
     };
     registrations.push(registration as unknown as DslRegistration);
@@ -43,9 +38,6 @@ export function on<T extends Event>(
   }
 }
 
-/**
- * Wait for all specified commands to settle and collect their events
- */
 function settled<
   T extends Command,
   U extends Command = never,
@@ -83,7 +75,6 @@ function settled<
   const commandTypesArray = commandTypes as readonly string[];
 
   if (typeof callbackOrConfig === 'function') {
-    // Backward compatibility: simple callback function
     const registration: SettledRegistration = {
       type: 'on-settled',
       commandTypes: commandTypesArray,
@@ -92,17 +83,14 @@ function settled<
     registrations.push(registration as unknown as DslRegistration);
     return registration;
   } else {
-    // Enhanced API with dispatches declaration
     const { dispatches, handler } = callbackOrConfig;
 
-    // Create a wrapper handler that provides a type-safe dispatch function
     const wrappedHandler = (events: Record<string, Event[]>) => {
       const validatedDispatch = <TCommand extends Command>(command: TCommand): void => {
         if (!dispatches.includes(command.type)) {
           throw new Error(`Command type "${command.type}" is not declared in dispatches list`);
         }
 
-        // Create a dispatch action and add it to pending dispatches
         const action: DispatchAction = {
           type: 'dispatch',
           command,
@@ -274,4 +262,147 @@ export function getPendingDispatches(): DispatchAction[] {
  */
 export function autoConfig(config: ConfigDefinition): ConfigDefinition {
   return config;
+}
+
+/**
+ * Generate pipeline graph from current registrations
+ */
+export function getPipelineGraph(metadataService?: CommandMetadataService): {
+  nodes: Array<{
+    id: string;
+    title: string;
+    alias?: string;
+    description?: string;
+    package?: string;
+    version?: string;
+    category?: string;
+    icon?: string;
+  }>;
+  edges: Array<{ from: string; to: string }>;
+} {
+  const commandNodes = new Set<string>();
+  const edges: Array<{ from: string; to: string }> = [];
+
+  // Process event registrations to find command connections
+  registrations.forEach((registration) => {
+    if (registration.type === 'on') {
+      processEventRegistration(registration, commandNodes, edges);
+    }
+
+    if (registration.type === 'on-settled') {
+      processSettledRegistration(registration, commandNodes, edges);
+    }
+  });
+
+  const nodes = Array.from(commandNodes).map((id) => {
+    const baseNode = { id, title: id };
+
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(id);
+      if (metadata) {
+        return {
+          ...baseNode,
+          alias: metadata.alias,
+          description: metadata.description,
+          package: metadata.package,
+          version: metadata.version,
+          category: metadata.category,
+          icon: metadata.icon ?? 'terminal',
+        };
+      }
+    }
+
+    return {
+      ...baseNode,
+      icon: 'terminal',
+    };
+  });
+
+  return { nodes, edges };
+}
+
+function processEventRegistration(
+  registration: EventRegistration,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+): void {
+  try {
+    const mockEvent = { type: registration.eventType, data: {} } as Event;
+    const result = registration.handler(mockEvent);
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      addCommandAndEdge(result as Command, registration.eventType, commandNodes, edges);
+    } else if (Array.isArray(result)) {
+      result.forEach((command) => {
+        if (command !== null && typeof command === 'object' && 'type' in command && typeof command.type === 'string') {
+          addCommandAndEdge(command, registration.eventType, commandNodes, edges);
+        }
+      });
+    }
+  } catch {
+    // Handler might require specific event data, skip if it fails
+  }
+}
+
+function processSettledRegistration(
+  registration: SettledRegistration,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+): void {
+  registration.commandTypes.forEach((commandType) => {
+    commandNodes.add(commandType);
+  });
+
+  if (registration.dispatches && registration.dispatches.length > 0) {
+    registration.dispatches.forEach((commandType) => {
+      commandNodes.add(commandType);
+
+      registration.commandTypes.forEach((settledCommand) => {
+        edges.push({
+          from: settledCommand,
+          to: commandType,
+        });
+      });
+    });
+  }
+}
+
+function addCommandAndEdge(
+  command: Command,
+  eventType: string,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+): void {
+  commandNodes.add(command.type);
+
+  const sourceCommand = inferSourceCommand(eventType);
+  if (sourceCommand !== null) {
+    commandNodes.add(sourceCommand);
+    edges.push({
+      from: sourceCommand,
+      to: command.type,
+    });
+  }
+}
+
+/**
+ * Infer source command from event name using naming patterns
+ */
+function inferSourceCommand(eventType: string): string | null {
+  // Pattern: EventExported -> ExportEvent
+  if (eventType.endsWith('Exported')) {
+    return 'Export' + eventType.replace('Exported', '');
+  }
+
+  // Pattern: EventGenerated -> GenerateEvent
+  if (eventType.endsWith('Generated')) {
+    return 'Generate' + eventType.replace('Generated', '');
+  }
+
+  // Pattern: EventImplemented -> ImplementEvent
+  if (eventType.endsWith('Implemented')) {
+    return 'Implement' + eventType.replace('Implemented', '');
+  }
+
+  return null;
 }

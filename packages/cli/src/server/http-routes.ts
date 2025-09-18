@@ -12,7 +12,7 @@ export interface HttpRoutesConfig {
   commandHandlerNames: string[];
   commandMetadata: Map<
     string,
-    { alias: string; description: string; package: string; version?: string; category?: string }
+    { alias: string; description: string; package: string; version?: string; category?: string; icon?: string }
   >;
   eventHandlers: Map<string, Array<(event: Event) => void>>;
   foldRegistry: Map<string, FoldFunction<Record<string, unknown>>>;
@@ -48,6 +48,37 @@ function validateCommandHandler(commandType: string, availableCommands: string[]
     return `Command handler not found for command: ${commandType}`;
   }
   return null;
+}
+
+function mapCommandToMetadata(cmd: {
+  name: string;
+  metadata?: {
+    alias?: string;
+    description?: string;
+    package?: string;
+    version?: string;
+    category?: string;
+    icon?: string;
+  };
+}): {
+  name: string;
+  alias: string;
+  description: string;
+  package: string;
+  version?: string;
+  category?: string;
+  icon: string;
+} {
+  const metadata = cmd.metadata ?? {};
+  return {
+    name: cmd.name,
+    alias: metadata.alias ?? cmd.name,
+    description: metadata.description ?? 'No description',
+    package: metadata.package ?? 'unknown',
+    version: metadata.version,
+    category: metadata.category,
+    icon: metadata.icon ?? 'terminal',
+  };
 }
 
 async function processCommand(messageBus: MessageBus, command: Command, config: HttpRoutesConfig): Promise<void> {
@@ -107,14 +138,7 @@ export function setupHttpRoutes(
       eventHandlers: Array.from(config.eventHandlers.keys()),
       folds: Array.from(config.foldRegistry.keys()),
       commandHandlers: sortedCommands.map((cmd) => cmd.name),
-      commandsWithMetadata: sortedCommands.map((cmd) => ({
-        name: cmd.name,
-        alias: cmd.metadata?.alias ?? cmd.name,
-        description: cmd.metadata?.description ?? 'No description',
-        package: cmd.metadata?.package ?? 'unknown',
-        version: cmd.metadata?.version,
-        category: cmd.metadata?.category,
-      })),
+      commandsWithMetadata: sortedCommands.map(mapCommandToMetadata),
     });
   });
 

@@ -12,6 +12,7 @@ import { setupHttpRoutes } from './http-routes';
 import { setupWebSocketHandlers } from './websocket-handler';
 import { EventProcessor } from './event-processor';
 import { CommandRegistry } from './command-registry';
+import { CommandMetadataService } from './command-metadata-service';
 
 const debug = createDebug('auto-engineer:server');
 
@@ -139,6 +140,13 @@ export class MessageBusServer {
    */
   registerCommandHandlers(handlers: unknown[]): void {
     this.commandRegistry.registerCommandHandlers(handlers);
+  }
+
+  /**
+   * Get the command metadata service
+   */
+  getCommandMetadataService(): CommandMetadataService {
+    return this.commandRegistry.getMetadataService();
   }
 
   /**
