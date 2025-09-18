@@ -100,7 +100,7 @@ function buildStatements(
 
   // Add imports
   const imports = buildImports(ts, opts, messages, typeIntegrationNames, valueIntegrationNames, usedFlowFunctionNames);
-  statements.push(imports.importFlowValues);
+  if (imports.importFlowValues !== null) statements.push(imports.importFlowValues);
   if (imports.importFlowTypes !== null) statements.push(imports.importFlowTypes);
   if (imports.importIntegrationValues !== null) statements.push(imports.importIntegrationValues);
   if (imports.importIntegrationTypes !== null) statements.push(imports.importIntegrationTypes);

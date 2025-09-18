@@ -13,6 +13,7 @@ export function jsonToExpr(ts: typeof import('typescript'), f: tsNS.NodeFactory,
     case 'boolean':
       return v ? f.createTrue() : f.createFalse();
     case 'object': {
+      if (v instanceof Date) return f.createStringLiteral(v.toISOString());
       if (Array.isArray(v)) {
         return f.createArrayLiteralExpression(v.map((x) => jsonToExpr(ts, f, x)));
       }

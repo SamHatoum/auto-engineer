@@ -26,8 +26,7 @@ export function buildImports(
 ) {
   const f = ts.factory;
 
-  const flowValueNames =
-    usedFlowFunctionNames.length > 0 ? [...usedFlowFunctionNames].sort() : [...ALL_FLOW_FUNCTION_NAMES].sort();
+  const flowValueNames = usedFlowFunctionNames.length > 0 ? [...usedFlowFunctionNames].sort() : [];
 
   // Determine which flow types are actually needed based on the messages
   const usedMessageTypes = new Set(messages.map((msg) => msg.type));
@@ -42,46 +41,70 @@ export function buildImports(
     .filter(Boolean)
     .sort();
 
-  // Create combined flow import with values first, then types
-  const importFlowCombined = f.createImportDeclaration(
-    undefined,
-    f.createImportClause(
-      false,
-      undefined,
-      f.createNamedImports([
-        // Regular value imports
-        ...flowValueNames.map((n) => f.createImportSpecifier(false, undefined, f.createIdentifier(n))),
-        // Type-only imports
-        ...flowTypeNames.map((n) => f.createImportSpecifier(true, undefined, f.createIdentifier(n))),
-      ]),
-    ),
-    f.createStringLiteral(opts.flowImport),
-  );
-
-  // Integration imports - derived from schema data
-  const hasIntegrationImports = valueIntegrationNames.length > 0 || typeIntegrationNames.length > 0;
-
-  const importIntegrationCombined = hasIntegrationImports
-    ? f.createImportDeclaration(
-        undefined,
-        f.createImportClause(
-          false,
+  const importFlowValues =
+    flowValueNames.length > 0
+      ? f.createImportDeclaration(
           undefined,
-          f.createNamedImports([
-            // Regular value imports
-            ...valueIntegrationNames.map((n) => f.createImportSpecifier(false, undefined, f.createIdentifier(n))),
-            // Type-only imports
-            ...typeIntegrationNames.map((n) => f.createImportSpecifier(true, undefined, f.createIdentifier(n))),
-          ]),
-        ),
-        f.createStringLiteral(opts.integrationImport),
-      )
-    : null;
+          f.createImportClause(
+            false,
+            undefined,
+            f.createNamedImports([
+              ...flowValueNames.map((n) => f.createImportSpecifier(false, undefined, f.createIdentifier(n))),
+            ]),
+          ),
+          f.createStringLiteral(opts.flowImport),
+        )
+      : null;
+
+  const importFlowTypes =
+    flowTypeNames.length > 0
+      ? f.createImportDeclaration(
+          undefined,
+          f.createImportClause(
+            true,
+            undefined,
+            f.createNamedImports([
+              ...flowTypeNames.map((n) => f.createImportSpecifier(false, undefined, f.createIdentifier(n))),
+            ]),
+          ),
+          f.createStringLiteral(opts.flowImport),
+        )
+      : null;
+
+  const importIntegrationValues =
+    valueIntegrationNames.length > 0
+      ? f.createImportDeclaration(
+          undefined,
+          f.createImportClause(
+            false,
+            undefined,
+            f.createNamedImports([
+              ...valueIntegrationNames.map((n) => f.createImportSpecifier(false, undefined, f.createIdentifier(n))),
+            ]),
+          ),
+          f.createStringLiteral(opts.integrationImport),
+        )
+      : null;
+
+  const importIntegrationTypes =
+    typeIntegrationNames.length > 0
+      ? f.createImportDeclaration(
+          undefined,
+          f.createImportClause(
+            true,
+            undefined,
+            f.createNamedImports([
+              ...typeIntegrationNames.map((n) => f.createImportSpecifier(false, undefined, f.createIdentifier(n))),
+            ]),
+          ),
+          f.createStringLiteral(opts.integrationImport),
+        )
+      : null;
 
   return {
-    importFlowValues: importFlowCombined,
-    importFlowTypes: null, // Combined above
-    importIntegrationValues: null,
-    importIntegrationTypes: importIntegrationCombined,
+    importFlowValues,
+    importFlowTypes,
+    importIntegrationValues,
+    importIntegrationTypes,
   };
 }
