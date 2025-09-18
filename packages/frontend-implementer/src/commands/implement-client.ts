@@ -36,6 +36,7 @@ export const commandHandler = defineCommandHandler<ImplementClientCommand>({
   alias: 'implement:client',
   description: 'AI implements client',
   category: 'implement',
+  icon: 'code',
   fields: {
     projectDir: {
       description: 'Client directory path',

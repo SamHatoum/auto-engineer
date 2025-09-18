@@ -46,6 +46,7 @@ export const commandHandler = defineCommandHandler<CheckLintCommand>({
   alias: 'check:lint',
   description: 'ESLint with optional auto-fix',
   category: 'check',
+  icon: 'sparkles',
   fields: {
     targetDirectory: {
       description: 'Directory to lint',

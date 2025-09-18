@@ -46,6 +46,7 @@ export const commandHandler = defineCommandHandler<GenerateClientCommand>({
   alias: 'generate:client',
   description: 'Generate React client app',
   category: 'generate',
+  icon: 'monitor',
   fields: {
     starterDir: {
       description: 'Starter template path',

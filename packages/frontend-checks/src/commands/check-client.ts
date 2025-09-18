@@ -46,7 +46,7 @@ export const checkClientCommandHandler = defineCommandHandler({
   alias: 'check:client',
   description: 'Full frontend validation suite',
   category: 'validation',
-
+  icon: 'monitor',
   fields: {
     clientDirectory: {
       description: 'Client directory to check',

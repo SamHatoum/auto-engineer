@@ -45,6 +45,7 @@ export const commandHandler = defineCommandHandler<CheckTestsCommand>({
   alias: 'check:tests',
   description: 'Run Vitest test suites',
   category: 'check',
+  icon: 'flask-conical',
   fields: {
     targetDirectory: {
       description: 'Directory containing tests',
