@@ -111,4 +111,110 @@ describe('on.settled', () => {
       expect(mockCallback).not.toHaveBeenCalled();
     });
   });
+
+  describe('Enhanced API with Dispatches Declaration', () => {
+    it('should accept enhanced API with dispatches declaration', () => {
+      const mockHandler = vi.fn();
+
+      const registration = on.settled<TestCommandA, TestCommandB>(['TestCommandA', 'TestCommandB'] as const, {
+        dispatches: ['ImplementClient', 'NotifyTeam'] as const,
+        handler: mockHandler,
+      });
+
+      expect(registration).toBeDefined();
+      expect(registration?.type).toBe('on-settled');
+    });
+
+    it('should provide type-safe dispatch function to handler', () => {
+      const mockHandler = vi.fn();
+
+      on.settled<TestCommandA, TestCommandB>(['TestCommandA', 'TestCommandB'] as const, {
+        dispatches: ['ImplementClient', 'NotifyTeam'] as const,
+        handler: (events, dispatch) => {
+          // Handler should receive events and a type-safe dispatch function
+          expect(events).toBeDefined();
+          expect(typeof dispatch).toBe('function');
+          mockHandler(events, dispatch);
+        },
+      });
+
+      // Registration should be created
+      expect(mockHandler).not.toHaveBeenCalled();
+    });
+
+    it('should validate dispatched commands against declared list', () => {
+      let capturedDispatch: ((command: { type: string; data: Record<string, unknown> }) => void) | null = null;
+
+      const registration = on.settled<TestCommandA, TestCommandB>(['TestCommandA', 'TestCommandB'] as const, {
+        dispatches: ['ImplementClient'] as const,
+        handler: (events, dispatch) => {
+          expect(events).toBeDefined();
+          capturedDispatch = dispatch;
+        },
+      });
+
+      // Simulate handler execution with mock events to capture the dispatch function
+      const mockEvents = { TestCommandA: [], TestCommandB: [] };
+      registration?.handler(mockEvents);
+
+      // Now capturedDispatch should be set
+      expect(capturedDispatch).toBeDefined();
+
+      // Should allow dispatching declared commands
+      expect(() => {
+        capturedDispatch!({
+          type: 'ImplementClient',
+          data: { clientId: 'test' },
+        });
+      }).not.toThrow();
+
+      // Should throw error for undeclared commands
+      expect(() => {
+        capturedDispatch!({
+          type: 'UndeclaredCommand',
+          data: { test: 'value' },
+        });
+      }).toThrow('Command type "UndeclaredCommand" is not declared in dispatches list');
+    });
+
+    it('should maintain backward compatibility with function-only API', () => {
+      const mockCallback = vi.fn();
+
+      const registration = on.settled<TestCommandA, TestCommandB>(
+        ['TestCommandA', 'TestCommandB'] as const,
+        mockCallback,
+      );
+
+      expect(registration).toBeDefined();
+      expect(registration?.type).toBe('on-settled');
+    });
+
+    it('should store dispatches information in registration for runtime use', () => {
+      const mockHandler = vi.fn();
+
+      const registration = on.settled<TestCommandA, TestCommandB>(['TestCommandA', 'TestCommandB'] as const, {
+        dispatches: ['ImplementClient', 'NotifyTeam'] as const,
+        handler: mockHandler,
+      });
+
+      // Registration should include dispatches information
+      expect(registration).toMatchObject({
+        type: 'on-settled',
+        commandTypes: ['TestCommandA', 'TestCommandB'],
+        dispatches: ['ImplementClient', 'NotifyTeam'],
+      });
+    });
+
+    it('should handle empty dispatches array', () => {
+      const mockHandler = vi.fn();
+
+      const registration = on.settled<TestCommandA, TestCommandB>(['TestCommandA', 'TestCommandB'] as const, {
+        dispatches: [] as const,
+        handler: mockHandler,
+      });
+
+      expect(registration).toBeDefined();
+      expect(registration?.dispatches).toEqual([]);
+    });
+  });
 });

@@ -6,6 +6,7 @@ import type {
   DslRegistration,
   ConfigDefinition,
   SettledRegistration,
+  SettledHandlerConfig,
 } from './types';
 
 // Track registrations when DSL functions are called
@@ -63,27 +64,64 @@ function settled<
           : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
             ? [T['type'], U['type'], V['type'], W['type'], X['type']]
             : never,
-  callback: (
-    events: [T, U, V, W, X] extends [Command, never, never, never, never]
-      ? { [K in T['type']]: Event[] }
-      : [T, U, V, W, X] extends [Command, Command, never, never, never]
-        ? { [K in T['type'] | U['type']]: Event[] }
-        : [T, U, V, W, X] extends [Command, Command, Command, never, never]
-          ? { [K in T['type'] | U['type'] | V['type']]: Event[] }
-          : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
-            ? { [K in T['type'] | U['type'] | V['type'] | W['type']]: Event[] }
-            : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
-              ? { [K in T['type'] | U['type'] | V['type'] | W['type'] | X['type']]: Event[] }
-              : never,
-  ) => void,
+  callbackOrConfig:
+    | ((
+        events: [T, U, V, W, X] extends [Command, never, never, never, never]
+          ? { [K in T['type']]: Event[] }
+          : [T, U, V, W, X] extends [Command, Command, never, never, never]
+            ? { [K in T['type'] | U['type']]: Event[] }
+            : [T, U, V, W, X] extends [Command, Command, Command, never, never]
+              ? { [K in T['type'] | U['type'] | V['type']]: Event[] }
+              : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
+                ? { [K in T['type'] | U['type'] | V['type'] | W['type']]: Event[] }
+                : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
+                  ? { [K in T['type'] | U['type'] | V['type'] | W['type'] | X['type']]: Event[] }
+                  : never,
+      ) => void)
+    | SettledHandlerConfig,
 ): SettledRegistration {
-  const registration: SettledRegistration = {
-    type: 'on-settled',
-    commandTypes: commandTypes as readonly string[],
-    handler: callback as (events: Record<string, Event[]>) => void,
-  };
-  registrations.push(registration as unknown as DslRegistration);
-  return registration;
+  const commandTypesArray = commandTypes as readonly string[];
+
+  if (typeof callbackOrConfig === 'function') {
+    // Backward compatibility: simple callback function
+    const registration: SettledRegistration = {
+      type: 'on-settled',
+      commandTypes: commandTypesArray,
+      handler: callbackOrConfig as (events: Record<string, Event[]>) => void,
+    };
+    registrations.push(registration as unknown as DslRegistration);
+    return registration;
+  } else {
+    // Enhanced API with dispatches declaration
+    const { dispatches, handler } = callbackOrConfig;
+
+    // Create a wrapper handler that provides a type-safe dispatch function
+    const wrappedHandler = (events: Record<string, Event[]>) => {
+      const validatedDispatch = <TCommand extends Command>(command: TCommand): void => {
+        if (!dispatches.includes(command.type)) {
+          throw new Error(`Command type "${command.type}" is not declared in dispatches list`);
+        }
+
+        // Create a dispatch action and add it to pending dispatches
+        const action: DispatchAction = {
+          type: 'dispatch',
+          command,
+        };
+        pendingDispatches.push(action);
+      };
+
+      handler(events, validatedDispatch);
+    };
+
+    const registration: SettledRegistration = {
+      type: 'on-settled',
+      commandTypes: commandTypesArray,
+      handler: wrappedHandler,
+      dispatches,
+    };
+    registrations.push(registration as unknown as DslRegistration);
+    return registration;
+  }
 }
 
 on.settled = settled;
@@ -91,13 +129,61 @@ on.settled = settled;
 /**
  * Dispatch a command to the message bus
  */
-export function dispatch<T extends Command>(command: T): DispatchAction {
-  const action: DispatchAction = {
-    type: 'dispatch',
-    command,
-  };
-  pendingDispatches.push(action);
-  return action;
+export function dispatch<T extends Command>(command: T): DispatchAction;
+export function dispatch<T extends Command>(commandType: T['type'], data: T['data']): Command;
+export function dispatch<TDispatchCommands extends Command>(
+  commandTypes: readonly TDispatchCommands['type'][],
+  handler: (
+    events: Record<string, Event[]>,
+    send: <TCommand extends TDispatchCommands>(command: TCommand) => void,
+  ) => void,
+): SettledHandlerConfig<TDispatchCommands>;
+export function dispatch<T extends Command>(
+  commandOrTypeOrTypes: T | T['type'] | readonly T['type'][],
+  dataOrHandler?:
+    | T['data']
+    | ((events: Record<string, Event[]>, send: <TCommand extends T>(command: TCommand) => void) => void),
+): DispatchAction | Command | SettledHandlerConfig<T> {
+  // Array pattern for on.settled
+  if (Array.isArray(commandOrTypeOrTypes)) {
+    const commandTypes = commandOrTypeOrTypes;
+    const handler = dataOrHandler as (
+      events: Record<string, Event[]>,
+      send: <TCommand extends T>(command: TCommand) => void,
+    ) => void;
+
+    return {
+      dispatches: commandTypes,
+      handler,
+    };
+  }
+
+  // Object pattern for full command
+  if (
+    typeof commandOrTypeOrTypes === 'object' &&
+    commandOrTypeOrTypes !== null &&
+    !Array.isArray(commandOrTypeOrTypes)
+  ) {
+    const command = commandOrTypeOrTypes as T;
+    const action: DispatchAction = {
+      type: 'dispatch',
+      command,
+    };
+    pendingDispatches.push(action);
+    return action;
+  }
+
+  // String pattern for command type + data - return the command object for event handlers
+  const commandType = commandOrTypeOrTypes as T['type'];
+  const data = dataOrHandler as T['data'];
+
+  const command = {
+    type: commandType,
+    data,
+  } as T;
+
+  // Return the command directly for event handlers to process
+  return command;
 }
 
 /**

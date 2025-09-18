@@ -1,4 +1,4 @@
-import { autoConfig, on, dispatch, fold } from '@auto-engineer/cli';
+import { autoConfig, on, dispatch } from '@auto-engineer/cli';
 import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
 import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
 import type { ImplementServerCommand, ImplementServerEvents } from '@auto-engineer/server-implementer';
@@ -35,90 +35,69 @@ export default autoConfig({
   },
   pipeline: () => {
     on<ExportSchemaEvents>('SchemaExported', () =>
-      dispatch<GenerateServerCommand>({
-        type: 'GenerateServer',
-        data: {
-          schemaPath: './.context/schema.json',
-          destination: '.',
-        },
+      dispatch<GenerateServerCommand>('GenerateServer', {
+        schemaPath: './.context/schema.json',
+        destination: '.',
       }),
     );
 
     on<GenerateServerEvents>('ServerGenerated', () =>
-      dispatch<GenerateIACommand>({
-        type: 'GenerateIA',
-        data: {
-          outputDir: './.context',
-          flowFiles: ['./flows/questionnaires.flow.ts'],
-        },
+      dispatch<GenerateIACommand>('GenerateIA', {
+        outputDir: './.context',
+        flowFiles: ['./flows/questionnaires.flow.ts'],
       }),
     );
 
     on<GenerateIAEvents>('IAGenerated', () =>
-      dispatch<GenerateClientCommand>({
-        type: 'GenerateClient',
-        data: {
-          starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
-          targetDir: './client',
-          iaSchemaPath: './.context/auto-ia-scheme.json',
-          gqlSchemaPath: './.context/schema.graphql',
-          figmaVariablesPath: './.context/figma-variables.json',
-        },
+      dispatch<GenerateClientCommand>('GenerateClient', {
+        starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
+        targetDir: './client',
+        iaSchemaPath: './.context/auto-ia-scheme.json',
+        gqlSchemaPath: './.context/schema.graphql',
+        figmaVariablesPath: './.context/figma-variables.json',
       }),
     );
 
     on<GenerateClientEvents>('ClientGenerated', () =>
-      dispatch<ImplementClientCommand>({
-        type: 'ImplementClient',
-        data: {
-          projectDir: './client',
-          iaSchemeDir: './.context',
-          designSystemPath: './.context/design-system.md',
-        },
+      dispatch<ImplementClientCommand>('ImplementClient', {
+        projectDir: './client',
+        iaSchemeDir: './.context',
+        designSystemPath: './.context/design-system.md',
       }),
     );
 
     on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckTestsCommand>({
-        type: 'CheckTests',
-        data: {
-          targetDirectory: 'sds',
-          scope: 'slice',
-        },
+      dispatch<CheckTestsCommand>('CheckTests', {
+        targetDirectory: 'sds',
+        scope: 'slice',
       });
     });
 
     on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckTypesCommand>({
-        type: 'CheckTypes',
-        data: {
-          targetDirectory: 'sds',
-          scope: 'slice',
-        },
+      dispatch<CheckTypesCommand>('CheckTypes', {
+        targetDirectory: 'sds',
+        scope: 'slice',
       });
     });
 
     on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckLintCommand>({
-        type: 'CheckLint',
-        data: {
-          targetDirectory: 'sds',
-          scope: 'slice',
-          fix: true,
-        },
+      dispatch<CheckLintCommand>('CheckLint', {
+        targetDirectory: 'sds',
+        scope: 'slice',
+        fix: true,
       });
     });
 
     on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
       ['CheckTests', 'CheckTypes', 'CheckLint'],
-      (events) => {
+      dispatch<ImplementClientCommand>(['ImplementClient'], (events, send) => {
         const hasFailures =
           events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
           events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
           events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
 
         if (hasFailures) {
-          dispatch<ImplementClientCommand>({
+          send({
             type: 'ImplementClient',
             data: {
               projectDir: 'some/where',
@@ -128,11 +107,10 @@ export default autoConfig({
             },
           });
         }
-      },
+      }),
     );
   },
 });
-
 /*
 
 rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json 

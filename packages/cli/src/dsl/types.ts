@@ -23,6 +23,12 @@ export interface SettledRegistration {
   type: 'on-settled';
   commandTypes: readonly string[];
   handler: (events: Record<string, Event[]>) => void;
+  dispatches?: readonly string[];
+}
+
+export interface SettledHandlerConfig<TDispatchCommands extends Command = Command> {
+  dispatches: readonly TDispatchCommands['type'][];
+  handler: (events: Record<string, Event[]>, dispatch: <T extends TDispatchCommands>(command: T) => void) => void;
 }
 
 export type DslRegistration = EventRegistration | DispatchAction | FoldRegistration | SettledRegistration;
