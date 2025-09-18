@@ -120,7 +120,9 @@ function buildStatements(
   // Flows
 
   if (flows.length > 0) {
-    statements.push(...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1]));
+    statements.push(
+      ...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1], messages),
+    );
   }
 
   return statements;

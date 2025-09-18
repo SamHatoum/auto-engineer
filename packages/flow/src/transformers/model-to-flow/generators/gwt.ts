@@ -1,5 +1,5 @@
 import tsNS from 'typescript';
-import { jsonToExpr } from '../ast/emit-helpers';
+import { jsonToExpr, type FieldTypeInfo } from '../ast/emit-helpers';
 
 /**
  * Build a single specs() block for a GWT entry, adapting to slice type:
@@ -35,26 +35,34 @@ export type GWTBlock = {
   >;
 };
 
-function buildThenItems(ts: typeof import('typescript'), f: tsNS.NodeFactory, g: GWTBlock): tsNS.Expression[] {
+function buildThenItems(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  g: GWTBlock,
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
+): tsNS.Expression[] {
   return g.then.map((t) => {
     const item = t as Record<string, unknown>;
 
     // Handle event references: just return the data (type handled by generic parameter)
     if ('eventRef' in item) {
       const e = t as { eventRef: string; exampleData: Record<string, unknown> };
-      return jsonToExpr(ts, f, e.exampleData);
+      const typeInfo = messages ? getFieldTypeInfo(messages, e.eventRef) : undefined;
+      return jsonToExpr(ts, f, e.exampleData, typeInfo);
     }
 
     // Handle command references: just return the data (type handled by generic parameter)
     if ('commandRef' in item) {
       const c = t as { commandRef: string; exampleData: Record<string, unknown> };
-      return jsonToExpr(ts, f, c.exampleData);
+      const typeInfo = messages ? getFieldTypeInfo(messages, c.commandRef) : undefined;
+      return jsonToExpr(ts, f, c.exampleData, typeInfo);
     }
 
     // Handle state references: just return the data (type handled by generic parameter)
     if ('stateRef' in item) {
       const s = t as { stateRef: string; exampleData: Record<string, unknown> };
-      return jsonToExpr(ts, f, s.exampleData);
+      const typeInfo = messages ? getFieldTypeInfo(messages, s.stateRef) : undefined;
+      return jsonToExpr(ts, f, s.exampleData, typeInfo);
     }
 
     // Handle error objects: { errorType: 'ValidationError', message: '...' }
@@ -98,14 +106,30 @@ function addGivenToChain(
   f: tsNS.NodeFactory,
   exampleChain: tsNS.Expression,
   g: GWTBlock,
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
   if (hasGivenEvents(g) && g.given !== null && g.given !== undefined && g.given.length > 0) {
-    const ev = g.given[0];
-    return f.createCallExpression(
+    // Start with the first given
+    const firstGiven = g.given[0];
+    const firstTypeInfo = messages ? getFieldTypeInfo(messages, firstGiven.eventRef) : undefined;
+    let currentChain = f.createCallExpression(
       f.createPropertyAccessExpression(exampleChain, 'given'),
-      [f.createTypeReferenceNode(ev.eventRef, undefined)],
-      [jsonToExpr(ts, f, ev.exampleData)],
+      [f.createTypeReferenceNode(firstGiven.eventRef, undefined)],
+      [jsonToExpr(ts, f, firstGiven.exampleData, firstTypeInfo)],
     );
+
+    // Chain additional givens with .and()
+    for (let i = 1; i < g.given.length; i++) {
+      const givenEvent = g.given[i];
+      const typeInfo = messages ? getFieldTypeInfo(messages, givenEvent.eventRef) : undefined;
+      currentChain = f.createCallExpression(
+        f.createPropertyAccessExpression(currentChain, 'and'),
+        [f.createTypeReferenceNode(givenEvent.eventRef, undefined)],
+        [jsonToExpr(ts, f, givenEvent.exampleData, typeInfo)],
+      );
+    }
+
+    return currentChain;
   }
   return exampleChain;
 }
@@ -115,11 +139,13 @@ function addCommandWhenToChain(
   f: tsNS.NodeFactory,
   exampleChain: tsNS.Expression,
   when: { commandRef: string; exampleData: Record<string, unknown> },
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
+  const typeInfo = messages ? getFieldTypeInfo(messages, when.commandRef) : undefined;
   return f.createCallExpression(
     f.createPropertyAccessExpression(exampleChain, 'when'),
     [f.createTypeReferenceNode(when.commandRef, undefined)],
-    [jsonToExpr(ts, f, when.exampleData)],
+    [jsonToExpr(ts, f, when.exampleData, typeInfo)],
   );
 }
 
@@ -128,11 +154,13 @@ function addEventWhenToChain(
   f: tsNS.NodeFactory,
   exampleChain: tsNS.Expression,
   firstEvent: { eventRef: string; exampleData: Record<string, unknown> },
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
+  const typeInfo = messages ? getFieldTypeInfo(messages, firstEvent.eventRef) : undefined;
   return f.createCallExpression(
     f.createPropertyAccessExpression(exampleChain, 'when'),
     [f.createTypeReferenceNode(firstEvent.eventRef, undefined)],
-    [jsonToExpr(ts, f, firstEvent.exampleData)],
+    [jsonToExpr(ts, f, firstEvent.exampleData, typeInfo)],
   );
 }
 
@@ -142,15 +170,16 @@ function addWhenToChain(
   exampleChain: tsNS.Expression,
   g: GWTBlock,
   sliceKind: 'command' | 'react' | 'query' | 'experience',
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
   if (sliceKind === 'command' && isWhenCommand(g.when)) {
-    return addCommandWhenToChain(ts, f, exampleChain, g.when);
+    return addCommandWhenToChain(ts, f, exampleChain, g.when, messages);
   } else if ((sliceKind === 'react' || sliceKind === 'query') && isWhenEvents(g.when)) {
     const firstWhenEvent = g.when[0];
-    return addEventWhenToChain(ts, f, exampleChain, firstWhenEvent);
+    return addEventWhenToChain(ts, f, exampleChain, firstWhenEvent, messages);
   } else if (sliceKind === 'query' && g.when && !Array.isArray(g.when) && 'eventRef' in g.when) {
     const whenEvent = g.when as { eventRef: string; exampleData: Record<string, unknown> };
-    return addEventWhenToChain(ts, f, exampleChain, whenEvent);
+    return addEventWhenToChain(ts, f, exampleChain, whenEvent, messages);
   }
   return exampleChain;
 }
@@ -171,8 +200,9 @@ function addThenToChain(
   f: tsNS.NodeFactory,
   exampleChain: tsNS.Expression,
   g: GWTBlock,
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
-  const thenItems = buildThenItems(ts, f, g);
+  const thenItems = buildThenItems(ts, f, g, messages);
   const firstThenItem = g.then[0];
   const thenTypeRef = getThenTypeRef(firstThenItem);
 
@@ -221,6 +251,82 @@ export function buildGwtSpecBlock(
       undefined,
       f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
       f.createBlock([f.createExpressionStatement(exampleChain)], true),
+    ),
+  );
+
+  const ruleCall = f.createCallExpression(f.createIdentifier('rule'), undefined, ruleArgs);
+  return f.createExpressionStatement(ruleCall);
+}
+
+/**
+ * Build a rule() call that contains multiple examples
+ */
+/**
+ * Extract field type information from messages for a specific type
+ */
+function getFieldTypeInfo(
+  messages: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
+  typeName: string,
+): FieldTypeInfo {
+  const message = messages.find((msg) => msg.name === typeName);
+  if (!message) return {};
+
+  const typeInfo: FieldTypeInfo = {};
+  for (const field of message.fields) {
+    typeInfo[field.name] = field.type;
+  }
+  return typeInfo;
+}
+
+export function buildConsolidatedGwtSpecBlock(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  rule: { id?: string; description: string },
+  gwtBlocks: Array<
+    GWTBlock & { description?: string; ruleDescription?: string; exampleDescription?: string; ruleId?: string }
+  >,
+  sliceKind: 'command' | 'react' | 'query' | 'experience',
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
+): tsNS.Statement {
+  // Build example chains for each GWT block
+  const exampleStatements: tsNS.Statement[] = [];
+
+  for (const g of gwtBlocks) {
+    const { exampleDesc } = getDescriptions(g);
+
+    // Build the example chain: example('desc').given().when().then()
+    let exampleChain: tsNS.Expression = f.createCallExpression(f.createIdentifier('example'), undefined, [
+      f.createStringLiteral(exampleDesc),
+    ]);
+
+    // Add .given() if present
+    exampleChain = addGivenToChain(ts, f, exampleChain, g, messages);
+
+    // Add .when()
+    exampleChain = addWhenToChain(ts, f, exampleChain, g, sliceKind, messages);
+
+    // Add .then()
+    exampleChain = addThenToChain(ts, f, exampleChain, g, messages);
+
+    exampleStatements.push(f.createExpressionStatement(exampleChain));
+  }
+
+  // Create the rule() call containing all examples
+  const ruleArgs: tsNS.Expression[] = [f.createStringLiteral(rule.description)];
+
+  // Add rule ID if provided
+  if (rule.id !== null && rule.id !== undefined) {
+    ruleArgs.push(f.createStringLiteral(rule.id));
+  }
+
+  ruleArgs.push(
+    f.createArrowFunction(
+      undefined,
+      undefined,
+      [],
+      undefined,
+      f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+      f.createBlock(exampleStatements, true),
     ),
   );
 

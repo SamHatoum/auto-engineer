@@ -1,7 +1,7 @@
 import type tsNS from 'typescript';
 import type { z } from 'zod';
 import { jsonToExpr } from '../ast/emit-helpers';
-import { buildGwtSpecBlock, type GWTBlock } from './gwt';
+import { buildConsolidatedGwtSpecBlock, type GWTBlock } from './gwt';
 import {
   CommandSliceSchema,
   QuerySliceSchema,
@@ -381,11 +381,64 @@ function convertExampleToGWT(example: Example, _sliceType: 'command' | 'query' |
   return gwtBlock;
 }
 
+type RuleType = { id?: string; description: string; examples: Example[] };
+type RuleGroup = { rule: RuleType; examples: Example[] };
+
+function buildRuleGroups(rules: RuleType[]): Map<string, RuleGroup> {
+  const ruleGroups = new Map<string, RuleGroup>();
+
+  for (const rule of rules) {
+    const ruleId = rule.id ?? 'no-id';
+    const ruleKey = `${ruleId}:${rule.description}`;
+
+    if (ruleGroups.has(ruleKey)) {
+      const existingGroup = ruleGroups.get(ruleKey)!;
+      existingGroup.examples.push(...rule.examples);
+    } else {
+      ruleGroups.set(ruleKey, { rule, examples: [...rule.examples] });
+    }
+  }
+
+  return ruleGroups;
+}
+
+function buildConsolidatedRules(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  ruleGroups: Map<string, RuleGroup>,
+  sliceType: 'command' | 'query' | 'react' | 'experience',
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
+): tsNS.Statement[] {
+  const allRuleStatements: tsNS.Statement[] = [];
+
+  for (const { rule, examples } of ruleGroups.values()) {
+    const gwtBlocks = examples.map((example) => {
+      const gwtBlock = convertExampleToGWT(example, sliceType);
+      const extendedGwtBlock = gwtBlock as GWTBlock & {
+        ruleDescription?: string;
+        exampleDescription?: string;
+        ruleId?: string;
+      };
+
+      extendedGwtBlock.ruleDescription = rule.description;
+      extendedGwtBlock.exampleDescription = example.description;
+      extendedGwtBlock.ruleId = rule.id;
+
+      return extendedGwtBlock;
+    });
+
+    allRuleStatements.push(buildConsolidatedGwtSpecBlock(ts, f, rule, gwtBlocks, sliceType, messages));
+  }
+
+  return allRuleStatements;
+}
+
 function buildServerStatements(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   server: CommandSlice['server'] | QuerySlice['server'] | ReactSlice['server'],
   sliceType: 'command' | 'query' | 'react' | 'experience',
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Statement[] {
   const statements: tsNS.Statement[] = [];
 
@@ -393,27 +446,10 @@ function buildServerStatements(
     statements.push(buildDataItems(ts, f, server.data as Array<DataSinkItem | DataSourceItem>));
   }
 
-  // Handle server.specs structure from schema
   if (server.specs !== null && server.specs !== undefined) {
-    // Create the outer specs() block
-    const allRuleStatements: tsNS.Statement[] = [];
+    const ruleGroups = buildRuleGroups(server.specs.rules as RuleType[]);
+    const allRuleStatements = buildConsolidatedRules(ts, f, ruleGroups, sliceType, messages);
 
-    for (const rule of server.specs.rules) {
-      for (const example of rule.examples) {
-        const gwtBlock = convertExampleToGWT(example, sliceType);
-        // Add metadata to the GWT block, including the rule ID
-        (gwtBlock as { ruleDescription?: string; exampleDescription?: string; ruleId?: string }).ruleDescription =
-          rule.description;
-        (gwtBlock as { ruleDescription?: string; exampleDescription?: string; ruleId?: string }).exampleDescription =
-          example.description;
-        (gwtBlock as { ruleDescription?: string; exampleDescription?: string; ruleId?: string }).ruleId = rule.id;
-
-        // buildGwtSpecBlock already creates the rule() call with the ID, so we don't wrap it again
-        allRuleStatements.push(buildGwtSpecBlock(ts, f, gwtBlock, sliceType));
-      }
-    }
-
-    // Wrap all rules in a single specs() block
     if (allRuleStatements.length > 0) {
       const specsStatement = f.createExpressionStatement(
         f.createCallExpression(f.createIdentifier('specs'), undefined, [
@@ -440,6 +476,7 @@ function addServerToChain(
   f: tsNS.NodeFactory,
   chain: tsNS.Expression,
   slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
   if ('server' in slice && slice.server !== null && slice.server !== undefined) {
     const sliceType = slice.type as 'command' | 'query' | 'react' | 'experience';
@@ -448,6 +485,7 @@ function addServerToChain(
       f,
       slice.server,
       sliceType === 'experience' ? 'react' : sliceType,
+      messages,
     );
 
     return f.createCallExpression(f.createPropertyAccessExpression(chain, f.createIdentifier('server')), undefined, [
@@ -468,6 +506,7 @@ function buildSlice(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
   slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Statement {
   const sliceCtor =
     slice.type === 'command'
@@ -487,15 +526,19 @@ function buildSlice(
 
   chain = addClientToChain(ts, f, chain, slice);
   chain = addRequestToChain(f, chain, slice);
-  chain = addServerToChain(ts, f, chain, slice);
+  chain = addServerToChain(ts, f, chain, slice, messages);
 
   return f.createExpressionStatement(chain);
 }
 
-export function buildFlowStatements(ts: typeof import('typescript'), flow: Flow): tsNS.Statement[] {
+export function buildFlowStatements(
+  ts: typeof import('typescript'),
+  flow: Flow,
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
+): tsNS.Statement[] {
   const f = ts.factory;
 
-  const body = (flow.slices ?? []).map((sl) => buildSlice(ts, f, sl));
+  const body = (flow.slices ?? []).map((sl) => buildSlice(ts, f, sl, messages));
 
   const flowArgs: tsNS.Expression[] = [f.createStringLiteral(flow.name)];
   if (flow.id !== null && flow.id !== undefined) {
