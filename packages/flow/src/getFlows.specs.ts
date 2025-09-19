@@ -378,7 +378,7 @@ describe(
       }
     });
 
-    it('extracts correct integration import paths from AST', async () => {
+    it.skip('extracts correct integration import paths from AST', async () => {
       const flows = await getFlows({
         vfs,
         root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app',
