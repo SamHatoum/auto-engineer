@@ -76,6 +76,7 @@ export const commandHandler = defineCommandHandler<GenerateServerCommand>({
   alias: 'generate:server',
   description: 'Generate server from schema.json',
   category: 'generate',
+  icon: 'server',
   fields: {
     schemaPath: {
       description: 'Path to schema.json file',

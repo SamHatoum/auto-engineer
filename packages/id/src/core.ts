@@ -1,6 +1,6 @@
-import { BASE63_ALPHABET, SAFE_PREFIX_REGEX } from './constants.js';
+import { BASE62_ALPHABET, SAFE_PREFIX_REGEX } from './constants.js';
 
-const BASE = BASE63_ALPHABET.length;
+const BASE = BASE62_ALPHABET.length;
 const ACCEPT_BOUND = Math.floor(256 / BASE) * BASE;
 
 export function assertSafePrefix(prefix: string): void {
@@ -10,8 +10,8 @@ export function assertSafePrefix(prefix: string): void {
   }
 }
 
-/** Unbiased base-63 token using rejection sampling. Default: 9 chars. */
-export function generateBase63Token(length = 9): string {
+/** Unbiased base-62 token using rejection sampling. Default: 9 chars. */
+export function generateBase62Token(length = 9): string {
   const out: string[] = [];
   const buf = new Uint8Array(length);
   while (out.length < length) {
@@ -19,7 +19,7 @@ export function generateBase63Token(length = 9): string {
     for (let i = 0; i < buf.length && out.length < length; i++) {
       const byte = buf[i];
       if (byte >= ACCEPT_BOUND) continue;
-      out.push(BASE63_ALPHABET[byte % BASE]);
+      out.push(BASE62_ALPHABET[byte % BASE]);
     }
   }
   return out.join('');

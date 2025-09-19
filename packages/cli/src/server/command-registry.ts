@@ -1,16 +1,14 @@
-import type { MessageBus, Command, UnifiedCommandHandler, Event } from '@auto-engineer/message-bus';
+import type { MessageBus, Command, Event } from '@auto-engineer/message-bus';
 import type { FoldRegistration } from '../dsl/types';
 import type { StateManager, FoldFunction } from './state-manager';
+import { CommandMetadataService, type CommandMetadata } from './command-metadata-service';
 import createDebug from 'debug';
 
 const debugBus = createDebug('auto-engineer:server:bus');
 
 export class CommandRegistry {
   private commandHandlerNames: string[] = [];
-  private commandMetadata: Map<
-    string,
-    { alias: string; description: string; package: string; version?: string; category?: string }
-  > = new Map();
+  private metadataService: CommandMetadataService = new CommandMetadataService();
   private foldRegistry: Map<string, FoldFunction<Record<string, unknown>>> = new Map();
 
   constructor(
@@ -42,33 +40,14 @@ export class CommandRegistry {
       this.messageBus.registerCommandHandler(cmdHandler);
       this.commandHandlerNames.push(cmdHandler.name);
 
-      this.extractUnifiedHandlerMetadata(handler, cmdHandler.name);
+      this.metadataService.extractUnifiedHandlerMetadata(handler, cmdHandler.name);
     } else {
       debugBus('Skipping invalid handler:', handler);
     }
   }
 
-  private extractUnifiedHandlerMetadata(handler: unknown, commandName: string): void {
-    if (typeof handler === 'object' && handler !== null && 'alias' in handler && 'description' in handler) {
-      const unifiedHandler = handler as UnifiedCommandHandler<Command<string, Record<string, unknown>>>;
-      debugBus('Extracting metadata from UnifiedCommandHandler:', commandName);
-
-      this.setCommandMetadata(commandName, {
-        alias: unifiedHandler.alias,
-        description: unifiedHandler.description,
-        package: unifiedHandler.package?.name ?? 'unknown',
-        version: unifiedHandler.package?.version,
-        category: unifiedHandler.category,
-      });
-    }
-  }
-
-  setCommandMetadata(
-    commandName: string,
-    metadata: { alias: string; description: string; package: string; version?: string; category?: string },
-  ): void {
-    this.commandMetadata.set(commandName, metadata);
-    debugBus('Set metadata for command:', commandName, metadata);
+  setCommandMetadata(commandName: string, metadata: CommandMetadata): void {
+    this.metadataService.setCommandMetadata(commandName, metadata);
   }
 
   registerFold(registration: FoldRegistration): void {
@@ -82,11 +61,12 @@ export class CommandRegistry {
     return this.commandHandlerNames;
   }
 
-  getCommandMetadata(): Map<
-    string,
-    { alias: string; description: string; package: string; version?: string; category?: string }
-  > {
-    return this.commandMetadata;
+  getCommandMetadata(): Map<string, CommandMetadata> {
+    return this.metadataService.getAllCommandMetadata();
+  }
+
+  getMetadataService(): CommandMetadataService {
+    return this.metadataService;
   }
 
   getFoldRegistry(): Map<string, FoldFunction<Record<string, unknown>>> {

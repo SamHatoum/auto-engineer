@@ -23,6 +23,7 @@ export interface UnifiedCommandHandler<C extends Command<string, Record<string, 
   alias: string;
   description: string;
   category?: string;
+  icon?: string;
   package?: PackageMetadata; // Made optional since plugin loader will extract from package.json
   fields: {
     [K in keyof CommandData<C>]: FieldDefinition<CommandData<C>[K]>;
@@ -42,6 +43,7 @@ export function defineCommandHandler<C extends Command<string, Record<string, un
   alias: string;
   description: string;
   category?: string;
+  icon?: string;
   package?: PackageMetadata; // Made optional since plugin loader will extract from package.json
   fields: {
     [K in keyof CommandData<C>]: FieldDefinition<CommandData<C>[K]>;

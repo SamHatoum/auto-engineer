@@ -42,6 +42,7 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
   alias: 'check:types',
   description: 'TypeScript type checking',
   category: 'check',
+  icon: 'shield-check',
   fields: {
     targetDirectory: {
       description: 'Directory to check',

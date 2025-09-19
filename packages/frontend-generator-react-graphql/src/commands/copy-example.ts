@@ -36,6 +36,7 @@ export const commandHandler = defineCommandHandler<CopyExampleCommand>({
   alias: 'copy:example',
   description: 'Copy example React GraphQL template',
   category: 'copy',
+  icon: 'copy',
   fields: {
     starterName: {
       description: 'Name of the example template',

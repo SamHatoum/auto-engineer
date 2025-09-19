@@ -100,7 +100,7 @@ function buildStatements(
 
   // Add imports
   const imports = buildImports(ts, opts, messages, typeIntegrationNames, valueIntegrationNames, usedFlowFunctionNames);
-  statements.push(imports.importFlowValues);
+  if (imports.importFlowValues !== null) statements.push(imports.importFlowValues);
   if (imports.importFlowTypes !== null) statements.push(imports.importFlowTypes);
   if (imports.importIntegrationValues !== null) statements.push(imports.importIntegrationValues);
   if (imports.importIntegrationTypes !== null) statements.push(imports.importIntegrationTypes);
@@ -120,7 +120,9 @@ function buildStatements(
   // Flows
 
   if (flows.length > 0) {
-    statements.push(...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1]));
+    statements.push(
+      ...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1], messages),
+    );
   }
 
   return statements;

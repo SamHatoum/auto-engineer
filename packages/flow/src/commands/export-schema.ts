@@ -37,6 +37,7 @@ export const commandHandler = defineCommandHandler<ExportSchemaCommand>({
   alias: 'export:schema',
   description: 'Export flow schemas to context directory',
   category: 'export',
+  icon: 'download',
   fields: {
     directory: {
       description: 'Context directory path',

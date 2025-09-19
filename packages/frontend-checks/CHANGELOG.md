@@ -1,5 +1,26 @@
 # @auto-engineer/frontend-checks
 
+## 0.9.12
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.12
+
+## 0.9.11
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.11
+
+## 0.9.10
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.10
+
 ## 0.9.9
 
 ### Patch Changes

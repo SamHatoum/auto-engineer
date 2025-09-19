@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const pattern = /\.(flow)\.(ts)$/;
 
-describe.skip(
+describe(
   'getFlows',
   (_mode) => {
     let vfs: NodeFileStore;
@@ -378,7 +378,7 @@ describe.skip(
       }
     });
 
-    it('extracts correct integration import paths from AST', async () => {
+    it.skip('extracts correct integration import paths from AST', async () => {
       const flows = await getFlows({
         vfs,
         root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/shopping-app',
@@ -401,7 +401,7 @@ describe.skip(
       }
     });
 
-    it('handles real questionnaires example correctly', async () => {
+    it.skip('handles real questionnaires example correctly', async () => {
       const flows = await getFlows({
         vfs,
         root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
@@ -535,7 +535,6 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
 
       registry.clearAll();
 
-      // This should work correctly with our ES module interop fix
       await expect(executeAST(['/browser/questionnaires.flow.ts'], memoryVfs, {}, '/browser')).resolves.toBeDefined();
 
       const flows = registry.getAllFlows();
@@ -659,6 +658,48 @@ flow('questionnaires-test', () => {
         validateCurrentQuestionIdType(model);
       }
     });
+
+    it('correctly distinguishes between State and Event types in given clauses with empty when', async () => {
+      const flows = await getFlows({ vfs, root, pattern, fastFsScan: true });
+      const model = flows.toModel();
+
+      const mixedGivenFlow = model.flows.find((f) => f.name === 'Mixed Given Types');
+      expect(mixedGivenFlow).toBeDefined();
+
+      if (!mixedGivenFlow) return;
+
+      const querySlice = mixedGivenFlow.slices.find((s) => s.name === 'system status check');
+      expect(querySlice).toBeDefined();
+      expect(querySlice?.type).toBe('query');
+
+      if (querySlice?.type !== 'query') return;
+
+      const example = querySlice.server.specs.rules[0]?.examples[0];
+      expect(example).toBeDefined();
+
+      if (example !== null && example !== undefined) {
+        validateMixedGivenTypes(example);
+        validateEmptyWhenClause(example);
+        validateThenClause(example);
+        validateMixedGivenTypeMessages(model);
+      }
+    });
+
+    it.skip('should not generate phantom messages with empty names', async () => {
+      const flows = await getFlows({
+        vfs,
+        root: '/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires',
+        pattern,
+        fastFsScan: true,
+      });
+      const model = flows.toModel();
+
+      const phantomMessages = model.messages.filter((message) => message.name === '');
+      expect(phantomMessages).toHaveLength(0);
+
+      const allMessages = model.messages;
+      expect(allMessages.every((message) => message.name.length > 0)).toBe(true);
+    });
   },
   { timeout: 10000 },
 );
@@ -710,6 +751,82 @@ function validateCurrentQuestionIdType(model: any): void {
   expect(progressMessage?.type).toBe('state');
   const currentQuestionIdField = progressMessage?.fields.find((f: any) => f.name === 'currentQuestionId');
   expect(currentQuestionIdField?.type).toBe('string | null');
+}
+
+function validateMixedGivenTypes(example: any): void {
+  expect(example.description).toBe('system with 2 items reaches max of 2');
+  expect(example.given).toBeDefined();
+  expect(Array.isArray(example.given)).toBe(true);
+  expect(example.given).toHaveLength(4);
+
+  const firstGiven = example.given[0];
+  expect('stateRef' in firstGiven).toBe(true);
+  expect('eventRef' in firstGiven).toBe(false);
+  if ('stateRef' in firstGiven) {
+    expect(firstGiven.stateRef).toBe('ConfigState');
+  }
+
+  const secondGiven = example.given[1];
+  expect('eventRef' in secondGiven).toBe(true);
+  if ('eventRef' in secondGiven) {
+    expect(secondGiven.eventRef).toBe('SystemInitialized');
+  }
+
+  const thirdGiven = example.given[2];
+  expect('eventRef' in thirdGiven).toBe(true);
+  if ('eventRef' in thirdGiven) {
+    expect(thirdGiven.eventRef).toBe('ItemAdded');
+  }
+
+  const fourthGiven = example.given[3];
+  expect('eventRef' in fourthGiven).toBe(true);
+  if ('eventRef' in fourthGiven) {
+    expect(fourthGiven.eventRef).toBe('ItemAdded');
+  }
+}
+
+function validateEmptyWhenClause(example: any): void {
+  expect(example.when).toBeDefined();
+  expect(typeof example.when === 'object' && !Array.isArray(example.when)).toBe(true);
+  if (typeof example.when === 'object' && !Array.isArray(example.when)) {
+    expect('commandRef' in example.when).toBe(false);
+    expect('eventRef' in example.when).toBe(true);
+    expect('stateRef' in example.when).toBe(false);
+    if ('eventRef' in example.when) {
+      expect(example.when.eventRef).toBe('');
+    }
+    expect(example.when.exampleData).toEqual({});
+  }
+}
+
+function validateThenClause(example: any): void {
+  expect(example.then).toBeDefined();
+  expect(Array.isArray(example.then)).toBe(true);
+  expect(example.then).toHaveLength(1);
+
+  const thenOutcome = example.then[0];
+  expect('stateRef' in thenOutcome).toBe(true);
+  if ('stateRef' in thenOutcome) {
+    expect(thenOutcome.stateRef).toBe('SystemStatus');
+  }
+}
+
+function validateMixedGivenTypeMessages(model: any): void {
+  const configStateMessage = model.messages.find((m: any) => m.name === 'ConfigState');
+  expect(configStateMessage).toBeDefined();
+  expect(configStateMessage?.type).toBe('state');
+
+  const systemInitializedMessage = model.messages.find((m: any) => m.name === 'SystemInitialized');
+  expect(systemInitializedMessage).toBeDefined();
+  expect(systemInitializedMessage?.type).toBe('event');
+
+  const itemAddedMessage = model.messages.find((m: any) => m.name === 'ItemAdded');
+  expect(itemAddedMessage).toBeDefined();
+  expect(itemAddedMessage?.type).toBe('event');
+
+  const systemStatusMessage = model.messages.find((m: any) => m.name === 'SystemStatus');
+  expect(systemStatusMessage).toBeDefined();
+  expect(systemStatusMessage?.type).toBe('state');
 }
 
 /* eslint-enable */

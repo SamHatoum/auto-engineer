@@ -37,6 +37,7 @@ export const commandHandler = defineCommandHandler({
   alias: 'import:design-system',
   description: 'Import Figma design system',
   category: 'import',
+  icon: 'palette',
   fields: {
     outputDir: {
       description: 'Source directory for design system',

@@ -7,11 +7,13 @@ import { MemoryMessageStore, type ILocalMessageStore } from '@auto-engineer/mess
 import createDebug from 'debug';
 import { StateManager } from './state-manager';
 import { FileSyncer } from './file-syncer';
-import type { EventRegistration, FoldRegistration } from '../dsl/types';
+import type { EventRegistration, FoldRegistration, SettledRegistration } from '../dsl/types';
 import { setupHttpRoutes } from './http-routes';
 import { setupWebSocketHandlers } from './websocket-handler';
 import { EventProcessor } from './event-processor';
 import { CommandRegistry } from './command-registry';
+import { CommandMetadataService } from './command-metadata-service';
+import { SettledTracker } from './settled-tracker';
 
 const debug = createDebug('auto-engineer:server');
 
@@ -36,6 +38,7 @@ export class MessageBusServer {
   private config: MessageBusServerConfig;
   private eventProcessor: EventProcessor;
   private commandRegistry: CommandRegistry;
+  private settledTracker: SettledTracker;
   private currentSessionId?: string;
 
   constructor(config: MessageBusServerConfig = {}) {
@@ -67,8 +70,16 @@ export class MessageBusServer {
     this.stateManager = new StateManager<Record<string, unknown>>();
 
     // Initialize modules
-    this.eventProcessor = new EventProcessor(this.messageBus, this.messageStore, this.stateManager, (event: Event) =>
-      this.io.emit('event', event),
+    this.settledTracker = new SettledTracker((action) => {
+      // Handle dispatch actions from settled handlers
+      void this.eventProcessor.processDispatchAction(action);
+    });
+    this.eventProcessor = new EventProcessor(
+      this.messageBus,
+      this.messageStore,
+      this.stateManager,
+      (event: Event) => this.io.emit('event', event),
+      this.settledTracker,
     );
     this.commandRegistry = new CommandRegistry(this.messageBus, this.stateManager);
 
@@ -91,6 +102,7 @@ export class MessageBusServer {
     setupHttpRoutes(this.app, this.messageBus, this.stateManager, {
       commandHandlerNames: this.commandRegistry.getCommandHandlerNames(),
       commandMetadata: this.commandRegistry.getCommandMetadata(),
+      commandMetadataService: this.commandRegistry.getMetadataService(),
       eventHandlers: this.eventProcessor.getEventHandlers(),
       foldRegistry: this.commandRegistry.getFoldRegistry(),
       messageStore: this.messageStore,
@@ -125,6 +137,13 @@ export class MessageBusServer {
   }
 
   /**
+   * Register settled handler from DSL
+   */
+  registerSettledHandler(registration: SettledRegistration): void {
+    this.settledTracker.registerSettledHandler(registration);
+  }
+
+  /**
    * Set command metadata for dashboard display
    */
   setCommandMetadata(
@@ -139,6 +158,13 @@ export class MessageBusServer {
    */
   registerCommandHandlers(handlers: unknown[]): void {
     this.commandRegistry.registerCommandHandlers(handlers);
+  }
+
+  /**
+   * Get the command metadata service
+   */
+  getCommandMetadataService(): CommandMetadataService {
+    return this.commandRegistry.getMetadataService();
   }
 
   /**

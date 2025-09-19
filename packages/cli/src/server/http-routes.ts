@@ -2,8 +2,10 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import type { MessageBus, Command, Event } from '@auto-engineer/message-bus';
-import type { IMessageStore, MessageFilter } from '@auto-engineer/message-store';
+import type { IMessageStore, ILocalMessageStore, MessageFilter } from '@auto-engineer/message-store';
 import type { StateManager, FoldFunction } from './state-manager';
+import { getPipelineGraph } from '../dsl';
+import type { CommandMetadataService } from './command-metadata-service';
 import createDebug from 'debug';
 
 const debugHttp = createDebug('auto-engineer:server:http');
@@ -12,8 +14,9 @@ export interface HttpRoutesConfig {
   commandHandlerNames: string[];
   commandMetadata: Map<
     string,
-    { alias: string; description: string; package: string; version?: string; category?: string }
+    { alias: string; description: string; package: string; version?: string; category?: string; icon?: string }
   >;
+  commandMetadataService: CommandMetadataService;
   eventHandlers: Map<string, Array<(event: Event) => void>>;
   foldRegistry: Map<string, FoldFunction<Record<string, unknown>>>;
   messageStore: IMessageStore;
@@ -48,6 +51,41 @@ function validateCommandHandler(commandType: string, availableCommands: string[]
     return `Command handler not found for command: ${commandType}`;
   }
   return null;
+}
+
+function mapCommandToMetadata(cmd: {
+  name: string;
+  metadata?: {
+    alias?: string;
+    description?: string;
+    package?: string;
+    version?: string;
+    category?: string;
+    icon?: string;
+  };
+}): {
+  id: string;
+  name: string;
+  alias: string;
+  description: string;
+  package: string;
+  version?: string;
+  category?: string;
+  icon: string;
+} {
+  const metadata = cmd.metadata ?? {};
+  const packageName = metadata.package ?? 'unknown';
+  const baseAlias = metadata.alias ?? cmd.name;
+  return {
+    id: `${packageName}/${baseAlias}`,
+    name: cmd.name,
+    alias: baseAlias,
+    description: metadata.description ?? 'No description',
+    package: packageName,
+    version: metadata.version,
+    category: metadata.category,
+    icon: metadata.icon ?? 'terminal',
+  };
 }
 
 async function processCommand(messageBus: MessageBus, command: Command, config: HttpRoutesConfig): Promise<void> {
@@ -107,15 +145,21 @@ export function setupHttpRoutes(
       eventHandlers: Array.from(config.eventHandlers.keys()),
       folds: Array.from(config.foldRegistry.keys()),
       commandHandlers: sortedCommands.map((cmd) => cmd.name),
-      commandsWithMetadata: sortedCommands.map((cmd) => ({
-        name: cmd.name,
-        alias: cmd.metadata?.alias ?? cmd.name,
-        description: cmd.metadata?.description ?? 'No description',
-        package: cmd.metadata?.package ?? 'unknown',
-        version: cmd.metadata?.version,
-        category: cmd.metadata?.category,
-      })),
+      commandsWithMetadata: sortedCommands.map(mapCommandToMetadata),
     });
+  });
+
+  // Get pipeline graph with command metadata and icons
+  // This endpoint will be polled frequently for status updates
+  app.get('/pipeline', (_req, res) => {
+    void (async () => {
+      const graph = await getPipelineGraph({
+        metadataService: config.commandMetadataService,
+        eventHandlers: config.eventHandlers,
+        messageStore: config.messageStore as ILocalMessageStore,
+      });
+      res.json(graph);
+    })();
   });
 
   // Get all messages with filtering

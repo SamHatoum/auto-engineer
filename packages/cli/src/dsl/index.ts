@@ -6,25 +6,77 @@ import type {
   DslRegistration,
   ConfigDefinition,
   SettledRegistration,
+  SettledHandlerConfig,
 } from './types';
+import type { CommandMetadataService } from '../server/command-metadata-service';
+import type { ILocalMessageStore } from '@auto-engineer/message-store';
+import createDebug from 'debug';
 
-// Track registrations when DSL functions are called
+const debug = createDebug('auto-engineer:dsl:pipeline-graph');
+
 let registrations: DslRegistration[] = [];
 let pendingDispatches: DispatchAction[] = [];
 
-/**
- * Register an event handler that will execute when the specified event occurs
- */
+export type NodeStatus = 'None' | 'idle' | 'running' | 'pass' | 'fail';
+
+export interface CommandEventMapping {
+  successEvent: string;
+  failureEvent: string;
+}
+
+export const COMMAND_TO_EVENT_MAP: Record<string, CommandEventMapping> = {
+  ExportSchema: {
+    successEvent: 'SchemaExported',
+    failureEvent: 'SchemaExportFailed',
+  },
+  GenerateServer: {
+    successEvent: 'ServerGenerated',
+    failureEvent: 'ServerGenerationFailed',
+  },
+  GenerateIA: {
+    successEvent: 'IAGenerated',
+    failureEvent: 'IAGenerationFailed',
+  },
+  GenerateClient: {
+    successEvent: 'ClientGenerated',
+    failureEvent: 'ClientGenerationFailed',
+  },
+  ImplementClient: {
+    successEvent: 'ClientImplemented',
+    failureEvent: 'ClientImplementationFailed',
+  },
+  ImplementSlice: {
+    successEvent: 'SliceImplemented',
+    failureEvent: 'SliceImplementationFailed',
+  },
+  CheckTests: {
+    successEvent: 'TestsPassed',
+    failureEvent: 'TestsFailed',
+  },
+  CheckTypes: {
+    successEvent: 'TypeCheckPassed',
+    failureEvent: 'TypeCheckFailed',
+  },
+  CheckLint: {
+    successEvent: 'LintCheckPassed',
+    failureEvent: 'LintCheckFailed',
+  },
+};
+
+export interface PipelineGraphConfig {
+  metadataService?: CommandMetadataService;
+  eventHandlers?: Map<string, Array<(event: Event) => void>>;
+  messageStore?: ILocalMessageStore;
+}
+
 export function on<T extends Event>(
   eventType: string | ((event: T) => void),
   handler?: (event: T) => Command | Command[] | DispatchAction | void,
 ): EventRegistration | void {
-  // Support both forms: on('EventName', handler) and on((event: EventType) => ...)
   if (typeof eventType === 'function') {
-    // Extract event type from function parameter type (will be handled by config parser)
     const registration: EventRegistration = {
       type: 'on',
-      eventType: '', // Will be inferred from type
+      eventType: '',
       handler: eventType as (event: Event) => Command | Command[] | DispatchAction | void,
     };
     registrations.push(registration as unknown as DslRegistration);
@@ -42,9 +94,6 @@ export function on<T extends Event>(
   }
 }
 
-/**
- * Wait for all specified commands to settle and collect their events
- */
 function settled<
   T extends Command,
   U extends Command = never,
@@ -63,27 +112,60 @@ function settled<
           : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
             ? [T['type'], U['type'], V['type'], W['type'], X['type']]
             : never,
-  callback: (
-    events: [T, U, V, W, X] extends [Command, never, never, never, never]
-      ? { [K in T['type']]: Event[] }
-      : [T, U, V, W, X] extends [Command, Command, never, never, never]
-        ? { [K in T['type'] | U['type']]: Event[] }
-        : [T, U, V, W, X] extends [Command, Command, Command, never, never]
-          ? { [K in T['type'] | U['type'] | V['type']]: Event[] }
-          : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
-            ? { [K in T['type'] | U['type'] | V['type'] | W['type']]: Event[] }
-            : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
-              ? { [K in T['type'] | U['type'] | V['type'] | W['type'] | X['type']]: Event[] }
-              : never,
-  ) => void,
+  callbackOrConfig:
+    | ((
+        events: [T, U, V, W, X] extends [Command, never, never, never, never]
+          ? { [K in T['type']]: Event[] }
+          : [T, U, V, W, X] extends [Command, Command, never, never, never]
+            ? { [K in T['type'] | U['type']]: Event[] }
+            : [T, U, V, W, X] extends [Command, Command, Command, never, never]
+              ? { [K in T['type'] | U['type'] | V['type']]: Event[] }
+              : [T, U, V, W, X] extends [Command, Command, Command, Command, never]
+                ? { [K in T['type'] | U['type'] | V['type'] | W['type']]: Event[] }
+                : [T, U, V, W, X] extends [Command, Command, Command, Command, Command]
+                  ? { [K in T['type'] | U['type'] | V['type'] | W['type'] | X['type']]: Event[] }
+                  : never,
+      ) => void)
+    | SettledHandlerConfig,
 ): SettledRegistration {
-  const registration: SettledRegistration = {
-    type: 'on-settled',
-    commandTypes: commandTypes as readonly string[],
-    handler: callback as (events: Record<string, Event[]>) => void,
-  };
-  registrations.push(registration as unknown as DslRegistration);
-  return registration;
+  const commandTypesArray = commandTypes as readonly string[];
+
+  if (typeof callbackOrConfig === 'function') {
+    const registration: SettledRegistration = {
+      type: 'on-settled',
+      commandTypes: commandTypesArray,
+      handler: callbackOrConfig as (events: Record<string, Event[]>) => void,
+    };
+    registrations.push(registration as unknown as DslRegistration);
+    return registration;
+  } else {
+    const { dispatches, handler } = callbackOrConfig;
+
+    const wrappedHandler = (events: Record<string, Event[]>) => {
+      const validatedDispatch = <TCommand extends Command>(command: TCommand): void => {
+        if (!dispatches.includes(command.type)) {
+          throw new Error(`Command type "${command.type}" is not declared in dispatches list`);
+        }
+
+        const action: DispatchAction = {
+          type: 'dispatch',
+          command,
+        };
+        pendingDispatches.push(action);
+      };
+
+      handler(events, validatedDispatch);
+    };
+
+    const registration: SettledRegistration = {
+      type: 'on-settled',
+      commandTypes: commandTypesArray,
+      handler: wrappedHandler,
+      dispatches,
+    };
+    registrations.push(registration as unknown as DslRegistration);
+    return registration;
+  }
 }
 
 on.settled = settled;
@@ -91,13 +173,61 @@ on.settled = settled;
 /**
  * Dispatch a command to the message bus
  */
-export function dispatch<T extends Command>(command: T): DispatchAction {
-  const action: DispatchAction = {
-    type: 'dispatch',
-    command,
-  };
-  pendingDispatches.push(action);
-  return action;
+export function dispatch<T extends Command>(command: T): DispatchAction;
+export function dispatch<T extends Command>(commandType: T['type'], data: T['data']): Command;
+export function dispatch<TDispatchCommands extends Command>(
+  commandTypes: readonly TDispatchCommands['type'][],
+  handler: (
+    events: Record<string, Event[]>,
+    send: <TCommand extends TDispatchCommands>(command: TCommand) => void,
+  ) => void,
+): SettledHandlerConfig<TDispatchCommands>;
+export function dispatch<T extends Command>(
+  commandOrTypeOrTypes: T | T['type'] | readonly T['type'][],
+  dataOrHandler?:
+    | T['data']
+    | ((events: Record<string, Event[]>, send: <TCommand extends T>(command: TCommand) => void) => void),
+): DispatchAction | Command | SettledHandlerConfig<T> {
+  // Array pattern for on.settled
+  if (Array.isArray(commandOrTypeOrTypes)) {
+    const commandTypes = commandOrTypeOrTypes;
+    const handler = dataOrHandler as (
+      events: Record<string, Event[]>,
+      send: <TCommand extends T>(command: TCommand) => void,
+    ) => void;
+
+    return {
+      dispatches: commandTypes,
+      handler,
+    };
+  }
+
+  // Object pattern for full command
+  if (
+    typeof commandOrTypeOrTypes === 'object' &&
+    commandOrTypeOrTypes !== null &&
+    !Array.isArray(commandOrTypeOrTypes)
+  ) {
+    const command = commandOrTypeOrTypes as T;
+    const action: DispatchAction = {
+      type: 'dispatch',
+      command,
+    };
+    pendingDispatches.push(action);
+    return action;
+  }
+
+  // String pattern for command type + data - return the command object for event handlers
+  const commandType = commandOrTypeOrTypes as T['type'];
+  const data = dataOrHandler as T['data'];
+
+  const command = {
+    type: commandType,
+    data,
+  } as T;
+
+  // Return the command directly for event handlers to process
+  return command;
 }
 
 /**
@@ -188,4 +318,343 @@ export function getPendingDispatches(): DispatchAction[] {
  */
 export function autoConfig(config: ConfigDefinition): ConfigDefinition {
   return config;
+}
+
+/**
+ * Convert camelCase/PascalCase to title case with spaces
+ * E.g., "GenerateServer" -> "Generate Server", "checkTypes" -> "Check Types", "GenerateHTML" -> "Generate HTML"
+ */
+function camelCaseToTitleCase(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/^./, (match) => match.toUpperCase())
+    .trim();
+}
+
+/**
+ * Extract the source command from an event type name
+ * E.g., "SchemaExported" -> "ExportSchema"
+ */
+function getCommandFromEventType(eventType: string): string | null {
+  // Map known event types to their source commands
+  const eventToCommandMap: Record<string, string> = {
+    SchemaExported: 'ExportSchema',
+    ServerGenerated: 'GenerateServer',
+    IAGenerated: 'GenerateIA',
+    ClientGenerated: 'GenerateClient',
+    SliceImplemented: 'ImplementSlice',
+  };
+
+  return eventToCommandMap[eventType] || null;
+}
+
+/**
+ * Get target commands that are typically dispatched for an event type
+ * Based on the pipeline configuration in auto.config.ts
+ */
+function getTargetCommandsFromEventType(eventType: string): string[] {
+  // Map event types to their typical target commands
+  const eventToTargetsMap: Record<string, string[]> = {
+    SchemaExported: ['GenerateServer'],
+    ServerGenerated: ['GenerateIA'],
+    IAGenerated: ['GenerateClient'],
+    ClientGenerated: ['ImplementClient'],
+    SliceImplemented: ['CheckTests', 'CheckTypes', 'CheckLint'],
+  };
+
+  return eventToTargetsMap[eventType] ?? [];
+}
+
+/**
+ * Calculate status for a pipeline node based on message store
+ */
+async function calculateNodeStatus(commandType: string, messageStore: ILocalMessageStore): Promise<NodeStatus> {
+  try {
+    // Get all messages from the message store
+    const allMessages = await messageStore.getAllMessages();
+
+    // Find all commands for this command type
+    const commands = allMessages
+      .filter((msg) => msg.messageType === 'command' && msg.message.type === commandType)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    if (commands.length === 0) {
+      return 'idle';
+    }
+
+    // Get the latest command
+    const latestCommand = commands[commands.length - 1];
+
+    const requestId = latestCommand.message.requestId;
+    if (requestId === undefined || requestId === null || requestId === '') {
+      throw new Error(`Command ${commandType} is missing requestId`);
+    }
+
+    const mapping = COMMAND_TO_EVENT_MAP[commandType];
+    if (mapping === undefined) {
+      return 'None';
+    }
+
+    // Find events that match this command's requestId
+    const relatedEvents = allMessages.filter(
+      (msg) => msg.messageType === 'event' && msg.message.requestId === requestId,
+    );
+
+    if (relatedEvents.length === 0) {
+      return 'running';
+    }
+
+    // Check if there's any failure event (any event with an error field)
+    const hasFailure = relatedEvents.some((event) => {
+      const data = event.message.data;
+      return data !== null && typeof data === 'object' && 'error' in data;
+    });
+    if (hasFailure) {
+      return 'fail';
+    }
+
+    // Check if there's a success event
+    const hasSuccess = relatedEvents.some((event) => event.message.type === mapping.successEvent);
+    if (hasSuccess) {
+      return 'pass';
+    }
+
+    return 'running';
+  } catch (error) {
+    debug('Error calculating node status for %s: %O', commandType, error);
+    throw error;
+  }
+}
+
+/**
+ * Generate pipeline graph from current registrations
+ */
+export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promise<{
+  nodes: Array<{
+    id: string;
+    name: string;
+    title: string;
+    alias?: string;
+    description?: string;
+    package?: string;
+    version?: string;
+    category?: string;
+    icon?: string;
+    status: NodeStatus;
+  }>;
+  edges: Array<{ from: string; to: string }>;
+}> {
+  const { metadataService, eventHandlers, messageStore } = config;
+  const commandNodes = new Set<string>();
+  const edges: Array<{ from: string; to: string }> = [];
+
+  debug(
+    'Called with metadataService=%s eventHandlers=%s eventHandlers size=%s messageStore=%s',
+    !!metadataService,
+    !!eventHandlers,
+    eventHandlers?.size,
+    !!messageStore,
+  );
+
+  function getNodeId(commandType: string): string {
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(commandType);
+      if (metadata) {
+        return `${metadata.package}/${metadata.alias}`;
+      }
+    }
+    return commandType;
+  }
+
+  // If eventHandlers are provided, use them instead of DSL registrations
+  if (eventHandlers) {
+    debug('Using event handlers, found %d handlers', eventHandlers.size);
+    // For now, we need to reconstruct the pipeline from the event handlers
+    // This is a simplified approach that may need enhancement
+    for (const [eventType, handlers] of eventHandlers) {
+      debug('Processing event type %s with %d handlers', eventType, handlers.length);
+      // Extract command relationships from event type names
+      // This is based on the naming convention in auto.config.ts
+      const sourceCommand = getCommandFromEventType(eventType);
+      debug('Source command for %s = %s', eventType, sourceCommand);
+      if (sourceCommand !== null && sourceCommand !== '') {
+        commandNodes.add(sourceCommand);
+
+        // For each handler, try to extract target commands
+        // This would need the actual dispatch functions to be analyzed
+        // For now, we'll use a simplified mapping based on known patterns
+        const targetCommands = getTargetCommandsFromEventType(eventType);
+        debug('Target commands for %s = %o', eventType, targetCommands);
+        targetCommands.forEach((targetCommand: string) => {
+          commandNodes.add(targetCommand);
+          edges.push({ from: getNodeId(sourceCommand), to: getNodeId(targetCommand) });
+        });
+      }
+    }
+    debug('Final nodes: %o', Array.from(commandNodes));
+    debug('Final edges: %o', edges);
+  } else {
+    // Fallback to DSL registrations (original behavior)
+    registrations.forEach((registration) => {
+      if (registration.type === 'on') {
+        processEventRegistration(registration, commandNodes, edges, metadataService);
+      }
+
+      if (registration.type === 'on-settled') {
+        processSettledRegistration(registration, commandNodes, edges, metadataService);
+      }
+    });
+  }
+
+  const nodes = await Promise.all(
+    Array.from(commandNodes).map(async (commandType) => {
+      const baseNode = {
+        id: commandType,
+        name: commandType,
+        title: camelCaseToTitleCase(commandType),
+      };
+
+      let status: NodeStatus = 'None';
+      if (messageStore) {
+        status = await calculateNodeStatus(commandType, messageStore);
+      }
+
+      if (metadataService) {
+        const metadata = metadataService.getCommandMetadata(commandType);
+        if (metadata) {
+          return {
+            ...baseNode,
+            id: `${metadata.package}/${metadata.alias}`,
+            title: camelCaseToTitleCase(commandType),
+            alias: metadata.alias,
+            description: metadata.description,
+            package: metadata.package,
+            version: metadata.version,
+            category: metadata.category,
+            icon: metadata.icon ?? 'terminal',
+            status,
+          };
+        }
+      }
+
+      return {
+        ...baseNode,
+        icon: 'terminal',
+        status,
+      };
+    }),
+  );
+
+  return { nodes, edges };
+}
+
+function processEventRegistration(
+  registration: EventRegistration,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+  metadataService?: CommandMetadataService,
+): void {
+  try {
+    const mockEvent = { type: registration.eventType, data: {} } as Event;
+    const result = registration.handler(mockEvent);
+
+    if (result && typeof result === 'object' && 'type' in result) {
+      addCommandAndEdge(result as Command, registration.eventType, commandNodes, edges, metadataService);
+    } else if (Array.isArray(result)) {
+      result.forEach((command) => {
+        if (command !== null && typeof command === 'object' && 'type' in command && typeof command.type === 'string') {
+          addCommandAndEdge(command, registration.eventType, commandNodes, edges, metadataService);
+        }
+      });
+    }
+  } catch {
+    // Handler might require specific event data, skip if it fails
+  }
+}
+
+function processSettledRegistration(
+  registration: SettledRegistration,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+  metadataService?: CommandMetadataService,
+): void {
+  function getNodeId(commandType: string): string {
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(commandType);
+      if (metadata) {
+        return `${metadata.package}/${metadata.alias}`;
+      }
+    }
+    return commandType;
+  }
+
+  registration.commandTypes.forEach((commandType) => {
+    commandNodes.add(commandType);
+  });
+
+  if (registration.dispatches && registration.dispatches.length > 0) {
+    registration.dispatches.forEach((commandType) => {
+      commandNodes.add(commandType);
+
+      registration.commandTypes.forEach((settledCommand) => {
+        edges.push({
+          from: getNodeId(settledCommand),
+          to: getNodeId(commandType),
+        });
+      });
+    });
+  }
+}
+
+function addCommandAndEdge(
+  command: Command,
+  eventType: string,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+  metadataService?: CommandMetadataService,
+): void {
+  function getNodeId(commandType: string): string {
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(commandType);
+      if (metadata) {
+        return `${metadata.package}/${metadata.alias}`;
+      }
+    }
+    return commandType;
+  }
+
+  commandNodes.add(command.type);
+
+  const sourceCommand = inferSourceCommand(eventType);
+  if (sourceCommand !== null) {
+    commandNodes.add(sourceCommand);
+    edges.push({
+      from: getNodeId(sourceCommand),
+      to: getNodeId(command.type),
+    });
+  }
+}
+
+/**
+ * Infer source command from event name using naming patterns
+ */
+function inferSourceCommand(eventType: string): string | null {
+  // Pattern: EventExported -> ExportEvent
+  if (eventType.endsWith('Exported')) {
+    return 'Export' + eventType.replace('Exported', '');
+  }
+
+  // Pattern: EventGenerated -> GenerateEvent
+  if (eventType.endsWith('Generated')) {
+    return 'Generate' + eventType.replace('Generated', '');
+  }
+
+  // Pattern: EventImplemented -> ImplementEvent
+  if (eventType.endsWith('Implemented')) {
+    return 'Implement' + eventType.replace('Implemented', '');
+  }
+
+  return null;
 }

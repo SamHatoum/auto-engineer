@@ -39,6 +39,7 @@ export const commandHandler = defineCommandHandler<ImplementServerCommand>({
   alias: 'implement:server',
   description: 'AI implements server TODOs and tests',
   category: 'implement',
+  icon: 'server',
   fields: {
     serverDirectory: {
       description: 'Server directory path',

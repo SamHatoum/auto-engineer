@@ -45,6 +45,7 @@ export const commandHandler = defineCommandHandler<ImplementSliceCommand>({
   alias: 'implement:slice',
   description: 'AI implements a specific server slice',
   category: 'implement',
+  icon: 'layers',
   fields: {
     slicePath: {
       description: 'Path to the slice directory to implement',

@@ -32,6 +32,8 @@ import {
 import { type GenerateClientCommand } from '@auto-engineer/frontend-generator-react-graphql';
 
 export default autoConfig({
+  fileId: 'a2b2c2d2e',
+
   plugins: [
     '@auto-engineer/server-checks',
     '@auto-engineer/design-system-importer',

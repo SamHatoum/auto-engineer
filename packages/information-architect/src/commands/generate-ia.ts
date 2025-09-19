@@ -48,6 +48,7 @@ export const commandHandler = defineCommandHandler<GenerateIACommand>({
   alias: 'generate:ia',
   description: 'Generate Information Architecture',
   category: 'generate',
+  icon: 'building',
   fields: {
     outputDir: {
       description: 'Context directory',

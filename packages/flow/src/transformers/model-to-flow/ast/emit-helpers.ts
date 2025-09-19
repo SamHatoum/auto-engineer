@@ -1,9 +1,29 @@
 import tsNS from 'typescript';
 
 /**
- * Emit a TS expression from a plain JSON-like value.
+ * Type information for converting JSON values with proper Date handling
  */
-export function jsonToExpr(ts: typeof import('typescript'), f: tsNS.NodeFactory, v: unknown): tsNS.Expression {
+export interface FieldTypeInfo {
+  [fieldName: string]: string; // field name -> type (e.g., 'Date', 'string', etc.)
+}
+
+/**
+ * Check if a string is a valid ISO date string
+ */
+function isISODateString(str: string): boolean {
+  const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})?$/;
+  return isoDateRegex.test(str);
+}
+
+/**
+ * Emit a TS expression from a plain JSON-like value with optional type information for Date handling.
+ */
+export function jsonToExpr(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  v: unknown,
+  typeInfo?: FieldTypeInfo,
+): tsNS.Expression {
   if (v === null) return f.createNull();
   switch (typeof v) {
     case 'string':
@@ -13,18 +33,38 @@ export function jsonToExpr(ts: typeof import('typescript'), f: tsNS.NodeFactory,
     case 'boolean':
       return v ? f.createTrue() : f.createFalse();
     case 'object': {
+      if (v instanceof Date) {
+        // Generate new Date('...') for Date objects
+        return f.createNewExpression(f.createIdentifier('Date'), undefined, [f.createStringLiteral(v.toISOString())]);
+      }
       if (Array.isArray(v)) {
-        return f.createArrayLiteralExpression(v.map((x) => jsonToExpr(ts, f, x)));
+        return f.createArrayLiteralExpression(v.map((x) => jsonToExpr(ts, f, x, typeInfo)));
       }
       const entries = Object.entries(v as Record<string, unknown>);
       return f.createObjectLiteralExpression(
-        entries.map(([k, x]) =>
-          f.createPropertyAssignment(
+        entries.map(([k, x]) => {
+          // Check if this field should be a Date
+          const fieldType = typeInfo?.[k];
+          let valueExpr: tsNS.Expression;
+
+          if (fieldType === 'Date' && typeof x === 'string' && isISODateString(x)) {
+            // Generate new Date('...') for Date fields
+            valueExpr = f.createNewExpression(f.createIdentifier('Date'), undefined, [f.createStringLiteral(x)]);
+          } else if (fieldType === 'Date' && x instanceof Date) {
+            // Generate new Date('...') for Date objects
+            valueExpr = f.createNewExpression(f.createIdentifier('Date'), undefined, [
+              f.createStringLiteral(x.toISOString()),
+            ]);
+          } else {
+            valueExpr = jsonToExpr(ts, f, x, typeInfo);
+          }
+
+          return f.createPropertyAssignment(
             // use identifier if safe, else quoted string
             /^[A-Za-z_]\w*$/.test(k) ? f.createIdentifier(k) : f.createStringLiteral(k),
-            jsonToExpr(ts, f, x),
-          ),
-        ),
+            valueExpr,
+          );
+        }),
         false,
       );
     }

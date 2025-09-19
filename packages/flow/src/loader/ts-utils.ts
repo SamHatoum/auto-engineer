@@ -582,6 +582,38 @@ function processGivenOrAndCallExpression(
   givenTypes.push(createGivenTypeInfo(sourceFile, node, ordinal, typeInfo.stringLiteral, typeInfo.classification));
 }
 
+function isChainStart(ts: typeof import('typescript'), node: import('typescript').CallExpression): boolean {
+  if (!ts.isPropertyAccessExpression(node.expression)) return false;
+  const method = node.expression.name.getText();
+  if (method !== 'given' && method !== 'and') return false;
+  const target = node.expression.expression;
+  if (ts.isCallExpression(target) && ts.isPropertyAccessExpression(target.expression)) {
+    const targetMethod = target.expression.name.getText();
+    return targetMethod !== 'given' && targetMethod !== 'and';
+  }
+  return true;
+}
+
+function collectChainFromStart(
+  ts: typeof import('typescript'),
+  startNode: import('typescript').CallExpression,
+): import('typescript').CallExpression[] {
+  const chain: import('typescript').CallExpression[] = [];
+  const collectNext = (node: import('typescript').Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const method = node.expression.name.getText();
+      if (method === 'given' || method === 'and') {
+        chain.push(node);
+      }
+    }
+    ts.forEachChild(node, collectNext);
+  };
+  const nodeToProcess = startNode.parent ?? startNode;
+  collectNext(nodeToProcess);
+  // Sort by source position to get correct execution order
+  return chain.sort((a, b) => a.getStart() - b.getStart());
+}
+
 export function parseGivenTypeArguments(
   ts: typeof import('typescript'),
   checker: import('typescript').TypeChecker,
@@ -590,18 +622,33 @@ export function parseGivenTypeArguments(
   typesByFile: Map<string, Map<string, TypeInfo>>,
 ): GivenTypeInfo[] {
   const givenTypes: GivenTypeInfo[] = [];
-  let ordinal = 0;
+  const processedNodes = new Set<import('typescript').CallExpression>();
 
+  // First pass: find all given/and chain starts
   const visit = (node: import('typescript').Node): void => {
-    if (ts.isCallExpression(node)) {
+    if (ts.isCallExpression(node) && !processedNodes.has(node)) {
       if (ts.isPropertyAccessExpression(node.expression)) {
         const method = node.expression.name.getText();
-        if (
-          (method === 'given' || method === 'and') &&
-          node.typeArguments !== undefined &&
-          node.typeArguments.length > 0
-        ) {
-          processGivenOrAndCallExpression(ts, node, checker, sourceFile, typeMap, typesByFile, givenTypes, ordinal++);
+        if (method === 'given' && isChainStart(ts, node)) {
+          // Found a chain start, collect the entire chain
+          const chain = collectChainFromStart(ts, node);
+          let ordinal = givenTypes.length;
+
+          for (const chainNode of chain) {
+            if (chainNode.typeArguments !== undefined && chainNode.typeArguments.length > 0) {
+              processGivenOrAndCallExpression(
+                ts,
+                chainNode,
+                checker,
+                sourceFile,
+                typeMap,
+                typesByFile,
+                givenTypes,
+                ordinal++,
+              );
+              processedNodes.add(chainNode);
+            }
+          }
         }
       }
     }
