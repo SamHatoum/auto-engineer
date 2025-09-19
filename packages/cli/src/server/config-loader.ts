@@ -1,7 +1,7 @@
 import createJiti from 'jiti';
 import createDebug from 'debug';
 import { on, dispatch, fold, getRegistrations, getPendingDispatches } from '../dsl';
-import type { EventRegistration, FoldRegistration, ConfigDefinition } from '../dsl/types';
+import type { EventRegistration, FoldRegistration, SettledRegistration, ConfigDefinition } from '../dsl/types';
 import type { MessageBusServer } from './server';
 
 const debug = createDebug('auto-engineer:server:config');
@@ -103,6 +103,9 @@ export async function loadMessageBusConfig(configPath: string, server: MessageBu
       } else if (registration.type === 'fold') {
         debug('Registering fold:', registration.eventType);
         server.registerFold(registration);
+      } else if (registration.type === 'on-settled') {
+        debug('Registering settled handler:', registration.commandTypes);
+        server.registerSettledHandler(registration);
       }
     }
 
@@ -122,9 +125,11 @@ export async function loadMessageBusConfig(configPath: string, server: MessageBu
 export function parseDslCode(code: string): {
   eventHandlers: EventRegistration[];
   folds: FoldRegistration[];
+  settledHandlers: SettledRegistration[];
 } {
   const eventHandlers: EventRegistration[] = [];
   const folds: FoldRegistration[] = [];
+  const settledHandlers: SettledRegistration[] = [];
 
   // Execute the code with DSL functions
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
@@ -143,8 +148,10 @@ export function parseDslCode(code: string): {
       eventHandlers.push(registration);
     } else if (registration.type === 'fold') {
       folds.push(registration);
+    } else if (registration.type === 'on-settled') {
+      settledHandlers.push(registration);
     }
   }
 
-  return { eventHandlers, folds };
+  return { eventHandlers, folds, settledHandlers };
 }

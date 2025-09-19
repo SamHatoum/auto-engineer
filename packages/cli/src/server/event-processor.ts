@@ -2,6 +2,7 @@ import type { MessageBus, Event, Command } from '@auto-engineer/message-bus';
 import type { IMessageStore } from '@auto-engineer/message-store';
 import type { StateManager } from './state-manager';
 import type { EventRegistration, DispatchAction } from '../dsl/types';
+import type { SettledTracker } from './settled-tracker';
 import { nanoid } from 'nanoid';
 import createDebug from 'debug';
 
@@ -16,6 +17,7 @@ export class EventProcessor {
     private messageStore: IMessageStore,
     private stateManager: StateManager<Record<string, unknown>>,
     private onEventBroadcast: (event: Event) => void,
+    private settledTracker?: SettledTracker,
   ) {}
 
   setupGlobalEventListener(): void {
@@ -34,6 +36,11 @@ export class EventProcessor {
 
         // Apply event to state
         this.stateManager.applyEvent(event);
+
+        // Notify settled tracker of event
+        if (this.settledTracker) {
+          this.settledTracker.onEventReceived(event);
+        }
 
         // Trigger registered event handlers
         const handlers = this.eventHandlers.get(event.type) || [];
@@ -127,7 +134,7 @@ export class EventProcessor {
     }
   }
 
-  private async processDispatchAction(action: DispatchAction): Promise<void> {
+  async processDispatchAction(action: DispatchAction): Promise<void> {
     switch (action.type) {
       case 'dispatch':
         await this.handleSingleDispatch(action);
@@ -200,6 +207,11 @@ export class EventProcessor {
     try {
       const enhancedCommand = this.enhanceCommandWithIds(command);
       await this.messageStore.saveMessages('$all', [enhancedCommand], undefined, 'command');
+
+      // Notify settled tracker that command started
+      if (this.settledTracker) {
+        this.settledTracker.onCommandStarted(enhancedCommand);
+      }
 
       // Store correlation context for this command's potential events
       if (
