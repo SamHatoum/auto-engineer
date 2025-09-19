@@ -9,12 +9,65 @@ import type {
   SettledHandlerConfig,
 } from './types';
 import type { CommandMetadataService } from '../server/command-metadata-service';
+import type { ILocalMessageStore } from '@auto-engineer/message-store';
 import createDebug from 'debug';
 
 const debug = createDebug('auto-engineer:dsl:pipeline-graph');
 
 let registrations: DslRegistration[] = [];
 let pendingDispatches: DispatchAction[] = [];
+
+export type NodeStatus = 'None' | 'idle' | 'running' | 'pass' | 'fail';
+
+export interface CommandEventMapping {
+  successEvent: string;
+  failureEvent: string;
+}
+
+export const COMMAND_TO_EVENT_MAP: Record<string, CommandEventMapping> = {
+  ExportSchema: {
+    successEvent: 'SchemaExported',
+    failureEvent: 'SchemaExportFailed',
+  },
+  GenerateServer: {
+    successEvent: 'ServerGenerated',
+    failureEvent: 'ServerGenerationFailed',
+  },
+  GenerateIA: {
+    successEvent: 'IAGenerated',
+    failureEvent: 'IAGenerationFailed',
+  },
+  GenerateClient: {
+    successEvent: 'ClientGenerated',
+    failureEvent: 'ClientGenerationFailed',
+  },
+  ImplementClient: {
+    successEvent: 'ClientImplemented',
+    failureEvent: 'ClientImplementationFailed',
+  },
+  ImplementSlice: {
+    successEvent: 'SliceImplemented',
+    failureEvent: 'SliceImplementationFailed',
+  },
+  CheckTests: {
+    successEvent: 'TestsPassed',
+    failureEvent: 'TestsFailed',
+  },
+  CheckTypes: {
+    successEvent: 'TypeCheckPassed',
+    failureEvent: 'TypeCheckFailed',
+  },
+  CheckLint: {
+    successEvent: 'LintCheckPassed',
+    failureEvent: 'LintCheckFailed',
+  },
+};
+
+export interface PipelineGraphConfig {
+  metadataService?: CommandMetadataService;
+  eventHandlers?: Map<string, Array<(event: Event) => void>>;
+  messageStore?: ILocalMessageStore;
+}
 
 export function on<T extends Event>(
   eventType: string | ((event: T) => void),
@@ -315,14 +368,73 @@ function getTargetCommandsFromEventType(eventType: string): string[] {
 }
 
 /**
+ * Calculate status for a pipeline node based on message store
+ */
+async function calculateNodeStatus(commandType: string, messageStore: ILocalMessageStore): Promise<NodeStatus> {
+  try {
+    // Get all messages from the message store
+    const allMessages = await messageStore.getAllMessages();
+
+    // Find all commands for this command type
+    const commands = allMessages
+      .filter((msg) => msg.messageType === 'command' && msg.message.type === commandType)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    if (commands.length === 0) {
+      return 'idle';
+    }
+
+    // Get the latest command
+    const latestCommand = commands[commands.length - 1];
+
+    const requestId = latestCommand.message.requestId;
+    if (requestId === undefined || requestId === null || requestId === '') {
+      throw new Error(`Command ${commandType} is missing requestId`);
+    }
+
+    const mapping = COMMAND_TO_EVENT_MAP[commandType];
+    if (mapping === undefined) {
+      return 'None';
+    }
+
+    // Find events that match this command's requestId
+    const relatedEvents = allMessages.filter(
+      (msg) => msg.messageType === 'event' && msg.message.requestId === requestId,
+    );
+
+    if (relatedEvents.length === 0) {
+      return 'running';
+    }
+
+    // Check if there's any failure event (any event with an error field)
+    const hasFailure = relatedEvents.some((event) => {
+      const data = event.message.data;
+      return data !== null && typeof data === 'object' && 'error' in data;
+    });
+    if (hasFailure) {
+      return 'fail';
+    }
+
+    // Check if there's a success event
+    const hasSuccess = relatedEvents.some((event) => event.message.type === mapping.successEvent);
+    if (hasSuccess) {
+      return 'pass';
+    }
+
+    return 'running';
+  } catch (error) {
+    debug('Error calculating node status for %s: %O', commandType, error);
+    throw error;
+  }
+}
+
+/**
  * Generate pipeline graph from current registrations
  */
-export function getPipelineGraph(
-  metadataService?: CommandMetadataService,
-  eventHandlers?: Map<string, Array<(event: Event) => void>>,
-): {
+export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promise<{
   nodes: Array<{
     id: string;
+    name: string;
     title: string;
     alias?: string;
     description?: string;
@@ -330,17 +442,20 @@ export function getPipelineGraph(
     version?: string;
     category?: string;
     icon?: string;
+    status: NodeStatus;
   }>;
   edges: Array<{ from: string; to: string }>;
-} {
+}> {
+  const { metadataService, eventHandlers, messageStore } = config;
   const commandNodes = new Set<string>();
   const edges: Array<{ from: string; to: string }> = [];
 
   debug(
-    'Called with metadataService=%s eventHandlers=%s eventHandlers size=%s',
+    'Called with metadataService=%s eventHandlers=%s eventHandlers size=%s messageStore=%s',
     !!metadataService,
     !!eventHandlers,
     eventHandlers?.size,
+    !!messageStore,
   );
 
   function getNodeId(commandType: string): string {
@@ -393,31 +508,44 @@ export function getPipelineGraph(
     });
   }
 
-  const nodes = Array.from(commandNodes).map((id) => {
-    const baseNode = { id, title: camelCaseToTitleCase(id) };
+  const nodes = await Promise.all(
+    Array.from(commandNodes).map(async (commandType) => {
+      const baseNode = {
+        id: commandType,
+        name: commandType,
+        title: camelCaseToTitleCase(commandType),
+      };
 
-    if (metadataService) {
-      const metadata = metadataService.getCommandMetadata(id);
-      if (metadata) {
-        return {
-          ...baseNode,
-          id: `${metadata.package}/${metadata.alias}`,
-          title: camelCaseToTitleCase(id),
-          alias: metadata.alias,
-          description: metadata.description,
-          package: metadata.package,
-          version: metadata.version,
-          category: metadata.category,
-          icon: metadata.icon ?? 'terminal',
-        };
+      let status: NodeStatus = 'None';
+      if (messageStore) {
+        status = await calculateNodeStatus(commandType, messageStore);
       }
-    }
 
-    return {
-      ...baseNode,
-      icon: 'terminal',
-    };
-  });
+      if (metadataService) {
+        const metadata = metadataService.getCommandMetadata(commandType);
+        if (metadata) {
+          return {
+            ...baseNode,
+            id: `${metadata.package}/${metadata.alias}`,
+            title: camelCaseToTitleCase(commandType),
+            alias: metadata.alias,
+            description: metadata.description,
+            package: metadata.package,
+            version: metadata.version,
+            category: metadata.category,
+            icon: metadata.icon ?? 'terminal',
+            status,
+          };
+        }
+      }
+
+      return {
+        ...baseNode,
+        icon: 'terminal',
+        status,
+      };
+    }),
+  );
 
   return { nodes, edges };
 }

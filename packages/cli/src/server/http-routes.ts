@@ -2,7 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import type { MessageBus, Command, Event } from '@auto-engineer/message-bus';
-import type { IMessageStore, MessageFilter } from '@auto-engineer/message-store';
+import type { IMessageStore, ILocalMessageStore, MessageFilter } from '@auto-engineer/message-store';
 import type { StateManager, FoldFunction } from './state-manager';
 import { getPipelineGraph } from '../dsl';
 import type { CommandMetadataService } from './command-metadata-service';
@@ -64,6 +64,7 @@ function mapCommandToMetadata(cmd: {
     icon?: string;
   };
 }): {
+  id: string;
   name: string;
   alias: string;
   description: string;
@@ -76,7 +77,8 @@ function mapCommandToMetadata(cmd: {
   const packageName = metadata.package ?? 'unknown';
   const baseAlias = metadata.alias ?? cmd.name;
   return {
-    name: `${packageName}/${baseAlias}`,
+    id: `${packageName}/${baseAlias}`,
+    name: cmd.name,
     alias: baseAlias,
     description: metadata.description ?? 'No description',
     package: packageName,
@@ -150,8 +152,14 @@ export function setupHttpRoutes(
   // Get pipeline graph with command metadata and icons
   // This endpoint will be polled frequently for status updates
   app.get('/pipeline', (_req, res) => {
-    const graph = getPipelineGraph(config.commandMetadataService, config.eventHandlers);
-    res.json(graph);
+    void (async () => {
+      const graph = await getPipelineGraph({
+        metadataService: config.commandMetadataService,
+        eventHandlers: config.eventHandlers,
+        messageStore: config.messageStore as ILocalMessageStore,
+      });
+      res.json(graph);
+    })();
   });
 
   // Get all messages with filtering

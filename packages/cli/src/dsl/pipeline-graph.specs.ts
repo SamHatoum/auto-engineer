@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { on, dispatch, getPipelineGraph, getRegistrations } from './index';
 import { CommandMetadataService } from '../server/command-metadata-service';
 import type { Command } from '@auto-engineer/message-bus';
+import type { ILocalMessageStore } from '@auto-engineer/message-store';
 
 interface CheckTestsCommand extends Command {
   type: 'CheckTests';
@@ -21,6 +22,33 @@ interface CheckLintCommand extends Command {
 interface ImplementClientCommand extends Command {
   type: 'ImplementClient';
   data: { projectDir: string; iaSchemeDir: string; designSystemPath?: string; failures?: unknown[] };
+}
+
+function createMockMessageStore(getAllMessagesReturn: unknown[] = []): ILocalMessageStore {
+  return {
+    getAllMessages: vi.fn().mockResolvedValue(getAllMessagesReturn),
+    reset: vi.fn().mockResolvedValue(undefined),
+    createSession: vi.fn().mockResolvedValue('mock-session-id'),
+    endSession: vi.fn().mockResolvedValue(undefined),
+    saveMessages: vi.fn().mockResolvedValue(undefined),
+    saveMessage: vi.fn().mockResolvedValue(undefined),
+    getMessages: vi.fn().mockResolvedValue([]),
+    getAllCommands: vi.fn().mockResolvedValue([]),
+    getAllEvents: vi.fn().mockResolvedValue([]),
+    getStreamInfo: vi.fn().mockResolvedValue(null),
+    getStreams: vi.fn().mockResolvedValue([]),
+    getSessions: vi.fn().mockResolvedValue([]),
+    getSessionInfo: vi.fn().mockResolvedValue(null),
+    getSessionMessages: vi.fn().mockResolvedValue([]),
+    getStats: vi.fn().mockResolvedValue({
+      totalMessages: 0,
+      totalCommands: 0,
+      totalEvents: 0,
+      totalStreams: 0,
+      totalSessions: 0,
+    }),
+    dispose: vi.fn().mockResolvedValue(undefined),
+  };
 }
 
 describe('Pipeline Graph Generation', () => {
@@ -89,7 +117,7 @@ describe('Pipeline Graph Generation', () => {
     });
   });
 
-  it('should generate pipeline graph from DSL registrations', () => {
+  it('should generate pipeline graph from DSL registrations', async () => {
     on('SchemaExported', () =>
       dispatch('GenerateServer', {
         schemaPath: './.context/schema.json',
@@ -123,7 +151,7 @@ describe('Pipeline Graph Generation', () => {
     );
 
     // Generate the pipeline graph
-    const graph = getPipelineGraph(metadataService);
+    const graph = await getPipelineGraph({ metadataService });
 
     console.log('🔗 GENERATED PIPELINE GRAPH:');
     console.log(JSON.stringify(graph, null, 2));
@@ -158,7 +186,7 @@ describe('Pipeline Graph Generation', () => {
     );
   });
 
-  it('should handle on.settled registrations', () => {
+  it('should handle on.settled registrations', async () => {
     on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
       ['CheckTests', 'CheckTypes', 'CheckLint'],
       dispatch<ImplementClientCommand>(['ImplementClient'], (_events, send) => {
@@ -174,7 +202,7 @@ describe('Pipeline Graph Generation', () => {
       }),
     );
 
-    const graph = getPipelineGraph(metadataService);
+    const graph = await getPipelineGraph({ metadataService });
 
     console.log('🔗 ON.SETTLED GRAPH:');
     console.log(JSON.stringify(graph, null, 2));
@@ -199,7 +227,7 @@ describe('Pipeline Graph Generation', () => {
     );
   });
 
-  it('should match the expected questionnaires pipeline structure', () => {
+  it('should match the expected questionnaires pipeline structure', async () => {
     // Replicate the questionnaires auto.config.ts pipeline
     on('SchemaExported', () => dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }));
     on('ServerGenerated', () =>
@@ -223,7 +251,7 @@ describe('Pipeline Graph Generation', () => {
       }),
     );
 
-    const actualGraph = getPipelineGraph(metadataService);
+    const actualGraph = await getPipelineGraph({ metadataService });
 
     // status (running, idle, failed)
     // icon: this needs to be added to dec
@@ -354,6 +382,195 @@ describe('Pipeline Graph Generation', () => {
     expectedGraph.edges.forEach((expectedEdge) => {
       const actualEdge = actualGraph.edges.find((e) => e.from === expectedEdge.from && e.to === expectedEdge.to);
       expect(actualEdge).toBeDefined();
+    });
+  });
+
+  describe('Pipeline Node Status', () => {
+    it('should add status field to each node based on event store', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const messageStore = createMockMessageStore([]);
+
+      const graph = await getPipelineGraph({ metadataService, messageStore });
+
+      const exportSchemaNode = graph.nodes.find((n) => n.alias === 'export:schema');
+      expect(exportSchemaNode).toHaveProperty('status');
+      expect(exportSchemaNode?.status).toBe('idle');
+    });
+
+    it('should show idle status when no commands have been sent for a node', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const messageStore = createMockMessageStore([]);
+
+      const graph = await getPipelineGraph({ metadataService, messageStore });
+
+      graph.nodes.forEach((node) => {
+        expect(node.status).toBe('idle');
+      });
+    });
+
+    it('should show running status when command sent but no corresponding event', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const commands = [
+        {
+          messageType: 'command' as const,
+          message: {
+            type: 'ExportSchema',
+            requestId: 'req-123',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:00:00Z'),
+        },
+      ];
+
+      const messageStore = createMockMessageStore(commands);
+
+      const graph = await getPipelineGraph({ metadataService, messageStore });
+
+      const exportSchemaNode = graph.nodes.find((n) => n.alias === 'export:schema');
+      expect(exportSchemaNode?.status).toBe('running');
+    });
+
+    it('should show pass status when command and success event match', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const messages = [
+        {
+          messageType: 'command' as const,
+          message: {
+            type: 'ExportSchema',
+            requestId: 'req-123',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:00:00Z'),
+        },
+        {
+          messageType: 'event' as const,
+          message: {
+            type: 'SchemaExported',
+            requestId: 'req-123',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:01:00Z'),
+        },
+      ];
+
+      const messageStore = createMockMessageStore(messages);
+
+      const graph = await getPipelineGraph({ metadataService, messageStore });
+
+      const exportSchemaNode = graph.nodes.find((n) => n.alias === 'export:schema');
+      expect(exportSchemaNode?.status).toBe('pass');
+    });
+
+    it('should show fail status when command has error event', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const messages = [
+        {
+          messageType: 'command' as const,
+          message: {
+            type: 'ExportSchema',
+            requestId: 'req-123',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:00:00Z'),
+        },
+        {
+          messageType: 'event' as const,
+          message: {
+            type: 'ExportSchemaFailed',
+            requestId: 'req-123',
+            data: { error: 'Schema file not found' },
+          },
+          timestamp: new Date('2024-01-01T10:01:00Z'),
+        },
+      ];
+
+      const messageStore = createMockMessageStore(messages);
+
+      const graph = await getPipelineGraph({ metadataService, messageStore });
+
+      const exportSchemaNode = graph.nodes.find((n) => n.alias === 'export:schema');
+      expect(exportSchemaNode?.status).toBe('fail');
+    });
+
+    it('should use latest command for status when multiple commands exist', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const messages = [
+        {
+          messageType: 'command' as const,
+          message: {
+            type: 'ExportSchema',
+            requestId: 'req-123',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:00:00Z'),
+        },
+        {
+          messageType: 'command' as const,
+          message: {
+            type: 'ExportSchema',
+            requestId: 'req-456',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T11:00:00Z'),
+        },
+        {
+          messageType: 'event' as const,
+          message: {
+            type: 'SchemaExported',
+            requestId: 'req-123',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:01:00Z'),
+        },
+      ];
+
+      const messageStore = createMockMessageStore(messages);
+
+      const graph = await getPipelineGraph({ metadataService, messageStore });
+
+      const exportSchemaNode = graph.nodes.find((n) => n.alias === 'export:schema');
+      expect(exportSchemaNode?.status).toBe('running');
+    });
+
+    it('should throw error when command is missing requestId', async () => {
+      on('SchemaExported', () =>
+        dispatch('GenerateServer', { schemaPath: './.context/schema.json', destination: '.' }),
+      );
+
+      const messages = [
+        {
+          messageType: 'command' as const,
+          message: {
+            type: 'ExportSchema',
+            data: {},
+          },
+          timestamp: new Date('2024-01-01T10:00:00Z'),
+        },
+      ];
+
+      const messageStore = createMockMessageStore(messages);
+
+      await expect(getPipelineGraph({ metadataService, messageStore })).rejects.toThrow(
+        'Command ExportSchema is missing requestId',
+      );
     });
   });
 });
