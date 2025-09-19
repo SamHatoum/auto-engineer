@@ -7,6 +7,7 @@ import { execa } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { generateId } from '@auto-engineer/id';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -153,6 +154,52 @@ async function installDependencies(targetDir: string, packageManager: 'npm' | 'p
   }
 }
 
+// Known bogus fileId patterns used in templates that should be replaced
+const BOGUS_FILE_ID_PATTERNS = [
+  'a1b2c3d4e', // questionnaires template
+  'a2b2c2d2e', // shopping-app template
+];
+
+async function replaceBogusFileIds(targetDir: string): Promise<void> {
+  const autoConfigPath = path.join(targetDir, 'auto.config.ts');
+
+  if (!(await fs.pathExists(autoConfigPath))) {
+    return; // No auto.config.ts file to process
+  }
+
+  try {
+    const content = await fs.readFile(autoConfigPath, 'utf8');
+    let modifiedContent = content;
+    let hasReplacement = false;
+
+    // Check if any bogus patterns exist and replace them
+    for (const bogusPattern of BOGUS_FILE_ID_PATTERNS) {
+      if (content.includes(bogusPattern)) {
+        // Generate a new unique ID
+        const newFileId = generateId();
+
+        // Replace the bogus pattern with the new ID
+        modifiedContent = modifiedContent.replace(
+          new RegExp(`fileId:\\s*['"]${bogusPattern}['"]`, 'g'),
+          `fileId: '${newFileId}'`,
+        );
+
+        hasReplacement = true;
+        console.log(chalk.blue(`Replaced fileId ${bogusPattern} with ${newFileId} in auto.config.ts`));
+        break; // Only replace the first match to avoid multiple replacements
+      }
+    }
+
+    // Write back only if we made changes
+    if (hasReplacement) {
+      await fs.writeFile(autoConfigPath, modifiedContent, 'utf8');
+    }
+  } catch (error) {
+    console.warn(chalk.yellow(`Warning: Could not process auto.config.ts fileId replacement:`, error));
+    // Don't throw - this is not a critical failure
+  }
+}
+
 async function createFromTemplate(templatePath: string, targetDir: string, projectName: string, templateName: string) {
   console.log(chalk.cyan(`Using ${templateName} template...`));
   try {
@@ -172,6 +219,9 @@ async function createFromTemplate(templatePath: string, targetDir: string, proje
   // Get latest versions for all packages
   const packagesToCheck = [...AUTO_ENGINEER_PACKAGES];
   const versions = await getLatestVersions(packagesToCheck);
+
+  // Replace bogus fileId values in auto.config.ts files
+  await replaceBogusFileIds(targetDir);
 
   // Update package versions
   await updatePackageVersions(targetDir, projectName, versions);
@@ -494,4 +544,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 // Export functions for testing
-export { getAvailableTemplates, createFromTemplate, detectPackageManager };
+export { getAvailableTemplates, createFromTemplate, detectPackageManager, replaceBogusFileIds };
