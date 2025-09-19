@@ -13,10 +13,18 @@ const __dirname = path.dirname(__filename);
 
 interface ProjectOptions {
   name: string;
-  template?: 'shopping-app';
+  template?: string;
   preset?: 'minimal' | 'full';
   packageManager: 'npm' | 'pnpm' | 'yarn';
   installDeps: boolean;
+}
+
+interface TemplateMetadata {
+  name: string;
+  displayName: string;
+  description: string;
+  type: 'template';
+  preset: 'minimal' | 'full';
 }
 
 const AUTO_ENGINEER_PACKAGES = [
@@ -145,8 +153,8 @@ async function installDependencies(targetDir: string, packageManager: 'npm' | 'p
   }
 }
 
-async function createFromTemplate(templatePath: string, targetDir: string, projectName: string) {
-  console.log(chalk.cyan('Using shopping-app template...'));
+async function createFromTemplate(templatePath: string, targetDir: string, projectName: string, templateName: string) {
+  console.log(chalk.cyan(`Using ${templateName} template...`));
   try {
     // Copy without filter first to ensure it works
     await fs.copy(templatePath, targetDir);
@@ -211,6 +219,34 @@ function printSuccessMessage(name: string, packageManager: string, installDeps: 
   console.log(chalk.cyan(`  ${packageManager} run start\n`));
 }
 
+async function getAvailableTemplates(): Promise<TemplateMetadata[]> {
+  const templatesDir = path.join(__dirname, '..', 'templates');
+  const templates: TemplateMetadata[] = [];
+
+  try {
+    const entries = await fs.readdir(templatesDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const templateJsonPath = path.join(templatesDir, entry.name, 'template.json');
+
+        if (await fs.pathExists(templateJsonPath)) {
+          try {
+            const metadata = (await fs.readJson(templateJsonPath)) as TemplateMetadata;
+            templates.push(metadata);
+          } catch (error) {
+            console.warn(chalk.yellow(`Failed to read template.json for ${entry.name}:`, error));
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(chalk.yellow('Failed to read templates directory:', error));
+  }
+
+  return templates;
+}
+
 async function handleTemplateCreation(
   template: string | undefined,
   preset: 'minimal' | 'full' | undefined,
@@ -218,11 +254,11 @@ async function handleTemplateCreation(
   projectName: string,
   packageManager: string,
 ) {
-  if (template === 'shopping-app') {
-    const templatePath = path.join(__dirname, '..', 'templates', 'shopping-app');
+  if (template !== undefined) {
+    const templatePath = path.join(__dirname, '..', 'templates', template);
 
     if (await fs.pathExists(templatePath)) {
-      await createFromTemplate(templatePath, targetDir, projectName);
+      await createFromTemplate(templatePath, targetDir, projectName, template);
     } else {
       console.log(chalk.yellow(`Template not found at ${templatePath}, creating minimal project...`));
       await createMinimalProject(targetDir, projectName, preset || 'minimal', packageManager);
@@ -346,12 +382,16 @@ Visit [Auto Engineer Documentation](https://github.com/solguru310/auto-engineer)
 }
 
 async function main() {
+  // Get available templates for help text
+  const availableTemplates = await getAvailableTemplates();
+  const templateNames = availableTemplates.map((t) => t.name).join(', ');
+
   program
     .name('create-auto-app')
     .description('Create a new Auto Engineer application')
     .version('0.1.0')
     .argument('[project-name]', 'Name of the project (use "." for current directory)')
-    .option('-t, --template <template>', 'Project template (shopping-app)', 'shopping-app')
+    .option('-t, --template <template>', `Project template (${templateNames})`)
     .option('-p, --preset <preset>', 'Package preset (minimal, full)', 'full')
     .option('--no-install', 'Skip dependency installation')
     .option('--use-npm', 'Use npm as package manager')
@@ -364,6 +404,18 @@ async function main() {
 
   // Interactive mode if no project name provided
   if (!projectName) {
+    // Build choices dynamically from available templates
+    const templateChoices = availableTemplates.map((template) => ({
+      name: `${template.displayName} - ${template.description}`,
+      value: template.name,
+    }));
+
+    const setupChoices = [
+      ...templateChoices,
+      { name: 'Create minimal project (just essentials)', value: 'minimal' },
+      { name: 'Create full project (all packages)', value: 'full' },
+    ];
+
     const answers = (await inquirer.prompt([
       {
         type: 'input',
@@ -383,12 +435,8 @@ async function main() {
         type: 'list',
         name: 'setupType',
         message: 'How would you like to set up your project?',
-        choices: [
-          { name: 'Use shopping-app template (full e-commerce example)', value: 'template' },
-          { name: 'Create minimal project (just essentials)', value: 'minimal' },
-          { name: 'Create full project (all packages)', value: 'full' },
-        ],
-        default: 'template',
+        choices: setupChoices,
+        default: availableTemplates.length > 0 ? availableTemplates[0].name : 'minimal',
       },
       {
         type: 'confirm',
@@ -398,17 +446,18 @@ async function main() {
       },
     ])) as {
       name: string;
-      setupType: 'template' | 'minimal' | 'full';
+      setupType: string;
       installDeps: boolean;
     };
 
     projectName = answers.name;
-    if (answers.setupType === 'template') {
-      options.template = 'shopping-app';
+    const selectedTemplate = availableTemplates.find((t) => t.name === answers.setupType);
+    if (selectedTemplate) {
+      options.template = selectedTemplate.name;
       options.preset = undefined;
     } else {
       options.template = undefined;
-      options.preset = answers.setupType;
+      options.preset = answers.setupType as 'minimal' | 'full';
     }
     options.install = answers.installDeps;
   }
@@ -427,7 +476,7 @@ async function main() {
 
   const projectOptions: ProjectOptions = {
     name: projectName,
-    template: options.template === 'shopping-app' ? 'shopping-app' : undefined,
+    template: typeof options.template === 'string' ? options.template : undefined,
     preset: options.preset as 'minimal' | 'full' | undefined,
     packageManager,
     installDeps: options.install !== false,
@@ -436,7 +485,13 @@ async function main() {
   await createProject(projectOptions);
 }
 
-main().catch((error) => {
-  console.error(chalk.red('Error:'), error);
-  process.exit(1);
-});
+// Only run main if this file is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(chalk.red('Error:'), error);
+    process.exit(1);
+  });
+}
+
+// Export functions for testing
+export { getAvailableTemplates, createFromTemplate, detectPackageManager };

@@ -11,9 +11,10 @@
     "templates"
   ],
   "scripts": {
-    "copy-templates": "rm -rf templates/shopping-app && rsync -a --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' --exclude='**/*.js' --exclude='**/*.js.map' ../../examples/shopping-app/ templates/shopping-app/",
+    "copy-templates": "rm -rf templates && mkdir templates && rsync -a --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' --exclude='**/*.js' --exclude='**/*.js.map' ../../examples/ templates/",
     "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
     "prepublishOnly": "npm run build",
+    "test": "vitest run --reporter=dot",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts --ignore-pattern 'templates/**'",
     "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn"
@@ -41,7 +42,8 @@
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.11.19",
     "tsx": "^4.20.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=18.0.0"

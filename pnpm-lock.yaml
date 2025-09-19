@@ -384,6 +384,9 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(jsdom@26.1.0)
 
   packages/design-system-importer:
     dependencies:
