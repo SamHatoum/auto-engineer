@@ -105,7 +105,7 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(jsdom@26.1.0)
 
-  examples/finance-app-2:
+  examples/finance-app:
     dependencies:
       '@auto-engineer/cli':
         specifier: workspace:*
