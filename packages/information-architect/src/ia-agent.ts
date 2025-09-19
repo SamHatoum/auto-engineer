@@ -70,6 +70,7 @@ ${JSON.stringify(uxSchema, null, 2)}
 ${existingSchema ? `Here is the current IA schema. Only add, update, or remove what is necessary based on the new flows and UX schema. Preserve what is still relevant and do not make unnecessary changes.\n\nCurrent IA Schema:\n${JSON.stringify(existingSchema, null, 2)}\n` : ''}
 Instructions:
 
+- NEVER generate any data_requirements queries or mutations if NONE were provided from the flow schema
 - Respond ONLY with a JSON object, no explanation, no markdown, no text before or after.
 - The JSON should have two main sections: "components" and "pages".
 - In "components", define composite UI elements (atoms, molecules, organisms) with:
