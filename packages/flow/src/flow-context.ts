@@ -26,6 +26,11 @@ export function setGivenTypesByFile(types: Map<string, GivenTypeInfo[]>): void {
 
 export function startFlow(name: string, id?: string): Flow {
   const sourceFile = (globalThis as Record<string, unknown>).__aeCurrentModulePath as string | undefined;
+  // Reset the given call counter for this file when starting a new flow
+  if (sourceFile !== null && sourceFile !== undefined && sourceFile !== '') {
+    givenCallCounters.set(sourceFile, 0);
+  }
+
   const flow: Flow = {
     name,
     id,
@@ -302,32 +307,18 @@ export function recordExample(description: string): void {
   }
 }
 
-export function recordGivenData(data: unknown[]): void {
-  if (
-    !context ||
-    context.currentSpecIndex === null ||
-    context.currentRuleIndex === null ||
-    context.currentExampleIndex === null
-  ) {
-    throw new Error('No active example context');
-  }
-  const slice = getCurrentSlice();
-  if (!slice) throw new Error('No active slice');
-
-  const example = getCurrentExample(slice);
-  if (!example) throw new Error('No active example for current slice');
-
+function processGivenItems(data: unknown[]): Array<{ [key: string]: unknown; exampleData: unknown }> {
   // Get normalized source file path for lookup
-  const sourceFile = context.flow.sourceFile;
+  const sourceFile = context?.flow.sourceFile;
 
-  const items = data.map((item) => {
+  return data.map((item) => {
     if (sourceFile !== null && sourceFile !== undefined && sourceFile !== '') {
       const currentCount = givenCallCounters.get(sourceFile) ?? 0;
       givenCallCounters.set(sourceFile, currentCount + 1);
 
       // Look up AST-extracted type info by ordinal position
       const givenTypes = givenTypesByFile.get(sourceFile) || [];
-      const matchingType = givenTypes[currentCount]; // Use ordinal index
+      const matchingType = givenTypes[currentCount];
 
       if (matchingType !== null && matchingType !== undefined) {
         const refType =
@@ -353,12 +344,25 @@ export function recordGivenData(data: unknown[]): void {
       exampleData: ensureMessageFormat(item).data,
     };
   });
-
-  example.given = items as typeof example.given;
 }
 
-function getInferredRefType(): string {
-  return 'eventRef';
+export function recordGivenData(data: unknown[]): void {
+  if (
+    !context ||
+    context.currentSpecIndex === null ||
+    context.currentRuleIndex === null ||
+    context.currentExampleIndex === null
+  ) {
+    throw new Error('No active example context');
+  }
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  const example = getCurrentExample(slice);
+  if (!example) throw new Error('No active example for current slice');
+
+  const items = processGivenItems(data);
+  example.given = items as typeof example.given;
 }
 
 export function recordAndGivenData(data: unknown[]): void {
@@ -376,10 +380,7 @@ export function recordAndGivenData(data: unknown[]): void {
   const example = getCurrentExample(slice);
   if (!example) throw new Error('No active example for current slice');
 
-  const items = data.map((item) => ({
-    [getInferredRefType()]: 'InferredType',
-    exampleData: ensureMessageFormat(item).data,
-  }));
+  const items = processGivenItems(data);
 
   if (example.given && Array.isArray(example.given)) {
     example.given.push(...(items as NonNullable<typeof example.given>));
@@ -389,12 +390,20 @@ export function recordAndGivenData(data: unknown[]): void {
 }
 
 function updateExampleWhen(example: Example, data: unknown, sliceType: string): void {
+  if (typeof data === 'object' && data !== null && Object.keys(data).length === 0) {
+    if (sliceType === 'query') {
+      example.when = { eventRef: '', exampleData: {} };
+    } else {
+      example.when = { commandRef: '', exampleData: {} };
+    }
+    return;
+  }
+
   if (sliceType === 'react' || (sliceType === 'query' && Array.isArray(data))) {
     // For react slices and query slices with array input, when is an array of events
     const eventsArray = Array.isArray(data) ? data : [data];
     example.when = eventsArray.map((item) => convertToEventExample(item));
   } else {
-    // For command slices, when is a single command
     example.when = convertToCommandOrEventExample(data);
   }
 }

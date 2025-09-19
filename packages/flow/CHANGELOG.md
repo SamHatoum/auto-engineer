@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.9.12
+
+### Patch Changes
+
+- bug fixes for flow to model
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.12
+  - @auto-engineer/id@0.9.12
+  - @auto-engineer/message-bus@0.9.12
+
 ## 0.9.11
 
 ### Patch Changes
