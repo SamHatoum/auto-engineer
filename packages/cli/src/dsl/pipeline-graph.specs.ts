@@ -144,10 +144,18 @@ describe('Pipeline Graph Generation', () => {
 
     // Should have the correct edges
     const edgeStrings = graph.edges.map((e) => `${e.from}->${e.to}`);
-    expect(edgeStrings).toContain('ExportSchema->GenerateServer');
-    expect(edgeStrings).toContain('GenerateServer->GenerateIA');
-    expect(edgeStrings).toContain('GenerateIA->GenerateClient');
-    expect(edgeStrings).toContain('GenerateClient->ImplementClient');
+    expect(edgeStrings).toContain(
+      '@auto-engineer/flow/export:schema->@auto-engineer/server-generator-apollo-emmett/generate:server',
+    );
+    expect(edgeStrings).toContain(
+      '@auto-engineer/server-generator-apollo-emmett/generate:server->@auto-engineer/information-architect/generate:ia',
+    );
+    expect(edgeStrings).toContain(
+      '@auto-engineer/information-architect/generate:ia->@auto-engineer/frontend-generator-react-graphql/generate:client',
+    );
+    expect(edgeStrings).toContain(
+      '@auto-engineer/frontend-generator-react-graphql/generate:client->@auto-engineer/frontend-implementer/implement:client',
+    );
   });
 
   it('should handle on.settled registrations', () => {
@@ -180,9 +188,15 @@ describe('Pipeline Graph Generation', () => {
 
     // Should have edges from check commands to ImplementClient
     const edgeStrings = graph.edges.map((e) => `${e.from}->${e.to}`);
-    expect(edgeStrings).toContain('CheckTests->ImplementClient');
-    expect(edgeStrings).toContain('CheckTypes->ImplementClient');
-    expect(edgeStrings).toContain('CheckLint->ImplementClient');
+    expect(edgeStrings).toContain(
+      '@auto-engineer/server-checks/check:tests->@auto-engineer/frontend-implementer/implement:client',
+    );
+    expect(edgeStrings).toContain(
+      '@auto-engineer/server-checks/check:types->@auto-engineer/frontend-implementer/implement:client',
+    );
+    expect(edgeStrings).toContain(
+      '@auto-engineer/server-checks/check:lint->@auto-engineer/frontend-implementer/implement:client',
+    );
   });
 
   it('should match the expected questionnaires pipeline structure', () => {
@@ -291,13 +305,31 @@ describe('Pipeline Graph Generation', () => {
         },
       ],
       edges: [
-        { from: 'ExportSchema', to: 'GenerateServer' },
-        { from: 'GenerateServer', to: 'GenerateIA' },
-        { from: 'GenerateIA', to: 'GenerateClient' },
-        { from: 'GenerateClient', to: 'ImplementClient' },
-        { from: 'CheckTests', to: 'ImplementClient' },
-        { from: 'CheckTypes', to: 'ImplementClient' },
-        { from: 'CheckLint', to: 'ImplementClient' },
+        {
+          from: '@auto-engineer/flow/export:schema',
+          to: '@auto-engineer/server-generator-apollo-emmett/generate:server',
+        },
+        {
+          from: '@auto-engineer/server-generator-apollo-emmett/generate:server',
+          to: '@auto-engineer/information-architect/generate:ia',
+        },
+        {
+          from: '@auto-engineer/information-architect/generate:ia',
+          to: '@auto-engineer/frontend-generator-react-graphql/generate:client',
+        },
+        {
+          from: '@auto-engineer/frontend-generator-react-graphql/generate:client',
+          to: '@auto-engineer/frontend-implementer/implement:client',
+        },
+        {
+          from: '@auto-engineer/server-checks/check:tests',
+          to: '@auto-engineer/frontend-implementer/implement:client',
+        },
+        {
+          from: '@auto-engineer/server-checks/check:types',
+          to: '@auto-engineer/frontend-implementer/implement:client',
+        },
+        { from: '@auto-engineer/server-checks/check:lint', to: '@auto-engineer/frontend-implementer/implement:client' },
       ],
     };
 

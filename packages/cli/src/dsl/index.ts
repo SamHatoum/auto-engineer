@@ -343,6 +343,16 @@ export function getPipelineGraph(
     eventHandlers?.size,
   );
 
+  function getNodeId(commandType: string): string {
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(commandType);
+      if (metadata) {
+        return `${metadata.package}/${metadata.alias}`;
+      }
+    }
+    return commandType;
+  }
+
   // If eventHandlers are provided, use them instead of DSL registrations
   if (eventHandlers) {
     debug('Using event handlers, found %d handlers', eventHandlers.size);
@@ -364,7 +374,7 @@ export function getPipelineGraph(
         debug('Target commands for %s = %o', eventType, targetCommands);
         targetCommands.forEach((targetCommand: string) => {
           commandNodes.add(targetCommand);
-          edges.push({ from: sourceCommand, to: targetCommand });
+          edges.push({ from: getNodeId(sourceCommand), to: getNodeId(targetCommand) });
         });
       }
     }
@@ -374,11 +384,11 @@ export function getPipelineGraph(
     // Fallback to DSL registrations (original behavior)
     registrations.forEach((registration) => {
       if (registration.type === 'on') {
-        processEventRegistration(registration, commandNodes, edges);
+        processEventRegistration(registration, commandNodes, edges, metadataService);
       }
 
       if (registration.type === 'on-settled') {
-        processSettledRegistration(registration, commandNodes, edges);
+        processSettledRegistration(registration, commandNodes, edges, metadataService);
       }
     });
   }
@@ -416,17 +426,18 @@ function processEventRegistration(
   registration: EventRegistration,
   commandNodes: Set<string>,
   edges: Array<{ from: string; to: string }>,
+  metadataService?: CommandMetadataService,
 ): void {
   try {
     const mockEvent = { type: registration.eventType, data: {} } as Event;
     const result = registration.handler(mockEvent);
 
     if (result && typeof result === 'object' && 'type' in result) {
-      addCommandAndEdge(result as Command, registration.eventType, commandNodes, edges);
+      addCommandAndEdge(result as Command, registration.eventType, commandNodes, edges, metadataService);
     } else if (Array.isArray(result)) {
       result.forEach((command) => {
         if (command !== null && typeof command === 'object' && 'type' in command && typeof command.type === 'string') {
-          addCommandAndEdge(command, registration.eventType, commandNodes, edges);
+          addCommandAndEdge(command, registration.eventType, commandNodes, edges, metadataService);
         }
       });
     }
@@ -439,7 +450,18 @@ function processSettledRegistration(
   registration: SettledRegistration,
   commandNodes: Set<string>,
   edges: Array<{ from: string; to: string }>,
+  metadataService?: CommandMetadataService,
 ): void {
+  function getNodeId(commandType: string): string {
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(commandType);
+      if (metadata) {
+        return `${metadata.package}/${metadata.alias}`;
+      }
+    }
+    return commandType;
+  }
+
   registration.commandTypes.forEach((commandType) => {
     commandNodes.add(commandType);
   });
@@ -450,8 +472,8 @@ function processSettledRegistration(
 
       registration.commandTypes.forEach((settledCommand) => {
         edges.push({
-          from: settledCommand,
-          to: commandType,
+          from: getNodeId(settledCommand),
+          to: getNodeId(commandType),
         });
       });
     });
@@ -463,15 +485,26 @@ function addCommandAndEdge(
   eventType: string,
   commandNodes: Set<string>,
   edges: Array<{ from: string; to: string }>,
+  metadataService?: CommandMetadataService,
 ): void {
+  function getNodeId(commandType: string): string {
+    if (metadataService) {
+      const metadata = metadataService.getCommandMetadata(commandType);
+      if (metadata) {
+        return `${metadata.package}/${metadata.alias}`;
+      }
+    }
+    return commandType;
+  }
+
   commandNodes.add(command.type);
 
   const sourceCommand = inferSourceCommand(eventType);
   if (sourceCommand !== null) {
     commandNodes.add(sourceCommand);
     edges.push({
-      from: sourceCommand,
-      to: command.type,
+      from: getNodeId(sourceCommand),
+      to: getNodeId(command.type),
     });
   }
 }
