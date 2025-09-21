@@ -16,7 +16,7 @@ import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engine
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
 
 export default autoConfig({
-  fileId: 'a1b2c3d4e', // unique 9-character base62 canvas file id where all flows in this project will be shown
+  fileId: 'test2222', // unique 9-character base62 canvas file id where all flows in this project will be shown
 
   plugins: [
     '@auto-engineer/server-checks',

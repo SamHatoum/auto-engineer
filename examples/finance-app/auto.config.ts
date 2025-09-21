@@ -16,7 +16,7 @@ import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engine
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
 
 export default autoConfig({
-  fileId: 'a3b3c3', // unique 9-character base62 canvas file id where all flows in this project will be shown
+  fileId: 'test33333', // unique 9-character base62 canvas file id where all flows in this project will be shown
 
   plugins: [
     '@auto-engineer/server-checks',
@@ -35,24 +35,24 @@ export default autoConfig({
   },
   pipeline: () => {
     on<ExportSchemaEvents>('SchemaExported', () =>
-      dispatch<GenerateServerCommand>({
-        type: 'GenerateServer',
-        data: {
-          schemaPath: './.context/schema.json',
-          destination: '.',
-        },
-      }),
-    );
-
-    on<GenerateServerEvents>('ServerGenerated', () =>
       dispatch<GenerateIACommand>({
         type: 'GenerateIA',
         data: {
           outputDir: './.context',
-          flowFiles: ['./flows/questionnaires.flow.ts'],
+          flowFiles: ['./flows/finance-app.flow.ts', './flows/finance-app-landing.flow.ts'],
         },
       }),
     );
+
+    // on<GenerateServerEvents>('ServerGenerated', () =>
+    //   dispatch<GenerateIACommand>({
+    //     type: 'GenerateIA',
+    //     data: {
+    //       outputDir: './.context',
+    //       flowFiles: ['./flows/finance-app.flow.ts', './flows/finance-app-landing.flow.ts'],
+    //     },
+    //   }),
+    // );
 
     on<GenerateIAEvents>('IAGenerated', () =>
       dispatch<GenerateClientCommand>({
@@ -78,58 +78,58 @@ export default autoConfig({
       }),
     );
 
-    on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckTestsCommand>({
-        type: 'CheckTests',
-        data: {
-          targetDirectory: 'sds',
-          scope: 'slice',
-        },
-      });
-    });
+    // on<ImplementServerEvents>('SliceImplemented', () => {
+    //   dispatch<CheckTestsCommand>({
+    //     type: 'CheckTests',
+    //     data: {
+    //       targetDirectory: 'sds',
+    //       scope: 'slice',
+    //     },
+    //   });
+    // });
 
-    on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckTypesCommand>({
-        type: 'CheckTypes',
-        data: {
-          targetDirectory: 'sds',
-          scope: 'slice',
-        },
-      });
-    });
+    // on<ImplementServerEvents>('SliceImplemented', () => {
+    //   dispatch<CheckTypesCommand>({
+    //     type: 'CheckTypes',
+    //     data: {
+    //       targetDirectory: 'sds',
+    //       scope: 'slice',
+    //     },
+    //   });
+    // });
 
-    on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckLintCommand>({
-        type: 'CheckLint',
-        data: {
-          targetDirectory: 'sds',
-          scope: 'slice',
-          fix: true,
-        },
-      });
-    });
+    // on<ImplementServerEvents>('SliceImplemented', () => {
+    //   dispatch<CheckLintCommand>({
+    //     type: 'CheckLint',
+    //     data: {
+    //       targetDirectory: 'sds',
+    //       scope: 'slice',
+    //       fix: true,
+    //     },
+    //   });
+    // });
 
-    on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
-      ['CheckTests', 'CheckTypes', 'CheckLint'],
-      (events) => {
-        const hasFailures =
-          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
-          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
-          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
+    // on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
+    //   ['CheckTests', 'CheckTypes', 'CheckLint'],
+    //   (events) => {
+    //     const hasFailures =
+    //       events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
+    //       events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
+    //       events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
 
-        if (hasFailures) {
-          dispatch<ImplementClientCommand>({
-            type: 'ImplementClient',
-            data: {
-              projectDir: 'some/where',
-              iaSchemeDir: '/',
-              designSystemPath: '',
-              failures: [],
-            },
-          });
-        }
-      },
-    );
+    //     if (hasFailures) {
+    //       dispatch<ImplementClientCommand>({
+    //         type: 'ImplementClient',
+    //         data: {
+    //           projectDir: 'some/where',
+    //           iaSchemeDir: '/',
+    //           designSystemPath: '',
+    //           failures: [],
+    //         },
+    //       });
+    //     }
+    //   },
+    // );
   },
 });
 
