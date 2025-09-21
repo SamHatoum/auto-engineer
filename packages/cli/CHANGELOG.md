@@ -1,5 +1,14 @@
 # @auto-engineer/cli
 
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.13
+  - @auto-engineer/message-bus@0.9.13
+  - @auto-engineer/message-store@0.9.13
+
 ## 0.9.12
 
 ### Patch Changes

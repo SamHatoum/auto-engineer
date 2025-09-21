@@ -144,7 +144,7 @@ function addCommandWhenToChain(
   const typeInfo = messages ? getFieldTypeInfo(messages, when.commandRef) : undefined;
   return f.createCallExpression(
     f.createPropertyAccessExpression(exampleChain, 'when'),
-    [f.createTypeReferenceNode(when.commandRef, undefined)],
+    when.commandRef ? [f.createTypeReferenceNode(when.commandRef, undefined)] : undefined,
     [jsonToExpr(ts, f, when.exampleData, typeInfo)],
   );
 }
@@ -159,7 +159,7 @@ function addEventWhenToChain(
   const typeInfo = messages ? getFieldTypeInfo(messages, firstEvent.eventRef) : undefined;
   return f.createCallExpression(
     f.createPropertyAccessExpression(exampleChain, 'when'),
-    [f.createTypeReferenceNode(firstEvent.eventRef, undefined)],
+    firstEvent.eventRef ? [f.createTypeReferenceNode(firstEvent.eventRef, undefined)] : undefined,
     [jsonToExpr(ts, f, firstEvent.exampleData, typeInfo)],
   );
 }

@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.9.13
+
+### Patch Changes
+
+- stop modelToFLow emitting empty generics for empty when()
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.13
+  - @auto-engineer/id@0.9.13
+  - @auto-engineer/message-bus@0.9.13
+
 ## 0.9.12
 
 ### Patch Changes

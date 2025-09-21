@@ -2,6 +2,8 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.9.13
+
 ## 0.9.12
 
 ## 0.9.11
@@ -163,6 +165,15 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.13
+  - @auto-engineer/message-bus@0.9.13
+  - @auto-engineer/message-store@0.9.13
 
 ## 0.9.12
 
@@ -702,6 +713,13 @@
 
 # create-auto-app
 
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.9.13
+
 ## 0.9.12
 
 ### Patch Changes
@@ -798,6 +816,13 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -1166,6 +1191,8 @@
 
 # @auto-engineer/file-store
 
+## 0.9.13
+
 ## 0.9.12
 
 ## 0.9.11
@@ -1281,6 +1308,17 @@
 - version bump
 
 # @auto-engineer/flow
+
+## 0.9.13
+
+### Patch Changes
+
+- stop modelToFLow emitting empty generics for empty when()
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.9.13
+  - @auto-engineer/id@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -1771,6 +1809,13 @@
 
 # @auto-engineer/frontend-checks
 
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.13
+
 ## 0.9.12
 
 ### Patch Changes
@@ -2096,6 +2141,14 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -2494,6 +2547,14 @@
   - @auto-engineer/message-bus@0.0.2
 
 # @auto-engineer/frontend-implementer
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -2894,6 +2955,8 @@
 
 # @auto-engineer/id
 
+## 0.9.13
+
 ## 0.9.12
 
 ## 0.9.11
@@ -2951,6 +3014,14 @@
 ## 0.8.6
 
 # @auto-engineer/information-architect
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -3350,6 +3421,8 @@
 
 # @auto-engineer/message-bus
 
+## 0.9.13
+
 ## 0.9.12
 
 ## 0.9.11
@@ -3517,6 +3590,13 @@
 
 # @auto-engineer/message-store
 
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.9.13
+
 ## 0.9.12
 
 ### Patch Changes
@@ -3669,6 +3749,14 @@
 - @auto-engineer/message-bus@0.8.6
 
 # @auto-engineer/server-checks
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -3924,6 +4012,14 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 
@@ -4324,6 +4420,14 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.9.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.9.13
+  - @auto-engineer/message-bus@0.9.13
 
 ## 0.9.12
 

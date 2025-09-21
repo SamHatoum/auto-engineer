@@ -93,6 +93,7 @@ import {
   ReactSliceSchema,
   ExperienceSliceSchema,
   MessageSchema,
+  MessageFieldSchema,
   CommandSliceSchema,
   ExampleSchema,
   RuleSchema,
@@ -111,6 +112,7 @@ export type CommandSlice = z.infer<typeof CommandSliceSchema>;
 export type ExperienceSlice = z.infer<typeof ExperienceSliceSchema>;
 export type Message = z.infer<typeof MessageSchema>;
 export type Example = z.infer<typeof ExampleSchema>;
+export type MessageField = z.infer<typeof MessageFieldSchema>;
 export type Rule = z.infer<typeof RuleSchema>;
 export type Spec = z.infer<typeof SpecSchema>;
 

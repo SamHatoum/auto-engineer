@@ -16,7 +16,7 @@ const importMap = {
   'graphql-tag': gql,
 };
 
-describe.skip('hasAllIds', () => {
+describe('hasAllIds', () => {
   let vfs: IFileStore;
   const root = '/test';
 
