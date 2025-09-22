@@ -41,7 +41,10 @@ export type ClientGenerationFailedEvent = Event<
 
 export type GenerateClientEvents = ClientGeneratedEvent | ClientGenerationFailedEvent;
 
-export const commandHandler = defineCommandHandler<GenerateClientCommand>({
+export const commandHandler = defineCommandHandler<
+  GenerateClientCommand,
+  (command: GenerateClientCommand) => Promise<ClientGeneratedEvent | ClientGenerationFailedEvent>
+>({
   name: 'GenerateClient',
   alias: 'generate:client',
   description: 'Generate React client app',
@@ -72,9 +75,11 @@ export const commandHandler = defineCommandHandler<GenerateClientCommand>({
   examples: [
     '$ auto generate:client --starter-dir=./shadcn-starter --target-dir=./client --ia-schema-path=./auto-ia.json --gql-schema-path=./schema.graphql --figma-variables-path=./figma-vars.json',
   ],
-  handle: async (command: GenerateClientCommand): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> => {
+  events: ['ClientGenerated', 'ClientGenerationFailed'],
+  handle: async (command: Command): Promise<ClientGeneratedEvent | ClientGenerationFailedEvent> => {
+    const typedCommand = command as GenerateClientCommand;
     debug('Command handler invoked for GenerateClient');
-    const result = await handleGenerateClientCommandInternal(command);
+    const result = await handleGenerateClientCommandInternal(typedCommand);
     if (result.type === 'ClientGenerated') {
       debug('Handler completed successfully');
       debug('Client generated successfully');

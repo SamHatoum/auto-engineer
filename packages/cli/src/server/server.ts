@@ -40,6 +40,7 @@ export class MessageBusServer {
   private commandRegistry: CommandRegistry;
   private settledTracker: SettledTracker;
   private currentSessionId?: string;
+  private dslRegistrations: Array<import('../dsl/types').DslRegistration> = [];
 
   constructor(config: MessageBusServerConfig = {}) {
     this.config = {
@@ -70,10 +71,11 @@ export class MessageBusServer {
     this.stateManager = new StateManager<Record<string, unknown>>();
 
     // Initialize modules
+    this.commandRegistry = new CommandRegistry(this.messageBus, this.stateManager);
     this.settledTracker = new SettledTracker((action) => {
       // Handle dispatch actions from settled handlers
       void this.eventProcessor.processDispatchAction(action);
-    });
+    }, this.commandRegistry.getMetadataService());
     this.eventProcessor = new EventProcessor(
       this.messageBus,
       this.messageStore,
@@ -81,16 +83,15 @@ export class MessageBusServer {
       (event: Event) => this.io.emit('event', event),
       this.settledTracker,
     );
-    this.commandRegistry = new CommandRegistry(this.messageBus, this.stateManager);
 
     // Set up global event listener for state management
     this.eventProcessor.setupGlobalEventListener();
 
-    // Set up HTTP routes
-    this.setupRoutes();
-
     // Set up WebSocket handlers
     this.setupWebSocketHandlers();
+
+    // Set up basic HTTP routes (can be called again after config loading to include DSL registrations)
+    this.setupRoutes();
 
     debug('Message bus server initialized');
   }
@@ -98,7 +99,7 @@ export class MessageBusServer {
   /**
    * Set up HTTP routes
    */
-  private setupRoutes(): void {
+  public setupRoutes(): void {
     setupHttpRoutes(this.app, this.messageBus, this.stateManager, {
       commandHandlerNames: this.commandRegistry.getCommandHandlerNames(),
       commandMetadata: this.commandRegistry.getCommandMetadata(),
@@ -106,6 +107,8 @@ export class MessageBusServer {
       eventHandlers: this.eventProcessor.getEventHandlers(),
       foldRegistry: this.commandRegistry.getFoldRegistry(),
       messageStore: this.messageStore,
+      dslRegistrations: this.dslRegistrations,
+      getDslRegistrations: () => this.dslRegistrations,
       onCommandError: (error) => {
         this.io.emit('commandError', error);
       },
@@ -150,7 +153,7 @@ export class MessageBusServer {
     commandName: string,
     metadata: { alias: string; description: string; package: string; version?: string; category?: string },
   ): void {
-    this.commandRegistry.setCommandMetadata(commandName, metadata);
+    this.commandRegistry.setCommandMetadata(commandName, { ...metadata, name: commandName });
   }
 
   /**
@@ -165,6 +168,21 @@ export class MessageBusServer {
    */
   getCommandMetadataService(): CommandMetadataService {
     return this.commandRegistry.getMetadataService();
+  }
+
+  /**
+   * Get the settled tracker (for testing)
+   */
+  getSettledTracker(): SettledTracker {
+    return this.settledTracker;
+  }
+
+  setDslRegistrations(registrations: Array<import('../dsl/types').DslRegistration>): void {
+    this.dslRegistrations = [...registrations];
+  }
+
+  getDslRegistrations(): Array<import('../dsl/types').DslRegistration> {
+    return [...this.dslRegistrations];
   }
 
   /**
@@ -272,5 +290,9 @@ export class MessageBusServer {
    */
   getMessageStore(): ILocalMessageStore {
     return this.messageStore;
+  }
+
+  getEventProcessor(): EventProcessor {
+    return this.eventProcessor;
   }
 }

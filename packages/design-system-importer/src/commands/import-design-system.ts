@@ -18,21 +18,24 @@ export type ImportDesignSystemCommand = Command<
 >;
 
 export type DesignSystemImportedEvent = Event<
-  'DesignSystemImported',
+  'ImportDesignSystemCompleted',
   {
     outputDir: string;
   }
 >;
 
 export type DesignSystemImportFailedEvent = Event<
-  'DesignSystemImportFailed',
+  'ImportDesignSystemFailed',
   {
     error: string;
     outputDir: string;
   }
 >;
 
-export const commandHandler = defineCommandHandler({
+export const commandHandler = defineCommandHandler<
+  ImportDesignSystemCommand,
+  (command: ImportDesignSystemCommand) => Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent>
+>({
   name: 'ImportDesignSystem',
   alias: 'import:design-system',
   description: 'Import Figma design system',
@@ -45,22 +48,20 @@ export const commandHandler = defineCommandHandler({
     },
     strategy: {
       description: 'Import mode (e.g., WITH_COMPONENT_SETS)',
-      required: false,
     },
     filterPath: {
       description: 'Optional filter file',
-      required: false,
     },
   },
   examples: [
     '$ auto import:design-system --output-dir=./.context --strategy=WITH_COMPONENT_SETS --filter-path=./shadcn-filter.ts',
   ],
-  handle: async (
-    command: ImportDesignSystemCommand,
-  ): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> => {
+  events: ['ImportDesignSystemCompleted', 'ImportDesignSystemFailed'],
+  handle: async (command: Command): Promise<DesignSystemImportedEvent | DesignSystemImportFailedEvent> => {
+    const typedCommand = command as ImportDesignSystemCommand;
     debug('CommandHandler executing for ImportDesignSystem');
-    const result = await handleImportDesignSystemCommandInternal(command);
-    if (result.type === 'DesignSystemImported') {
+    const result = await handleImportDesignSystemCommandInternal(typedCommand);
+    if (result.type === 'ImportDesignSystemCompleted') {
       debug('Command handler completed: success');
       debugResult('Design system imported successfully to %s', result.data.outputDir);
     } else {
@@ -100,7 +101,7 @@ async function loadFilterFunction(filterPath?: string): Promise<FilterFunctionTy
 
 function createSuccessEvent(command: ImportDesignSystemCommand, outputDir: string): DesignSystemImportedEvent {
   const successEvent: DesignSystemImportedEvent = {
-    type: 'DesignSystemImported',
+    type: 'ImportDesignSystemCompleted',
     data: { outputDir },
     timestamp: new Date(),
     requestId: command.requestId,
@@ -121,13 +122,13 @@ function createFailureEvent(
   debugResult('Error message: %s', errorMessage);
 
   const failureEvent: DesignSystemImportFailedEvent = {
-    type: 'DesignSystemImportFailed',
+    type: 'ImportDesignSystemFailed',
     data: { error: errorMessage, outputDir },
     timestamp: new Date(),
     requestId: command.requestId,
     correlationId: command.correlationId,
   };
-  debugResult('Returning failure event: DesignSystemImportFailed');
+  debugResult('Returning failure event: ImportDesignSystemFailed');
   debugResult('  Error: %s', errorMessage);
   debugResult('  Output directory: %s', outputDir);
   return failureEvent;

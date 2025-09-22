@@ -20,6 +20,8 @@ export interface HttpRoutesConfig {
   eventHandlers: Map<string, Array<(event: Event) => void>>;
   foldRegistry: Map<string, FoldFunction<Record<string, unknown>>>;
   messageStore: IMessageStore;
+  dslRegistrations: Array<import('../dsl/types').DslRegistration>;
+  getDslRegistrations?: () => Array<import('../dsl/types').DslRegistration>;
   onCommandError: (error: { commandId: string; error: string; timestamp: string }) => void;
   onCommandReceived: (command: Command) => Promise<void>;
 }
@@ -153,10 +155,12 @@ export function setupHttpRoutes(
   // This endpoint will be polled frequently for status updates
   app.get('/pipeline', (_req, res) => {
     void (async () => {
+      const currentDslRegistrations = config.getDslRegistrations?.() ?? config.dslRegistrations;
+      debugHttp('Pipeline request - dslRegistrations length:', currentDslRegistrations?.length ?? 0);
       const graph = await getPipelineGraph({
         metadataService: config.commandMetadataService,
-        eventHandlers: config.eventHandlers,
         messageStore: config.messageStore as ILocalMessageStore,
+        dslRegistrations: currentDslRegistrations,
       });
       res.json(graph);
     })();

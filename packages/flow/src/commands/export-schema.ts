@@ -32,12 +32,13 @@ export type SchemaExportFailedEvent = Event<
 
 export type ExportSchemaEvents = SchemaExportedEvent | SchemaExportFailedEvent;
 
-export const commandHandler = defineCommandHandler<ExportSchemaCommand>({
+export const commandHandler = defineCommandHandler({
   name: 'ExportSchema',
   alias: 'export:schema',
   description: 'Export flow schemas to context directory',
   category: 'export',
   icon: 'download',
+  events: ['SchemaExported', 'SchemaExportFailed'],
   fields: {
     directory: {
       description: 'Context directory path',
@@ -45,8 +46,9 @@ export const commandHandler = defineCommandHandler<ExportSchemaCommand>({
     },
   },
   examples: ['$ auto export:schema --directory=./.context'],
-  handle: async (command: ExportSchemaCommand): Promise<SchemaExportedEvent | SchemaExportFailedEvent> => {
-    const result = await handleExportSchemaCommand(command);
+  handle: async (command: Command): Promise<SchemaExportedEvent | SchemaExportFailedEvent> => {
+    const typedCommand = command as ExportSchemaCommand;
+    const result = await handleExportSchemaCommand(typedCommand);
     if (result.type === 'SchemaExported') {
       debug('✅ Flow schema written to: %s', result.data.outputPath);
     } else {

@@ -37,7 +37,10 @@ export type TypeCheckFailedEvent = Event<
 
 export type CheckTypesEvents = TypeCheckPassedEvent | TypeCheckFailedEvent;
 
-export const commandHandler = defineCommandHandler<CheckTypesCommand>({
+export const commandHandler = defineCommandHandler<
+  CheckTypesCommand,
+  (command: CheckTypesCommand) => Promise<TypeCheckPassedEvent | TypeCheckFailedEvent>
+>({
   name: 'CheckTypes',
   alias: 'check:types',
   description: 'TypeScript type checking',
@@ -57,16 +60,18 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
     '$ auto check:types --target-directory=./server',
     '$ auto check:types --target-directory=./server --scope=project',
   ],
+  events: ['TypeCheckPassed', 'TypeCheckFailed'],
   // eslint-disable-next-line complexity
-  handle: async (command: CheckTypesCommand): Promise<TypeCheckPassedEvent | TypeCheckFailedEvent> => {
+  handle: async (command: Command): Promise<TypeCheckPassedEvent | TypeCheckFailedEvent> => {
+    const typedCommand = command as CheckTypesCommand;
     debug('CommandHandler executing for CheckTypes');
-    const { targetDirectory, scope = 'slice' } = command.data;
+    const { targetDirectory, scope = 'slice' } = typedCommand.data;
 
     debug('Handling CheckTypesCommand');
     debug('  Target directory: %s', targetDirectory);
     debug('  Scope: %s', scope);
-    debug('  Request ID: %s', command.requestId);
-    debug('  Correlation ID: %s', command.correlationId ?? 'none');
+    debug('  Request ID: %s', typedCommand.requestId);
+    debug('  Correlation ID: %s', typedCommand.correlationId ?? 'none');
 
     try {
       const targetDir = path.resolve(targetDirectory);
@@ -117,8 +122,8 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
                 checkedFiles: files.length,
               },
               timestamp: new Date(),
-              requestId: command.requestId,
-              correlationId: command.correlationId,
+              requestId: typedCommand.requestId,
+              correlationId: typedCommand.correlationId,
             };
           }
 
@@ -134,8 +139,8 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
               failedFiles: failedFiles.map((f) => path.relative(targetDir, f)),
             },
             timestamp: new Date(),
-            requestId: command.requestId,
-            correlationId: command.correlationId,
+            requestId: typedCommand.requestId,
+            correlationId: typedCommand.correlationId,
           };
         } else {
           // Project scope - return all errors
@@ -150,8 +155,8 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
               failedFiles: failedFiles.map((f) => path.relative(projectRoot, f)),
             },
             timestamp: new Date(),
-            requestId: command.requestId,
-            correlationId: command.correlationId,
+            requestId: typedCommand.requestId,
+            correlationId: typedCommand.correlationId,
           };
         }
       }
@@ -171,8 +176,8 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
           checkedFiles: files.length,
         },
         timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
+        requestId: typedCommand.requestId,
+        correlationId: typedCommand.correlationId,
       };
     } catch (error) {
       debug('ERROR: Exception caught: %O', error);
@@ -186,8 +191,8 @@ export const commandHandler = defineCommandHandler<CheckTypesCommand>({
           failedFiles: [],
         },
         timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
+        requestId: typedCommand.requestId,
+        correlationId: typedCommand.correlationId,
       };
     }
   },

@@ -18,7 +18,15 @@ export interface PackageMetadata {
   description?: string;
 }
 
-// The unified command handler definition
+type ExtractEventTypes<T> =
+  T extends Promise<infer U>
+    ? U extends Event<infer EventType, Record<string, unknown>>
+      ? EventType
+      : U extends Event<infer EventType1, Record<string, unknown>> | Event<infer EventType2, Record<string, unknown>>
+        ? EventType1 | EventType2
+        : never
+    : never;
+
 export interface UnifiedCommandHandler<C extends Command<string, Record<string, unknown>>> extends CommandHandler {
   alias: string;
   description: string;
@@ -29,6 +37,7 @@ export interface UnifiedCommandHandler<C extends Command<string, Record<string, 
     [K in keyof CommandData<C>]: FieldDefinition<CommandData<C>[K]>;
   };
   examples: string[];
+  events?: string[];
   // Override the handle type to match CommandHandler but with the specific command type
   handle: (command: Command) => Promise<Event | Event[] | void>;
 }
@@ -38,7 +47,10 @@ export interface UnifiedCommandHandler<C extends Command<string, Record<string, 
  * @param config The command handler configuration
  * @returns A command handler with manifest metadata
  */
-export function defineCommandHandler<C extends Command<string, Record<string, unknown>>>(config: {
+export function defineCommandHandler<
+  C extends Command<string, Record<string, unknown>>,
+  H extends (command: C) => Promise<Event<string, Record<string, unknown>>>,
+>(config: {
   name: CommandType<C>;
   alias: string;
   description: string;
@@ -49,11 +61,43 @@ export function defineCommandHandler<C extends Command<string, Record<string, un
     [K in keyof CommandData<C>]: FieldDefinition<CommandData<C>[K]>;
   };
   examples: string[];
-  handle: (command: C) => Promise<Event | Event[] | void>;
-}): UnifiedCommandHandler<C> {
+  handle: H;
+  events: Array<ExtractEventTypes<ReturnType<H>>>;
+}): UnifiedCommandHandler<C>;
+
+/**
+ * Define a command handler with manual event specification (without generics)
+ * @param config The command handler configuration
+ * @returns A command handler with manifest metadata
+ */
+export function defineCommandHandler(config: {
+  name: string;
+  alias: string;
+  description: string;
+  category?: string;
+  icon?: string;
+  package?: PackageMetadata;
+  fields: Record<string, FieldDefinition<unknown>>;
+  examples: string[];
+  handle: (command: Command) => Promise<Event | Event[] | void>;
+  events: string[];
+}): CommandHandler;
+
+export function defineCommandHandler(config: {
+  name: string;
+  alias: string;
+  description: string;
+  category?: string;
+  icon?: string;
+  package?: PackageMetadata;
+  fields: Record<string, FieldDefinition<unknown>>;
+  examples: string[];
+  handle: (command: Command) => Promise<Event | Event[] | void>;
+  events: string[];
+}): CommandHandler {
   // Cast the handle function to the base Command type for interface compatibility
   return {
     ...config,
     handle: config.handle as (command: Command) => Promise<Event | Event[] | void>,
-  } as UnifiedCommandHandler<C>;
+  };
 }

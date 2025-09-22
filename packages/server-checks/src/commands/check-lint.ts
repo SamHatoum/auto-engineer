@@ -41,7 +41,10 @@ export type LintCheckFailedEvent = Event<
 
 export type CheckLintEvents = LintCheckPassedEvent | LintCheckFailedEvent;
 
-export const commandHandler = defineCommandHandler<CheckLintCommand>({
+export const commandHandler = defineCommandHandler<
+  CheckLintCommand,
+  (command: CheckLintCommand) => Promise<LintCheckPassedEvent | LintCheckFailedEvent>
+>({
   name: 'CheckLint',
   alias: 'check:lint',
   description: 'ESLint with optional auto-fix',
@@ -63,17 +66,19 @@ export const commandHandler = defineCommandHandler<CheckLintCommand>({
     },
   },
   examples: ['$ auto check:lint --target-directory=./server', '$ auto check:lint --target-directory=./server --fix'],
+  events: ['LintCheckPassed', 'LintCheckFailed'],
   // eslint-disable-next-line complexity
-  handle: async (command: CheckLintCommand) => {
+  handle: async (command: Command) => {
+    const typedCommand = command as CheckLintCommand;
     debug('CommandHandler executing for CheckLint');
-    const { targetDirectory, scope = 'slice', fix = false } = command.data;
+    const { targetDirectory, scope = 'slice', fix = false } = typedCommand.data;
 
     debug('Handling CheckLintCommand');
     debug('  Target directory: %s', targetDirectory);
     debug('  Scope: %s', scope);
     debug('  Auto-fix: %s', fix);
-    debug('  Request ID: %s', command.requestId);
-    debug('  Correlation ID: %s', command.correlationId ?? 'none');
+    debug('  Request ID: %s', typedCommand.requestId);
+    debug('  Correlation ID: %s', typedCommand.correlationId ?? 'none');
 
     try {
       const targetDir = path.resolve(targetDirectory);
@@ -100,8 +105,8 @@ export const commandHandler = defineCommandHandler<CheckLintCommand>({
             filesChecked: 0,
           },
           timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
+          requestId: typedCommand.requestId,
+          correlationId: typedCommand.correlationId,
         };
       }
 
@@ -176,8 +181,8 @@ export const commandHandler = defineCommandHandler<CheckLintCommand>({
             warningCount,
           },
           timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
+          requestId: typedCommand.requestId,
+          correlationId: typedCommand.correlationId,
         };
       }
 
@@ -207,8 +212,8 @@ export const commandHandler = defineCommandHandler<CheckLintCommand>({
         type: 'LintCheckPassed',
         data: successData,
         timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
+        requestId: typedCommand.requestId,
+        correlationId: typedCommand.correlationId,
       };
     } catch (error) {
       debug('ERROR: Exception caught: %O', error);
@@ -224,8 +229,8 @@ export const commandHandler = defineCommandHandler<CheckLintCommand>({
           warningCount: 0,
         },
         timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
+        requestId: typedCommand.requestId,
+        correlationId: typedCommand.correlationId,
       };
     }
   },

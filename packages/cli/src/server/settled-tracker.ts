@@ -1,6 +1,8 @@
 import type { Event, Command } from '@auto-engineer/message-bus';
 import type { SettledRegistration, DispatchAction } from '../dsl/types';
 import { getPendingDispatches } from '../dsl';
+import { buildEventToCommandMapping } from '../dsl';
+import type { CommandMetadataService } from './command-metadata-service';
 import createDebug from 'debug';
 
 const debug = createDebug('auto-engineer:server:settled-tracker');
@@ -21,9 +23,13 @@ export class SettledTracker {
   private commandToHandlerIds: Map<string, Set<string>> = new Map();
   private runningCommands: Map<string, { commandType: string; correlationId: string }> = new Map();
   private onDispatchAction?: (action: DispatchAction) => void;
+  private metadataService?: CommandMetadataService;
+  private eventToCommandMapping: Record<string, string> = {};
 
-  constructor(onDispatchAction?: (action: DispatchAction) => void) {
+  constructor(onDispatchAction?: (action: DispatchAction) => void, metadataService?: CommandMetadataService) {
     this.onDispatchAction = onDispatchAction;
+    this.metadataService = metadataService;
+    this.eventToCommandMapping = buildEventToCommandMapping(metadataService);
   }
 
   registerSettledHandler(registration: SettledRegistration): void {
@@ -103,35 +109,26 @@ export class SettledTracker {
   }
 
   private isEventFromCommand(eventType: string, commandType: string): boolean {
-    // Simple heuristic mapping based on common patterns
-    const eventToCommandMap: Record<string, string[]> = {
-      TestsCheckPassed: ['CheckTests'],
-      TestsCheckFailed: ['CheckTests'],
-      TestsStarted: ['CheckTests'],
-      TestProgress: ['CheckTests'],
-      TypeCheckPassed: ['CheckTypes'],
-      TypeCheckFailed: ['CheckTypes'],
-      LintCheckPassed: ['CheckLint'],
-      LintCheckFailed: ['CheckLint'],
-      ClientImplemented: ['ImplementClient'],
-    };
-
-    const commandsForEvent = eventToCommandMap[eventType];
-    return commandsForEvent?.includes(commandType) ?? false;
+    // Get fresh mapping in case new handlers have been registered
+    const currentMapping = buildEventToCommandMapping(this.metadataService);
+    const sourceCommand = currentMapping[eventType];
+    return sourceCommand === commandType;
   }
 
   private isCompletionEvent(eventType: string): boolean {
-    // Only these events indicate command completion
-    const completionEvents = [
-      'TestsCheckPassed',
-      'TestsCheckFailed',
-      'TypeCheckPassed',
-      'TypeCheckFailed',
-      'LintCheckPassed',
-      'LintCheckFailed',
-      'ClientImplemented',
-    ];
-    return completionEvents.includes(eventType);
+    // Get fresh mapping in case new handlers have been registered
+    const currentMapping = buildEventToCommandMapping(this.metadataService);
+
+    if (currentMapping[eventType] !== undefined) {
+      return true;
+    }
+
+    if (this.metadataService) {
+      const commands = this.metadataService.getAllCommandsMetadata();
+      return commands.some((command) => command.events?.includes(eventType) ?? false);
+    }
+
+    return false;
   }
 
   private checkAndTriggerHandler(handlerId: string, handler: SettledHandler): void {

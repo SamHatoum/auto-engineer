@@ -96,6 +96,9 @@ export async function loadMessageBusConfig(configPath: string, server: MessageBu
     const registrations = getRegistrations();
     debug('Collected %d registrations from pipeline', registrations.length);
 
+    // Store registrations in server for pipeline graph generation
+    server.setDslRegistrations(registrations);
+
     for (const registration of registrations) {
       if (registration.type === 'on') {
         debug('Registering event handler:', registration.eventType);
@@ -117,6 +120,10 @@ export async function loadMessageBusConfig(configPath: string, server: MessageBu
   }
 
   debug('Message bus configuration loaded and registered');
+
+  // Set up HTTP routes now that DSL registrations are available
+  server.setupRoutes();
+  debug('HTTP routes configured with DSL registrations');
 }
 
 /**

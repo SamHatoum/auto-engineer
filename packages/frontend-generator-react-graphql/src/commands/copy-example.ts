@@ -31,7 +31,10 @@ export type ExampleCopyFailedEvent = Event<
   }
 >;
 
-export const commandHandler = defineCommandHandler<CopyExampleCommand>({
+export const commandHandler = defineCommandHandler<
+  CopyExampleCommand,
+  (command: CopyExampleCommand) => Promise<ExampleCopiedEvent | ExampleCopyFailedEvent>
+>({
   name: 'CopyExample',
   alias: 'copy:example',
   description: 'Copy example React GraphQL template',
@@ -48,8 +51,10 @@ export const commandHandler = defineCommandHandler<CopyExampleCommand>({
     },
   },
   examples: ['$ auto copy:example --starter-name=shadcn-starter --target-dir=./my-starter'],
-  handle: async (command: CopyExampleCommand): Promise<ExampleCopiedEvent | ExampleCopyFailedEvent> => {
-    const result = await handleCopyExampleCommand(command);
+  events: ['ExampleCopied', 'ExampleCopyFailed'],
+  handle: async (command: Command): Promise<ExampleCopiedEvent | ExampleCopyFailedEvent> => {
+    const typedCommand = command as CopyExampleCommand;
+    const result = await handleCopyExampleCommand(typedCommand);
     if (result.type === 'ExampleCopied') {
       debug('Starter "%s" copied successfully to %s', result.data.starterName, result.data.targetDir);
     } else {

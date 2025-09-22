@@ -1,7 +1,12 @@
 import { autoConfig, on, dispatch } from '@auto-engineer/cli';
 import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
 import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
-import type { ImplementServerCommand, ImplementServerEvents } from '@auto-engineer/server-implementer';
+import type {
+  ImplementServerCommand,
+  ImplementServerEvents,
+  ImplementSliceEvents,
+  ImplementSliceCommand,
+} from '@auto-engineer/server-implementer';
 import type {
   CheckTestsCommand,
   CheckTestsEvents,
@@ -42,6 +47,70 @@ export default autoConfig({
     );
 
     on<GenerateServerEvents>('ServerGenerated', () =>
+      dispatch<ImplementSliceCommand>('ImplementSlice', {
+        slicePath: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        context: {
+          previousOutputs: 'errors',
+          attemptNumber: 0,
+        },
+      }),
+    );
+
+    on<ImplementSliceEvents>('SliceImplemented', () =>
+      dispatch<CheckTestsCommand>('CheckTests', {
+        targetDirectory: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        scope: 'slice',
+      }),
+    );
+
+    on<ImplementSliceEvents>('SliceImplemented', () =>
+      dispatch<CheckTypesCommand>('CheckTypes', {
+        targetDirectory: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        scope: 'slice',
+      }),
+    );
+
+    on<ImplementServerEvents>('SliceImplemented', () =>
+      dispatch<CheckLintCommand>('CheckLint', {
+        targetDirectory: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        scope: 'slice',
+        fix: true,
+      }),
+    );
+
+    on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
+      ['CheckTests', 'CheckTypes', 'CheckLint'],
+      dispatch<ImplementSliceCommand>(['ImplementSlice'], (events, send) => {
+        const hasFailures =
+          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
+          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
+          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
+
+        if (hasFailures) {
+          send({
+            type: 'ImplementSlice',
+            data: {
+              slicePath: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+              context: {
+                previousOutputs:
+                  events.CheckTests.map((e) => (e.type === 'TestsCheckFailed' ? e : null))
+                    .filter(Boolean)
+                    .join('\n') +
+                  events.CheckTypes.map((e) => (e.type === 'TypeCheckFailed' ? e : null))
+                    .filter(Boolean)
+                    .join('\n') +
+                  events.CheckLint.map((e) => (e.type === 'LintCheckFailed' ? e : null))
+                    .filter(Boolean)
+                    .join('\n'),
+                attemptNumber: 0,
+              },
+            },
+          });
+        }
+      }),
+    );
+
+    on<GenerateServerEvents>('ServerGenerated', () =>
       dispatch<GenerateIACommand>('GenerateIA', {
         outputDir: './.context',
         flowFiles: ['./flows/questionnaires.flow.ts'],
@@ -63,50 +132,6 @@ export default autoConfig({
         projectDir: './client',
         iaSchemeDir: './.context',
         designSystemPath: './.context/design-system.md',
-      }),
-    );
-
-    on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckTestsCommand>('CheckTests', {
-        targetDirectory: 'sds',
-        scope: 'slice',
-      });
-    });
-
-    on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckTypesCommand>('CheckTypes', {
-        targetDirectory: 'sds',
-        scope: 'slice',
-      });
-    });
-
-    on<ImplementServerEvents>('SliceImplemented', () => {
-      dispatch<CheckLintCommand>('CheckLint', {
-        targetDirectory: 'sds',
-        scope: 'slice',
-        fix: true,
-      });
-    });
-
-    on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
-      ['CheckTests', 'CheckTypes', 'CheckLint'],
-      dispatch<ImplementClientCommand>(['ImplementClient'], (events, send) => {
-        const hasFailures =
-          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
-          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
-          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
-
-        if (hasFailures) {
-          send({
-            type: 'ImplementClient',
-            data: {
-              projectDir: 'some/where',
-              iaSchemeDir: '/',
-              designSystemPath: '',
-              failures: [],
-            },
-          });
-        }
       }),
     );
   },
