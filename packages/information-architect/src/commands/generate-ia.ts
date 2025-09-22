@@ -43,12 +43,16 @@ export type IAGenerationFailedEvent = Event<
 
 export type GenerateIAEvents = IAGeneratedEvent | IAGenerationFailedEvent;
 
-export const commandHandler = defineCommandHandler<GenerateIACommand>({
+export const commandHandler = defineCommandHandler<
+  GenerateIACommand,
+  (command: GenerateIACommand) => Promise<IAGeneratedEvent | IAGenerationFailedEvent>
+>({
   name: 'GenerateIA',
   alias: 'generate:ia',
   description: 'Generate Information Architecture',
   category: 'generate',
   icon: 'building',
+  events: ['IAGenerated', 'IAGenerationFailed'],
   fields: {
     outputDir: {
       description: 'Context directory',

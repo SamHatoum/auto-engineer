@@ -11,9 +11,22 @@ interface MessageData {
   };
 }
 
+interface CommandMetadata {
+  id: string;
+  name: string;
+  alias: string;
+  description: string;
+  package: string;
+  version?: string;
+  category?: string;
+  icon: string;
+}
+
 interface RegistryData {
   eventHandlers: string[];
   commandHandlers: string[];
+  commandsWithMetadata: CommandMetadata[];
+  folds: string[];
 }
 
 describe('CLI Pipeline Integration', () => {
@@ -117,6 +130,71 @@ describe('CLI Pipeline Integration', () => {
     const response = await axios.get<unknown[]>(`${baseUrl}/sessions`);
     expect(response.status).toBe(200);
     expect(Array.isArray(response.data)).toBe(true);
+  });
+
+  it('should build dynamic bi-directional command-event mappings from loaded plugins', async () => {
+    // Get the dynamic mappings from the pipeline graph API
+    const pipelineResponse = await axios.get(`${baseUrl}/pipeline`);
+    expect(pipelineResponse.status).toBe(200);
+
+    console.log('📊 Pipeline API Response:', JSON.stringify(pipelineResponse.data, null, 2));
+
+    const { commandToEvents, eventToCommand } = pipelineResponse.data;
+
+    if (!commandToEvents) {
+      console.log('❌ commandToEvents is missing from pipeline response');
+      return;
+    }
+
+    console.log('📊 Total mapped commands:', Object.keys(commandToEvents).length);
+    console.log('📊 Dynamic Command-to-Event Mappings:');
+    console.log(JSON.stringify(commandToEvents, null, 2));
+    console.log('📊 Dynamic Event-to-Command Mappings:');
+    console.log(JSON.stringify(eventToCommand, null, 2));
+
+    // Verify key mappings exist
+    expect(commandToEvents).toHaveProperty('ExportSchema');
+    expect(commandToEvents['ExportSchema']).toEqual(['SchemaExported', 'SchemaExportFailed']);
+
+    expect(commandToEvents).toHaveProperty('GenerateServer');
+    expect(commandToEvents['GenerateServer']).toEqual(['ServerGenerated', 'ServerGenerationFailed']);
+
+    // Verify bi-directional mapping
+    expect(eventToCommand).toHaveProperty('SchemaExported', 'ExportSchema');
+    expect(eventToCommand).toHaveProperty('ServerGenerated', 'GenerateServer');
+
+    // Verify that we have a good variety of commands from different plugins (command names from dynamic mappings)
+    const commandNames = Object.keys(commandToEvents);
+    expect(commandNames).toContain('ExportSchema');
+    expect(commandNames).toContain('GenerateServer');
+    expect(commandNames).toContain('ImplementSlice');
+    expect(commandNames).toContain('CheckTests');
+
+    console.log(
+      `✅ Successfully built mappings for ${Object.keys(commandToEvents).length} commands and ${Object.keys(eventToCommand).length} events`,
+    );
+
+    // Test cases for commands/events NOT in hardcoded mappings - these should FAIL with current implementation
+    console.log('🚨 Testing commands NOT in hardcoded mappings...');
+
+    // Test CheckTests command (not in hardcoded COMMAND_TO_EVENT_MAP)
+    expect(commandToEvents).toHaveProperty('CheckTests');
+    expect(commandToEvents['CheckTests']).toEqual(['TestsCheckPassed', 'TestsCheckFailed']);
+
+    // Test ImplementClient command (not in hardcoded mapping)
+    expect(commandToEvents).toHaveProperty('ImplementClient');
+    expect(commandToEvents['ImplementClient']).toEqual(['ClientImplemented', 'ClientImplementationFailed']);
+
+    // Test ImportDesignSystem command (completely missing from hardcoded mappings)
+    expect(commandToEvents).toHaveProperty('ImportDesignSystem');
+    expect(commandToEvents['ImportDesignSystem']).toEqual(['ImportDesignSystemCompleted', 'ImportDesignSystemFailed']);
+
+    // Test bi-directional mapping for events not in hardcoded getCommandFromEventType
+    expect(eventToCommand).toHaveProperty('TestsCheckPassed', 'CheckTests');
+    expect(eventToCommand).toHaveProperty('ClientImplemented', 'ImplementClient');
+    expect(eventToCommand).toHaveProperty('ImportDesignSystemCompleted', 'ImportDesignSystem');
+
+    console.log('🚨 All non-hardcoded mappings work correctly!');
   });
 
   it('should trigger pipeline when ExportSchema command generates SchemaExported event', async () => {

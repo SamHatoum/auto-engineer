@@ -11,33 +11,13 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execa } from 'execa';
 import createDebug from 'debug';
-import { defineCommandHandler } from '@auto-engineer/message-bus';
+import { defineCommandHandler, Command, Event } from '@auto-engineer/message-bus';
 
 const debug = createDebug('auto:generate-server');
 const debugSchema = createDebug('auto:generate-server:schema');
 const debugFiles = createDebug('auto:generate-server:files');
 const debugDeps = createDebug('auto:generate-server:deps');
 const debugScaffold = createDebug('auto:generate-server:scaffold');
-
-type DefaultRecord = Record<string, unknown>;
-export type Command<CommandType extends string = string, CommandData extends DefaultRecord = DefaultRecord> = Readonly<{
-  type: CommandType;
-  data: Readonly<CommandData>;
-  timestamp?: Date;
-  requestId?: string;
-  correlationId?: string;
-}>;
-export type Event<EventType extends string = string, EventData extends DefaultRecord = DefaultRecord> = Readonly<{
-  type: EventType;
-  data: Readonly<EventData>;
-  timestamp?: Date;
-  requestId?: string;
-  correlationId?: string;
-}>;
-export type CommandHandler<TCommand extends Command = Command, TResult = unknown> = {
-  name: string;
-  handle: (command: TCommand) => Promise<TResult>;
-};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -71,12 +51,13 @@ export type ServerGenerationFailedEvent = Event<
 
 export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent;
 
-export const commandHandler = defineCommandHandler<GenerateServerCommand>({
+export const commandHandler = defineCommandHandler({
   name: 'GenerateServer',
   alias: 'generate:server',
   description: 'Generate server from schema.json',
   category: 'generate',
   icon: 'server',
+  events: ['ServerGenerated', 'ServerGenerationFailed'],
   fields: {
     schemaPath: {
       description: 'Path to schema.json file',
@@ -88,8 +69,9 @@ export const commandHandler = defineCommandHandler<GenerateServerCommand>({
     },
   },
   examples: ['$ auto generate:server --schema-path=.context/schema.json --destination=.'],
-  handle: async (command: GenerateServerCommand): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
-    const result = await handleGenerateServerCommandInternal(command);
+  handle: async (command: Command): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
+    const typedCommand = command as GenerateServerCommand;
+    const result = await handleGenerateServerCommandInternal(typedCommand);
     if (result.type === 'ServerGenerated') {
       debug('Server generated at %s', result.data.serverDir);
     } else {

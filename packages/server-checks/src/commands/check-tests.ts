@@ -40,7 +40,10 @@ export type TestsCheckFailedEvent = Event<
 
 export type CheckTestsEvents = TestsCheckPassedEvent | TestsCheckFailedEvent;
 
-export const commandHandler = defineCommandHandler<CheckTestsCommand>({
+export const commandHandler = defineCommandHandler<
+  CheckTestsCommand,
+  (command: CheckTestsCommand) => Promise<TestsCheckPassedEvent | TestsCheckFailedEvent>
+>({
   name: 'CheckTests',
   alias: 'check:tests',
   description: 'Run Vitest test suites',
@@ -60,16 +63,18 @@ export const commandHandler = defineCommandHandler<CheckTestsCommand>({
     '$ auto check:tests --target-directory=./server',
     '$ auto check:tests --target-directory=./server --scope=project',
   ],
+  events: ['TestsCheckPassed', 'TestsCheckFailed'],
   // eslint-disable-next-line complexity
-  handle: async (command: CheckTestsCommand): Promise<TestsCheckPassedEvent | TestsCheckFailedEvent> => {
+  handle: async (command: Command): Promise<TestsCheckPassedEvent | TestsCheckFailedEvent> => {
+    const typedCommand = command as CheckTestsCommand;
     debug('CommandHandler executing for CheckTests');
-    const { targetDirectory, scope = 'slice' } = command.data;
+    const { targetDirectory, scope = 'slice' } = typedCommand.data;
 
     debug('Handling CheckTestsCommand');
     debug('  Target directory: %s', targetDirectory);
     debug('  Scope: %s', scope);
-    debug('  Request ID: %s', command.requestId);
-    debug('  Correlation ID: %s', command.correlationId ?? 'none');
+    debug('  Request ID: %s', typedCommand.requestId);
+    debug('  Correlation ID: %s', typedCommand.correlationId ?? 'none');
 
     try {
       const targetDir = path.resolve(targetDirectory);
@@ -97,8 +102,8 @@ export const commandHandler = defineCommandHandler<CheckTestsCommand>({
             testsPassed: 0,
           },
           timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
+          requestId: typedCommand.requestId,
+          correlationId: typedCommand.correlationId,
         };
       }
 
@@ -155,8 +160,8 @@ export const commandHandler = defineCommandHandler<CheckTestsCommand>({
             testsFailed,
           },
           timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
+          requestId: typedCommand.requestId,
+          correlationId: typedCommand.correlationId,
         };
       }
 
@@ -172,8 +177,8 @@ export const commandHandler = defineCommandHandler<CheckTestsCommand>({
           testsPassed,
         },
         timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
+        requestId: typedCommand.requestId,
+        correlationId: typedCommand.correlationId,
       };
     } catch (error) {
       debug('ERROR: Exception caught: %O', error);
@@ -189,8 +194,8 @@ export const commandHandler = defineCommandHandler<CheckTestsCommand>({
           testsFailed: 0,
         },
         timestamp: new Date(),
-        requestId: command.requestId,
-        correlationId: command.correlationId,
+        requestId: typedCommand.requestId,
+        correlationId: typedCommand.correlationId,
       };
     }
   },

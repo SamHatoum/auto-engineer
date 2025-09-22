@@ -44,20 +44,36 @@ export function createMessageBus() {
   }
 
   async function sendCommand<TCommand extends Command>(command: TCommand): Promise<void> {
+    await logCommand(command);
+
+    const commandHandler = findCommandHandler(command.type);
+
+    await executeCommandHandler(commandHandler, command);
+  }
+
+  async function logCommand<TCommand extends Command>(command: TCommand): Promise<void> {
     debugCommand('Sending command: %s', command.type);
     debugCommand('  Request ID: %s', command.requestId ?? 'none');
     debugCommand('  Correlation ID: %s', command.correlationId ?? 'none');
     debugCommand('  Data keys: %o', Object.keys(command.data));
+  }
 
-    const commandHandler = state.commandHandlers[command.type];
+  function findCommandHandler(commandType: string): CommandHandler {
+    const commandHandler = state.commandHandlers[commandType];
     if (commandHandler === undefined) {
-      debugCommand('ERROR: No handler found for command: %s', command.type);
+      debugCommand('ERROR: No handler found for command: %s', commandType);
       debugCommand('Available handlers: %o', Object.keys(state.commandHandlers));
-      throw new Error(`Command handler not found for command: ${command.type}`);
+      throw new Error(`Command handler not found for command: ${commandType}`);
     }
 
-    debugCommand('Handler found for command: %s', command.type);
+    debugCommand('Handler found for command: %s', commandType);
+    return commandHandler;
+  }
 
+  async function executeCommandHandler<TCommand extends Command>(
+    commandHandler: CommandHandler,
+    command: TCommand,
+  ): Promise<void> {
     try {
       debugCommand('Executing handler for: %s', command.type);
       const startTime = Date.now();
@@ -67,18 +83,29 @@ export function createMessageBus() {
       const duration = Date.now() - startTime;
       debugCommand('Handler executed successfully in %dms', duration);
 
-      // If handler returned events, publish them
-      if (result) {
-        const events = Array.isArray(result) ? result : [result];
-        for (const event of events) {
-          debugCommand('Publishing event from command handler: %s', event.type);
-          await publishEvent(event);
-        }
-      }
+      await publishEventsFromResult(result, command);
     } catch (error) {
       debugCommand('ERROR: Handler failed for command %s: %O', command.type, error);
       debugCommand('ERROR: Failed command data: %O', command.data);
       throw new Error(`Command handling failed: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+    }
+  }
+
+  async function publishEventsFromResult<TCommand extends Command>(
+    result: Event | Event[] | void,
+    command: TCommand,
+  ): Promise<void> {
+    if (!result) return;
+
+    const events = Array.isArray(result) ? result : [result];
+    for (const event of events) {
+      const eventWithRequestId = {
+        ...event,
+        requestId: event.requestId ?? command.requestId,
+        correlationId: event.correlationId ?? command.correlationId,
+      };
+      debugCommand('Publishing event from command handler: %s', event.type);
+      await publishEvent(eventWithRequestId);
     }
   }
 

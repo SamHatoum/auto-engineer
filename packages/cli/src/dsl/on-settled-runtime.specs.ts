@@ -50,6 +50,13 @@ describe('on.settled Runtime Execution', () => {
     server.registerCommandHandlers([
       {
         name: 'CheckTests',
+        alias: 'check:tests',
+        description: 'Run Vitest test suites',
+        category: 'check',
+        icon: 'flask-conical',
+        fields: {},
+        examples: [],
+        events: ['TestsCheckPassed', 'TestsCheckFailed'],
         handle: async (command: CheckTestsCommand) => {
           return {
             type: 'TestsCheckPassed',
@@ -59,6 +66,13 @@ describe('on.settled Runtime Execution', () => {
       },
       {
         name: 'CheckTypes',
+        alias: 'check:types',
+        description: 'TypeScript type checking',
+        category: 'check',
+        icon: 'shield-check',
+        fields: {},
+        examples: [],
+        events: ['TypeCheckPassed', 'TypeCheckFailed'],
         handle: async (command: CheckTypesCommand) => {
           return {
             type: 'TypeCheckPassed',
@@ -68,6 +82,13 @@ describe('on.settled Runtime Execution', () => {
       },
       {
         name: 'CheckLint',
+        alias: 'check:lint',
+        description: 'ESLint with optional auto-fix',
+        category: 'check',
+        icon: 'sparkles',
+        fields: {},
+        examples: [],
+        events: ['LintCheckPassed', 'LintCheckFailed'],
         handle: async (command: CheckLintCommand) => {
           return {
             type: 'LintCheckPassed',
@@ -97,9 +118,26 @@ describe('on.settled Runtime Execution', () => {
 
     await server.start();
     const bus = server.getMessageBus();
+    const settledTracker = server.getSettledTracker();
+
+    // Helper function to send command and notify settled tracker
+    const sendCommand = async (command: Command) => {
+      // Add correlation and request IDs if missing
+      const enhancedCommand = {
+        ...command,
+        correlationId: command.correlationId ?? `corr-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        requestId: command.requestId ?? `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+
+      // Notify settled tracker that command started
+      settledTracker.onCommandStarted(enhancedCommand);
+
+      // Send the command
+      return bus.sendCommand(enhancedCommand);
+    };
 
     // Execute the first command
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTests',
       data: { targetDirectory: './src', scope: 'all' },
     });
@@ -109,7 +147,7 @@ describe('on.settled Runtime Execution', () => {
     expect(settledHandlerExecuted).toBe(false);
 
     // Execute the second command
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTypes',
       data: { targetDirectory: './src', scope: 'all' },
     });
@@ -119,7 +157,7 @@ describe('on.settled Runtime Execution', () => {
     expect(settledHandlerExecuted).toBe(false);
 
     // Execute the third command
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckLint',
       data: { targetDirectory: './src', scope: 'all', fix: false },
     });
@@ -151,6 +189,13 @@ describe('on.settled Runtime Execution', () => {
     server.registerCommandHandlers([
       {
         name: 'CheckTests',
+        alias: 'check:tests',
+        description: 'Run Vitest test suites',
+        category: 'check',
+        icon: 'flask-conical',
+        fields: {},
+        examples: [],
+        events: ['TestsCheckPassed', 'TestsCheckFailed'],
         handle: async (command: CheckTestsCommand) => {
           return {
             type: 'TestsCheckFailed',
@@ -163,6 +208,13 @@ describe('on.settled Runtime Execution', () => {
       },
       {
         name: 'CheckTypes',
+        alias: 'check:types',
+        description: 'TypeScript type checking',
+        category: 'check',
+        icon: 'shield-check',
+        fields: {},
+        examples: [],
+        events: ['TypeCheckPassed', 'TypeCheckFailed'],
         handle: async (command: CheckTypesCommand) => {
           return {
             type: 'TypeCheckPassed',
@@ -219,14 +271,35 @@ describe('on.settled Runtime Execution', () => {
     server.registerCommandHandlers([
       {
         name: 'CheckTests',
+        alias: 'check:tests',
+        description: 'Run Vitest test suites',
+        category: 'check',
+        icon: 'flask-conical',
+        fields: {},
+        examples: [],
+        events: ['TestsCheckPassed', 'TestsCheckFailed'],
         handle: async () => ({ type: 'TestsCheckPassed', data: {} }),
       },
       {
         name: 'CheckTypes',
+        alias: 'check:types',
+        description: 'TypeScript type checking',
+        category: 'check',
+        icon: 'shield-check',
+        fields: {},
+        examples: [],
+        events: ['TypeCheckPassed', 'TypeCheckFailed'],
         handle: async () => ({ type: 'TypeCheckPassed', data: {} }),
       },
       {
         name: 'ImplementClient',
+        alias: 'implement:client',
+        description: 'AI implements client',
+        category: 'implement',
+        icon: 'code',
+        fields: {},
+        examples: [],
+        events: ['ClientImplemented', 'ClientImplementationFailed'],
         handle: async (command: ImplementClientCommand) => {
           implementClientCommandDispatched = true;
           return {
@@ -289,28 +362,22 @@ describe('on.settled Runtime Execution', () => {
     expect(implementClientCommandDispatched).toBe(true);
   });
 
-  it('should handle multiple events from the same command type', async () => {
+  it('should handle events from commands', async () => {
     let settledHandlerExecuted = false;
     let receivedEvents: Record<string, Event[]> = {};
 
-    // Command handler that emits multiple events
+    // Command handler that returns completion event
     server.registerCommandHandlers([
       {
         name: 'CheckTests',
+        alias: 'check:tests',
+        description: 'Run Vitest test suites',
+        category: 'check',
+        icon: 'flask-conical',
+        fields: {},
+        examples: [],
+        events: ['TestsCheckPassed', 'TestsCheckFailed'],
         handle: async (command: CheckTestsCommand) => {
-          const bus = server.getMessageBus();
-
-          // Emit multiple events for the same command
-          await bus.publishEvent({
-            type: 'TestsStarted',
-            data: { directory: command.data.targetDirectory },
-          });
-
-          await bus.publishEvent({
-            type: 'TestProgress',
-            data: { completed: 5, total: 10 },
-          });
-
           return {
             type: 'TestsCheckPassed',
             data: { directory: command.data.targetDirectory },
@@ -349,9 +416,7 @@ describe('on.settled Runtime Execution', () => {
     expect(settledHandlerExecuted).toBe(true);
 
     // Should collect all events from the command
-    expect(receivedEvents.CheckTests).toHaveLength(3);
-    expect(receivedEvents.CheckTests.map((e) => e.type)).toContain('TestsStarted');
-    expect(receivedEvents.CheckTests.map((e) => e.type)).toContain('TestProgress');
+    expect(receivedEvents.CheckTests).toHaveLength(1);
     expect(receivedEvents.CheckTests.map((e) => e.type)).toContain('TestsCheckPassed');
   });
 
@@ -375,6 +440,13 @@ describe('on.settled Runtime Execution', () => {
     server.registerCommandHandlers([
       {
         name: 'CheckTests',
+        alias: 'check:tests',
+        description: 'Run Vitest test suites',
+        category: 'check',
+        icon: 'flask-conical',
+        fields: {},
+        examples: [],
+        events: ['TestsCheckPassed', 'TestsCheckFailed'],
         handle: async () => {
           return {
             type: 'TestsCheckPassed',

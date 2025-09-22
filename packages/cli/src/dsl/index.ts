@@ -19,54 +19,37 @@ let pendingDispatches: DispatchAction[] = [];
 
 export type NodeStatus = 'None' | 'idle' | 'running' | 'pass' | 'fail';
 
-export interface CommandEventMapping {
-  successEvent: string;
-  failureEvent: string;
-}
+function buildCommandEventMappings(metadataService?: CommandMetadataService): Record<string, string[]> {
+  const mappings: Record<string, string[]> = {};
 
-export const COMMAND_TO_EVENT_MAP: Record<string, CommandEventMapping> = {
-  ExportSchema: {
-    successEvent: 'SchemaExported',
-    failureEvent: 'SchemaExportFailed',
-  },
-  GenerateServer: {
-    successEvent: 'ServerGenerated',
-    failureEvent: 'ServerGenerationFailed',
-  },
-  GenerateIA: {
-    successEvent: 'IAGenerated',
-    failureEvent: 'IAGenerationFailed',
-  },
-  GenerateClient: {
-    successEvent: 'ClientGenerated',
-    failureEvent: 'ClientGenerationFailed',
-  },
-  ImplementClient: {
-    successEvent: 'ClientImplemented',
-    failureEvent: 'ClientImplementationFailed',
-  },
-  ImplementSlice: {
-    successEvent: 'SliceImplemented',
-    failureEvent: 'SliceImplementationFailed',
-  },
-  CheckTests: {
-    successEvent: 'TestsPassed',
-    failureEvent: 'TestsFailed',
-  },
-  CheckTypes: {
-    successEvent: 'TypeCheckPassed',
-    failureEvent: 'TypeCheckFailed',
-  },
-  CheckLint: {
-    successEvent: 'LintCheckPassed',
-    failureEvent: 'LintCheckFailed',
-  },
-};
+  if (!metadataService) {
+    return mappings;
+  }
+
+  const commands = metadataService.getAllCommandsMetadata();
+
+  for (const command of commands) {
+    const commandName = command.name;
+
+    if (!commandName || typeof commandName !== 'string') {
+      continue;
+    }
+
+    if (!command.events || command.events.length === 0) {
+      continue;
+    }
+
+    mappings[commandName] = command.events;
+  }
+
+  return mappings;
+}
 
 export interface PipelineGraphConfig {
   metadataService?: CommandMetadataService;
   eventHandlers?: Map<string, Array<(event: Event) => void>>;
   messageStore?: ILocalMessageStore;
+  dslRegistrations?: DslRegistration[];
 }
 
 export function on<T extends Event>(
@@ -305,6 +288,13 @@ export function getRegistrations(): DslRegistration[] {
 }
 
 /**
+ * Peek at registrations without clearing them
+ */
+export function peekRegistrations(): DslRegistration[] {
+  return [...registrations];
+}
+
+/**
  * Get all pending dispatches and clear the list
  */
 export function getPendingDispatches(): DispatchAction[] {
@@ -333,44 +323,41 @@ function camelCaseToTitleCase(str: string): string {
     .trim();
 }
 
-/**
- * Extract the source command from an event type name
- * E.g., "SchemaExported" -> "ExportSchema"
- */
-function getCommandFromEventType(eventType: string): string | null {
-  // Map known event types to their source commands
-  const eventToCommandMap: Record<string, string> = {
-    SchemaExported: 'ExportSchema',
-    ServerGenerated: 'GenerateServer',
-    IAGenerated: 'GenerateIA',
-    ClientGenerated: 'GenerateClient',
-    SliceImplemented: 'ImplementSlice',
-  };
+export function buildEventToCommandMapping(metadataService?: CommandMetadataService): Record<string, string> {
+  if (!metadataService) {
+    return {};
+  }
 
-  return eventToCommandMap[eventType] || null;
+  // Use the dynamic mappings from the command metadata service
+  const eventToCommandMap = (
+    metadataService as CommandMetadataService & { getEventToCommandMapping?: () => Map<string, string> }
+  ).getEventToCommandMapping?.();
+  const result: Record<string, string> = {};
+
+  if (eventToCommandMap instanceof Map) {
+    for (const [eventType, commandName] of eventToCommandMap.entries()) {
+      result[eventType] = commandName;
+    }
+  }
+
+  debug('Built %d dynamic event-to-command mappings from metadata service', Object.keys(result).length);
+
+  return result;
 }
 
-/**
- * Get target commands that are typically dispatched for an event type
- * Based on the pipeline configuration in auto.config.ts
- */
-function getTargetCommandsFromEventType(eventType: string): string[] {
-  // Map event types to their typical target commands
-  const eventToTargetsMap: Record<string, string[]> = {
-    SchemaExported: ['GenerateServer'],
-    ServerGenerated: ['GenerateIA'],
-    IAGenerated: ['GenerateClient'],
-    ClientGenerated: ['ImplementClient'],
-    SliceImplemented: ['CheckTests', 'CheckTypes', 'CheckLint'],
-  };
-
-  return eventToTargetsMap[eventType] ?? [];
+function getCommandFromEventType(eventType: string, metadataService?: CommandMetadataService): string | null {
+  const eventToCommandMap = buildEventToCommandMapping(metadataService);
+  return eventToCommandMap[eventType] || null;
 }
 
 /**
  * Calculate status for a pipeline node based on message store
  */
-async function calculateNodeStatus(commandType: string, messageStore: ILocalMessageStore): Promise<NodeStatus> {
+async function calculateNodeStatus(
+  commandType: string,
+  messageStore: ILocalMessageStore,
+  metadataService?: CommandMetadataService,
+): Promise<NodeStatus> {
   try {
     // Get all messages from the message store
     const allMessages = await messageStore.getAllMessages();
@@ -392,8 +379,9 @@ async function calculateNodeStatus(commandType: string, messageStore: ILocalMess
       throw new Error(`Command ${commandType} is missing requestId`);
     }
 
-    const mapping = COMMAND_TO_EVENT_MAP[commandType];
-    if (mapping === undefined) {
+    const commandEventMappings = buildCommandEventMappings(metadataService);
+    const commandEvents = commandEventMappings[commandType];
+    if (commandEvents === undefined) {
       return 'None';
     }
 
@@ -406,22 +394,25 @@ async function calculateNodeStatus(commandType: string, messageStore: ILocalMess
       return 'running';
     }
 
-    // Check if there's any failure event (any event with an error field)
+    // Check if there's any completion event from this command's event list
+    const hasCompletion = relatedEvents.some((event) => commandEvents.includes(event.message.type));
+    if (!hasCompletion) {
+      return 'running';
+    }
+
+    // Check if there's any failure event (any event with error/errors field)
+    // This check must come AFTER completion check to ensure we have completed events
+    // but takes precedence for determining final status
     const hasFailure = relatedEvents.some((event) => {
       const data = event.message.data;
-      return data !== null && typeof data === 'object' && 'error' in data;
+      return data !== null && typeof data === 'object' && ('error' in data || 'errors' in data);
     });
     if (hasFailure) {
       return 'fail';
     }
 
-    // Check if there's a success event
-    const hasSuccess = relatedEvents.some((event) => event.message.type === mapping.successEvent);
-    if (hasSuccess) {
-      return 'pass';
-    }
-
-    return 'running';
+    // If we have completion events but no failures, it's a pass
+    return 'pass';
   } catch (error) {
     debug('Error calculating node status for %s: %O', commandType, error);
     throw error;
@@ -432,6 +423,8 @@ async function calculateNodeStatus(commandType: string, messageStore: ILocalMess
  * Generate pipeline graph from current registrations
  */
 export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promise<{
+  commandToEvents: Record<string, string[]>;
+  eventToCommand: Record<string, string>;
   nodes: Array<{
     id: string;
     name: string;
@@ -446,27 +439,18 @@ export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promis
   }>;
   edges: Array<{ from: string; to: string }>;
 }> {
-  const { metadataService, eventHandlers, messageStore } = config;
+  const { metadataService, eventHandlers, messageStore, dslRegistrations } = config;
   const commandNodes = new Set<string>();
   const edges: Array<{ from: string; to: string }> = [];
 
   debug(
-    'Called with metadataService=%s eventHandlers=%s eventHandlers size=%s messageStore=%s',
+    'Called with metadataService=%s eventHandlers=%s eventHandlers size=%s messageStore=%s dslRegistrations=%s',
     !!metadataService,
     !!eventHandlers,
     eventHandlers?.size,
     !!messageStore,
+    dslRegistrations?.length ?? 0,
   );
-
-  function getNodeId(commandType: string): string {
-    if (metadataService) {
-      const metadata = metadataService.getCommandMetadata(commandType);
-      if (metadata) {
-        return `${metadata.package}/${metadata.alias}`;
-      }
-    }
-    return commandType;
-  }
 
   // If eventHandlers are provided, use them instead of DSL registrations
   if (eventHandlers) {
@@ -477,27 +461,25 @@ export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promis
       debug('Processing event type %s with %d handlers', eventType, handlers.length);
       // Extract command relationships from event type names
       // This is based on the naming convention in auto.config.ts
-      const sourceCommand = getCommandFromEventType(eventType);
+      const sourceCommand = getCommandFromEventType(eventType, metadataService);
       debug('Source command for %s = %s', eventType, sourceCommand);
       if (sourceCommand !== null && sourceCommand !== '') {
         commandNodes.add(sourceCommand);
 
-        // For each handler, try to extract target commands
-        // This would need the actual dispatch functions to be analyzed
-        // For now, we'll use a simplified mapping based on known patterns
-        const targetCommands = getTargetCommandsFromEventType(eventType);
-        debug('Target commands for %s = %o', eventType, targetCommands);
-        targetCommands.forEach((targetCommand: string) => {
-          commandNodes.add(targetCommand);
-          edges.push({ from: getNodeId(sourceCommand), to: getNodeId(targetCommand) });
-        });
+        // We can't determine target commands from event handlers without analyzing their dispatch calls
+        // The eventHandlers approach is fundamentally broken for pipeline graph generation
+        // Only the DSL registrations path should be used
+        debug('Warning: eventHandlers path cannot determine target commands - skipping edge creation');
       }
     }
     debug('Final nodes: %o', Array.from(commandNodes));
     debug('Final edges: %o', edges);
   } else {
-    // Fallback to DSL registrations (original behavior)
-    registrations.forEach((registration) => {
+    // Use DSL registrations (either passed in or from global state)
+    const regsToProcess = dslRegistrations || registrations;
+    debug('Using DSL registrations, found %d registrations', regsToProcess.length);
+
+    regsToProcess.forEach((registration) => {
       if (registration.type === 'on') {
         processEventRegistration(registration, commandNodes, edges, metadataService);
       }
@@ -518,7 +500,7 @@ export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promis
 
       let status: NodeStatus = 'None';
       if (messageStore) {
-        status = await calculateNodeStatus(commandType, messageStore);
+        status = await calculateNodeStatus(commandType, messageStore, metadataService);
       }
 
       if (metadataService) {
@@ -547,7 +529,10 @@ export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promis
     }),
   );
 
-  return { nodes, edges };
+  const commandToEvents = buildCommandEventMappings(metadataService);
+  const eventToCommand = buildEventToCommandMapping(metadataService);
+
+  return { nodes, edges, commandToEvents, eventToCommand };
 }
 
 function processEventRegistration(
@@ -627,34 +612,13 @@ function addCommandAndEdge(
 
   commandNodes.add(command.type);
 
-  const sourceCommand = inferSourceCommand(eventType);
-  if (sourceCommand !== null) {
+  const eventToCommandMap = buildEventToCommandMapping(metadataService);
+  const sourceCommand = eventToCommandMap[eventType];
+  if (sourceCommand !== undefined) {
     commandNodes.add(sourceCommand);
     edges.push({
       from: getNodeId(sourceCommand),
       to: getNodeId(command.type),
     });
   }
-}
-
-/**
- * Infer source command from event name using naming patterns
- */
-function inferSourceCommand(eventType: string): string | null {
-  // Pattern: EventExported -> ExportEvent
-  if (eventType.endsWith('Exported')) {
-    return 'Export' + eventType.replace('Exported', '');
-  }
-
-  // Pattern: EventGenerated -> GenerateEvent
-  if (eventType.endsWith('Generated')) {
-    return 'Generate' + eventType.replace('Generated', '');
-  }
-
-  // Pattern: EventImplemented -> ImplementEvent
-  if (eventType.endsWith('Implemented')) {
-    return 'Implement' + eventType.replace('Implemented', '');
-  }
-
-  return null;
 }

@@ -822,15 +822,8 @@ export class PluginLoader {
   }
 
   private handleCommandEvent(eventType: string, event: Event): void {
-    // Handle different event types and log appropriately
-    if (eventType.endsWith('Failed') || eventType.endsWith('Error')) {
-      this.handleFailureEvent(eventType, event);
-    } else if (eventType.endsWith('Passed') || eventType.endsWith('Completed')) {
-      this.handleSuccessEvent(eventType, event);
-    } else {
-      // For all other command/event types, use minimal display - no verbose data
-      this.displayMinimalMessage(event);
-    }
+    // For all command/event types, use minimal display - no verbose data
+    this.displayMinimalMessage(event);
   }
 
   private displayMinimalMessage(message: Event | Command): void {
@@ -915,34 +908,6 @@ export class PluginLoader {
       if (data.errors.length > 3) {
         console.error(`     ... and ${data.errors.length - 3} more`);
       }
-    }
-  }
-
-  private handleFailureEvent(eventType: string, event: Event): void {
-    const data = event.data as Record<string, unknown>;
-    console.error(`❌ ${eventType}`);
-
-    this.displayErrorField(data);
-    this.displayErrorsField(data);
-
-    // Display any other fields in the data object generically
-    const displayedFields = new Set(['error', 'errors']);
-    for (const [key, value] of Object.entries(data)) {
-      if (displayedFields.has(key) || value === null || value === undefined) continue;
-      this.displayFieldValue(key, value, true);
-    }
-
-    process.exit(1);
-  }
-
-  private handleSuccessEvent(eventType: string, event: Event): void {
-    const data = event.data as Record<string, unknown>;
-    console.log(`✅ ${eventType}`);
-
-    // Display all fields in the data object generically
-    for (const [key, value] of Object.entries(data)) {
-      if (value === null || value === undefined) continue;
-      this.displayFieldValue(key, value, false);
     }
   }
 

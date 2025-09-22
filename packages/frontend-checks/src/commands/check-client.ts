@@ -54,16 +54,18 @@ export const checkClientCommandHandler = defineCommandHandler({
     },
     skipBrowserChecks: {
       description: 'Skip browser-based validation checks',
-      required: false,
       flag: true,
     },
   },
 
   examples: ['$ auto check:client --client-directory=./client'],
 
-  handle: async (command: CheckClientCommand): Promise<ClientCheckedEvent | ClientCheckFailedEvent> => {
+  events: ['ClientChecked', 'ClientCheckFailed'],
+
+  handle: async (command: Command): Promise<ClientCheckedEvent | ClientCheckFailedEvent> => {
+    const typedCommand = command as CheckClientCommand;
     debug('CommandHandler executing for CheckClient');
-    const result = await handleCheckClientCommand(command);
+    const result = await handleCheckClientCommand(typedCommand);
 
     if (result.type === 'ClientChecked') {
       const { tsErrors, buildErrors, consoleErrors, allChecksPassed } = result.data;
