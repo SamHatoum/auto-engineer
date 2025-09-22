@@ -25,31 +25,37 @@ export async function importDesignSystemComponentsFromFigma(
   debug('Import strategy: %s', strategy);
   debug('Filter function provided: %s', filterFn ? 'yes' : 'no');
 
-  const figmaComponentsBuilder = new FigmaComponentsBuilder();
-  debugComponents('FigmaComponentsBuilder instance created');
+  // const figmaComponentsBuilder = new FigmaComponentsBuilder();
+  // debugComponents('FigmaComponentsBuilder instance created');
 
-  if (strategy === ImportStrategy.WITH_COMPONENTS) {
-    debugComponents('Using strategy: WITH_COMPONENTS');
-    await figmaComponentsBuilder.withFigmaComponents();
-  } else if (strategy === ImportStrategy.WITH_COMPONENT_SETS) {
-    debugComponents('Using strategy: WITH_COMPONENT_SETS');
-    await figmaComponentsBuilder.withFigmaComponentSets();
-  } else if (strategy === ImportStrategy.WITH_ALL_FIGMA_INSTANCES) {
-    debugComponents('Using strategy: WITH_ALL_FIGMA_INSTANCES');
-    await figmaComponentsBuilder.withAllFigmaInstanceNames();
-  }
+  // if (strategy === ImportStrategy.WITH_COMPONENTS) {
+  //   debugComponents('Using strategy: WITH_COMPONENTS');
+  //   await figmaComponentsBuilder.withFigmaComponents();
+  // } else if (strategy === ImportStrategy.WITH_COMPONENT_SETS) {
+  //   debugComponents('Using strategy: WITH_COMPONENT_SETS');
+  //   await figmaComponentsBuilder.withFigmaComponentSets();
+  // } else if (strategy === ImportStrategy.WITH_ALL_FIGMA_INSTANCES) {
+  //   debugComponents('Using strategy: WITH_ALL_FIGMA_INSTANCES');
+  //   await figmaComponentsBuilder.withAllFigmaInstanceNames();
+  // }
   debugComponents('Strategy applied successfully');
 
   // figmaComponentsBuilder.withFilteredNamesForMui();
   // figmaComponentsBuilder.withFilteredNamesForShadcn();
+  let figmaComponents: { name: string; description: string; thumbnail: string }[] = [];
 
   if (filterFn) {
     debugComponents('Applying custom filter function');
-    figmaComponentsBuilder.withFilter(filterFn);
+    // figmaComponentsBuilder.withFilter(filterFn);
+
+    const absolutePath = path.resolve(outputDir, 'figma-file.json');
+    const rawFigmaFile = await fs.readFile(absolutePath, 'utf-8');
+    const nodes = JSON.parse(rawFigmaFile)?.root;
+    figmaComponents = filterFn(nodes);
   }
 
   debugComponents('Building Figma components...');
-  const figmaComponents = figmaComponentsBuilder.build();
+  // const figmaComponents = figmaComponentsBuilder.build();
   debugComponents('Built %d Figma components', figmaComponents.length);
 
   console.log(figmaComponents.length);

@@ -1,0 +1,166 @@
+{
+  "schema_description": "A questionnaire application that allows users to view, answer questions, and submit questionnaires with progress tracking",
+  "atoms": {
+    "description": "Basic UI primitives used throughout the application",
+    "items": {}
+  },
+  "molecules": {
+    "description": "Reusable components composed from atoms",
+    "items": {
+      "HeroSection": {
+        "description": "Welcome message section with call-to-action to start questionnaire",
+        "composition": {
+          "atoms": ["Card", "Button"]
+        }
+      },
+      "ProgressIndicator": {
+        "description": "Visual indicator showing questionnaire completion progress",
+        "composition": {
+          "atoms": ["Progress"]
+        }
+      },
+      "QuestionCard": {
+        "description": "Individual question display with answer input",
+        "composition": {
+          "atoms": ["Card", "Button"]
+        }
+      },
+      "AnswerList": {
+        "description": "Display of answered questions",
+        "composition": {
+          "atoms": ["Card"]
+        }
+      },
+      "RemainingQuestionsList": {
+        "description": "Display of remaining questions to be answered",
+        "composition": {
+          "atoms": ["Card"]
+        }
+      },
+      "SuccessMessage": {
+        "description": "Success notification for submitted answers",
+        "composition": {
+          "atoms": ["Alert"]
+        }
+      },
+      "ErrorMessage": {
+        "description": "Error notification for rejected submissions",
+        "composition": {
+          "atoms": ["Alert"]
+        }
+      },
+      "ConfirmationMessage": {
+        "description": "Confirmation message for successful questionnaire submission",
+        "composition": {
+          "atoms": ["Alert"]
+        }
+      }
+    }
+  },
+  "organisms": {
+    "description": "Smart UI components with data-fetching capabilities",
+    "items": {
+      "QuestionnaireViewer": {
+        "description": "Main questionnaire interface showing progress and current question",
+        "composition": {
+          "molecules": ["ProgressIndicator", "QuestionCard", "AnswerList", "RemainingQuestionsList"]
+        },
+        "data_requirements": [
+          {
+            "type": "query",
+            "description": "Fetch questionnaire progress and current state",
+            "trigger": "On component mount and after answer submission",
+            "details": {
+              "source": "QuestionnaireProgress state from projection",
+              "gql": "query QuestionnaireProgress($participantId: ID!) {\n        questionnaireProgress(participantId: $participantId) {\n          questionnaireId\n          participantId\n          currentQuestionId\n          remainingQuestions\n          status\n          answers {\n            questionId\n            value\n          }\n        }\n      }",
+              "payload_schema": {
+                "participantId": "ID!"
+              }
+            }
+          }
+        ],
+        "specs": [
+          "focus on the current question based on the progress state",
+          "display the list of answered questions",
+          "display the list of remaining questions",
+          "show a progress indicator that is always visible as the user scrolls"
+        ]
+      },
+      "AnswerSubmissionHandler": {
+        "description": "Handles answer submission and feedback",
+        "composition": {
+          "molecules": ["SuccessMessage", "ErrorMessage"]
+        },
+        "data_requirements": [
+          {
+            "type": "mutation",
+            "description": "Submit answer to a question",
+            "trigger": "When user submits an answer",
+            "details": {
+              "source": "AnswerQuestion command",
+              "gql": "mutation AnswerQuestion($input: AnswerQuestionInput!) {\n        answerQuestion(input: $input) {\n          success\n        }\n      }",
+              "payload_schema": {
+                "input": "AnswerQuestionInput!"
+              }
+            }
+          }
+        ],
+        "specs": [
+          "displays a success message when the answer is submitted",
+          "display an error message when the answer submission is rejected"
+        ]
+      },
+      "QuestionnaireSubmissionControl": {
+        "description": "Controls final questionnaire submission when ready",
+        "composition": {
+          "molecules": ["ConfirmationMessage"]
+        },
+        "data_requirements": [
+          {
+            "type": "query",
+            "description": "Check if questionnaire is ready for submission",
+            "trigger": "On component mount and after each answer",
+            "details": {
+              "source": "QuestionnaireProgress state from projection",
+              "gql": "query QuestionnaireProgress($participantId: ID!) {\n        questionnaireProgress(participantId: $participantId) {\n          questionnaireId\n          participantId\n          status\n          currentQuestionId\n          remainingQuestions\n          answers {\n            questionId\n            value\n          }\n        }\n      }",
+              "payload_schema": {
+                "participantId": "ID!"
+              }
+            }
+          },
+          {
+            "type": "mutation",
+            "description": "Submit completed questionnaire",
+            "trigger": "When user clicks submit button",
+            "details": {
+              "source": "SubmitQuestionnaire command",
+              "gql": "mutation SubmitQuestionnaire($input: SubmitQuestionnaireInput!) {\n        submitQuestionnaire(input: $input) {\n          success\n        }\n      }",
+              "payload_schema": {
+                "input": "SubmitQuestionnaireInput!"
+              }
+            }
+          }
+        ],
+        "specs": [
+          "enable the submit button when all questions are answered",
+          "disable the submit button when all questions have not been answered",
+          "display a confirmation message upon successful submission"
+        ]
+      }
+    }
+  },
+  "pages": {
+    "description": "Top-level application pages",
+    "items": {
+      "Homepage": {
+        "route": "/",
+        "description": "Landing page with welcome message and questionnaire start option",
+        "layout": {
+          "organisms": []
+        },
+        "navigation": [],
+        "specs": ["show a hero section with a welcome message", "allow user to start the questionnaire"]
+      }
+    }
+  }
+}
