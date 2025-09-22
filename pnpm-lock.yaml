@@ -305,6 +305,9 @@ importers:
       '@auto-engineer/message-store':
         specifier: workspace:*
         version: link:../message-store
+      '@scarf/scarf':
+        specifier: ^1.4.0
+        version: 1.4.0
       chalk:
         specifier: ^5.3.0
         version: 5.6.0
@@ -405,6 +408,9 @@ importers:
       '@auto-engineer/id':
         specifier: workspace:*
         version: link:../id
+      '@scarf/scarf':
+        specifier: ^1.4.0
+        version: 1.4.0
       chalk:
         specifier: ^5.3.0
         version: 5.6.0
@@ -1950,6 +1956,9 @@ packages:
     resolution: {integrity: sha512-gEtqFbzmZLFk2xKh7g0Rlo8xzho8KrEFEkzvHbfUGkrgXOpZ4XagQ6n+wIZFNh1nTb8UD16J4nFSFKXYgnbdBg==}
     cpu: [x64]
     os: [win32]
+
+  '@scarf/scarf@1.4.0':
+    resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
@@ -6491,6 +6500,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.49.0':
     optional: true
+
+  '@scarf/scarf@1.4.0': {}
 
   '@sec-ant/readable-stream@0.4.1': {}
 
