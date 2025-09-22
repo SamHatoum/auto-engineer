@@ -39,7 +39,7 @@ export default autoConfig({
         type: 'GenerateIA',
         data: {
           outputDir: './.context',
-          flowFiles: ['./flows/finance-app.flow.ts', './flows/finance-app-landing.flow.ts'],
+          modelPath: './.model/schema.json',
         },
       }),
     );

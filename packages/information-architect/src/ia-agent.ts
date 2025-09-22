@@ -1,5 +1,6 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import { type UXSchema, type AIAgentOutput } from './types.js';
+import { type Model } from '@auto-engineer/flow';
 
 function extractJsonFromMarkdown(text: string): string {
   return text.replace(/```(?:json)?\s*([\s\S]*?)\s*```/, '$1').trim();
@@ -22,12 +23,12 @@ export class InformationArchitectAgent {
   }
 
   async generateUXComponents(
-    flows: string[],
+    model: Model,
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
   ): Promise<AIAgentOutput> {
-    const prompt = this.constructPrompt(flows, uxSchema, existingSchema, atoms);
+    const prompt = this.constructPrompt(model, uxSchema, existingSchema, atoms);
     try {
       const response = await generateTextWithAI(prompt, {
         provider: this.provider,
@@ -49,20 +50,20 @@ export class InformationArchitectAgent {
   }
 
   private constructPrompt(
-    flows: string[],
+    model: Model,
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
   ): string {
     return `
-You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
+You are an expert UI architect and product designer. Given the following model (containing flows, messages, and integrations) and UX schema, generate a detailed JSON specification for the application's UI components and pages.
 
-IMPORTANT: Only generate pages and components that are directly referenced in the provided flows. Do NOT add any extra pages or components, and do NOT make assumptions outside the flows. If something is not mentioned in the flows, it should NOT appear in the output.
+IMPORTANT: Only generate pages and components that are directly referenced in the provided model's flows. Do NOT add any extra pages or components, and do NOT make assumptions outside the flows. If something is not mentioned in the flows, it should NOT appear in the output.
 IMPORTANT: try your best to reuse the existing atoms, and try not to generate atoms with context: like Submit Button, because the submit part is mainly irrelevant, instead just use the Button atom if provided.
 
 $${atoms ? `Here is a list of available atomic components (atoms) from the design system. Use these atoms and their props as much as possible. Only create new atoms if absolutely necessary. And only put the new atoms created into the schema. \n\nAtoms:\n${JSON.stringify(atoms, null, 2)}\n` : ''}
-Flows:
-${JSON.stringify(flows, null, 2)}
+System Model (flows, messages, integrations):
+${JSON.stringify(model, null, 2)}
 
 UX Schema:
 ${JSON.stringify(uxSchema, null, 2)}
@@ -91,8 +92,8 @@ Instructions:
     - layout (listing the organisms used)
     - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
     - data_requirements (array, as above, for page-level data fetching)
-- For each component or page, if there are any specs defined in the flows using specs('ComponentOrPageName', ...), extract all should(...) statements from .client(() => { ... }) blocks and assign them as an array of strings to a 'specs' field for the corrosponding component/page.
-- Only include specs from .client(() => { ... }) blocks, not from server() or other blocks.
+- For each component or page, if there are any specs defined in the model's flow slices (look for slice.specs array where specs have context='client'), extract all spec descriptions and assign them as an array of strings to a 'specs' field for the corresponding component/page.
+- Only include specs where the context is 'client', not 'server' or other contexts.
 - If no specs are found for a component/page, omit the 'specs' field.
 
 Use the following structure as a template for your response:
@@ -147,11 +148,11 @@ Do not include any text, explanation, or markdown—only the JSON object as desc
 }
 
 export async function processFlowsWithAI(
-  flows: string[],
+  model: Model,
   uxSchema: UXSchema,
   existingSchema?: object,
   atoms?: { name: string; props: { name: string; type: string }[] }[],
 ): Promise<AIAgentOutput> {
   const agent = new InformationArchitectAgent();
-  return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms);
+  return agent.generateUXComponents(model, uxSchema, existingSchema, atoms);
 }

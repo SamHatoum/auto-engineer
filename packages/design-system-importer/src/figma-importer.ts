@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import createDebug from 'debug';
-import { FigmaComponentsBuilder, type FilterFunctionType } from './FigmaComponentsBuilder.js';
+import { type FilterFunctionType } from './FigmaComponentsBuilder.js';
 import { generateMarkdownFromComponents } from './markdown-generator.js';
 
 const debug = createDebug('design-system-importer');
@@ -50,7 +50,10 @@ export async function importDesignSystemComponentsFromFigma(
 
     const absolutePath = path.resolve(outputDir, 'figma-file.json');
     const rawFigmaFile = await fs.readFile(absolutePath, 'utf-8');
-    const nodes = JSON.parse(rawFigmaFile)?.root;
+    const parsedFile = JSON.parse(rawFigmaFile) as {
+      root: { name: string; description: string; thumbnail: string }[];
+    };
+    const nodes = parsedFile.root;
     figmaComponents = filterFn(nodes);
   }
 

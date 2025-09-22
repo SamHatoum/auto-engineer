@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { processFlowsWithAI } from '../index';
 import { type UXSchema } from '../types';
 import createDebug from 'debug';
+import { Model } from '@auto-engineer/flow';
 
 const debug = createDebug('ia:generate-command');
 const debugSchema = createDebug('ia:generate-command:schema');
@@ -18,8 +19,8 @@ const __dirname = path.dirname(__filename);
 export type GenerateIACommand = Command<
   'GenerateIA',
   {
+    modelPath: string;
     outputDir: string;
-    flowFiles: string[];
   }
 >;
 
@@ -28,7 +29,6 @@ export type IAGeneratedEvent = Event<
   {
     outputPath: string;
     outputDir: string;
-    flowFiles: string[];
   }
 >;
 
@@ -37,7 +37,6 @@ export type IAGenerationFailedEvent = Event<
   {
     error: string;
     outputDir: string;
-    flowFiles: string[];
   }
 >;
 
@@ -58,13 +57,12 @@ export const commandHandler = defineCommandHandler<
       description: 'Context directory',
       required: true,
     },
-    flowFiles: {
-      description: 'Flow files to analyze',
+    modelPath: {
+      description: 'Path to the model file',
       required: true,
-      // Note: flowFiles is an array, so it doesn't have a simple position
     },
   },
-  examples: ['$ auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts'],
+  examples: ['$ auto generate:ia --output-dir=./.context --model-path=./.context/schema.json'],
   handle: async (command: GenerateIACommand): Promise<IAGeneratedEvent | IAGenerationFailedEvent> => {
     const result = await handleGenerateIACommandInternal(command);
     if (result.type === 'IAGenerated') {
@@ -106,6 +104,12 @@ async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> 
   return components;
 }
 
+async function getModelFromContext(modelPath: string): Promise<Model> {
+  debug('Loading model from context: %s', modelPath);
+  const modelContent = await fs.readFile(modelPath, 'utf-8');
+  return JSON.parse(modelContent) as Model;
+}
+
 async function getUniqueSchemaPath(
   outputDir: string,
 ): Promise<{ filePath: string; existingSchema: object | undefined }> {
@@ -134,11 +138,10 @@ async function getUniqueSchemaPath(
 async function handleGenerateIACommandInternal(
   command: GenerateIACommand,
 ): Promise<IAGeneratedEvent | IAGenerationFailedEvent> {
-  const { outputDir, flowFiles } = command.data;
+  const { outputDir, modelPath } = command.data;
 
   debug('Handling GenerateIA command');
   debug('  Output directory: %s', outputDir);
-  debug('  Flow files: %d', flowFiles.length);
   debug('  Request ID: %s', command.requestId);
   debug('  Correlation ID: %s', command.correlationId ?? 'none');
 
@@ -146,22 +149,11 @@ async function handleGenerateIACommandInternal(
     // Load UX schema
     const uxSchemaPath = path.join(__dirname, '..', 'auto-ux-schema.json');
     debugSchema('Loading UX schema from: %s', uxSchemaPath);
-
     const uxSchemaContent = await fs.readFile(uxSchemaPath, 'utf-8');
     const uxSchema = JSON.parse(uxSchemaContent) as UXSchema;
     debugSchema('UX schema loaded successfully');
-
-    // Read all flow files
-    debugFiles('Reading %d flow files', flowFiles.length);
-    const flows: string[] = await Promise.all(
-      flowFiles.map(async (flow: string) => {
-        debugFiles('  Reading: %s', flow);
-        const content = await fs.readFile(flow, 'utf-8');
-        debugFiles('    Size: %d bytes', content.length);
-        return content;
-      }),
-    );
-    debugFiles('All flow files read successfully');
+    const model = await getModelFromContext(modelPath);
+    debugFiles('Reading %d flow files', model.flows.length);
 
     // Get unique schema path and existing schema
     const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
@@ -174,11 +166,10 @@ async function handleGenerateIACommandInternal(
 
     // Generate IA schema using AI
     debug('Processing flows with AI...');
-    debug('  Flow count: %d', flows.length);
     debug('  Existing schema: %s', existingSchema ? 'yes' : 'no');
     debug('  Atom count: %d', atoms.length);
 
-    const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms);
+    const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms);
     debug('AI processing complete');
 
     // Write the schema to file
@@ -195,7 +186,6 @@ async function handleGenerateIACommandInternal(
       data: {
         outputPath: filePath,
         outputDir,
-        flowFiles,
       },
       timestamp: new Date(),
       requestId: command.requestId,
@@ -215,7 +205,6 @@ async function handleGenerateIACommandInternal(
       data: {
         error: errorMessage,
         outputDir,
-        flowFiles,
       },
       timestamp: new Date(),
       requestId: command.requestId,
