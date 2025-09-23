@@ -14,7 +14,7 @@ import createDebug from 'debug';
 import { defineCommandHandler, Command, Event } from '@auto-engineer/message-bus';
 
 const debug = createDebug('auto:generate-server');
-const debugSchema = createDebug('auto:generate-server:schema');
+const debugModel = createDebug('auto:generate-server:schema');
 const debugFiles = createDebug('auto:generate-server:files');
 const debugDeps = createDebug('auto:generate-server:deps');
 const debugScaffold = createDebug('auto:generate-server:scaffold');
@@ -25,7 +25,7 @@ const __dirname = dirname(__filename);
 export type GenerateServerCommand = Command<
   'GenerateServer',
   {
-    schemaPath: string;
+    modelPath: string;
     destination: string; // the project root where "server" directory will be created
   }
 >;
@@ -33,7 +33,7 @@ export type GenerateServerCommand = Command<
 export type ServerGeneratedEvent = Event<
   'ServerGenerated',
   {
-    schemaPath: string;
+    modelPath: string;
     destination: string;
     serverDir: string;
     contextSchemaGraphQL?: string;
@@ -43,24 +43,35 @@ export type ServerGeneratedEvent = Event<
 export type ServerGenerationFailedEvent = Event<
   'ServerGenerationFailed',
   {
-    schemaPath: string;
+    modelPath: string;
     destination: string;
     error: string;
   }
 >;
 
-export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent;
+export type SliceImplementedEvent = Event<
+  'SliceImplemented',
+  {
+    flowName: string;
+    sliceName: string;
+    sliceType: string;
+    schemaPath: string;
+    destination: string;
+  }
+>;
+
+export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent | SliceImplementedEvent;
 
 export const commandHandler = defineCommandHandler({
   name: 'GenerateServer',
   alias: 'generate:server',
-  description: 'Generate server from schema.json',
+  description: 'Generate server from model',
   category: 'generate',
   icon: 'server',
-  events: ['ServerGenerated', 'ServerGenerationFailed'],
+  events: ['ServerGenerated', 'ServerGenerationFailed', 'SliceImplemented'],
   fields: {
-    schemaPath: {
-      description: 'Path to schema.json file',
+    modelPath: {
+      description: 'Path to the json model file',
       required: true,
     },
     destination: {
@@ -68,31 +79,34 @@ export const commandHandler = defineCommandHandler({
       required: true,
     },
   },
-  examples: ['$ auto generate:server --schema-path=.context/schema.json --destination=.'],
-  handle: async (command: Command): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
+  examples: ['$ auto generate:server --model-path=.context/model.json --destination=.'],
+  handle: async (command: Command): Promise<GenerateServerEvents | GenerateServerEvents[]> => {
     const typedCommand = command as GenerateServerCommand;
     const result = await handleGenerateServerCommandInternal(typedCommand);
-    if (result.type === 'ServerGenerated') {
-      debug('Server generated at %s', result.data.serverDir);
-    } else {
-      debug('Failed to generate server: %s', result.data.error);
+    const events = Array.isArray(result) ? result : [result];
+    const finalEvent = events[events.length - 1];
+    if (finalEvent.type === 'ServerGenerated') {
+      debug('Server generated at %s', finalEvent.data.serverDir);
+    } else if (finalEvent.type === 'ServerGenerationFailed') {
+      debug('Failed to generate server: %s', finalEvent.data.error);
     }
+
     return result;
   },
 });
 
-async function validateSchemaFile(
-  absSchema: string,
+async function validateModelFile(
+  absModel: string,
   command: GenerateServerCommand,
 ): Promise<ServerGenerationFailedEvent | null> {
-  if (!existsSync(absSchema)) {
-    debug('Schema file not found at %s', absSchema);
+  if (!existsSync(absModel)) {
+    debug('Model file not found at %s', absModel);
     return {
       type: 'ServerGenerationFailed',
       data: {
-        schemaPath: command.data.schemaPath,
+        modelPath: command.data.modelPath,
         destination: command.data.destination,
-        error: `Schema file not found at ${absSchema}`,
+        error: `Model file not found at ${absModel}`,
       },
       timestamp: new Date(),
       requestId: command.requestId,
@@ -102,17 +116,17 @@ async function validateSchemaFile(
   return null;
 }
 
-async function readAndParseSchema(absSchema: string): Promise<Model> {
-  debugSchema('Reading schema file from %s', absSchema);
-  const content = await readFile(absSchema, 'utf8');
+async function readAndParseModel(absModel: string): Promise<Model> {
+  debugModel('Reading model file from %s', absModel);
+  const content = await readFile(absModel, 'utf8');
 
-  debugSchema('Schema content length: %d bytes', content.length);
+  debugModel('Model content length: %d bytes', content.length);
   const spec = JSON.parse(content) as Model;
 
-  debugSchema('Parsed schema:');
-  debugSchema('  Flows: %d', spec.flows?.length || 0);
-  debugSchema('  Messages: %d', spec.messages?.length || 0);
-  debugSchema('  Integrations: %d', spec.integrations?.length ?? 0);
+  debugModel('Parsed model:');
+  debugModel('  Flows: %d', spec.flows?.length || 0);
+  debugModel('  Messages: %d', spec.messages?.length || 0);
+  debugModel('  Integrations: %d', spec.integrations?.length ?? 0);
 
   logFlowDetails(spec);
   return spec;
@@ -120,14 +134,14 @@ async function readAndParseSchema(absSchema: string): Promise<Model> {
 
 function logFlowDetails(spec: Model): void {
   if (spec.flows !== undefined && spec.flows.length > 0) {
-    debugSchema(
+    debugModel(
       'Flow names: %o',
       spec.flows.map((f) => f.name),
     );
     spec.flows.forEach((flow) => {
-      debugSchema('  Flow "%s" has %d slices', flow.name, flow.slices?.length || 0);
+      debugModel('  Flow "%s" has %d slices', flow.name, flow.slices?.length || 0);
       flow.slices?.forEach((slice) => {
-        debugSchema('    Slice: %s (type: %s)', slice.name, slice.type);
+        debugModel('    Slice: %s (type: %s)', slice.name, slice.type);
       });
     });
   }
@@ -189,7 +203,7 @@ function createServerSuccessEvent(
   return {
     type: 'ServerGenerated',
     data: {
-      schemaPath: command.data.schemaPath,
+      modelPath: command.data.modelPath,
       destination: command.data.destination,
       serverDir,
       contextSchemaGraphQL: join(absDest, '.context', 'schema.graphql'),
@@ -205,7 +219,7 @@ function createServerFailureEvent(command: GenerateServerCommand, error: unknown
   return {
     type: 'ServerGenerationFailed',
     data: {
-      schemaPath: command.data.schemaPath,
+      modelPath: command.data.modelPath,
       destination: command.data.destination,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     },
@@ -215,29 +229,28 @@ function createServerFailureEvent(command: GenerateServerCommand, error: unknown
   };
 }
 
-async function handleGenerateServerCommandInternal(
+export async function handleGenerateServerCommandInternal(
   command: GenerateServerCommand,
-): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
-  const { schemaPath, destination } = command.data;
+): Promise<GenerateServerEvents[]> {
+  const { modelPath, destination } = command.data;
+  const events: GenerateServerEvents[] = [];
 
   debug('Starting server generation');
-  debug('Schema path: %s', schemaPath);
+  debug('Model path: %s', modelPath);
   debug('Destination: %s', destination);
 
   try {
     const absDest = resolve(destination);
-    const absSchema = resolve(schemaPath);
+    const absModel = resolve(modelPath);
 
     debug('Resolved paths:');
     debug('  Absolute destination: %s', absDest);
-    debug('  Absolute schema: %s', absSchema);
+    debug('  Absolute model: %s', absModel);
 
-    // Validate schema file exists
-    const validationError = await validateSchemaFile(absSchema, command);
-    if (validationError) return validationError;
+    const validationError = await validateModelFile(absModel, command);
+    if (validationError) return [validationError];
 
-    // Read and parse schema
-    const spec = await readAndParseSchema(absSchema);
+    const spec = await readAndParseModel(absModel);
 
     // Setup server directory
     const serverDir = join(absDest, 'server');
@@ -247,8 +260,33 @@ async function handleGenerateServerCommandInternal(
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
 
-    // Generate scaffold files
+    // Generate scaffold files and emit SliceImplemented events
     await generateAndWriteScaffold(spec, serverDir);
+
+    // Emit SliceImplemented events for each slice
+    if (Array.isArray(spec.flows) && spec.flows.length > 0) {
+      for (const flow of spec.flows) {
+        if (Array.isArray(flow.slices) && flow.slices.length > 0) {
+          for (const slice of flow.slices) {
+            const sliceEvent: SliceImplementedEvent = {
+              type: 'SliceImplemented',
+              data: {
+                flowName: flow.name,
+                sliceName: slice.name,
+                sliceType: slice.type,
+                schemaPath: command.data.modelPath,
+                destination: command.data.destination,
+              },
+              timestamp: new Date(),
+              requestId: command.requestId,
+              correlationId: command.correlationId,
+            };
+            events.push(sliceEvent);
+            debug('SliceImplemented: %s.%s', flow.name, slice.name);
+          }
+        }
+      }
+    }
 
     // Copy files
     await copyAllFiles(serverDir);
@@ -263,9 +301,13 @@ async function handleGenerateServerCommandInternal(
     debug('Server generation completed successfully');
     debug('Server directory: %s', serverDir);
 
-    return createServerSuccessEvent(command, serverDir, absDest);
+    // Add final success event
+    events.push(createServerSuccessEvent(command, serverDir, absDest));
+    return events;
   } catch (error) {
-    return createServerFailureEvent(command, error);
+    // Add failure event to events array if any events were already added
+    events.push(createServerFailureEvent(command, error));
+    return events;
   }
 }
 

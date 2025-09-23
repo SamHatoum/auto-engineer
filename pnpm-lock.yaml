@@ -623,6 +623,9 @@ importers:
       '@auto-engineer/ai-gateway':
         specifier: workspace:*
         version: link:../ai-gateway
+      '@auto-engineer/flow':
+        specifier: workspace:*
+        version: link:../flow
       '@auto-engineer/message-bus':
         specifier: workspace:*
         version: link:../message-bus

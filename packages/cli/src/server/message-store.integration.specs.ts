@@ -106,7 +106,6 @@ describe('Message Store Integration', async () => {
     expect(messagesResponse.ok).toBe(true);
 
     const messages = (await messagesResponse.json()) as HttpPositionalMessage[];
-    console.log('Received messages:', typeof messages, Array.isArray(messages), messages);
     expect(Array.isArray(messages)).toBe(true);
     expect(messages.length).toBeGreaterThanOrEqual(2);
 

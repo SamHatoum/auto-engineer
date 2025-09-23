@@ -2,6 +2,7 @@ import { processFlowsWithAI } from './index';
 import uxSchema from './auto-ux-schema.json';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { type Model } from '@auto-engineer/flow';
 
 interface DesignSystemItem {
   name: string;
@@ -100,19 +101,32 @@ async function getUniqueSchemaPath(
   return { filePath, existingSchema };
 }
 
+async function getModelFromContext(outputDir: string): Promise<Model> {
+  const modelPath = path.join(outputDir, 'schema.json');
+  try {
+    const modelContent = await fs.readFile(modelPath, 'utf-8');
+    return JSON.parse(modelContent) as Model;
+  } catch (error) {
+    console.error(`Error reading model from ${modelPath}:`, error);
+    console.error('Please ensure the model schema.json exists in the output directory.');
+    process.exit(1);
+  }
+}
+
 async function main() {
-  const [, , outputDir, ...flowFiles] = process.argv;
+  const [, , outputDir] = process.argv;
   if (!outputDir) {
-    console.error('Usage: tsx src/generate-ia-schema.ts <output-dir> <flow-file-1> <flow-file-2> ...');
+    console.error('Usage: tsx src/generate-ia-schema.ts <output-dir>');
+    console.error('Note: The model schema.json must exist in the output directory.');
     process.exit(1);
   }
 
-  const flows: string[] = await Promise.all(flowFiles.map((flow) => fs.readFile(flow, 'utf-8')));
+  const model = await getModelFromContext(outputDir);
   const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
   const { components: atomsNames, layouts } = await getComponentsAndLayouts(outputDir);
   const atoms = atomsNames.map((atom) => ({ name: atom.name, props: [] }));
 
-  const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms, layouts);
+  const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms, layouts);
 
   await fs.writeFile(filePath, JSON.stringify(iaSchema, null, 2));
   console.log(`Generated IA schema written to ${filePath}`);

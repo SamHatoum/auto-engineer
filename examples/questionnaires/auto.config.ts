@@ -41,7 +41,7 @@ export default autoConfig({
   pipeline: () => {
     on<ExportSchemaEvents>('SchemaExported', () =>
       dispatch<GenerateServerCommand>('GenerateServer', {
-        schemaPath: './.context/schema.json',
+        modelPath: './.context/schema.json',
         destination: '.',
       }),
     );
@@ -112,8 +112,8 @@ export default autoConfig({
 
     on<GenerateServerEvents>('ServerGenerated', () =>
       dispatch<GenerateIACommand>('GenerateIA', {
+        modelPath: './.context/schema.json',
         outputDir: './.context',
-        flowFiles: ['./flows/questionnaires.flow.ts'],
       }),
     );
 

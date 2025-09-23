@@ -28,6 +28,7 @@
   "dependencies": {
     "@auto-engineer/ai-gateway": "workspace:*",
     "@auto-engineer/message-bus": "workspace:*",
+    "@auto-engineer/flow": "workspace:*",
     "fast-glob": "^3.3.2"
   },
   "devDependencies": {

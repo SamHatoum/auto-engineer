@@ -177,6 +177,18 @@ export class MessageBusServer {
     return this.settledTracker;
   }
 
+  /**
+   * Subscribe to all events (for testing)
+   */
+  subscribeToAllEvents(handler: (event: Event) => void): void {
+    this.messageBus.subscribeAll({
+      name: 'TestEventSubscriber',
+      handle: async (event: Event) => {
+        handler(event);
+      },
+    });
+  }
+
   setDslRegistrations(registrations: Array<import('../dsl/types').DslRegistration>): void {
     this.dslRegistrations = [...registrations];
   }

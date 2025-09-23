@@ -20,7 +20,7 @@ export type Event<EventType extends string = string, EventData extends DefaultRe
 
 export type CommandHandler<TCommand extends Command = Command, TEvent extends Event = Event> = {
   name: string;
-  handle: (command: TCommand) => Promise<TEvent | TEvent[] | void>;
+  handle: (command: TCommand) => Promise<TEvent | TEvent[]>;
 };
 
 export type EventHandler<TEvent extends Event = Event> = {

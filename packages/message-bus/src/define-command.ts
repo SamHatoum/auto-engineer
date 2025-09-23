@@ -39,7 +39,7 @@ export interface UnifiedCommandHandler<C extends Command<string, Record<string, 
   examples: string[];
   events?: string[];
   // Override the handle type to match CommandHandler but with the specific command type
-  handle: (command: Command) => Promise<Event | Event[] | void>;
+  handle: (command: Command) => Promise<Event | Event[]>;
 }
 
 /**
@@ -79,7 +79,7 @@ export function defineCommandHandler(config: {
   package?: PackageMetadata;
   fields: Record<string, FieldDefinition<unknown>>;
   examples: string[];
-  handle: (command: Command) => Promise<Event | Event[] | void>;
+  handle: (command: Command) => Promise<Event | Event[]>;
   events: string[];
 }): CommandHandler;
 
@@ -92,12 +92,12 @@ export function defineCommandHandler(config: {
   package?: PackageMetadata;
   fields: Record<string, FieldDefinition<unknown>>;
   examples: string[];
-  handle: (command: Command) => Promise<Event | Event[] | void>;
+  handle: (command: Command) => Promise<Event | Event[]>;
   events: string[];
 }): CommandHandler {
   // Cast the handle function to the base Command type for interface compatibility
   return {
     ...config,
-    handle: config.handle as (command: Command) => Promise<Event | Event[] | void>,
+    handle: config.handle as (command: Command) => Promise<Event | Event[]>,
   };
 }

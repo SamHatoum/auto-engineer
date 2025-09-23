@@ -35,7 +35,7 @@ export class CommandRegistry {
       'name' in handler &&
       'handle' in handler
     ) {
-      const cmdHandler = handler as { name: string; handle: (cmd: Command) => Promise<Event | Event[] | void> };
+      const cmdHandler = handler as { name: string; handle: (cmd: Command) => Promise<Event | Event[]> };
       debugBus('Registering command handler:', cmdHandler.name);
       this.messageBus.registerCommandHandler(cmdHandler);
       this.commandHandlerNames.push(cmdHandler.name);

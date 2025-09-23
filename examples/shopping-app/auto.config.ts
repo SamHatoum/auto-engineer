@@ -99,7 +99,7 @@ export default autoConfig({
       dispatch<GenerateServerCommand>({
         type: 'GenerateServer',
         data: {
-          schemaPath: event.data.outputPath,
+          modelPath: event.data.outputPath,
           destination: event.data.outputPath.replace('/.context/schema.json', '/server'),
         },
       }),
@@ -110,7 +110,10 @@ export default autoConfig({
         { type: 'ImplementServer', data: { serverDirectory: event.data.serverDir } },
         {
           type: 'GenerateIA',
-          data: { outputDir: event.data.destination + '/.context', flowFiles: [event.data.schemaPath] },
+          data: {
+            outputDir: event.data.destination + '/.context',
+            modelPath: event.data.destination + '/.context/model.json',
+          },
         },
       ]),
     );

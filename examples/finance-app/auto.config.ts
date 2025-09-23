@@ -1,12 +1,7 @@
-import { autoConfig, on, dispatch } from '@auto-engineer/cli';
+import { autoConfig, on, dispatch, fold } from '@auto-engineer/cli';
 import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
 import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
-import type {
-  ImplementServerCommand,
-  ImplementServerEvents,
-  ImplementSliceEvents,
-  ImplementSliceCommand,
-} from '@auto-engineer/server-implementer';
+import type { ImplementServerCommand, ImplementServerEvents } from '@auto-engineer/server-implementer';
 import type {
   CheckTestsCommand,
   CheckTestsEvents,
@@ -40,110 +35,112 @@ export default autoConfig({
   },
   pipeline: () => {
     on<ExportSchemaEvents>('SchemaExported', () =>
-      dispatch<GenerateServerCommand>('GenerateServer', {
-        schemaPath: './.context/schema.json',
-        destination: '.',
-      }),
-    );
-
-    on<GenerateServerEvents>('ServerGenerated', () =>
-      dispatch<ImplementSliceCommand>('ImplementSlice', {
-        slicePath: './server/src/domain/flows/finance-app/submits-a-questionnaire-answer',
-        context: {
-          previousOutputs: 'errors',
-          attemptNumber: 0,
+      dispatch<GenerateIACommand>({
+        type: 'GenerateIA',
+        data: {
+          outputDir: './.context',
+          modelPath: './.model/schema.json',
         },
       }),
     );
 
-    on<ImplementSliceEvents>('SliceImplemented', () =>
-      dispatch<CheckTestsCommand>('CheckTests', {
-        targetDirectory: './server/src/domain/flows/finance-app/submits-a-questionnaire-answer',
-        scope: 'slice',
-      }),
-    );
-
-    on<ImplementSliceEvents>('SliceImplemented', () =>
-      dispatch<CheckTypesCommand>('CheckTypes', {
-        targetDirectory: './server/src/domain/flows/finance-app/submits-a-questionnaire-answer',
-        scope: 'slice',
-      }),
-    );
-
-    on<ImplementServerEvents>('SliceImplemented', () =>
-      dispatch<CheckLintCommand>('CheckLint', {
-        targetDirectory: './server/src/domain/flows/finance-app/submits-a-questionnaire-answer',
-        scope: 'slice',
-        fix: true,
-      }),
-    );
-
-    on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
-      ['CheckTests', 'CheckTypes', 'CheckLint'],
-      dispatch<ImplementSliceCommand>(['ImplementSlice'], (events, send) => {
-        const hasFailures =
-          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
-          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
-          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
-
-        if (hasFailures) {
-          send({
-            type: 'ImplementSlice',
-            data: {
-              slicePath: './server/src/domain/flows/finance-app/submits-a-questionnaire-answer',
-              context: {
-                previousOutputs:
-                  events.CheckTests.map((e) => (e.type === 'TestsCheckFailed' ? e : null))
-                    .filter(Boolean)
-                    .join('\n') +
-                  events.CheckTypes.map((e) => (e.type === 'TypeCheckFailed' ? e : null))
-                    .filter(Boolean)
-                    .join('\n') +
-                  events.CheckLint.map((e) => (e.type === 'LintCheckFailed' ? e : null))
-                    .filter(Boolean)
-                    .join('\n'),
-                attemptNumber: 0,
-              },
-            },
-          });
-        }
-      }),
-    );
-
-    on<GenerateServerEvents>('ServerGenerated', () =>
-      dispatch<GenerateIACommand>('GenerateIA', {
-        outputDir: './.context',
-        flowFiles: ['./flows/app-homepage.flow.ts', 'landing-page.flow.ts'],
-      }),
-    );
+    // on<GenerateServerEvents>('ServerGenerated', () =>
+    //   dispatch<GenerateIACommand>({
+    //     type: 'GenerateIA',
+    //     data: {
+    //       outputDir: './.context',
+    //       flowFiles: ['./flows/finance-app.flow.ts', './flows/finance-app-landing.flow.ts'],
+    //     },
+    //   }),
+    // );
 
     on<GenerateIAEvents>('IAGenerated', () =>
-      dispatch<GenerateClientCommand>('GenerateClient', {
-        starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
-        targetDir: './client',
-        iaSchemaPath: './.context/auto-ia-scheme.json',
-        gqlSchemaPath: './.context/schema.graphql',
-        figmaVariablesPath: './.context/figma-variables.json',
+      dispatch<GenerateClientCommand>({
+        type: 'GenerateClient',
+        data: {
+          starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
+          targetDir: './client',
+          iaSchemaPath: './.context/auto-ia-scheme.json',
+          gqlSchemaPath: './.context/schema.graphql',
+          figmaVariablesPath: './.context/figma-variables.json',
+        },
       }),
     );
 
     on<GenerateClientEvents>('ClientGenerated', () =>
-      dispatch<ImplementClientCommand>('ImplementClient', {
-        projectDir: './client',
-        iaSchemeDir: './.context',
-        designSystemPath: './.context/design-system.md',
+      dispatch<ImplementClientCommand>({
+        type: 'ImplementClient',
+        data: {
+          projectDir: './client',
+          iaSchemeDir: './.context',
+          designSystemPath: './.context/design-system.md',
+        },
       }),
     );
+
+    // on<ImplementServerEvents>('SliceImplemented', () => {
+    //   dispatch<CheckTestsCommand>({
+    //     type: 'CheckTests',
+    //     data: {
+    //       targetDirectory: 'sds',
+    //       scope: 'slice',
+    //     },
+    //   });
+    // });
+
+    // on<ImplementServerEvents>('SliceImplemented', () => {
+    //   dispatch<CheckTypesCommand>({
+    //     type: 'CheckTypes',
+    //     data: {
+    //       targetDirectory: 'sds',
+    //       scope: 'slice',
+    //     },
+    //   });
+    // });
+
+    // on<ImplementServerEvents>('SliceImplemented', () => {
+    //   dispatch<CheckLintCommand>({
+    //     type: 'CheckLint',
+    //     data: {
+    //       targetDirectory: 'sds',
+    //       scope: 'slice',
+    //       fix: true,
+    //     },
+    //   });
+    // });
+
+    // on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
+    //   ['CheckTests', 'CheckTypes', 'CheckLint'],
+    //   (events) => {
+    //     const hasFailures =
+    //       events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
+    //       events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
+    //       events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
+
+    //     if (hasFailures) {
+    //       dispatch<ImplementClientCommand>({
+    //         type: 'ImplementClient',
+    //         data: {
+    //           projectDir: 'some/where',
+    //           iaSchemeDir: '/',
+    //           designSystemPath: '',
+    //           failures: [],
+    //         },
+    //       });
+    //     }
+    //   },
+    // );
   },
 });
+
 /*
 
 rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json 
 pnpm auto export:schema
-pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/finance-app.flow.ts
+pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/questionnaires.flow.ts
 pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
 pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
-pnpm auto implement:client --project-dir=./finance-app/client --ia-scheme-dir=./finance-app/.context --design-system-path=./finance-app/.context/design-system.md
+pnpm auto implement:client --project-dir=./questionnaires/client --ia-scheme-dir=./questionnaires/.context --design-system-path=./questionnaires/.context/design-system.md
 
 
 // make this emit one slice at a time
@@ -153,12 +150,12 @@ pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
 pnpm auto generate:client --starter-dir=/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter  --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
 
 // run this per slice in parallel
-pnpm auto implement:slice --slice-path=./finance-app/server/src/domain/flows/finance-app/submits-the-questionnaire
+pnpm auto implement:slice --slice-path=./questionnaires/server/src/domain/flows/questionnaires/submits-the-questionnaire
 // add checks
 // add retry logic tore-implement failed slices with a retry count
 
 // slice these up
-pnpm auto implement:client --project-dir=./finance-app/client --ia-scheme-dir=./finance-app/.context --design-system-path=./finance-app/.context/design-system.md
+pnpm auto implement:client --project-dir=./questionnaires/client --ia-scheme-dir=./questionnaires/.context --design-system-path=./questionnaires/.context/design-system.md
 
 
 // implement atoms in parallel - how do I know all atoms are done?
@@ -171,12 +168,13 @@ pnpm auto implement:client --project-dir=./finance-app/client --ia-scheme-dir=./
 // generate slice > implement slice > check slice > retry failure 3 times > 
 // generate slice > implement slice > check slice > retry failure 3 times > 
 
-cd ~/WebstormProjects/top/auto-engineer/examples/finance-app &&\
+cd ~/WebstormProjects/top/auto-engineer/examples/questionnaires &&\
 pnpm -w build &&\
 rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json &&\
 DEBUG=* pnpm auto export:schema &&\
 DEBUG=* pnpm auto generate:server --schema-path=./.context/schema.json --destination=. &&\
-DEBUG=* pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/finance-app.flow.ts &&\
+DEBUG=* pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/questionnaires.flow.ts &&\
 DEBUG=* pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+
 
 */
