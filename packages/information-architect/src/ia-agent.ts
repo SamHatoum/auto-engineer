@@ -70,7 +70,7 @@ ${JSON.stringify(model, null, 2)}
 UX Schema:
 ${JSON.stringify(uxSchema, null, 2)}
 
-${layouts ? `Templates: here is a lot of templates to be used for pages ${layouts}` : ``}
+${layouts ? `Templates: here is a lot of templates to be used for pages ${JSON.stringify(layouts, null, 2)}` : ``}
 
 ${existingSchema ? `Here is the current IA schema. Only add, update, or remove what is necessary based on the new flows and UX schema. Preserve what is still relevant and do not make unnecessary changes.\n\nCurrent IA Schema:\n${JSON.stringify(existingSchema, null, 2)}\n` : ''}
 Instructions:
