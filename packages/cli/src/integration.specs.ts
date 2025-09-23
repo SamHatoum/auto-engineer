@@ -52,14 +52,12 @@ describe('CLI Pipeline Integration', () => {
 
       const handleOutput = (data: Buffer, source: 'stdout' | 'stderr') => {
         const output = data.toString();
-        console.log(`Server ${source}:`, output);
 
         // Look for port in server startup message
         const portMatch = output.match(/Message bus server started on port (\d+)/);
         if (portMatch) {
           port = parseInt(portMatch[1], 10);
           baseUrl = `http://localhost:${port}`;
-          console.log(`Detected server port: ${port}`);
 
           // Start checking if server is ready
           const checkServer = () => {
@@ -137,27 +135,22 @@ describe('CLI Pipeline Integration', () => {
     const pipelineResponse = await axios.get(`${baseUrl}/pipeline`);
     expect(pipelineResponse.status).toBe(200);
 
-    console.log('📊 Pipeline API Response:', JSON.stringify(pipelineResponse.data, null, 2));
-
     const { commandToEvents, eventToCommand } = pipelineResponse.data;
 
     if (!commandToEvents) {
-      console.log('❌ commandToEvents is missing from pipeline response');
       return;
     }
-
-    console.log('📊 Total mapped commands:', Object.keys(commandToEvents).length);
-    console.log('📊 Dynamic Command-to-Event Mappings:');
-    console.log(JSON.stringify(commandToEvents, null, 2));
-    console.log('📊 Dynamic Event-to-Command Mappings:');
-    console.log(JSON.stringify(eventToCommand, null, 2));
 
     // Verify key mappings exist
     expect(commandToEvents).toHaveProperty('ExportSchema');
     expect(commandToEvents['ExportSchema']).toEqual(['SchemaExported', 'SchemaExportFailed']);
 
     expect(commandToEvents).toHaveProperty('GenerateServer');
-    expect(commandToEvents['GenerateServer']).toEqual(['ServerGenerated', 'ServerGenerationFailed']);
+    expect(commandToEvents['GenerateServer']).toEqual([
+      'ServerGenerated',
+      'ServerGenerationFailed',
+      'SliceImplemented',
+    ]);
 
     // Verify bi-directional mapping
     expect(eventToCommand).toHaveProperty('SchemaExported', 'ExportSchema');
@@ -170,12 +163,7 @@ describe('CLI Pipeline Integration', () => {
     expect(commandNames).toContain('ImplementSlice');
     expect(commandNames).toContain('CheckTests');
 
-    console.log(
-      `✅ Successfully built mappings for ${Object.keys(commandToEvents).length} commands and ${Object.keys(eventToCommand).length} events`,
-    );
-
     // Test cases for commands/events NOT in hardcoded mappings - these should FAIL with current implementation
-    console.log('🚨 Testing commands NOT in hardcoded mappings...');
 
     // Test CheckTests command (not in hardcoded COMMAND_TO_EVENT_MAP)
     expect(commandToEvents).toHaveProperty('CheckTests');
@@ -193,8 +181,6 @@ describe('CLI Pipeline Integration', () => {
     expect(eventToCommand).toHaveProperty('TestsCheckPassed', 'CheckTests');
     expect(eventToCommand).toHaveProperty('ClientImplemented', 'ImplementClient');
     expect(eventToCommand).toHaveProperty('ImportDesignSystemCompleted', 'ImportDesignSystem');
-
-    console.log('🚨 All non-hardcoded mappings work correctly!');
   });
 
   it('should trigger pipeline when ExportSchema command generates SchemaExported event', async () => {
@@ -220,11 +206,6 @@ describe('CLI Pipeline Integration', () => {
     const messagesResponse = await axios.get<MessageData[]>(`${baseUrl}/messages`);
     const messages = messagesResponse.data;
     const newMessages = messages.slice(initialCount);
-
-    console.log(
-      'New messages after command:',
-      newMessages.map((m) => `${m.messageType}:${m.message.type}`),
-    );
 
     // Find the SchemaExported event
     const schemaExportedEvent = newMessages.find(

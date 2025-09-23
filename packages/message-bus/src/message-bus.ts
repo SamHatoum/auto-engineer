@@ -92,11 +92,9 @@ export function createMessageBus() {
   }
 
   async function publishEventsFromResult<TCommand extends Command>(
-    result: Event | Event[] | void,
+    result: Event | Event[],
     command: TCommand,
   ): Promise<void> {
-    if (!result) return;
-
     const events = Array.isArray(result) ? result : [result];
     for (const event of events) {
       const eventWithRequestId = {

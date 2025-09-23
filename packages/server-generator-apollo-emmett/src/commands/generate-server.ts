@@ -49,7 +49,18 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
-export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent;
+export type SliceImplementedEvent = Event<
+  'SliceImplemented',
+  {
+    flowName: string;
+    sliceName: string;
+    sliceType: string;
+    schemaPath: string;
+    destination: string;
+  }
+>;
+
+export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent | SliceImplementedEvent;
 
 export const commandHandler = defineCommandHandler({
   name: 'GenerateServer',
@@ -57,7 +68,7 @@ export const commandHandler = defineCommandHandler({
   description: 'Generate server from model',
   category: 'generate',
   icon: 'server',
-  events: ['ServerGenerated', 'ServerGenerationFailed'],
+  events: ['ServerGenerated', 'ServerGenerationFailed', 'SliceImplemented'],
   fields: {
     modelPath: {
       description: 'Path to the json model file',
@@ -71,13 +82,16 @@ export const commandHandler = defineCommandHandler({
   examples: ['$ auto generate:server --model-path=.context/model.json --destination=.'],
   handle: async (command: Command): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
     const typedCommand = command as GenerateServerCommand;
-    const result = await handleGenerateServerCommandInternal(typedCommand);
-    if (result.type === 'ServerGenerated') {
-      debug('Server generated at %s', result.data.serverDir);
-    } else {
-      debug('Failed to generate server: %s', result.data.error);
+    const events = await handleGenerateServerCommandInternal(typedCommand);
+
+    const finalEvent = events[events.length - 1];
+    if (finalEvent.type === 'ServerGenerated') {
+      debug('Server generated at %s', finalEvent.data.serverDir);
+    } else if (finalEvent.type === 'ServerGenerationFailed') {
+      debug('Failed to generate server: %s', finalEvent.data.error);
     }
-    return result;
+
+    return events;
   },
 });
 
@@ -215,7 +229,7 @@ function createServerFailureEvent(command: GenerateServerCommand, error: unknown
   };
 }
 
-async function handleGenerateServerCommandInternal(
+export async function handleGenerateServerCommandInternal(
   command: GenerateServerCommand,
 ): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
   const { modelPath, destination } = command.data;
@@ -245,8 +259,33 @@ async function handleGenerateServerCommandInternal(
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
 
-    // Generate scaffold files
+    // Generate scaffold files and emit SliceImplemented events
     await generateAndWriteScaffold(spec, serverDir);
+
+    // Emit SliceImplemented events for each slice
+    if (Array.isArray(spec.flows) && spec.flows.length > 0) {
+      for (const flow of spec.flows) {
+        if (Array.isArray(flow.slices) && flow.slices.length > 0) {
+          for (const slice of flow.slices) {
+            const sliceEvent: SliceImplementedEvent = {
+              type: 'SliceImplemented',
+              data: {
+                flowName: flow.name,
+                sliceName: slice.name,
+                sliceType: slice.type,
+                schemaPath: command.data.schemaPath,
+                destination: command.data.destination,
+              },
+              timestamp: new Date(),
+              requestId: command.requestId,
+              correlationId: command.correlationId,
+            };
+            events.push(sliceEvent);
+            debug('SliceImplemented: %s.%s', flow.name, slice.name);
+          }
+        }
+      }
+    }
 
     // Copy files
     await copyAllFiles(serverDir);
@@ -261,9 +300,13 @@ async function handleGenerateServerCommandInternal(
     debug('Server generation completed successfully');
     debug('Server directory: %s', serverDir);
 
-    return createServerSuccessEvent(command, serverDir, absDest);
+    // Add final success event
+    events.push(createServerSuccessEvent(command, serverDir, absDest));
+    return events;
   } catch (error) {
-    return createServerFailureEvent(command, error);
+    // Add failure event to events array if any events were already added
+    events.push(createServerFailureEvent(command, error));
+    return events;
   }
 }
 

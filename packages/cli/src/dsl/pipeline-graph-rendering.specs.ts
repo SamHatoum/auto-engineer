@@ -97,9 +97,6 @@ describe('Pipeline Graph Rendering Integration', () => {
         e.to === '@auto-engineer/information-architect/generate:ia',
     );
 
-    console.log('🔍 GenerateServer -> ImplementSlice edge exists:', !!serverToSliceEdge);
-    console.log('🔍 GenerateServer -> GenerateIA edge exists:', !!serverToIAEdge);
-
     // Both edges should exist since we have multiple handlers for ServerGenerated
     expect(serverToSliceEdge, 'Missing GenerateServer -> ImplementSlice edge').toBeDefined();
     expect(serverToIAEdge, 'Missing GenerateServer -> GenerateIA edge').toBeDefined();
@@ -122,13 +119,6 @@ describe('Pipeline Graph Rendering Integration', () => {
 
     const graph = await getPipelineGraph({ metadataService });
 
-    console.log('🔍 DSL REGISTRATIONS PATH (GenerateIA commented out):');
-    console.log(
-      'Nodes:',
-      graph.nodes.map((n) => n.id),
-    );
-    console.log('Edges:', graph.edges);
-
     // Should have ImplementSlice edge since it's actually registered
     const serverToSliceEdge = graph.edges.find(
       (e) =>
@@ -145,10 +135,6 @@ describe('Pipeline Graph Rendering Integration', () => {
 
     // Should NOT have GenerateIA node since it's not dispatched anywhere
     const generateIANode = graph.nodes.find((n) => n.id === '@auto-engineer/information-architect/generate:ia');
-
-    console.log('🔍 GenerateServer -> ImplementSlice edge exists:', !!serverToSliceEdge);
-    console.log('🔍 GenerateServer -> GenerateIA edge exists (should be false):', !!serverToIAEdge);
-    console.log('🔍 GenerateIA node exists (should be false):', !!generateIANode);
 
     // Only the actually registered edge should exist
     expect(serverToSliceEdge, 'Missing GenerateServer -> ImplementSlice edge').toBeDefined();
@@ -173,13 +159,6 @@ describe('Pipeline Graph Rendering Integration', () => {
       metadataService,
       eventHandlers,
     });
-
-    console.log('✅ FIXED: EventHandlers path without hardcoded mappings:');
-    console.log(
-      'Nodes:',
-      graph.nodes.map((n) => n.id),
-    );
-    console.log('Edges:', graph.edges);
 
     // With eventHandlers path, we should only get source nodes, no edges
     // because we can't determine targets without analyzing dispatch calls
@@ -241,9 +220,6 @@ describe('Pipeline Graph Rendering Integration', () => {
 
     const graph = await getPipelineGraph({ metadataService });
 
-    console.log('🏗️ COMPLEX MULTI-STAGE PIPELINE:');
-    console.log(JSON.stringify(graph, null, 2));
-
     // Verify all nodes have canonical IDs
     const nodeIds = graph.nodes.map((n) => n.id);
     expect(nodeIds.every((id) => id.includes('/'))).toBe(true); // All should have package/alias format
@@ -288,9 +264,6 @@ describe('Pipeline Graph Rendering Integration', () => {
       messageStore: undefined,
     });
 
-    console.log('🔧 FALLBACK BEHAVIOR WITHOUT METADATA:');
-    console.log(JSON.stringify(graph, null, 2));
-
     const nodeIds = graph.nodes.map((n) => n.id);
 
     // Without metadata, only dispatched commands become nodes (can't determine source commands)
@@ -299,8 +272,6 @@ describe('Pipeline Graph Rendering Integration', () => {
 
     // All nodes should be command names (no "/" in IDs)
     expect(nodeIds.every((id) => !id.includes('/'))).toBe(true);
-
-    console.log('✅ Confirmed: Without metadata service, nodes use command names as fallback');
   });
 
   it('should handle fan-out pattern where one event triggers multiple commands', async () => {
@@ -346,9 +317,6 @@ describe('Pipeline Graph Rendering Integration', () => {
 
     const graph = await getPipelineGraph({ metadataService });
 
-    console.log('🌟 FAN-OUT PATTERN TEST:');
-    console.log(JSON.stringify(graph, null, 2));
-
     // Verify the pipeline structure
     expect(graph.nodes.length).toBeGreaterThan(5);
     expect(graph.edges.length).toBeGreaterThan(3);
@@ -371,7 +339,6 @@ describe('Pipeline Graph Rendering Integration', () => {
     );
 
     expect(implementSliceToChecks.length).toBe(3);
-    console.log('✅ Verified fan-out pattern: SliceImplemented → [CheckTests, CheckTypes, CheckLint]');
   });
 
   it('should show failed status when command emits events with error data', async () => {
@@ -428,58 +395,34 @@ describe('Pipeline Graph Rendering Integration', () => {
 
     // Get all messages to debug
     const allMessages = await messageStore.getAllMessages();
-    console.log(
-      '📋 ALL MESSAGES:',
-      allMessages.map((m) => ({
-        type: m.messageType,
-        messageType: m.message.type,
-        requestId: m.message.requestId,
-        hasError:
-          m.messageType === 'event' &&
-          m.message.data != null &&
-          typeof m.message.data === 'object' &&
-          'error' in m.message.data,
-      })),
-    );
+    allMessages.map((m) => ({
+      type: m.messageType,
+      messageType: m.message.type,
+      requestId: m.message.requestId,
+      hasError:
+        m.messageType === 'event' &&
+        m.message.data != null &&
+        typeof m.message.data === 'object' &&
+        'error' in m.message.data,
+    }));
 
     // Find commands specifically
     const commands = allMessages.filter((m) => m.messageType === 'command');
     const events = allMessages.filter((m) => m.messageType === 'event');
-    console.log(
-      '📋 COMMANDS:',
-      commands.map((m) => ({ type: m.message.type, requestId: m.message.requestId })),
-    );
-    console.log(
-      '📋 EVENTS:',
-      events.map((m) => ({ type: m.message.type, requestId: m.message.requestId })),
-    );
 
     // Generate pipeline graph with message store
     const graph = await getPipelineGraph({ metadataService, messageStore });
-
-    console.log('🔍 PIPELINE GRAPH WITH FAILED COMMAND:');
-    console.log(
-      'Nodes:',
-      graph.nodes.map((n) => ({ name: n.name, status: n.status })),
-    );
 
     // Find the MockFailCommand node
     const mockFailNode = graph.nodes.find((n) => n.name === 'MockFailCommand');
     expect(mockFailNode, 'MockFailCommand node should exist').toBeDefined();
 
-    console.log('🚨 ISSUE DEMONSTRATION:');
-
     // Find the ExportSchema node which actually failed
     const exportSchemaNode = graph.nodes.find((n) => n.name === 'ExportSchema');
     expect(exportSchemaNode, 'ExportSchema node should exist').toBeDefined();
 
-    console.log(`ExportSchema node status: ${exportSchemaNode?.status}`);
-    console.log('Expected: fail (because SchemaExportFailed event has error data)');
-    console.log('Actual: This demonstrates the bug - command that emitted error event shows wrong status');
-
     // The root issue: events have requestId: undefined, breaking status calculation
     const schemaExportFailedEvent = allMessages.find((m) => m.message.type === 'SchemaExportFailed');
-    console.log(`SchemaExportFailed event requestId: ${schemaExportFailedEvent?.message.requestId}`);
 
     // First verify that the event has error data
     expect(schemaExportFailedEvent, 'SchemaExportFailed event should exist').toBeDefined();
