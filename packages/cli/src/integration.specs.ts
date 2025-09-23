@@ -22,6 +22,11 @@ interface CommandMetadata {
   icon: string;
 }
 
+interface PipelineResponse {
+  commandToEvents?: Record<string, string[]>;
+  eventToCommand?: Record<string, string>;
+}
+
 interface RegistryData {
   eventHandlers: string[];
   commandHandlers: string[];
@@ -50,7 +55,7 @@ describe('CLI Pipeline Integration', () => {
         reject(new Error('Server failed to start within 20 seconds'));
       }, 20000);
 
-      const handleOutput = (data: Buffer, source: 'stdout' | 'stderr') => {
+      const handleOutput = (data: Buffer, _source: 'stdout' | 'stderr') => {
         const output = data.toString();
 
         // Look for port in server startup message
@@ -135,22 +140,19 @@ describe('CLI Pipeline Integration', () => {
     const pipelineResponse = await axios.get(`${baseUrl}/pipeline`);
     expect(pipelineResponse.status).toBe(200);
 
-    const { commandToEvents, eventToCommand } = pipelineResponse.data;
+    const pipelineData = pipelineResponse.data as PipelineResponse;
+    const { commandToEvents, eventToCommand } = pipelineData;
 
-    if (!commandToEvents) {
+    if (!commandToEvents || typeof commandToEvents !== 'object') {
       return;
     }
 
     // Verify key mappings exist
     expect(commandToEvents).toHaveProperty('ExportSchema');
-    expect(commandToEvents['ExportSchema']).toEqual(['SchemaExported', 'SchemaExportFailed']);
+    expect(commandToEvents.ExportSchema).toEqual(['SchemaExported', 'SchemaExportFailed']);
 
     expect(commandToEvents).toHaveProperty('GenerateServer');
-    expect(commandToEvents['GenerateServer']).toEqual([
-      'ServerGenerated',
-      'ServerGenerationFailed',
-      'SliceImplemented',
-    ]);
+    expect(commandToEvents.GenerateServer).toEqual(['ServerGenerated', 'ServerGenerationFailed', 'SliceImplemented']);
 
     // Verify bi-directional mapping
     expect(eventToCommand).toHaveProperty('SchemaExported', 'ExportSchema');
@@ -167,15 +169,15 @@ describe('CLI Pipeline Integration', () => {
 
     // Test CheckTests command (not in hardcoded COMMAND_TO_EVENT_MAP)
     expect(commandToEvents).toHaveProperty('CheckTests');
-    expect(commandToEvents['CheckTests']).toEqual(['TestsCheckPassed', 'TestsCheckFailed']);
+    expect(commandToEvents.CheckTests).toEqual(['TestsCheckPassed', 'TestsCheckFailed']);
 
     // Test ImplementClient command (not in hardcoded mapping)
     expect(commandToEvents).toHaveProperty('ImplementClient');
-    expect(commandToEvents['ImplementClient']).toEqual(['ClientImplemented', 'ClientImplementationFailed']);
+    expect(commandToEvents.ImplementClient).toEqual(['ClientImplemented', 'ClientImplementationFailed']);
 
     // Test ImportDesignSystem command (completely missing from hardcoded mappings)
     expect(commandToEvents).toHaveProperty('ImportDesignSystem');
-    expect(commandToEvents['ImportDesignSystem']).toEqual(['ImportDesignSystemCompleted', 'ImportDesignSystemFailed']);
+    expect(commandToEvents.ImportDesignSystem).toEqual(['ImportDesignSystemCompleted', 'ImportDesignSystemFailed']);
 
     // Test bi-directional mapping for events not in hardcoded getCommandFromEventType
     expect(eventToCommand).toHaveProperty('TestsCheckPassed', 'CheckTests');

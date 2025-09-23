@@ -244,7 +244,7 @@ export default autoConfig({
       await fs.copy(templateDir, targetDir);
 
       // Now call the replacement function directly (since we're testing integration but not the full createFromTemplate flow)
-      const { replaceBogusFileIds } = await import('./index.js');
+      const { replaceBogusFileIds } = await import('../dist/index.js');
       await replaceBogusFileIds(targetDir);
 
       // Read the processed auto.config.ts file
@@ -286,7 +286,7 @@ export default autoConfig({
       await fs.copy(templateDir, targetDir);
 
       // Apply the replacement function
-      const { replaceBogusFileIds } = await import('./index.js');
+      const { replaceBogusFileIds } = await import('../dist/index.js');
       await replaceBogusFileIds(targetDir);
 
       const copiedContent = await fs.readFile(path.join(targetDir, 'auto.config.ts'), 'utf8');
@@ -319,7 +319,7 @@ export default autoConfig({
       await fs.copy(templateDir, targetDir);
 
       // Apply the replacement function (should not change anything)
-      const { replaceBogusFileIds } = await import('./index.js');
+      const { replaceBogusFileIds } = await import('../dist/index.js');
       await replaceBogusFileIds(targetDir);
 
       const copiedContent = await fs.readFile(path.join(targetDir, 'auto.config.ts'), 'utf8');
