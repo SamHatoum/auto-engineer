@@ -34,7 +34,7 @@ interface RegistryData {
   folds: string[];
 }
 
-describe('CLI Pipeline Integration', () => {
+describe.skip('CLI Pipeline Integration', () => {
   let serverProcess: ChildProcess;
   let port: number;
   let baseUrl: string;

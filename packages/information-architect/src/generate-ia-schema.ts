@@ -151,10 +151,10 @@ async function main() {
 
   const model = await getModelFromContext(outputDir);
   const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
-  const { components: atomsNames, layouts } = await getComponentsAndLayouts(outputDir);
+  const { components: atomsNames } = await getComponentsAndLayouts(outputDir);
   const atoms = atomsNames.map((atom) => ({ name: atom.name, props: [] }));
 
-  const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms, layouts);
+  const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms);
 
   await fs.writeFile(filePath, JSON.stringify(iaSchema, null, 2));
   console.log(`Generated IA schema written to ${filePath}`);

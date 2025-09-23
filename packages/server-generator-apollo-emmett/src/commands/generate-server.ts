@@ -5,7 +5,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { resolve, join } from 'path';
 import { existsSync } from 'fs';
 import { generateScaffoldFilePlans, writeScaffoldFilePlans } from '../codegen/scaffoldFromSchema';
-import { ensureDirExists } from '../codegen/utils/path';
+import { ensureDirExists, ensureDirPath, toKebabCase } from '../codegen/utils/path';
 import { Model } from '@auto-engineer/flow';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -49,18 +49,18 @@ export type ServerGenerationFailedEvent = Event<
   }
 >;
 
-export type SliceImplementedEvent = Event<
-  'SliceImplemented',
+export type SliceGeneratedEvent = Event<
+  'SliceGenerated',
   {
     flowName: string;
     sliceName: string;
     sliceType: string;
     schemaPath: string;
-    destination: string;
+    slicePath: string;
   }
 >;
 
-export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent | SliceImplementedEvent;
+export type GenerateServerEvents = ServerGeneratedEvent | ServerGenerationFailedEvent | SliceGeneratedEvent;
 
 export const commandHandler = defineCommandHandler({
   name: 'GenerateServer',
@@ -68,7 +68,7 @@ export const commandHandler = defineCommandHandler({
   description: 'Generate server from model',
   category: 'generate',
   icon: 'server',
-  events: ['ServerGenerated', 'ServerGenerationFailed', 'SliceImplemented'],
+  events: ['ServerGenerated', 'ServerGenerationFailed', 'SliceGenerated'],
   fields: {
     modelPath: {
       description: 'Path to the json model file',
@@ -260,29 +260,27 @@ export async function handleGenerateServerCommandInternal(
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
 
-    // Generate scaffold files and emit SliceImplemented events
     await generateAndWriteScaffold(spec, serverDir);
 
-    // Emit SliceImplemented events for each slice
     if (Array.isArray(spec.flows) && spec.flows.length > 0) {
       for (const flow of spec.flows) {
         if (Array.isArray(flow.slices) && flow.slices.length > 0) {
           for (const slice of flow.slices) {
-            const sliceEvent: SliceImplementedEvent = {
-              type: 'SliceImplemented',
+            const sliceEvent: SliceGeneratedEvent = {
+              type: 'SliceGenerated',
               data: {
                 flowName: flow.name,
                 sliceName: slice.name,
                 sliceType: slice.type,
                 schemaPath: command.data.modelPath,
-                destination: command.data.destination,
+                slicePath: ensureDirPath('./server/src/domain/flows', toKebabCase(slice.name)),
               },
               timestamp: new Date(),
               requestId: command.requestId,
               correlationId: command.correlationId,
             };
             events.push(sliceEvent);
-            debug('SliceImplemented: %s.%s', flow.name, slice.name);
+            debug('SliceGenerated: %s.%s', flow.name, slice.name);
           }
         }
       }
