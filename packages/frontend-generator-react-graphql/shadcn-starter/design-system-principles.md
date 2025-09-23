@@ -17,3 +17,7 @@ UX Principles:
 - Do not use visual headers or hero titles to convey page identity.
 - Use dynamic hierarchy expressed through tone, spacing, and primary-color signals.
 - Prefer subtle transitions and clear focus indicators.
+
+Templates:
+
+- For the app layout make sure to use a non collapsable sidebar

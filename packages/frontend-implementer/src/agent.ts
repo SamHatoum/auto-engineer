@@ -238,6 +238,7 @@ function getFileTreeSummary(
       (f) =>
         f.startsWith('src/pages/') ||
         f.startsWith('src/hooks/') ||
+        f.startsWith('src/components/templates') ||
         f.startsWith('src/lib/') ||
         ['src/App.tsx', 'src/routes.tsx', 'src/main.tsx'].includes(f),
     ),
@@ -357,8 +358,9 @@ IMPLEMENTATION MUST:
 
 Component Design & Structure:
 - Follow atomic design:
-  - Build molecules → organisms → pages
+  - Build molecules → organisms → templates → pages
   - Then update routing in \`App.tsx\` accordingly. **DO NOT FORGET THIS.**
+- Leverage the provided template layouts under components/templates first before creating new ones, feel free to modify them as needed
 - Only create pages that are explicitly listed in \`auto-ia-scheme.json\`. No extra routes.
 - If a root page is not explicitly listed in \`auto-ia-scheme.json\`, then make the root page an index to all the other routes
 - Reuse atoms/molecules/organisms when possible. Only create new components when absolutely required.
@@ -382,6 +384,7 @@ Code Standards:
 - Add console logs for key state transitions.
 - Avoid layout jitter — use placeholder/stable containers during async rendering.
 - Maintain modular folder structure aligned with atomic principles.
+- ALWAYS make sure to use optional chaining for nested access of properties or build in functions (.map, .filter, .toFixed etc.)
 
 GraphQL Integration Rules:
 - Use **Apollo Client**: \`useQuery\`, \`useMutation\`, \`useLazyQuery\`.
