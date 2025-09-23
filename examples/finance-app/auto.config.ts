@@ -39,7 +39,7 @@ export default autoConfig({
         type: 'GenerateIA',
         data: {
           outputDir: './.context',
-          modelPath: './.model/schema.json',
+          modelPath: './.context/schema.json',
         },
       }),
     );
