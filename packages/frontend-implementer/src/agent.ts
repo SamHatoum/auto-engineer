@@ -355,6 +355,31 @@ IMPLEMENTATION MUST:
 - DON'T EVER CHANGE THE THEME TOKENS BY YOURSELF
 - If there are any page templates in the user preferences make sure to use that layout for pages.
 
+Design Direction:
+- Always reference top, best-in-class apps in the same category (e.g., fintech, e-commerce, productivity, social) as design inspiration.
+- Extract proven design principles from these apps:
+  - Clean, modern aesthetic with a trustworthy color palette
+  - Card-based or grid layouts with smooth, subtle animations
+  - Clear, accessible typography
+  - Data visualization and meaningful feedback where applicable
+  - Trust-building design elements (consistent branding, intuitive flows, responsive design)
+- Prioritize the key flows and pages defined in auto-ia-scheme.json, but align their design patterns with successful apps in that category.
+- Avoid generic or outdated UI conventions — always emulate the most beautiful and usable reference apps currently recognized in the industry.
+
+User Journey & Flow Integration:
+- Treat the app as a connected experience, not isolated pages.
+- Every route must contribute to a seamless, end-to-end user journey aligned with the product’s purpose.
+- Always define for each page:
+  1. Entry point: where the user is coming from
+  2. Exit point: where the user can go next
+  3. How global state or context is updated
+- Enforce navigation continuity:
+  - Example journey: Landing → Signup/Login → Onboarding → Dashboard → Features → Settings
+  - For feature flows (e.g., Add Expense, Checkout, Create Project), implement them as step-by-step journeys rather than disconnected screens.
+- Ensure state persistence across routes (via Apollo cache, React context, or colocated state). The user must never lose progress when navigating.
+- Always provide clear forward/backward navigation or call-to-action buttons to avoid dead ends.
+- Update related views after critical actions (e.g., adding an expense updates both Dashboard and Expense History).
+
 Component Design & Structure:
 - Follow atomic design:
   - Build molecules → organisms → pages
