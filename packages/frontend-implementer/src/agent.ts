@@ -838,7 +838,7 @@ export async function runAIAgent(
   debug('Design system path: %s', designSystemPath);
   debug('='.repeat(80));
 
-  const userPreferencesFile = path.join(projectDir, 'design-system-principles.md');
+  const userPreferencesFile = path.resolve(projectDir, 'design-system-principles.md');
   debug('Loading user preferences from: %s', userPreferencesFile);
   const userPreferences = await fs.readFile(userPreferencesFile, 'utf-8');
   debug('User preferences loaded, size: %d bytes', userPreferences.length);

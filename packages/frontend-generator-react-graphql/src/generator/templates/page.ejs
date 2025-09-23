@@ -1,6 +1,9 @@
 <% organisms.forEach(org => { -%>
 import { <%= org %> } from "@/components/organisms/<%= org %>";
 <% }) -%>
+<% if (template) { -%>
+import { <%= template.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') %> } from "@/components/templates/<%= template %>";
+<% } -%>
 
 // <%= description %>
 <% if (specs && specs.length) { -%>

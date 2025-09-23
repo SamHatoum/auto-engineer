@@ -74,6 +74,7 @@ function generate(spec: IAScheme): GeneratedFile[] {
       navigation: def.navigation ?? [],
       specs: def.specs ?? [],
       dataRequirements: def.data_requirements ?? [],
+      template: def.template,
     });
 
     files.push({

@@ -3,24 +3,67 @@ import uxSchema from './auto-ux-schema.json';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-async function getAtomsFromMarkdown(designSystemDir: string): Promise<string[]> {
+interface DesignSystemItem {
+  name: string;
+  description: string;
+}
+
+async function getComponentsAndLayouts(
+  designSystemDir: string,
+): Promise<{ components: DesignSystemItem[]; layouts: DesignSystemItem[] }> {
   const mdPath = path.join(designSystemDir, 'design-system.md');
   let content: string;
   try {
     content = await fs.readFile(mdPath, 'utf-8');
   } catch {
-    return [];
+    return { components: [], layouts: [] };
   }
-  // Find all lines that start with '### ' and extract the component name
+
   const lines = content.split('\n');
-  const components: string[] = [];
+  const components: DesignSystemItem[] = [];
+  const layouts: DesignSystemItem[] = [];
+  let currentSection: 'components' | 'layouts' | null = null;
+  let currentItem: DesignSystemItem | null = null;
+
   for (const line of lines) {
-    const match = line.match(/^###\s+(.+)/);
-    if (match) {
-      components.push(match[1].trim());
+    const trimmedLine = line.trim();
+
+    if (trimmedLine.startsWith('## ')) {
+      currentSection = trimmedLine === '## Components' ? 'components' : trimmedLine === '## Layouts' ? 'layouts' : null;
+      currentItem = null;
+      continue;
+    }
+
+    if (trimmedLine.startsWith('### ') && currentSection) {
+      if (currentItem) {
+        if (currentSection === 'components') {
+          components.push(currentItem);
+        } else if (currentSection === 'layouts') {
+          layouts.push(currentItem);
+        }
+      }
+
+      currentItem = {
+        name: trimmedLine.replace(/^###\s+/, '').trim(),
+        description: '',
+      };
+      continue;
+    }
+
+    if (currentItem && trimmedLine.startsWith('Description: ')) {
+      currentItem.description = trimmedLine.replace(/^Description:\s+/, '').trim();
     }
   }
-  return components;
+
+  if (currentItem && currentSection) {
+    if (currentSection === 'components') {
+      components.push(currentItem);
+    } else if (currentSection === 'layouts') {
+      layouts.push(currentItem);
+    }
+  }
+
+  return { components, layouts };
 }
 
 async function getUniqueSchemaPath(
@@ -66,10 +109,10 @@ async function main() {
 
   const flows: string[] = await Promise.all(flowFiles.map((flow) => fs.readFile(flow, 'utf-8')));
   const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
-  const atomNames = await getAtomsFromMarkdown(outputDir);
-  const atoms = atomNames.map((name) => ({ name, props: [] }));
+  const { components: atomsNames, layouts } = await getComponentsAndLayouts(outputDir);
+  const atoms = atomsNames.map((atom) => ({ name: atom.name, props: [] }));
 
-  const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms);
+  const iaSchema = await processFlowsWithAI(flows, uxSchema, existingSchema, atoms, layouts);
 
   await fs.writeFile(filePath, JSON.stringify(iaSchema, null, 2));
   console.log(`Generated IA schema written to ${filePath}`);

@@ -26,8 +26,9 @@ export class InformationArchitectAgent {
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
+    layouts?: { name: string; description: string }[],
   ): Promise<AIAgentOutput> {
-    const prompt = this.constructPrompt(flows, uxSchema, existingSchema, atoms);
+    const prompt = this.constructPrompt(flows, uxSchema, existingSchema, atoms, layouts);
     try {
       const response = await generateTextWithAI(prompt, {
         provider: this.provider,
@@ -53,6 +54,7 @@ export class InformationArchitectAgent {
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
+    layouts?: { name: string; description: string }[],
   ): string {
     return `
 You are an expert UI architect and product designer. Given the following flows and UX schema, generate a detailed JSON specification for the application's UI components and pages.
@@ -66,6 +68,8 @@ ${JSON.stringify(flows, null, 2)}
 
 UX Schema:
 ${JSON.stringify(uxSchema, null, 2)}
+
+${layouts ? `Templates: here is a lot of templates to be used for pages ${layouts}` : ``}
 
 ${existingSchema ? `Here is the current IA schema. Only add, update, or remove what is necessary based on the new flows and UX schema. Preserve what is still relevant and do not make unnecessary changes.\n\nCurrent IA Schema:\n${JSON.stringify(existingSchema, null, 2)}\n` : ''}
 Instructions:
@@ -89,6 +93,7 @@ Instructions:
     - route (URL path)
     - description
     - layout (listing the organisms used)
+    - template (what wrapper does the page use)
     - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
     - data_requirements (array, as above, for page-level data fetching)
 - For each component or page, if there are any specs defined in the flows using specs('ComponentOrPageName', ...), extract all should(...) statements from .client(() => { ... }) blocks and assign them as an array of strings to a 'specs' field for the corrosponding component/page.
@@ -151,7 +156,8 @@ export async function processFlowsWithAI(
   uxSchema: UXSchema,
   existingSchema?: object,
   atoms?: { name: string; props: { name: string; type: string }[] }[],
+  layouts?: { name: string; description: string }[],
 ): Promise<AIAgentOutput> {
   const agent = new InformationArchitectAgent();
-  return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms);
+  return agent.generateUXComponents(flows, uxSchema, existingSchema, atoms, layouts);
 }

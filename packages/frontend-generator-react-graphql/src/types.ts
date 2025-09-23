@@ -54,6 +54,7 @@ export interface PageSpec {
   layout: {
     organisms: string[];
   };
+  template?: string;
   navigation?: {
     on: string;
     to: string;

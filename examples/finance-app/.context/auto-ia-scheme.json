@@ -1,0 +1,273 @@
+{
+  "schema_description": "Micro Personal Finance App with sidebar navigation and comprehensive expense tracking features",
+  "atoms": {
+    "description": "No new atomic components needed beyond the provided design system",
+    "items": {}
+  },
+  "molecules": {
+    "description": "Reusable components composed from atoms for finance app functionality",
+    "items": {
+      "ExpenseCard": {
+        "description": "Displays individual expense information with amount, category, and note",
+        "composition": {
+          "atoms": ["card", "button"]
+        }
+      },
+      "QuickActionButton": {
+        "description": "Quick access button for common actions",
+        "composition": {
+          "atoms": ["button"]
+        }
+      },
+      "BudgetProgressBar": {
+        "description": "Visual representation of budget progress and remaining amount",
+        "composition": {
+          "atoms": ["progress"]
+        }
+      },
+      "SavingsJarWidget": {
+        "description": "Visual progress indicator for savings jar goal",
+        "composition": {
+          "atoms": ["progress", "card"]
+        }
+      },
+      "SubscriptionCard": {
+        "description": "Card displaying subscription details with amount and renewal date",
+        "composition": {
+          "atoms": ["card", "badge", "button"]
+        }
+      },
+      "CategorySelector": {
+        "description": "Dropdown or selection component for expense categories",
+        "composition": {
+          "atoms": ["select", "combobox"]
+        }
+      },
+      "ExpenseForm": {
+        "description": "Form for adding new expenses with amount, category, and note fields",
+        "composition": {
+          "atoms": ["card", "button", "select", "textarea"]
+        }
+      },
+      "FilterControls": {
+        "description": "Controls for filtering expenses by category, date, or amount",
+        "composition": {
+          "atoms": ["select", "date-picker", "button"]
+        }
+      }
+    }
+  },
+  "organisms": {
+    "description": "Smart UI components with logic composed of molecules",
+    "items": {
+      "AppSidebar": {
+        "description": "Persistent navigation sidebar with collapsible functionality",
+        "composition": {
+          "molecules": ["QuickActionButton"]
+        },
+        "specs": [
+          "display persistent sidebar on left for navigation",
+          "sidebar includes links: Home, Add Expense, Charts, Subscriptions, Savings Jar, Budget, Expense History",
+          "highlight current active link in sidebar",
+          "sidebar collapsible for smaller screens"
+        ]
+      },
+      "TopBar": {
+        "description": "Top navigation bar with logo, profile menu, and notifications",
+        "composition": {
+          "molecules": []
+        },
+        "specs": ["top bar includes app logo, profile menu, and notifications icon"]
+      },
+      "GlobalWidgetBar": {
+        "description": "Persistent bar showing global financial widgets",
+        "composition": {
+          "molecules": ["BudgetProgressBar", "SavingsJarWidget"]
+        },
+        "specs": [
+          "bottom or top persistent bar shows global widgets: total spending, remaining budget, savings jar progress"
+        ]
+      },
+      "HomeOverview": {
+        "description": "Home screen overview with spending summary and quick actions",
+        "composition": {
+          "molecules": ["ExpenseCard", "QuickActionButton", "SavingsJarWidget", "BudgetProgressBar"]
+        },
+        "specs": [
+          "show today's spending summary and remaining budget",
+          "display recent expenses list",
+          "show visual progress of savings jar goal",
+          "quick access buttons for Add Expense, Charts, Subscriptions"
+        ]
+      },
+      "AddExpenseForm": {
+        "description": "Form organism for adding new expenses",
+        "composition": {
+          "molecules": ["ExpenseForm", "CategorySelector"]
+        },
+        "specs": [
+          "allow entering expense amount, category, and note",
+          "show recent/frequent categories for quick selection",
+          "display confirmation toast after adding expense",
+          "update budget bar and charts in real-time"
+        ]
+      },
+      "SpendingChartsDisplay": {
+        "description": "Charts and visualizations for spending analysis",
+        "composition": {
+          "molecules": ["FilterControls"]
+        },
+        "specs": [
+          "show daily and weekly spending charts",
+          "highlight categories with highest spend",
+          "allow filtering by category or date range",
+          "update dynamically when new expenses are added"
+        ]
+      },
+      "SubscriptionManager": {
+        "description": "Management interface for subscriptions",
+        "composition": {
+          "molecules": ["SubscriptionCard"]
+        },
+        "specs": [
+          "list all active subscriptions with amount and renewal date",
+          "allow adding, editing, and removing subscriptions",
+          "show monthly summary of subscription spending",
+          "highlight upcoming renewals"
+        ]
+      },
+      "SavingsJarManager": {
+        "description": "Interface for managing savings jar and goals",
+        "composition": {
+          "molecules": ["SavingsJarWidget"]
+        },
+        "specs": [
+          "show current total and goal progress",
+          "allow changing the savings goal",
+          "automatically round up new expenses",
+          "display visual progress bar consistently in shell"
+        ]
+      },
+      "BudgetTracker": {
+        "description": "Budget management and tracking interface",
+        "composition": {
+          "molecules": ["BudgetProgressBar"]
+        },
+        "specs": [
+          "allow setting monthly/weekly budget",
+          "show remaining budget as a progress bar",
+          "highlight overspending",
+          "update in real-time when expenses are added"
+        ]
+      },
+      "ExpenseHistoryList": {
+        "description": "Detailed expense history with filtering and editing capabilities",
+        "composition": {
+          "molecules": ["ExpenseCard", "FilterControls"]
+        },
+        "specs": [
+          "allow viewing full expense history",
+          "filter by category, date, or amount",
+          "edit or delete individual expenses",
+          "show contribution of each expense to daily/weekly/monthly totals"
+        ]
+      }
+    }
+  },
+  "pages": {
+    "description": "Top-level application pages with routing and layout",
+    "items": {
+      "HomePage": {
+        "route": "/",
+        "description": "Main dashboard showing financial overview and quick actions",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "HomeOverview"]
+        },
+        "navigation": [
+          {
+            "on": "Click Add Expense",
+            "to": "AddExpensePage"
+          },
+          {
+            "on": "Click Charts",
+            "to": "ChartsPage"
+          },
+          {
+            "on": "Click Subscriptions",
+            "to": "SubscriptionsPage"
+          }
+        ],
+        "specs": [
+          "display persistent sidebar on left for navigation",
+          "highlight current active link in sidebar",
+          "sidebar collapsible for smaller screens",
+          "top bar includes app logo, profile menu, and notifications icon",
+          "bottom or top persistent bar shows global widgets: total spending, remaining budget, savings jar progress",
+          "content area changes dynamically based on selected navigation link",
+          "maintain layout consistency across all screens",
+          "support responsive design with sidebar collapsing into hamburger menu on mobile"
+        ]
+      },
+      "AddExpensePage": {
+        "route": "/add-expense",
+        "description": "Page for adding new expenses",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "AddExpenseForm"]
+        },
+        "navigation": [
+          {
+            "on": "Submit Expense",
+            "to": "HomePage"
+          }
+        ]
+      },
+      "ChartsPage": {
+        "route": "/charts",
+        "description": "Spending analysis and charts visualization page",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "SpendingChartsDisplay"]
+        },
+        "navigation": []
+      },
+      "SubscriptionsPage": {
+        "route": "/subscriptions",
+        "description": "Subscription management page",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "SubscriptionManager"]
+        },
+        "navigation": []
+      },
+      "SavingsJarPage": {
+        "route": "/savings-jar",
+        "description": "Round-up savings jar management page",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "SavingsJarManager"]
+        },
+        "navigation": []
+      },
+      "BudgetPage": {
+        "route": "/budget",
+        "description": "Budget tracking and management page",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "BudgetTracker"]
+        },
+        "navigation": []
+      },
+      "ExpenseHistoryPage": {
+        "route": "/expense-history",
+        "description": "Detailed expense history and management page",
+        "template": "app-layout",
+        "layout": {
+          "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "ExpenseHistoryList"]
+        },
+        "navigation": []
+      }
+    }
+  }
+}
