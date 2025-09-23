@@ -80,10 +80,10 @@ export const commandHandler = defineCommandHandler({
     },
   },
   examples: ['$ auto generate:server --model-path=.context/model.json --destination=.'],
-  handle: async (command: Command): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> => {
+  handle: async (command: Command): Promise<GenerateServerEvents | GenerateServerEvents[]> => {
     const typedCommand = command as GenerateServerCommand;
-    const events = await handleGenerateServerCommandInternal(typedCommand);
-
+    const result = await handleGenerateServerCommandInternal(typedCommand);
+    const events = Array.isArray(result) ? result : [result];
     const finalEvent = events[events.length - 1];
     if (finalEvent.type === 'ServerGenerated') {
       debug('Server generated at %s', finalEvent.data.serverDir);
@@ -91,7 +91,7 @@ export const commandHandler = defineCommandHandler({
       debug('Failed to generate server: %s', finalEvent.data.error);
     }
 
-    return events;
+    return result;
   },
 });
 
@@ -231,8 +231,9 @@ function createServerFailureEvent(command: GenerateServerCommand, error: unknown
 
 export async function handleGenerateServerCommandInternal(
   command: GenerateServerCommand,
-): Promise<ServerGeneratedEvent | ServerGenerationFailedEvent> {
+): Promise<GenerateServerEvents[]> {
   const { modelPath, destination } = command.data;
+  const events: GenerateServerEvents[] = [];
 
   debug('Starting server generation');
   debug('Model path: %s', modelPath);
@@ -247,7 +248,7 @@ export async function handleGenerateServerCommandInternal(
     debug('  Absolute model: %s', absModel);
 
     const validationError = await validateModelFile(absModel, command);
-    if (validationError) return validationError;
+    if (validationError) return [validationError];
 
     const spec = await readAndParseModel(absModel);
 
@@ -273,7 +274,7 @@ export async function handleGenerateServerCommandInternal(
                 flowName: flow.name,
                 sliceName: slice.name,
                 sliceType: slice.type,
-                schemaPath: command.data.schemaPath,
+                schemaPath: command.data.modelPath,
                 destination: command.data.destination,
               },
               timestamp: new Date(),
