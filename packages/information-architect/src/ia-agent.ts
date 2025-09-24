@@ -27,14 +27,14 @@ export class InformationArchitectAgent {
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
-    layouts?: { name: string; description: string }[],
+    // layouts?: { name: string; description: string }[],
   ): Promise<AIAgentOutput> {
-    const prompt = this.constructPrompt(model, uxSchema, existingSchema, atoms, layouts);
+    const prompt = this.constructPrompt(model, uxSchema, existingSchema, atoms);
     try {
       const response = await generateTextWithAI(prompt, {
         provider: this.provider,
         temperature: 0.7,
-        maxTokens: 4096,
+        maxTokens: 4096 * 2,
       });
       if (!response) {
         throw new Error('No response from AI agent');
@@ -55,7 +55,7 @@ export class InformationArchitectAgent {
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
-    layouts?: { name: string; description: string }[],
+    // layouts?: { name: string; description: string }[],
   ): string {
     return `
 You are an expert UI architect and product designer. Given the following model (containing flows, messages, and integrations) and UX schema, generate a detailed JSON specification for the application's UI components and pages.
@@ -69,8 +69,6 @@ ${JSON.stringify(model, null, 2)}
 
 UX Schema:
 ${JSON.stringify(uxSchema, null, 2)}
-
-${layouts ? `Templates: here is a lot of templates to be used for pages ${layouts}` : ``}
 
 ${existingSchema ? `Here is the current IA schema. Only add, update, or remove what is necessary based on the new flows and UX schema. Preserve what is still relevant and do not make unnecessary changes.\n\nCurrent IA Schema:\n${JSON.stringify(existingSchema, null, 2)}\n` : ''}
 Instructions:
@@ -93,7 +91,6 @@ Instructions:
 - In "pages", define each page as a key, with:
     - route (URL path)
     - description
-    - layout (listing the organisms used)
     - template (what wrapper does the page use)
     - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
     - data_requirements (array, as above, for page-level data fetching)
@@ -135,7 +132,6 @@ Use the following structure as a template for your response:
     "PageName": {
       "route": "/route",
       "description": "What this page does.",
-      "layout": { "organisms": ["Organism1", "Organism2"] },
       "navigation": [{ "on": "Event", "to": "TargetPage" }],
       "data_requirements": [
         // ... as above
@@ -157,8 +153,8 @@ export async function processFlowsWithAI(
   uxSchema: UXSchema,
   existingSchema?: object,
   atoms?: { name: string; props: { name: string; type: string }[] }[],
-  layouts?: { name: string; description: string }[],
+  // layouts?: { name: string; description: string }[],
 ): Promise<AIAgentOutput> {
   const agent = new InformationArchitectAgent();
-  return agent.generateUXComponents(model, uxSchema, existingSchema, atoms, layouts);
+  return agent.generateUXComponents(model, uxSchema, existingSchema, atoms);
 }

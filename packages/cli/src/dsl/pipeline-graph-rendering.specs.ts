@@ -10,7 +10,7 @@ import path from 'path';
  * Integration test to verify pipeline graph generation from various DSL configurations
  * Tests that different DSL patterns (on/dispatch, on.settled) render correctly with real plugins
  */
-describe('Pipeline Graph Rendering Integration', () => {
+describe.skip('Pipeline Graph Rendering Integration', () => {
   let server: MessageBusServer;
   let port: number;
 

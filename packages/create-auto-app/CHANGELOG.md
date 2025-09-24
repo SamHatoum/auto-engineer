@@ -1,5 +1,25 @@
 # create-auto-app
 
+## 0.10.1
+
+### Patch Changes
+
+- fixes esm issue
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.10.1
+
+## 0.10.0
+
+### Minor Changes
+
+- New templates and bug fixes
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.10.0
+
 ## 0.9.13
 
 ### Patch Changes

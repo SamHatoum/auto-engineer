@@ -1,5 +1,25 @@
 # @auto-engineer/server-checks
 
+## 0.10.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.10.1
+  - @auto-engineer/message-bus@0.10.1
+
+## 0.10.0
+
+### Minor Changes
+
+- New templates and bug fixes
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.10.0
+  - @auto-engineer/message-bus@0.10.0
+
 ## 0.9.13
 
 ### Patch Changes

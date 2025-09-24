@@ -1,7 +1,12 @@
-import { autoConfig, on, dispatch, fold } from '@auto-engineer/cli';
+import { autoConfig, on, dispatch } from '@auto-engineer/cli';
 import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
 import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
-import type { ImplementServerCommand, ImplementServerEvents } from '@auto-engineer/server-implementer';
+import type {
+  ImplementServerCommand,
+  ImplementServerEvents,
+  ImplementSliceEvents,
+  ImplementSliceCommand,
+} from '@auto-engineer/server-implementer';
 import type {
   CheckTestsCommand,
   CheckTestsEvents,
@@ -14,6 +19,11 @@ import type {
 import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/information-architect';
 import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engineer/frontend-implementer';
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
+import {
+  CheckClientCommand,
+  CheckClientEvents,
+  ClientCheckFailedEvent,
+} from '../../packages/frontend-checks/dist/src/commands/check-client';
 
 export default autoConfig({
   fileId: 'test33333', // unique 9-character base62 canvas file id where all flows in this project will be shown
@@ -39,97 +49,55 @@ export default autoConfig({
         type: 'GenerateIA',
         data: {
           outputDir: './.context',
-          modelPath: './.model/schema.json',
+          modelPath: './.context/schema.json',
         },
       }),
     );
 
-    // on<GenerateServerEvents>('ServerGenerated', () =>
-    //   dispatch<GenerateIACommand>({
-    //     type: 'GenerateIA',
-    //     data: {
-    //       outputDir: './.context',
-    //       flowFiles: ['./flows/finance-app.flow.ts', './flows/finance-app-landing.flow.ts'],
-    //     },
-    //   }),
-    // );
-
     on<GenerateIAEvents>('IAGenerated', () =>
-      dispatch<GenerateClientCommand>({
-        type: 'GenerateClient',
-        data: {
-          starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
-          targetDir: './client',
-          iaSchemaPath: './.context/auto-ia-scheme.json',
-          gqlSchemaPath: './.context/schema.graphql',
-          figmaVariablesPath: './.context/figma-file.json',
-        },
+      dispatch<GenerateClientCommand>('GenerateClient', {
+        starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
+        targetDir: './client',
+        iaSchemaPath: './.context/auto-ia-scheme.json',
+        gqlSchemaPath: './.context/schema.graphql',
+        figmaVariablesPath: './.context/figma-file.json',
       }),
     );
 
     on<GenerateClientEvents>('ClientGenerated', () =>
-      dispatch<ImplementClientCommand>({
-        type: 'ImplementClient',
-        data: {
-          projectDir: './client',
-          iaSchemeDir: './.context',
-          designSystemPath: './.context/design-system.md',
-        },
+      dispatch<ImplementClientCommand>('ImplementClient', {
+        projectDir: './client',
+        iaSchemeDir: './.context',
+        designSystemPath: './.context/design-system.md',
       }),
     );
 
-    // on<ImplementServerEvents>('SliceImplemented', () => {
-    //   dispatch<CheckTestsCommand>({
-    //     type: 'CheckTests',
-    //     data: {
-    //       targetDirectory: 'sds',
-    //       scope: 'slice',
-    //     },
-    //   });
-    // });
+    on<ImplementClientEvents>('ClientImplemented', () =>
+      dispatch<CheckClientCommand>('CheckClient', {
+        clientDirectory: './client',
+        skipBrowserChecks: true,
+      }),
+    );
 
-    // on<ImplementServerEvents>('SliceImplemented', () => {
-    //   dispatch<CheckTypesCommand>({
-    //     type: 'CheckTypes',
-    //     data: {
-    //       targetDirectory: 'sds',
-    //       scope: 'slice',
-    //     },
-    //   });
-    // });
+    on<CheckClientEvents>('ClientChecked', (e) => {
+      if (e.type === 'ClientChecked') {
+        const hasErrors = e.data.tsErrors > 0 || e.data.buildErrors > 0 || e.data.consoleErrors > 0;
 
-    // on<ImplementServerEvents>('SliceImplemented', () => {
-    //   dispatch<CheckLintCommand>({
-    //     type: 'CheckLint',
-    //     data: {
-    //       targetDirectory: 'sds',
-    //       scope: 'slice',
-    //       fix: true,
-    //     },
-    //   });
-    // });
-
-    // on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
-    //   ['CheckTests', 'CheckTypes', 'CheckLint'],
-    //   (events) => {
-    //     const hasFailures =
-    //       events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
-    //       events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
-    //       events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
-
-    //     if (hasFailures) {
-    //       dispatch<ImplementClientCommand>({
-    //         type: 'ImplementClient',
-    //         data: {
-    //           projectDir: 'some/where',
-    //           iaSchemeDir: '/',
-    //           designSystemPath: '',
-    //           failures: [],
-    //         },
-    //       });
-    //     }
-    //   },
-    // );
+        if (hasErrors) {
+          const failures = [
+            ...(e.data.tsErrorDetails || []),
+            ...(e.data.buildErrorDetails || []),
+            ...(e.data.consoleErrorDetails || []),
+          ];
+          return dispatch<ImplementClientCommand>('ImplementClient', {
+            projectDir: './client',
+            iaSchemeDir: './.context',
+            designSystemPath: './.context/design-system.md',
+            failures,
+          });
+        }
+      }
+    });
   },
 });
 

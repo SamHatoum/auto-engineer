@@ -536,7 +536,7 @@ async function main() {
 }
 
 // Only run main if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url.startsWith('file:') && process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
     console.error(chalk.red('Error:'), error);
     process.exit(1);

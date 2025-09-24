@@ -1,5 +1,13 @@
 # @auto-engineer/message-bus
 
+## 0.10.1
+
+## 0.10.0
+
+### Minor Changes
+
+- New templates and bug fixes
+
 ## 0.9.13
 
 ## 0.9.12

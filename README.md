@@ -13,7 +13,8 @@
 
 ##### _EARLY PREVIEW_
 
-- We are working hard on making it happen
+- It will be buggy as you use it!
+- We are working hard on making it awesome
 - We are actively using Auto with real-world clients and use-cases
 - We are making a lot of design decisions as we battle test the approach
 
@@ -77,39 +78,6 @@ export default {
 };
 ```
 
-### Create Your First App
-
-```bash
-# With plugins configured, create a new app
-auto create:example --name=shopping-assistant
-
-# Navigate to the created project
-cd shopping-assistant
-pnpm install
-
-# Export the flow schemas
-auto export:schema --output-dir=./.context --directory=./flows
-
-# Generate and implement the server
-auto generate:server --schema-path=.context/schema.json --destination=.
-auto implement:server --server-directory=./server
-
-# Run server validation
-auto check:types --target-directory=./server
-auto check:tests --target-directory=./server
-auto check:lint --target-directory=./server --fix
-
-# Generate frontend (requires additional plugins)
-auto generate:ia --output-dir=./.context --flow-files=./flows/*.flow.ts
-auto generate:client --starter-template=./shadcn-starter --client-dir=./client \
-  --ia-schema=./auto-ia.json --gql-schema=./schema.graphql --figma-vars=./figma-vars.json
-auto implement:client --project-dir=./client --ia-scheme-dir=./.context \
-  --design-system-path=./design-system.md
-
-# Start the application
-pnpm start
-```
-
 ## 🔌 Plugin System
 
 Auto Engineer uses a modular plugin architecture. Each plugin provides specific functionality:
@@ -136,13 +104,13 @@ Install only the plugins you need:
 
 ```bash
 # For server development
-npm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett @auto-engineer/server-implementer @auto-engineer/server-checks
+pnpm install @auto-engineer/flow @auto-engineer/server-generator-apollo-emmett @auto-engineer/server-implementer @auto-engineer/server-checks
 
 # For frontend development
-npm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer @auto-engineer/frontend-checks
+pnpm install @auto-engineer/frontend-generator-react-graphql @auto-engineer/frontend-implementer @auto-engineer/frontend-checks
 
 # For design system integration
-npm install @auto-engineer/design-system-importer @auto-engineer/information-architect
+pnpm install @auto-engineer/design-system-importer @auto-engineer/information-architect
 ```
 
 ### Handling Plugin Conflicts
@@ -220,31 +188,31 @@ All commands now use named parameters for clarity and consistency:
 
 **Flow Development**
 
-- `create:example --name=<project-name>` - Create an example project
-- `export:schema --output-dir=<dir> --directory=<flows-dir>` - Export flow schemas
+- `auto create:example --name=<project-name>` - Create an example project
+- `auto export:schema --output-dir=<dir> --directory=<flows-dir>` - Export flow schemas
 
 **Server Generation**
 
-- `generate:server --schema-path=<schema> --destination=<dest>` - Generate server from schema
-- `implement:server --server-directory=<dir>` - AI implements server
-- `implement:slice --server-directory=<dir> --slice=<name>` - Implement specific slice
+- `auto generate:server --schema-path=<schema> --destination=<dest>` - Generate server from schema
+- `auto implement:server --server-directory=<dir>` - AI implements server
+- `auto implement:slice --server-directory=<dir> --slice=<name>` - Implement specific slice
 
 **Frontend Generation**
 
-- `generate:ia --output-dir=<dir> --flow-files=<patterns>` - Generate Information Architecture
-- `generate:client --starter-template=<template> --client-dir=<dir> --ia-schema=<file> --gql-schema=<file>` - Generate React client
-- `implement:client --project-dir=<dir> --ia-scheme-dir=<dir> --design-system-path=<file>` - AI implements client
+- `auto generate:ia --output-dir=<dir> --flow-files=<patterns>` - Generate Information Architecture
+- `auto generate:client --starter-template=<template> --client-dir=<dir> --ia-schema=<file> --gql-schema=<file>` - Generate React client
+- `auto implement:client --project-dir=<dir> --ia-scheme-dir=<dir> --design-system-path=<file>` - AI implements client
 
 **Validation & Testing**
 
-- `check:types --target-directory=<dir> --scope=<project|changed>` - TypeScript type checking
-- `check:tests --target-directory=<dir> --scope=<project|changed>` - Run test suites
-- `check:lint --target-directory=<dir> --fix --scope=<project|changed>` - Linting with optional auto-fix
-- `check:client --client-directory=<dir> --skip-browser-checks` - Full frontend validation
+- `auto check:types --target-directory=<dir> --scope=<project|changed>` - TypeScript type checking
+- `auto check:tests --target-directory=<dir> --scope=<project|changed>` - Run test suites
+- `auto check:lint --target-directory=<dir> --fix --scope=<project|changed>` - Linting with optional auto-fix
+- `auto check:client --client-directory=<dir> --skip-browser-checks` - Full frontend validation
 
 **Design System**
 
-- `import:design-system --figma-file-id=<id> --figma-access-token=<token> --output-dir=<dir>` - Import from Figma
+- `auto import:design-system --figma-file-id=<id> --figma-access-token=<token> --output-dir=<dir>` - Import from Figma
 
 ## 🏗️ Architecture
 
@@ -254,35 +222,6 @@ Auto Engineer follows a command/event-driven architecture:
 - **Command Pattern**: All operations are commands that can be composed
 - **Event-driven**: Loosely coupled components communicate via events
 - **Type-safe**: Full TypeScript with strict typing throughout
-
-## 📦 Monorepo Structure
-
-```
-auto-engineer/
-├── packages/
-│   ├── cli/                               # Main CLI with plugin loader
-│   ├── flow/                              # Flow modeling DSL
-│   ├── server-generator-apollo-emmett/    # Server code generation
-│   ├── server-implementer/                # AI server implementation
-│   ├── frontend-generator-react-graphql/  # React client scaffolding
-│   ├── frontend-implementer/              # AI client implementation
-│   ├── information-architect/             # IA generation
-│   ├── design-system-importer/            # Figma integration
-│   ├── server-checks/                     # Server validation
-│   ├── frontend-checks/                   # Frontend validation
-│   ├── ai-gateway/                        # Unified AI provider interface
-│   ├── message-bus/                       # Event-driven messaging
-│   ├── file-store/                        # File system operations
-│   ├── file-syncer/                       # File watching and synchronization
-│   └── create-auto-app/                   # Project bootstrapping
-├── integrations/
-│   ├── ai-chat-completion/                # AI provider integrations
-│   ├── cart/                              # Cart service integration
-│   └── product-catalogue/                 # Product catalog integration
-└── examples/
-    ├── cart-api/                          # Example cart API
-    └── product-catalogue-api/             # Example product API
-```
 
 ## 🛠️ Local Development Setup
 
@@ -493,3 +432,5 @@ Auto Engineer is licensed under the [Elastic License 2.0 (EL2)](LICENSE.md).
 - [Discord Community](https://discord.gg/B8BKcKMRm8)
 - [Documentation](https://github.com/SamHatoum/auto-engineer/wiki)
 - [Issue Tracker](https://github.com/SamHatoum/auto-engineer/issues)
+
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.on.auto/a.png?x-pxid=3e68b410-a966-4c96-887b-34102030fd15&page=README.md" />

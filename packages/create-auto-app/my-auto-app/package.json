@@ -1,0 +1,30 @@
+{
+  "name": "my-auto-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "auto": "node ../../packages/cli/dist/bin/auto.js",
+    "auto:debug": "DEBUG=flow:*,cli:*,auto*,ai*,-*file-syncer,-*flow* node ../../packages/cli/dist/bin/auto.js",
+    "start": "dotenv -e .env -- pnpm --parallel start"
+  },
+  "dependencies": {
+    "@auto-engineer/cli": "^0.9.13",
+    "@auto-engineer/design-system-importer": "^0.9.13",
+    "@auto-engineer/flow": "^0.9.13",
+    "@auto-engineer/frontend-checks": "^0.9.13",
+    "@auto-engineer/frontend-generator-react-graphql": "^0.9.13",
+    "@auto-engineer/frontend-implementer": "^0.9.13",
+    "@auto-engineer/information-architect": "^0.9.13",
+    "@auto-engineer/message-bus": "^0.9.13",
+    "@auto-engineer/server-checks": "^0.9.13",
+    "@auto-engineer/server-generator-apollo-emmett": "^0.9.13",
+    "@auto-engineer/server-implementer": "^0.9.13"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "dotenv-cli": "^9.0.0",
+    "tsx": "^3.12.7"
+  }
+}

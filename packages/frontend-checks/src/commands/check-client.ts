@@ -40,6 +40,7 @@ export type ClientCheckFailedEvent = Event<
     error: string;
   }
 >;
+export type CheckClientEvents = ClientCheckedEvent | ClientCheckFailedEvent;
 
 export const checkClientCommandHandler = defineCommandHandler({
   name: 'CheckClient',

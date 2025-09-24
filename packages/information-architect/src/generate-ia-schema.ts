@@ -9,6 +9,62 @@ interface DesignSystemItem {
   description: string;
 }
 
+function determineSectionType(line: string): 'components' | 'layouts' | null {
+  if (line === '## Components') return 'components';
+  if (line === '## Layouts') return 'layouts';
+  return null;
+}
+
+function addItemToSection(
+  item: DesignSystemItem,
+  sectionType: 'components' | 'layouts',
+  components: DesignSystemItem[],
+  layouts: DesignSystemItem[],
+): void {
+  if (sectionType === 'components') {
+    components.push(item);
+  } else {
+    layouts.push(item);
+  }
+}
+
+function processLine(
+  line: string,
+  currentSection: 'components' | 'layouts' | null,
+  currentItem: DesignSystemItem | null,
+  components: DesignSystemItem[],
+  layouts: DesignSystemItem[],
+): { section: typeof currentSection; item: typeof currentItem } {
+  const trimmedLine = line.trim();
+
+  if (trimmedLine.startsWith('## ')) {
+    return {
+      section: determineSectionType(trimmedLine),
+      item: null,
+    };
+  }
+
+  if (trimmedLine.startsWith('### ') && currentSection) {
+    if (currentItem) {
+      addItemToSection(currentItem, currentSection, components, layouts);
+    }
+
+    return {
+      section: currentSection,
+      item: {
+        name: trimmedLine.replace(/^###\s+/, '').trim(),
+        description: '',
+      },
+    };
+  }
+
+  if (currentItem && trimmedLine.startsWith('Description: ')) {
+    currentItem.description = trimmedLine.replace(/^Description:\s+/, '').trim();
+  }
+
+  return { section: currentSection, item: currentItem };
+}
+
 async function getComponentsAndLayouts(
   designSystemDir: string,
 ): Promise<{ components: DesignSystemItem[]; layouts: DesignSystemItem[] }> {
@@ -27,41 +83,13 @@ async function getComponentsAndLayouts(
   let currentItem: DesignSystemItem | null = null;
 
   for (const line of lines) {
-    const trimmedLine = line.trim();
-
-    if (trimmedLine.startsWith('## ')) {
-      currentSection = trimmedLine === '## Components' ? 'components' : trimmedLine === '## Layouts' ? 'layouts' : null;
-      currentItem = null;
-      continue;
-    }
-
-    if (trimmedLine.startsWith('### ') && currentSection) {
-      if (currentItem) {
-        if (currentSection === 'components') {
-          components.push(currentItem);
-        } else if (currentSection === 'layouts') {
-          layouts.push(currentItem);
-        }
-      }
-
-      currentItem = {
-        name: trimmedLine.replace(/^###\s+/, '').trim(),
-        description: '',
-      };
-      continue;
-    }
-
-    if (currentItem && trimmedLine.startsWith('Description: ')) {
-      currentItem.description = trimmedLine.replace(/^Description:\s+/, '').trim();
-    }
+    const result = processLine(line, currentSection, currentItem, components, layouts);
+    currentSection = result.section;
+    currentItem = result.item;
   }
 
   if (currentItem && currentSection) {
-    if (currentSection === 'components') {
-      components.push(currentItem);
-    } else if (currentSection === 'layouts') {
-      layouts.push(currentItem);
-    }
+    addItemToSection(currentItem, currentSection, components, layouts);
   }
 
   return { components, layouts };
@@ -123,10 +151,10 @@ async function main() {
 
   const model = await getModelFromContext(outputDir);
   const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
-  const { components: atomsNames, layouts } = await getComponentsAndLayouts(outputDir);
+  const { components: atomsNames } = await getComponentsAndLayouts(outputDir);
   const atoms = atomsNames.map((atom) => ({ name: atom.name, props: [] }));
 
-  const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms, layouts);
+  const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms);
 
   await fs.writeFile(filePath, JSON.stringify(iaSchema, null, 2));
   console.log(`Generated IA schema written to ${filePath}`);

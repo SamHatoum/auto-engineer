@@ -19,9 +19,15 @@ import type {
 import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/information-architect';
 import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engineer/frontend-implementer';
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
+import {
+  CheckClientCommand,
+  CheckClientEvents,
+  ClientCheckFailedEvent,
+} from '../../packages/frontend-checks/dist/src/commands/check-client';
+import { SliceGeneratedEvent } from '../../packages/server-generator-apollo-emmett/dist/src/commands/generate-server';
 
 export default autoConfig({
-  fileId: 'test2222', // unique 9-character base62 canvas file id where all flows in this project will be shown
+  fileId: 'test44444', // unique 9-character base62 canvas file id where all flows in this project will be shown
 
   plugins: [
     '@auto-engineer/server-checks',
@@ -45,10 +51,9 @@ export default autoConfig({
         destination: '.',
       }),
     );
-
-    on<GenerateServerEvents>('ServerGenerated', () =>
+    on<SliceGeneratedEvent>('SliceGenerated', (e) =>
       dispatch<ImplementSliceCommand>('ImplementSlice', {
-        slicePath: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        slicePath: e.data.slicePath,
         context: {
           previousOutputs: 'errors',
           attemptNumber: 0,
@@ -56,23 +61,23 @@ export default autoConfig({
       }),
     );
 
-    on<ImplementSliceEvents>('SliceImplemented', () =>
+    on<ImplementSliceEvents>('SliceImplemented', (e) =>
       dispatch<CheckTestsCommand>('CheckTests', {
-        targetDirectory: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        targetDirectory: e.data.slicePath,
         scope: 'slice',
       }),
     );
 
-    on<ImplementSliceEvents>('SliceImplemented', () =>
+    on<ImplementSliceEvents>('SliceImplemented', (e) =>
       dispatch<CheckTypesCommand>('CheckTypes', {
-        targetDirectory: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        targetDirectory: e.data.slicePath,
         scope: 'slice',
       }),
     );
 
-    on<ImplementServerEvents>('SliceImplemented', () =>
+    on<ImplementSliceEvents>('SliceImplemented', (e) =>
       dispatch<CheckLintCommand>('CheckLint', {
-        targetDirectory: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+        targetDirectory: e.data.slicePath,
         scope: 'slice',
         fix: true,
       }),
@@ -90,7 +95,7 @@ export default autoConfig({
           send({
             type: 'ImplementSlice',
             data: {
-              slicePath: './server/src/domain/flows/questionnaires/submits-a-questionnaire-answer',
+              slicePath: (events.CheckTests[0] as CheckTestsEvents).data.targetDirectory,
               context: {
                 previousOutputs:
                   events.CheckTests.map((e) => (e.type === 'TestsCheckFailed' ? e : null))
@@ -134,6 +139,33 @@ export default autoConfig({
         designSystemPath: './.context/design-system.md',
       }),
     );
+
+    on<ImplementClientEvents>('ClientImplemented', () =>
+      dispatch<CheckClientCommand>('CheckClient', {
+        clientDirectory: './client',
+        skipBrowserChecks: true,
+      }),
+    );
+
+    on<CheckClientEvents>('ClientChecked', (e) => {
+      if (e.type === 'ClientChecked') {
+        const hasErrors = e.data.tsErrors > 0 || e.data.buildErrors > 0 || e.data.consoleErrors > 0;
+
+        if (hasErrors) {
+          const failures = [
+            ...(e.data.tsErrorDetails || []),
+            ...(e.data.buildErrorDetails || []),
+            ...(e.data.consoleErrorDetails || []),
+          ];
+          return dispatch<ImplementClientCommand>('ImplementClient', {
+            projectDir: './client',
+            iaSchemeDir: './.context',
+            designSystemPath: './.context/design-system.md',
+            failures,
+          });
+        }
+      }
+    });
   },
 });
 /*
