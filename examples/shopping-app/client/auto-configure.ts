@@ -90,7 +90,7 @@ const cssVariables = {
 await createFile(
   'index.css.ejs',
   'index.css',
-  templatePropsAIMapper('../.context/figma-variables.json', {
+  templatePropsAIMapper('../.context/figma-file.json', {
     prompt: `
       - Goal: Map Figma variables to strictly named CSS variables provided as input: ${JSON.stringify(cssVariables)}
       - The input will contain a predefined set of CSS variable names.

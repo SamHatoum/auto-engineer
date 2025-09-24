@@ -88,7 +88,7 @@ const MUIObject = {
 await createFile(
   'theme.ts.ejs',
   'theme.ts',
-  templatePropsAIMapper('../.context/figma-variables.json', {
+  templatePropsAIMapper('../.context/figma-file.json', {
     prompt: `
       - Goal: Map Figma variables into a valid MUI v7+ createTheme options object like this: ${JSON.stringify(MUIObject)}
       - The expected output format is:

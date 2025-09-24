@@ -129,7 +129,7 @@ export default autoConfig({
             '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/auto-ia-scheme.json',
           gqlSchemaPath: '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/schema.graphql',
           figmaVariablesPath:
-            '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/figma-variables.json',
+            '/Users/sam/WebstormProjects/top/auto-engineer/examples/shopping-app/.context/figma-file.json',
         },
       }),
     );

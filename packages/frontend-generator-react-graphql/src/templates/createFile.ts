@@ -59,7 +59,8 @@ const BASE_SYSTEM_INSTRUCTIONS = `
 const readJson = async (filePath: string) => {
   const absolute = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
   const raw = await fs.readFile(absolute, 'utf-8');
-  return JSON.parse(raw) as unknown;
+  const json = JSON.parse(raw) as Record<string, unknown>;
+  return 'variables' in json && typeof json.variables === 'object' ? json.variables : json;
 };
 
 export const templatePropsAIMapper: Mapper<{ prompt: string }> = async (variablesPath, options) => {

@@ -62,7 +62,7 @@ export default autoConfig({
           targetDir: './client',
           iaSchemaPath: './.context/auto-ia-scheme.json',
           gqlSchemaPath: './.context/schema.graphql',
-          figmaVariablesPath: './.context/figma-variables.json',
+          figmaVariablesPath: './.context/figma-file.json',
         },
       }),
     );
@@ -139,7 +139,7 @@ rm -rf server client .context/schema.json .context/schema.graphql .context/auto-
 pnpm auto export:schema
 pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/questionnaires.flow.ts
 pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
-pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-file.json
 pnpm auto implement:client --project-dir=./questionnaires/client --ia-scheme-dir=./questionnaires/.context --design-system-path=./questionnaires/.context/design-system.md
 
 
@@ -147,7 +147,7 @@ pnpm auto implement:client --project-dir=./questionnaires/client --ia-scheme-dir
 pnpm auto generate:server --schema-path=./.context/schema.json --destination=.
 
 // TODO remove the AI part and make it mathematical
-pnpm auto generate:client --starter-dir=/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter  --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+pnpm auto generate:client --starter-dir=/Users/sam/WebstormProjects/top/auto-engineer/packages/frontend-generator-react-graphql/shadcn-starter  --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-file.json
 
 // run this per slice in parallel
 pnpm auto implement:slice --slice-path=./questionnaires/server/src/domain/flows/questionnaires/submits-the-questionnaire
@@ -174,7 +174,7 @@ rm -rf server client .context/schema.json .context/schema.graphql .context/auto-
 DEBUG=* pnpm auto export:schema &&\
 DEBUG=* pnpm auto generate:server --schema-path=./.context/schema.json --destination=. &&\
 DEBUG=* pnpm auto generate:ia --output-dir=./.context --flow-files=./flows/questionnaires.flow.ts &&\
-DEBUG=* pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-variables.json
+DEBUG=* pnpm auto generate:client --starter-dir=../../packages/frontend-generator-react-graphql/shadcn-starter --target-dir=./client  --ia-schema-path=./.context/auto-ia-scheme.json  --gql-schema-path=./.context/schema.graphql  --figma-variables-path=./.context/figma-file.json
 
 
 */
