@@ -1,5 +1,14 @@
 # @auto-engineer/information-architect
 
+## 0.10.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.10.1
+  - @auto-engineer/flow@0.10.1
+  - @auto-engineer/message-bus@0.10.1
+
 ## 0.10.0
 
 ### Minor Changes
