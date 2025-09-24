@@ -241,7 +241,6 @@
       "LandingPage": {
         "route": "/",
         "description": "Landing page showcasing app features and pricing",
-        "template": "landing-layout",
         "layout": {
           "organisms": ["LandingHero", "FeaturesSection", "TestimonialsSection", "PricingSection"]
         },
@@ -277,7 +276,6 @@
       "OnboardingPage": {
         "route": "/onboarding",
         "description": "User onboarding flow for initial app setup",
-        "template": "app-layout",
         "layout": {
           "organisms": ["OnboardingFlow"]
         },
@@ -302,7 +300,6 @@
       "HomePage": {
         "route": "/app",
         "description": "Main dashboard showing financial overview and quick actions",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "HomeOverview"]
         },
@@ -338,7 +335,6 @@
       "AddExpensePage": {
         "route": "/app/add-expense",
         "description": "Page for adding new expenses",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "AddExpenseForm"]
         },
@@ -358,7 +354,6 @@
       "ChartsPage": {
         "route": "/app/charts",
         "description": "Spending analysis and charts visualization page",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "SpendingChartsDisplay"]
         },
@@ -373,7 +368,6 @@
       "SubscriptionsPage": {
         "route": "/app/subscriptions",
         "description": "Subscription management page",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "SubscriptionManager"]
         },
@@ -388,7 +382,6 @@
       "SavingsJarPage": {
         "route": "/app/savings-jar",
         "description": "Round-up savings jar management page",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "SavingsJarManager"]
         },
@@ -403,7 +396,6 @@
       "BudgetPage": {
         "route": "/app/budget",
         "description": "Budget tracking and management page",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "BudgetTracker"]
         },
@@ -418,7 +410,6 @@
       "ExpenseHistoryPage": {
         "route": "/app/expense-history",
         "description": "Detailed expense history and management page",
-        "template": "app-layout",
         "layout": {
           "organisms": ["AppSidebar", "TopBar", "GlobalWidgetBar", "ExpenseHistoryList"]
         },

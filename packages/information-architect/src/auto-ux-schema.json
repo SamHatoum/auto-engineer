@@ -183,9 +183,6 @@
                 "description": {
                   "type": "string"
                 },
-                "template": {
-                  "type": "string"
-                },
                 "layout": {
                   "type": "object",
                   "properties": {

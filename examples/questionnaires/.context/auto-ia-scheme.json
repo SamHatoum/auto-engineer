@@ -1,5 +1,5 @@
 {
-  "schema_description": "A questionnaire application allowing participants to answer questions, track progress, and submit responses",
+  "schema_description": "A questionnaire application with administrative dashboard for managing surveys, tracking responses, and analyzing data",
   "atoms": {
     "description": "Atomic UI primitives reused from the design system",
     "items": {}
@@ -36,6 +36,36 @@
         "composition": {
           "atoms": ["alert", "button"]
         }
+      },
+      "SurveyCard": {
+        "description": "Card displaying survey information and quick actions",
+        "composition": {
+          "atoms": ["card", "button", "badge"]
+        }
+      },
+      "ResponseChart": {
+        "description": "Visual representation of response data",
+        "composition": {
+          "atoms": ["card"]
+        }
+      },
+      "TemplateCard": {
+        "description": "Template display with usage statistics",
+        "composition": {
+          "atoms": ["card", "button", "badge"]
+        }
+      },
+      "CompletionTracker": {
+        "description": "Visual progress tracking for completion rates",
+        "composition": {
+          "atoms": ["progress", "card"]
+        }
+      },
+      "ResponseHistoryItem": {
+        "description": "Individual response history entry",
+        "composition": {
+          "atoms": ["card", "button"]
+        }
       }
     }
   },
@@ -54,7 +84,7 @@
             "trigger": "On page load and after each answer",
             "details": {
               "source": "QuestionnaireProgress projection",
-              "gql": "query QuestionnaireProgress($participantId: ID!) {\n        questionnaireProgress(participantId: $participantId) {\n          questionnaireId\n          participantId\n          currentQuestionId\n          remainingQuestions\n          status\n          answers {\n            questionId\n            value\n          }\n        }\n      }"
+              "gql": "query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    currentQuestionId\n    remainingQuestions\n    status\n    answers {\n      questionId\n      value\n    }\n  }\n}"
             }
           }
         ],
@@ -77,7 +107,7 @@
             "trigger": "When user answers a question",
             "details": {
               "source": "AnswerQuestion command",
-              "gql": "mutation AnswerQuestion($input: AnswerQuestionInput!) {\n        answerQuestion(input: $input) {\n          success\n        }\n      }"
+              "gql": "mutation AnswerQuestion($input: AnswerQuestionInput!) {\n  answerQuestion(input: $input) {\n    success\n  }\n}"
             }
           },
           {
@@ -86,7 +116,7 @@
             "trigger": "When user clicks submit button",
             "details": {
               "source": "SubmitQuestionnaire command",
-              "gql": "mutation SubmitQuestionnaire($input: SubmitQuestionnaireInput!) {\n        submitQuestionnaire(input: $input) {\n          success\n        }\n      }"
+              "gql": "mutation SubmitQuestionnaire($input: SubmitQuestionnaireInput!) {\n  submitQuestionnaire(input: $input) {\n    success\n  }\n}"
             }
           },
           {
@@ -95,7 +125,7 @@
             "trigger": "After each answer is submitted",
             "details": {
               "source": "QuestionnaireProgress projection",
-              "gql": "query QuestionnaireProgress($participantId: ID!) {\n        questionnaireProgress(participantId: $participantId) {\n          questionnaireId\n          participantId\n          status\n          currentQuestionId\n          remainingQuestions\n          answers {\n            questionId\n            value\n          }\n        }\n      }"
+              "gql": "query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    status\n    currentQuestionId\n    remainingQuestions\n    answers {\n      questionId\n      value\n    }\n  }\n}"
             }
           }
         ],
@@ -106,6 +136,78 @@
           "disable the submit button when all questions have not been answered",
           "display a confirmation message upon successful submission"
         ]
+      },
+      "DashboardSidebar": {
+        "description": "Navigation sidebar with all app sections",
+        "composition": {
+          "molecules": []
+        }
+      },
+      "DashboardHeader": {
+        "description": "Top bar with logo, profile menu, and notifications",
+        "composition": {
+          "molecules": []
+        }
+      },
+      "GlobalWidgets": {
+        "description": "Persistent widgets showing total responses, active surveys, completion rate",
+        "composition": {
+          "molecules": ["CompletionTracker"]
+        }
+      },
+      "SurveyOverview": {
+        "description": "Active surveys summary and response rate overview",
+        "composition": {
+          "molecules": ["SurveyCard", "ProgressIndicator"]
+        }
+      },
+      "RecentResponses": {
+        "description": "List of recent survey responses",
+        "composition": {
+          "molecules": ["ResponseHistoryItem"]
+        }
+      },
+      "QuickActions": {
+        "description": "Quick access buttons for main actions",
+        "composition": {
+          "molecules": []
+        }
+      },
+      "SurveyCreator": {
+        "description": "Form for creating new surveys with templates",
+        "composition": {
+          "molecules": ["TemplateCard"]
+        }
+      },
+      "AnalyticsDashboard": {
+        "description": "Charts and analytics for response data",
+        "composition": {
+          "molecules": ["ResponseChart"]
+        }
+      },
+      "TemplateManager": {
+        "description": "Template listing and management interface",
+        "composition": {
+          "molecules": ["TemplateCard"]
+        }
+      },
+      "CompletionRateTracker": {
+        "description": "Completion rate tracking and target setting",
+        "composition": {
+          "molecules": ["CompletionTracker"]
+        }
+      },
+      "ResponseGoalsTracker": {
+        "description": "Response goals setting and progress tracking",
+        "composition": {
+          "molecules": ["CompletionTracker"]
+        }
+      },
+      "ResponseHistoryViewer": {
+        "description": "Full response history with filtering and export",
+        "composition": {
+          "molecules": ["ResponseHistoryItem"]
+        }
       }
     }
   },
@@ -115,9 +217,8 @@
       "Homepage": {
         "route": "/",
         "description": "Landing page with welcome message and questionnaire start option",
-        "template": "landing-layout",
         "layout": {
-          "organisms": []
+          "organisms": ["HeroSection"]
         },
         "navigation": [
           {
@@ -130,7 +231,6 @@
       "QuestionnairePage": {
         "route": "/questionnaire",
         "description": "Main questionnaire interface for answering questions and tracking progress",
-        "template": "app-layout",
         "layout": {
           "organisms": ["QuestionnaireProgress", "QuestionnaireSubmission"]
         },
@@ -139,6 +239,129 @@
             "on": "Questionnaire submission complete",
             "to": "Homepage"
           }
+        ]
+      },
+      "DashboardHome": {
+        "route": "/dashboard",
+        "description": "Main dashboard with survey overview and recent activity",
+        "layout": {
+          "organisms": [
+            "DashboardSidebar",
+            "DashboardHeader",
+            "GlobalWidgets",
+            "SurveyOverview",
+            "RecentResponses",
+            "QuickActions"
+          ]
+        },
+        "navigation": [
+          {
+            "on": "Create Survey click",
+            "to": "CreateSurveyPage"
+          },
+          {
+            "on": "Analytics click",
+            "to": "AnalyticsPage"
+          },
+          {
+            "on": "Templates click",
+            "to": "TemplatesPage"
+          }
+        ],
+        "specs": [
+          "show active surveys summary and response rate overview",
+          "display recent survey responses list",
+          "show visual progress of completion rate goals",
+          "quick access buttons for Create Survey, Analytics, Templates"
+        ]
+      },
+      "CreateSurveyPage": {
+        "route": "/create-survey",
+        "description": "Survey creation interface with templates and question types",
+        "layout": {
+          "organisms": ["DashboardSidebar", "DashboardHeader", "GlobalWidgets", "SurveyCreator"]
+        },
+        "navigation": [
+          {
+            "on": "Survey created",
+            "to": "DashboardHome"
+          }
+        ],
+        "specs": [
+          "allow entering survey title, description, and question types",
+          "show recent/frequent question templates for quick selection",
+          "display confirmation toast after creating survey",
+          "update survey dashboard and analytics in real-time"
+        ]
+      },
+      "AnalyticsPage": {
+        "route": "/analytics",
+        "description": "Response analytics with charts and filtering options",
+        "layout": {
+          "organisms": ["DashboardSidebar", "DashboardHeader", "GlobalWidgets", "AnalyticsDashboard"]
+        },
+        "navigation": [],
+        "specs": [
+          "show daily and weekly response rate charts",
+          "highlight surveys with highest engagement",
+          "allow filtering by survey type or date range",
+          "update dynamically when new responses are received"
+        ]
+      },
+      "TemplatesPage": {
+        "route": "/templates",
+        "description": "Template management interface",
+        "layout": {
+          "organisms": ["DashboardSidebar", "DashboardHeader", "GlobalWidgets", "TemplateManager"]
+        },
+        "navigation": [],
+        "specs": [
+          "list all survey templates with usage count and last modified date",
+          "allow creating, editing, and deleting survey templates",
+          "show monthly summary of template usage statistics",
+          "highlight most popular and recently used templates"
+        ]
+      },
+      "CompletionTrackerPage": {
+        "route": "/completion-tracker",
+        "description": "Survey completion tracking and target setting",
+        "layout": {
+          "organisms": ["DashboardSidebar", "DashboardHeader", "GlobalWidgets", "CompletionRateTracker"]
+        },
+        "navigation": [],
+        "specs": [
+          "show current completion rate and target progress",
+          "allow setting completion rate targets",
+          "automatically track new survey completions",
+          "display visual completion progress bar consistently in shell"
+        ]
+      },
+      "ResponseGoalsPage": {
+        "route": "/response-goals",
+        "description": "Response goals tracking and target management",
+        "layout": {
+          "organisms": ["DashboardSidebar", "DashboardHeader", "GlobalWidgets", "ResponseGoalsTracker"]
+        },
+        "navigation": [],
+        "specs": [
+          "allow setting monthly/weekly response targets",
+          "show remaining response targets as a progress bar",
+          "highlight underperforming surveys",
+          "update in real-time when responses are received"
+        ]
+      },
+      "ResponseHistoryPage": {
+        "route": "/response-history",
+        "description": "Full response history with filtering and export capabilities",
+        "layout": {
+          "organisms": ["DashboardSidebar", "DashboardHeader", "GlobalWidgets", "ResponseHistoryViewer"]
+        },
+        "navigation": [],
+        "specs": [
+          "allow viewing full response history",
+          "filter by survey type, date, or completion status",
+          "view detailed response data and export individual responses",
+          "show contribution of each response to daily/weekly/monthly engagement totals"
         ]
       }
     }

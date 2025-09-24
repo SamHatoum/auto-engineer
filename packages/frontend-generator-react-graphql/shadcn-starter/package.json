@@ -70,8 +70,6 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "zod": "^3.25.63",
-    "@auto-engineer/frontend-generator-react-graphql": "workspace:*",
-    "@auto-engineer/ai-gateway": "workspace:*",
     "ejs": "^3.1.10",
     "commander": "^14.0.0"
   },

@@ -9,17 +9,15 @@ import { NotFound } from '@/pages/NotFound';
 import { SidebarProvider } from '@/components/atoms/sidebar';
 
 export const App = () => (
-    <SidebarProvider>
-        <ApolloProvider client={apolloClient}>
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/" element={<Index />} />
-                    <% pages.forEach(page => { -%>
-                        <Route path="<%= page.route %>" element={<<%= page.name %> />} />
-                    <% }) -%>
-                    <Route path="*" element={<NotFound />} />
-                </Routes>
-            </BrowserRouter>
-        </ApolloProvider>
-    </SidebarProvider>
+    <ApolloProvider client={apolloClient}>
+        <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Index />} />
+                <% pages.forEach(page => { -%>
+                    <Route path="<%= page.route %>" element={<<%= page.name %> />} />
+                <% }) -%>
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </BrowserRouter>
+    </ApolloProvider>
 );

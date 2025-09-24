@@ -2,6 +2,146 @@
   "variant": "specs",
   "flows": [
     {
+      "name": "Beautiful Questionnaire App",
+      "id": "AUTO-EUVNoohRE",
+      "slices": [
+        {
+          "name": "App Structure",
+          "id": "AUTO-k6JkQZQnc",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "display persistent sidebar on left for navigation",
+                "sidebar includes links: Home, Create Survey, Analytics, Templates, Completion Tracker, Response Goals, Response History",
+                "highlight current active link in sidebar",
+                "sidebar collapsible for smaller screens",
+                "top bar includes app logo, profile menu, and notifications icon",
+                "bottom or top persistent bar shows global widgets: total responses, active surveys, completion rate progress",
+                "content area changes dynamically based on selected navigation link",
+                "maintain layout consistency across all screens",
+                "support responsive design with sidebar collapsing into hamburger menu on mobile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Home Screen",
+          "id": "AUTO-aifPcU3hw",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "show active surveys summary and response rate overview",
+                "display recent survey responses list",
+                "show visual progress of completion rate goals",
+                "quick access buttons for Create Survey, Analytics, Templates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Survey",
+          "id": "AUTO-MPviTMrQC",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "allow entering survey title, description, and question types",
+                "show recent/frequent question templates for quick selection",
+                "display confirmation toast after creating survey",
+                "update survey dashboard and analytics in real-time"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Response Analytics",
+          "id": "AUTO-eME978Euk",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "show daily and weekly response rate charts",
+                "highlight surveys with highest engagement",
+                "allow filtering by survey type or date range",
+                "update dynamically when new responses are received"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Manage Templates",
+          "id": "AUTO-TRJBgM1JS",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "list all survey templates with usage count and last modified date",
+                "allow creating, editing, and deleting survey templates",
+                "show monthly summary of template usage statistics",
+                "highlight most popular and recently used templates"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Survey Completion Tracker",
+          "id": "AUTO-oDBBOUNzr",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "show current completion rate and target progress",
+                "allow setting completion rate targets",
+                "automatically track new survey completions",
+                "display visual completion progress bar consistently in shell"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Response Goals Tracker",
+          "id": "AUTO-Idmim68Yf",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "allow setting monthly/weekly response targets",
+                "show remaining response targets as a progress bar",
+                "highlight underperforming surveys",
+                "update in real-time when responses are received"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Response History",
+          "id": "AUTO-cIpwPlqRq",
+          "type": "experience",
+          "client": {
+            "specs": {
+              "name": "",
+              "rules": [
+                "allow viewing full response history",
+                "filter by survey type, date, or completion status",
+                "view detailed response data and export individual responses",
+                "show contribution of each response to daily/weekly/monthly engagement totals"
+              ]
+            }
+          }
+        }
+      ],
+      "sourceFile": "/Users/osamatanveer/Desktop/Work/auto-engineer/examples/questionnaires/flows/homepage.flow.ts"
+    },
+    {
       "name": "Questionnaires",
       "id": "AUTO-Q9m2Kp4Lx",
       "slices": [
@@ -465,7 +605,7 @@
           }
         }
       ],
-      "sourceFile": "/Users/ramihatoum/WebstormProjects/xolvio/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts"
+      "sourceFile": "/Users/osamatanveer/Desktop/Work/auto-engineer/examples/questionnaires/flows/questionnaires.flow.ts"
     }
   ],
   "messages": [

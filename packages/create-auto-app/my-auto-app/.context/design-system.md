@@ -256,13 +256,3 @@ Image: ![toggle-group image](undefined)
 
 Description: INSTANCE
 Image: ![tooltip image](undefined)
-
-## Layouts
-
-### landing-layout
-
-Description: header + footer, with children in the middle
-
-### app-layout
-
-Description: horizontal layout of a sidebar + children

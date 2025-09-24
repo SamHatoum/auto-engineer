@@ -27,7 +27,6 @@ export class InformationArchitectAgent {
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
-    // layouts?: { name: string; description: string }[],
   ): Promise<AIAgentOutput> {
     const prompt = this.constructPrompt(model, uxSchema, existingSchema, atoms);
     try {
@@ -55,7 +54,6 @@ export class InformationArchitectAgent {
     uxSchema: UXSchema,
     existingSchema?: object,
     atoms?: { name: string; props: { name: string; type: string }[] }[],
-    // layouts?: { name: string; description: string }[],
   ): string {
     return `
 You are an expert UI architect and product designer. Given the following model (containing flows, messages, and integrations) and UX schema, generate a detailed JSON specification for the application's UI components and pages.
@@ -153,7 +151,6 @@ export async function processFlowsWithAI(
   uxSchema: UXSchema,
   existingSchema?: object,
   atoms?: { name: string; props: { name: string; type: string }[] }[],
-  // layouts?: { name: string; description: string }[],
 ): Promise<AIAgentOutput> {
   const agent = new InformationArchitectAgent();
   return agent.generateUXComponents(model, uxSchema, existingSchema, atoms);

@@ -1,0 +1,49 @@
+type Query {
+  questionnaireProgress(participantId: ID): [QuestionnaireProgress!]!
+}
+
+type QuestionnaireProgress {
+  questionnaireId: String!
+  participantId: String!
+  status: String!
+  currentQuestionId: String
+  remainingQuestions: [String!]!
+  answers: [QuestionnaireProgressAnswers!]!
+}
+
+type QuestionnaireProgressAnswers {
+  questionId: String!
+  value: JSON!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type Mutation {
+  answerQuestion(input: AnswerQuestionInput!): MutationResponse!
+  submitQuestionnaire(input: SubmitQuestionnaireInput!): MutationResponse!
+}
+
+type MutationResponse {
+  success: Boolean!
+  error: MutationError
+}
+
+type MutationError {
+  type: String!
+  message: String
+}
+
+input AnswerQuestionInput {
+  questionnaireId: String!
+  participantId: String!
+  questionId: String!
+  answer: JSON!
+}
+
+input SubmitQuestionnaireInput {
+  questionnaireId: String!
+  participantId: String!
+}
