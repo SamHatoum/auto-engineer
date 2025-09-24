@@ -1,5 +1,16 @@
 # @auto-engineer/cli
 
+## 0.10.3
+
+### Patch Changes
+
+- Fix dev dep
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.10.3
+  - @auto-engineer/message-bus@0.10.3
+  - @auto-engineer/message-store@0.10.3
+
 ## 0.10.2
 
 ### Patch Changes

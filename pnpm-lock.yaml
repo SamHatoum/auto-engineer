@@ -335,6 +335,9 @@ importers:
       figlet:
         specifier: ^1.7.0
         version: 1.8.2
+      get-port:
+        specifier: ^7.1.0
+        version: 7.1.0
       gradient-string:
         specifier: ^3.0.0
         version: 3.0.0
@@ -393,9 +396,6 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.18.0
-      get-port:
-        specifier: ^7.1.0
-        version: 7.1.0
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
