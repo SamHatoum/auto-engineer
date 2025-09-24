@@ -535,8 +535,8 @@ async function main() {
   await createProject(projectOptions);
 }
 
-// Only run main if this file is executed directly
-if (import.meta.url.startsWith('file:') && process.argv[1] === fileURLToPath(import.meta.url)) {
+// Run main function when this module is executed directly (not during testing)
+if (process.env.NODE_ENV !== 'test' && typeof process.env.VITEST === 'undefined') {
   main().catch((error) => {
     console.error(chalk.red('Error:'), error);
     process.exit(1);
