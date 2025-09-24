@@ -266,6 +266,7 @@ export async function handleGenerateServerCommandInternal(
       for (const flow of spec.flows) {
         if (Array.isArray(flow.slices) && flow.slices.length > 0) {
           for (const slice of flow.slices) {
+            if (slice.type === 'experience') continue; // skip experience slices
             const sliceEvent: SliceGeneratedEvent = {
               type: 'SliceGenerated',
               data: {
@@ -273,7 +274,7 @@ export async function handleGenerateServerCommandInternal(
                 sliceName: slice.name,
                 sliceType: slice.type,
                 schemaPath: command.data.modelPath,
-                slicePath: ensureDirPath('./server/src/domain/flows', toKebabCase(slice.name)),
+                slicePath: ensureDirPath('./server/src/domain/flows', toKebabCase(flow.name), toKebabCase(slice.name)),
               },
               timestamp: new Date(),
               requestId: command.requestId,

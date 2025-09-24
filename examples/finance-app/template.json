@@ -1,0 +1,7 @@
+{
+  "name": "finance-tracker",
+  "displayName": "Finance Tracker",
+  "description": "Manage financial transactions and budgets",
+  "type": "template",
+  "preset": "full"
+}

@@ -24,10 +24,9 @@ import {
   CheckClientEvents,
   ClientCheckFailedEvent,
 } from '../../packages/frontend-checks/dist/src/commands/check-client';
-import { SliceGeneratedEvent } from '../../packages/server-generator-apollo-emmett/dist/src/commands/generate-server';
 
 export default autoConfig({
-  fileId: 'test44444', // unique 9-character base62 canvas file id where all flows in this project will be shown
+  fileId: 'test33333', // unique 9-character base62 canvas file id where all flows in this project will be shown
 
   plugins: [
     '@auto-engineer/server-checks',
@@ -46,79 +45,12 @@ export default autoConfig({
   },
   pipeline: () => {
     on<ExportSchemaEvents>('SchemaExported', () =>
-      dispatch<GenerateServerCommand>('GenerateServer', {
-        modelPath: './.context/schema.json',
-        destination: '.',
-      }),
-    );
-    on<SliceGeneratedEvent>('SliceGenerated', (e) =>
-      dispatch<ImplementSliceCommand>('ImplementSlice', {
-        slicePath: e.data.slicePath,
-        context: {
-          previousOutputs: 'errors',
-          attemptNumber: 0,
+      dispatch<GenerateIACommand>({
+        type: 'GenerateIA',
+        data: {
+          outputDir: './.context',
+          modelPath: './.context/schema.json',
         },
-      }),
-    );
-
-    on<ImplementSliceEvents>('SliceImplemented', (e) =>
-      dispatch<CheckTestsCommand>('CheckTests', {
-        targetDirectory: e.data.slicePath,
-        scope: 'slice',
-      }),
-    );
-
-    on<ImplementSliceEvents>('SliceImplemented', (e) =>
-      dispatch<CheckTypesCommand>('CheckTypes', {
-        targetDirectory: e.data.slicePath,
-        scope: 'slice',
-      }),
-    );
-
-    on<ImplementSliceEvents>('SliceImplemented', (e) =>
-      dispatch<CheckLintCommand>('CheckLint', {
-        targetDirectory: e.data.slicePath,
-        scope: 'slice',
-        fix: true,
-      }),
-    );
-
-    on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
-      ['CheckTests', 'CheckTypes', 'CheckLint'],
-      dispatch<ImplementSliceCommand>(['ImplementSlice'], (events, send) => {
-        const hasFailures =
-          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
-          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
-          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
-
-        if (hasFailures) {
-          send({
-            type: 'ImplementSlice',
-            data: {
-              slicePath: (events.CheckTests[0] as CheckTestsEvents).data.targetDirectory,
-              context: {
-                previousOutputs:
-                  events.CheckTests.map((e) => (e.type === 'TestsCheckFailed' ? e : null))
-                    .filter(Boolean)
-                    .join('\n') +
-                  events.CheckTypes.map((e) => (e.type === 'TypeCheckFailed' ? e : null))
-                    .filter(Boolean)
-                    .join('\n') +
-                  events.CheckLint.map((e) => (e.type === 'LintCheckFailed' ? e : null))
-                    .filter(Boolean)
-                    .join('\n'),
-                attemptNumber: 0,
-              },
-            },
-          });
-        }
-      }),
-    );
-
-    on<GenerateServerEvents>('ServerGenerated', () =>
-      dispatch<GenerateIACommand>('GenerateIA', {
-        modelPath: './.context/schema.json',
-        outputDir: './.context',
       }),
     );
 
@@ -168,6 +100,7 @@ export default autoConfig({
     });
   },
 });
+
 /*
 
 rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json 

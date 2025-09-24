@@ -1,0 +1,7 @@
+{
+  "name": "finance-app",
+  "displayName": "Finance App",
+  "description": "Manage financial transactions and budgets",
+  "type": "template",
+  "preset": "full"
+}

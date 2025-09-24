@@ -11,7 +11,7 @@
     "templates"
   ],
   "scripts": {
-    "copy-templates": "rm -rf templates && mkdir templates && rsync -a --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' --exclude='**/*.js' --exclude='**/*.js.map' ../../examples/ templates/",
+    "copy-templates": "rm -rf templates && mkdir templates && rsync -a --exclude='node_modules' --exclude='.turbo' --exclude='dist' --exclude='build' --exclude='**/*.js' --exclude='**/*.js.map' --exclude='.env*' ../../examples/ templates/",
     "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
     "prepublishOnly": "npm run build",
     "test": "vitest run --reporter=dot",
