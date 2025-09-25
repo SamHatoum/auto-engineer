@@ -108,7 +108,17 @@ export const getFlows = async (
     opts.fastFsScan === undefined ? false : opts.fastFsScan,
   );
   if (seedFiles.length === 0) {
-    throw new Error(`getFlows: no candidate files found. root=${normRoot} pattern=${String(pattern)}`);
+    debug('no candidate files found. root=%s pattern=%s', normRoot, String(pattern));
+    return {
+      flows: [],
+      vfsFiles: [],
+      externals: [],
+      typings: {},
+      typeMap: new Map(),
+      typesByFile: new Map(),
+      givenTypesByFile: new Map(),
+      toModel: () => ({ variant: 'specs' as const, flows: [], messages: [] }),
+    };
   }
 
   const cacheKey = [CACHE_VERSION, normRoot, String(pattern), stableStringify(importMap)].join('|');
