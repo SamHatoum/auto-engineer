@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.10.4
+
+### Patch Changes
+
+- getFlows returns an empty list when there are no flows instead of throwing an error
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.10.4
+  - @auto-engineer/id@0.10.4
+  - @auto-engineer/message-bus@0.10.4
+
 ## 0.10.3
 
 ### Patch Changes

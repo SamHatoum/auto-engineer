@@ -1,5 +1,7 @@
 # @auto-engineer/message-bus
 
+## 0.10.4
+
 ## 0.10.3
 
 ## 0.10.2
