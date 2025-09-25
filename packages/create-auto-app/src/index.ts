@@ -266,7 +266,7 @@ function printSuccessMessage(name: string, packageManager: string, installDeps: 
   if (!installDeps) {
     console.log(chalk.cyan(`  ${packageManager} install`));
   }
-  console.log(chalk.cyan(`  auto (you may need: ${packageManager} install -g @auto-engineer/cli@latest)\n`));
+  console.log(chalk.cyan(`  auto (you may need to ${packageManager} install -g @auto-engineer/cli@latest)\n`));
 }
 
 async function getAvailableTemplates(): Promise<TemplateMetadata[]> {
