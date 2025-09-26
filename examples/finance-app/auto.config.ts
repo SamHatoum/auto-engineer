@@ -45,12 +45,9 @@ export default autoConfig({
   },
   pipeline: () => {
     on<ExportSchemaEvents>('SchemaExported', () =>
-      dispatch<GenerateIACommand>({
-        type: 'GenerateIA',
-        data: {
-          outputDir: './.context',
-          modelPath: './.context/schema.json',
-        },
+      dispatch<GenerateIACommand>('GenerateIA', {
+        outputDir: './.context',
+        modelPath: './.context/schema.json',
       }),
     );
 

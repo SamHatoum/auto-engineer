@@ -1,7 +1,0 @@
-{
-  "name": "shopping-assistant",
-  "displayName": "AI Shopping Assistant",
-  "description": "Suggest items from product catalog based on a prompt",
-  "type": "template",
-  "preset": "full"
-}
