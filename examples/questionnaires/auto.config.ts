@@ -15,6 +15,8 @@ import type {
   CheckLintCommand,
   CheckLintEvents,
   TestsCheckFailedEvent,
+  TypeCheckFailedEvent,
+  LintCheckFailedEvent,
 } from '@auto-engineer/server-checks';
 import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/information-architect';
 import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engineer/frontend-implementer';
@@ -83,6 +85,28 @@ export default autoConfig({
       }),
     );
 
+    on<ImplementSliceEvents>('SliceImplemented', (e) =>
+      dispatch<CheckTestsCommand>('CheckTests', {
+        targetDirectory: e.data.slicePath,
+        scope: 'slice',
+      }),
+    );
+
+    on<ImplementSliceEvents>('SliceImplemented', (e) =>
+      dispatch<CheckTypesCommand>('CheckTypes', {
+        targetDirectory: e.data.slicePath,
+        scope: 'slice',
+      }),
+    );
+
+    on<ImplementSliceEvents>('SliceImplemented', (e) =>
+      dispatch<CheckLintCommand>('CheckLint', {
+        targetDirectory: e.data.slicePath,
+        scope: 'slice',
+        fix: true,
+      }),
+    );
+
     on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
       ['CheckTests', 'CheckTypes', 'CheckLint'],
       dispatch<ImplementSliceCommand>(['ImplementSlice'], (events, send) => {
@@ -98,14 +122,14 @@ export default autoConfig({
               slicePath: (events.CheckTests[0] as CheckTestsEvents).data.targetDirectory,
               context: {
                 previousOutputs:
-                  events.CheckTests.map((e) => (e.type === 'TestsCheckFailed' ? e : null))
-                    .filter(Boolean)
+                  events.CheckTests.filter((e): e is TestsCheckFailedEvent => e.type === 'TestsCheckFailed')
+                    .map((e) => e.data.errors)
                     .join('\n') +
-                  events.CheckTypes.map((e) => (e.type === 'TypeCheckFailed' ? e : null))
-                    .filter(Boolean)
+                  events.CheckTypes.filter((e): e is TypeCheckFailedEvent => e.type === 'TypeCheckFailed')
+                    .map((e) => e.data.errors)
                     .join('\n') +
-                  events.CheckLint.map((e) => (e.type === 'LintCheckFailed' ? e : null))
-                    .filter(Boolean)
+                  events.CheckLint.filter((e): e is LintCheckFailedEvent => e.type === 'LintCheckFailed')
+                    .map((e) => e.data.errors)
                     .join('\n'),
                 attemptNumber: 0,
               },

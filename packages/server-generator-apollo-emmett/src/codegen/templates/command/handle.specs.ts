@@ -117,11 +117,11 @@ describe('generateScaffoldFilePlans', () => {
 
         try {
           await handler(eventStore, streamId, (state) => decide(command, state));
-          return; // success (returns void)
-        } catch (error: any) {
+          return undefined; // success
+        } catch (error: unknown) {
           return {
             type: 'SKIP',
-            reason: \`Command failed: \${error?.message ?? 'Unknown'}\`,
+            reason: \`Command failed: \${error instanceof Error ? error.message : 'Unknown'}\`,
           };
         }
       };
@@ -315,11 +315,11 @@ describe('generateScaffoldFilePlans', () => {
             // TODO: add products as a parameter to decide once implemented above
             decide(command, state /* products */),
           );
-          return; // success (returns void)
-        } catch (error: any) {
+          return undefined; // success
+        } catch (error: unknown) {
           return {
             type: 'SKIP',
-            reason: \`Command failed: \${error?.message ?? 'Unknown'}\`,
+            reason: \`Command failed: \${error instanceof Error ? error.message : 'Unknown'}\`,
           };
         }
       };

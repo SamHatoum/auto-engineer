@@ -1,7 +1,7 @@
-<% if (events.length) { -%>
+<% if (localEvents.length) { -%>
     import type { Event } from '@event-driven-io/emmett';
 
-    <% for (const event of events) { -%>
+    <% for (const event of localEvents) { -%>
         export type <%= pascalCase(event.type) %> = Event<
         '<%= event.type %>',
         {

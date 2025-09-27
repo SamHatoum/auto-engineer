@@ -16,6 +16,14 @@ import {
   type State,
 } from '@auto-engineer/flow';
 
+type SendQuestionnaireLink = Command<
+  'SendQuestionnaireLink',
+  {
+    questionnaireId: string;
+    participantId: string;
+  }
+>;
+
 type QuestionnaireLinkSent = Event<
   'QuestionnaireLinkSent',
   {
@@ -101,7 +109,38 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       should('allow user to start the questionnaire');
     });
   });
-
+  command('sends the questionnaire link', 'AUTO-S2b5Cp7Dz')
+    .server(() => {
+      specs(() => {
+        rule('questionnaire link is sent to participant', 'AUTO-r0A1Bo8X', () => {
+          example('sends the questionnaire link successfully')
+            .when<SendQuestionnaireLink>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+            })
+            .then<QuestionnaireLinkSent>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              link: 'https://app.example.com/q/q-001?participant=participant-abc',
+              sentAt: new Date('2030-01-01T09:00:00Z'),
+            });
+        });
+      });
+      data([sink().event('QuestionnaireLinkSent').toStream('questionnaire-participantId')]);
+    })
+    .request(gql`
+      mutation SendQuestionnaireLink($input: SendQuestionnaireLinkInput!) {
+        sendQuestionnaireLink(input: $input) {
+          success
+        }
+      }
+    `)
+    .client(() => {
+      specs('Questionnaire Link', () => {
+        should('display a confirmation message when the link is sent');
+        should('handle errors when the link cannot be sent');
+      });
+    });
   query('views the questionnaire', 'AUTO-V7n8Rq5M')
     .server(() => {
       specs(() => {
@@ -125,7 +164,7 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               participantId: 'participant-abc',
               status: 'in_progress',
               currentQuestionId: 'q2',
-              remainingQuestions: ['q2', 'q3'],
+              remainingQuestions: ['q2'],
               answers: [{ questionId: 'q1', value: 'Yes' }],
             });
           example('no questions have been answered yet')
@@ -141,12 +180,12 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               participantId: 'participant-abc',
               status: 'in_progress',
               currentQuestionId: 'q1',
-              remainingQuestions: ['q1', 'q2', 'q3'],
+              remainingQuestions: ['q1', 'q2'],
               answers: [],
             });
         });
       });
-      data([source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaire-participantId')]);
+      data([source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaireId-participantId')]);
     })
     .request(gql`
       query QuestionnaireProgress($participantId: ID!) {
@@ -290,13 +329,13 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               participantId: 'participant-abc',
               status: 'in_progress',
               currentQuestionId: 'q2',
-              remainingQuestions: ['q2', 'q3'],
+              remainingQuestions: ['q2'],
               answers: [{ questionId: 'q1', value: 'Yes' }],
             });
         });
       });
       data([
-        source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaire-participantId'),
+        source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaireId-participantId'),
         source().state('QuestionnaireConfig').fromDatabase('QuestionnaireConfigAPI'),
       ]);
     })

@@ -101,11 +101,11 @@ command: <%= commands.map(c => pascalCase(c.type)).join(' | ') %>
             ? `      // TODO: add ${resultVarName} as a parameter to decide once implemented above\n      decide(command, state, /* ${resultVarName} */)`
             : `      decide(command, state)` %>
     );
-    return; // success (returns void)
-    } catch (error: any) {
+    return undefined; // success
+    } catch (error: unknown) {
     return {
     type: 'SKIP',
-    reason: `Command failed: ${error?.message ?? 'Unknown'}`,
+    reason: `Command failed: ${error instanceof Error ? error.message : 'Unknown'}`,
     };
     }
     };

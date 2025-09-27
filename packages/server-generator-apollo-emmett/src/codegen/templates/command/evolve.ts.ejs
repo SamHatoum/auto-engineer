@@ -1,8 +1,8 @@
 <% if (events.length) { -%>
     import type { State } from './state';
-    <% events.forEach(event => { -%>
-        import type { <%= pascalCase(event.type) %> } from './events';
-    <% }); -%>
+    <% for (const group of eventImportGroups) { -%>
+        import type { <%= group.eventTypes.map(name => pascalCase(name)).join(', ') %> } from '<%= group.importPath %>';
+    <% } -%>
 
     /**
     * ## IMPLEMENTATION INSTRUCTIONS ##

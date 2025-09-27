@@ -21,12 +21,16 @@ function extractGwtSpecs(slice: Slice) {
           given: example.given,
           when: example.when,
           then: example.then,
+          description: example.description,
+          ruleDescription: rule.description,
         })),
       )
     : [];
 }
 
-function buildCommandMapping(gwtSpecs: Array<{ given: unknown; when: unknown; then: unknown }>) {
+function buildCommandMapping(
+  gwtSpecs: Array<{ given: unknown; when: unknown; then: unknown; description?: string; ruleDescription?: string }>,
+) {
   const mapping: Record<string, GwtCondition[]> = {};
 
   for (const gwt of gwtSpecs) {
@@ -43,6 +47,8 @@ function buildCommandMapping(gwtSpecs: Array<{ given: unknown; when: unknown; th
         given: gwt.given as Array<EventExample | StateExample> | undefined,
         when: gwt.when as CommandExample | EventExample[],
         then: gwt.then as Array<EventExample | StateExample | CommandExample | { errorType: string; message?: string }>,
+        description: gwt.description,
+        ruleDescription: gwt.ruleDescription,
       });
     }
   }
@@ -54,38 +60,16 @@ function enhanceMapping(mapping: Record<string, GwtCondition[]>) {
   const enhancedMapping: Record<string, (GwtCondition & { failingFields?: string[] })[]> = {};
 
   for (const command in mapping) {
-    const merged = mergeGwtConditions(mapping[command]);
-    const successfulData = findSuccessfulExampleData(merged);
+    const conditions = mapping[command];
+    const successfulData = findSuccessfulExampleData(conditions);
 
-    enhancedMapping[command] = merged.map((gwt) => ({
+    enhancedMapping[command] = conditions.map((gwt) => ({
       ...gwt,
       failingFields: findFailingFields(gwt, successfulData),
     }));
   }
 
   return enhancedMapping;
-}
-
-function mergeGwtConditions(gwts: GwtCondition[]): GwtCondition[] {
-  const map = new Map<string, GwtCondition[]>();
-
-  for (const gwt of gwts) {
-    // Handle both single command and array of events in when clause
-    const whenData = Array.isArray(gwt.when) ? gwt.when[0]?.exampleData : gwt.when.exampleData;
-    const key = JSON.stringify(whenData ?? {});
-    const existing = map.get(key) ?? [];
-    map.set(key, [...existing, gwt]);
-  }
-
-  return Array.from(map.values()).map((conditions) => {
-    const first = conditions[0];
-    const combinedThen = conditions.flatMap((g) => g.then);
-    return {
-      given: conditions.flatMap((g) => g.given ?? []),
-      when: first.when,
-      then: combinedThen,
-    };
-  });
 }
 
 function findSuccessfulExampleData(gwts: GwtCondition[]): Record<string, unknown> {

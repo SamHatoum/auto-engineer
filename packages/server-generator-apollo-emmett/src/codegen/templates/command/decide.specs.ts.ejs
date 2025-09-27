@@ -1,51 +1,116 @@
+<%
+const allEvents = [];
+const ruleGroups = new Map();
+for (const commandName in gwtMapping) {
+    const cases = gwtMapping[commandName];
+    for (const gwt of cases) {
+        const ruleDescription = gwt.ruleDescription || `${flowName} | ${sliceName}`;
+        if (!ruleGroups.has(ruleDescription)) {
+            ruleGroups.set(ruleDescription, []);
+        }
+        ruleGroups.get(ruleDescription).push({ commandName, gwt });
+        if (gwt.given && gwt.given.length) {
+            for (const g of gwt.given) {
+                if (g.eventRef) {
+                    const event = events.find(e => e.type === g.eventRef);
+                    if (event) allEvents.push(event);
+                }
+            }
+        }
+        if (gwt.then) {
+            for (const t of gwt.then) {
+                if (t.eventRef) {
+                    const event = events.find(e => e.type === t.eventRef);
+                    if (event) allEvents.push(event);
+                }
+            }
+        }
+    }
+}
+
+const testEventImportGroups = [];
+const testEventsByPath = new Map();
+
+for (const event of allEvents) {
+    if (!event.type) continue;
+    const importGroup = eventImportGroups.find(group =>
+        group.eventTypes.includes(event.type)
+    );
+
+    if (importGroup) {
+        const path = importGroup.importPath;
+        if (!testEventsByPath.has(path)) {
+            testEventsByPath.set(path, []);
+        }
+        if (!testEventsByPath.get(path).includes(event.type)) {
+            testEventsByPath.get(path).push(event.type);
+        }
+    }
+}
+
+for (const [importPath, eventTypes] of testEventsByPath.entries()) {
+    testEventImportGroups.push({ importPath, eventTypes: eventTypes.sort() });
+}
+
+const uniqueEventTypes = Array.from(new Set(allEvents.map(e => e?.type).filter(Boolean))).sort();
+_%>
 import { describe, it } from 'vitest';
 import { DeciderSpecification } from '@event-driven-io/emmett';
 import { decide } from './decide';
 import { evolve } from './evolve';
-import { initialState } from './state';
+import { initialState, State } from './state';
+<% for (const group of testEventImportGroups) { -%>
+import type { <%= group.eventTypes.join(', ') %> } from '<%= group.importPath %>';
+<% } -%>
+import type { <%= Object.keys(commandSchemasByName).join(', ') %> } from './commands';
+<% for (const [ruleDescription, ruleGwts] of ruleGroups.entries()) { %>
+describe('<%= ruleDescription %>', () => {
 
-describe('<%= flowName %> | <%= sliceName %>', () => {
-const given = DeciderSpecification.for({
-decide,
-evolve,
-initialState,
-});
+  type Events = <%= uniqueEventTypes.length > 0 ? uniqueEventTypes.join(' | ') : 'never' %>;
 
-<% for (const commandName in gwtMapping) {
-    const cases = gwtMapping[commandName];
+  const given = DeciderSpecification.for<<%= Object.keys(commandSchemasByName).length === 1 ? Object.keys(commandSchemasByName)[0] : `(${Object.keys(commandSchemasByName).join(' | ')})` %>, Events, State>({
+    decide,
+    evolve,
+    initialState,
+  });
+
+<% for (const { commandName, gwt } of ruleGwts) {
     const schema = commandSchemasByName[commandName];
-        for (const [i, gwt] of cases.entries()) {
     const example = gwt.when;
     const eventResults = gwt.then.filter(t => 'eventRef' in t);
     const errorResult = gwt.then.find(t => 'errorType' in t);
-    const testName = errorResult
+
+    const testDescription = gwt.description ||
+        (errorResult
             ? `should throw ${errorResult.errorType} when ${gwt.failingFields?.join(', ') || 'invalid input'}`
-            : `should emit ${eventResults.map(e => e.eventRef).join(', ')} for valid ${commandName}`;
+            : `should emit ${eventResults.map(e => e.eventRef).join(', ')} for valid ${commandName}`);
 %>
-it('<%- testName %>', () => {
-given([
+  it('<%= testDescription %>', () => {
+    given([
 <%_ if (gwt.given && gwt.given.length) { _%>
-    <%- gwt.given.map(g => `{
+      <%- gwt.given.map(g => `{
         type: '${g.eventRef}',
         data: ${formatDataObject(g.exampleData, events.find(e => e.type === g.eventRef))}
       }`).join(',\n      ') %>
 <%_ } _%>
-])
-.when({
-type: '<%= example.commandRef %>',
-data: <%- formatDataObject(example.exampleData, schema) %>,
-metadata: { now: new Date() }
-})
+    ])
+      .when({
+        type: '<%= example.commandRef %>',
+        data: <%- formatDataObject(example.exampleData, schema) %>,
+        metadata: { now: new Date() },
+      })
 <% if (errorResult) { %>
-    .thenThrows((err) => err instanceof <%= errorResult.errorType %> && err.message === '<%= errorResult.message || '' %>');
+      .thenThrows((err) => err instanceof <%= errorResult.errorType %> && err.message === '<%= errorResult.message || '' %>');
 <% } else { %>
-    .then([
-    <%- eventResults.map(e => `{
-        type: '${e.eventRef}',
-        data: ${formatDataObject(e.exampleData, events.find(evt => evt.type === e.eventRef))}
-      }`).join(',\n      ') %>
-    ]);
+
+      .then([
+        <%- eventResults.map(e => `{
+          type: '${e.eventRef}',
+          data: ${formatDataObject(e.exampleData, events.find(evt => evt.type === e.eventRef))}
+        }`).join(',\n        ') %>
+      ]);
+<% } %>
+  });
 <% } %>
 });
-<% }} %>
-});
+<% } %>

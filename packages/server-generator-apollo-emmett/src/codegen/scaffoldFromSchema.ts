@@ -21,6 +21,10 @@ import {
   buildQueryGwtMapping,
   extractMessagesFromSpecs,
   extractProjectionName,
+  groupEventImports,
+  getAllEventTypes,
+  getLocalEvents,
+  createEventUnionType,
 } from './extract';
 
 function extractGwtSpecs(slice: Slice) {
@@ -273,6 +277,11 @@ async function prepareTemplateData(
   const filteredCommands =
     allowedForSlice.size > 0 ? uniqueCommands.filter((c) => allowedForSlice.has(c.type)) : uniqueCommands;
 
+  const eventImportGroups = groupEventImports({ currentSliceName: slice.name, events });
+  const allEventTypesArray = getAllEventTypes(events);
+  const allEventTypes = createEventUnionType(events);
+  const localEvents = getLocalEvents(events);
+
   return {
     flowName: flow.name,
     sliceName: slice.name,
@@ -295,6 +304,10 @@ async function prepareTemplateData(
         ? allMessages.find((m) => m.name === slice.server?.data?.[0]?.target?.name)
         : undefined,
     integrations,
+    eventImportGroups,
+    allEventTypes,
+    allEventTypesArray,
+    localEvents,
   };
 }
 

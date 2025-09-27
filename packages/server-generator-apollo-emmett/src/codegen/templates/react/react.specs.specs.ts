@@ -173,14 +173,17 @@ describe('react.specs.ts.ejs (react slice)', () => {
       import type { BookingRequested } from '../guest-submits-booking-request/events';
       import type { NotifyHost } from '../send-notification-to-host/commands';
 
-      describe('ManageBookings | SendNotificationToHost', () => {
+      type ReactorEvent = BookingRequested;
+      type ReactorCommand = NotifyHost;
+
+      describe('Should send host notification on booking request', () => {
         let eventStore: InMemoryEventStore;
-        let given: ReactorSpecification<BookingRequested, NotifyHost, ReactorContext>;
+        let given: ReactorSpecification<ReactorEvent, ReactorCommand, ReactorContext>;
         let messageBus: CommandSender;
 
         beforeEach(() => {
           eventStore = getInMemoryEventStore({});
-          given = ReactorSpecification.for<BookingRequested, NotifyHost, ReactorContext>(
+          given = ReactorSpecification.for<ReactorEvent, ReactorCommand, ReactorContext>(
             () => react({ eventStore, commandSender: messageBus }),
             (commandSender) => {
               messageBus = commandSender;
@@ -193,7 +196,7 @@ describe('react.specs.ts.ejs (react slice)', () => {
           );
         });
 
-        it('should send NotifyHost when BookingRequested is received', async () => {
+        it('Booking request triggers host notification', async () => {
           await given([])
             .when({
               type: 'BookingRequested',

@@ -4,28 +4,15 @@ type ReadEvent,
 type InMemoryReadEventMetadata,
 } from '@event-driven-io/emmett';
 import type { <%= pascalCase(slice.server?.data?.[0]?.target?.name || 'UnknownState') %> } from './state';<%
-if (events.length > 0) {
-    const importGroups = new Map();
-    for (const event of events) {
-        const fromSameFlow = event.sourceFlowName === flowName;
-        const basePath = fromSameFlow
-                ? `../${toKebabCase(event.sourceSliceName ?? 'unknown')}/events`
-                : `../${toKebabCase(event.sourceFlowName ?? 'unknown')}/${toKebabCase(event.sourceSliceName ?? 'unknown')}/events`;
-
-        if (!importGroups.has(basePath)) {
-            importGroups.set(basePath, []);
-        }
-        importGroups.get(basePath).push(event.type);
-    }
-
-        for (const [importPath, typeNames] of importGroups.entries()) {
+if (eventImportGroups.length > 0) {
+    for (const group of eventImportGroups) {
 %>
-    import type { <%= typeNames.join(', ') %> } from '<%= importPath %>';
+import type { <%= group.eventTypes.join(', ') %> } from '<%= group.importPath %>';
 <%
-}
+    }
 } -%>
 
-type AllEvents = <%= events.length > 0 ? events.map(e => e.type).join(' | ') : 'never' %>;
+type AllEvents = <%= allEventTypes %>;
 
 export const projection = inMemorySingleStreamProjection<
 <%= pascalCase(slice.server?.data?.[0]?.target?.name || 'UnknownState') %>,
@@ -33,7 +20,19 @@ AllEvents
 >({
 collectionName: '<%= pascalCase(slice.server?.data?.[0]?.origin?.name || "unknown-collection") %>',
 canHandle: [<%- events.map(e => `'${e.type}'`).join(', ') %>],
-getDocumentId: (event) => event.data.<%= slice.server?.data?.[0]?.origin?.idField ?? 'id' %>,
+getDocumentId: (event) => <%
+const idField = slice.server?.data?.[0]?.origin?.idField ?? 'id';
+// Check if idField contains hyphen-separated composite keys
+if (idField.includes('-')) {
+    const parts = idField.split('-');
+    const template = parts.map((part, index) =>
+        index === 0 ? `\${event.data.${part}}` : `-\${event.data.${part}}`
+    ).join('');
+%>`<%= template %>`<%
+} else {
+%>event.data.<%= idField %><%
+}
+%>,
 evolve: (
 document: <%= pascalCase(slice.server?.data?.[0]?.target?.name || 'UnknownState') %> | null,
 event: ReadEvent<AllEvents, InMemoryReadEventMetadata>
@@ -42,9 +41,11 @@ switch (event.type) {
 <% for (const event of events) {
     const targetName = slice.server?.data?.[0]?.target?.name;
     const queryGwt = slice.type === 'query'
-            ? queryGwtMapping.find(gwt =>
-                    gwt.given.some(g => g.eventRef === event.type)
-            )
+            ? queryGwtMapping.find(gwt => {
+                    const inGiven = gwt.given && gwt.given.some(g => g.eventRef === event.type);
+                    const inWhen = gwt.when.some(g => g.eventRef === event.type);
+                    return inGiven || inWhen;
+            })
             : undefined;
     const example = slice.type === 'query'
             ? queryGwt?.then.find(t => t.stateRef === targetName)?.exampleData
@@ -94,19 +95,19 @@ case '<%= event.type %>': {
 
         let placeholder = 'undefined';
         if (type === 'string' || type === 'ID') {
-            placeholder = "''";
+            placeholder = "/* TODO: map from event.data */ ''";
         } else if (type === 'number') {
-            placeholder = '0';
+            placeholder = '/* TODO: map from event.data */ 0';
         } else if (type === 'boolean') {
-            placeholder = 'false';
+            placeholder = '/* TODO: map from event.data */ false';
         } else if (type === 'Date') {
-            placeholder = 'new Date()';
+            placeholder = '/* TODO: map from event.data */ new Date()';
         } else if (type.startsWith('Array<')) {
-            placeholder = '[]';
+            placeholder = '/* TODO: map from event.data */ []';
         } else {
-            placeholder = '{} as any';
+            placeholder = '/* TODO: map from event.data */ undefined as any';
         }
-    %>          <%= field %>: /* TODO: map from event.data */ <%- placeholder %><%= isLast ? '' : ',' %>
+    %>        <%= field %>: <%- placeholder %><%= isLast ? '' : ',' %>
     <% } -%>
     };
 <% } -%>

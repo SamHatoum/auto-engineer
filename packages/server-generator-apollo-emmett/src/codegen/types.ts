@@ -32,4 +32,6 @@ export interface GwtCondition {
   given?: Array<EventExample | StateExample>;
   when: CommandExample | EventExample[];
   then: Array<EventExample | StateExample | CommandExample | { errorType: string; message?: string }>;
+  description?: string;
+  ruleDescription?: string;
 }

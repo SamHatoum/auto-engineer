@@ -1,88 +1,139 @@
 <%
-// Extract all examples from specs/rules structure
-const specs = slice.server?.specs;
-const gwtList = specs?.rules?.flatMap(rule => 
-  rule.examples.map(example => ({
-    given: example.given,
-    when: example.when,
-    then: example.then
-  }))
-) ?? [];
-const firstGwt = gwtList[0];
-const firstWhen = Array.isArray(firstGwt?.when) ? firstGwt.when[0] : firstGwt?.when;
-const firstThen = Array.isArray(firstGwt?.then) ? firstGwt.then[0] : firstGwt?.then;
+const ruleGroups = new Map();
+const rules = slice.server?.specs?.rules || [];
 
-const eventType = firstWhen?.eventRef;
-const commandType = firstThen?.commandRef;
+const allUsedEvents = new Set();
+const allUsedCommands = new Set();
 
-const event = events.find(e => e.type === eventType);
-const command = commands.find(c => c.type === commandType);
+for (const rule of rules) {
+    const ruleDescription = rule.description || `${flowName} | ${sliceName}`;
+    if (!ruleGroups.has(ruleDescription)) {
+        ruleGroups.set(ruleDescription, []);
+    }
 
-const eventImportPath = toKebabCase(event?.sourceSliceName ?? 'unknown');
-const commandImportPath = toKebabCase(command?.sourceSliceName ?? 'unknown');
+    for (const example of rule.examples || []) {
+        ruleGroups.get(ruleDescription).push({
+            description: example.description || 'should react correctly',
+            given: example.given || [],
+            when: example.when || [],
+            then: example.then || []
+        });
+
+        const whenEvents = Array.isArray(example.when) ? example.when : (example.when ? [example.when] : []);
+        for (const evt of whenEvents) {
+            if (evt.eventRef) allUsedEvents.add(evt.eventRef);
+        }
+
+        const thenCommands = Array.isArray(example.then) ? example.then : (example.then ? [example.then] : []);
+        for (const cmd of thenCommands) {
+            if (cmd.commandRef) allUsedCommands.add(cmd.commandRef);
+        }
+    }
+}
+
+const eventImportGroups = new Map();
+const commandImportGroups = new Map();
+
+for (const eventType of allUsedEvents) {
+    const event = events.find(e => e.type === eventType);
+    if (event) {
+        const importPath = event.sourceSliceName ? `../${toKebabCase(event.sourceSliceName)}/events` : './events';
+        if (!eventImportGroups.has(importPath)) {
+            eventImportGroups.set(importPath, []);
+        }
+        eventImportGroups.get(importPath).push(pascalCase(eventType));
+    }
+}
+
+for (const commandType of allUsedCommands) {
+    const command = commands.find(c => c.type === commandType);
+    if (command) {
+        const importPath = command.sourceSliceName ? `../${toKebabCase(command.sourceSliceName)}/commands` : './commands';
+        if (!commandImportGroups.has(importPath)) {
+            commandImportGroups.set(importPath, []);
+        }
+        commandImportGroups.get(importPath).push(pascalCase(commandType));
+    }
+}
+
+const allEventTypes = Array.from(allUsedEvents).map(e => pascalCase(e)).sort();
+const allCommandTypes = Array.from(allUsedCommands).map(c => pascalCase(c)).sort();
 %>
 import { describe, it, beforeEach } from 'vitest';
 import 'reflect-metadata';
 import {
-getInMemoryEventStore,
-type InMemoryEventStore,
-type CommandSender,
+  getInMemoryEventStore,
+  type InMemoryEventStore,
+  type CommandSender,
 } from '@event-driven-io/emmett';
 import { type ReactorContext, ReactorSpecification } from '../../../shared';
 import { react } from './react';
-import type { <%= pascalCase(eventType) %> } from '../<%= eventImportPath %>/events';
-import type { <%= pascalCase(commandType) %> } from '../<%= commandImportPath %>/commands';
+<% for (const [importPath, typeNames] of eventImportGroups.entries()) { -%>
+import type { <%= typeNames.sort().join(', ') %> } from '<%= importPath %>';
+<% } -%>
+<% for (const [importPath, typeNames] of commandImportGroups.entries()) { -%>
+import type { <%= typeNames.sort().join(', ') %> } from '<%= importPath %>';
+<% } -%>
 
-describe('<%= pascalCase(flowName) %> | <%= pascalCase(slice.name) %>', () => {
-let eventStore: InMemoryEventStore;
-let given: ReactorSpecification<<%= pascalCase(eventType) %>, <%= pascalCase(commandType) %>, ReactorContext>;
-let messageBus: CommandSender;
+type ReactorEvent = <%= allEventTypes.length ? allEventTypes.join(' | ') : 'never' %>;
+type ReactorCommand = <%= allCommandTypes.length ? allCommandTypes.join(' | ') : 'never' %>;
 
-beforeEach(() => {
-eventStore = getInMemoryEventStore({});
-given = ReactorSpecification.for<<%= pascalCase(eventType) %>, <%= pascalCase(commandType) %>, ReactorContext>(
-() => react({ eventStore, commandSender: messageBus }),
-(commandSender) => {
-messageBus = commandSender;
-return {
-eventStore,
-commandSender,
-database: eventStore.database,
-};
-}
-);
-});
+<% for (const [ruleDescription, ruleTests] of ruleGroups.entries()) { %>
+describe('<%= ruleDescription %>', () => {
+  let eventStore: InMemoryEventStore;
+  let given: ReactorSpecification<ReactorEvent, ReactorCommand, ReactorContext>;
+  let messageBus: CommandSender;
 
-<% for (const example of gwtList) {
-    const exampleEvent = Array.isArray(example.when) ? example.when[0] : example.when;
-    const commands = example.then;
-    const description = `should send ${commands.map(c => c.commandRef).join(', ')} when ${exampleEvent.eventRef} is received`;
+  beforeEach(() => {
+    eventStore = getInMemoryEventStore({});
+    given = ReactorSpecification.for<ReactorEvent, ReactorCommand, ReactorContext>(
+      () => react({ eventStore, commandSender: messageBus }),
+      (commandSender) => {
+        messageBus = commandSender;
+        return {
+          eventStore,
+          commandSender,
+          database: eventStore.database,
+        };
+      }
+    );
+  });
+
+<% for (const testCase of ruleTests) {
+    const whenEvents = Array.isArray(testCase.when) ? testCase.when : (testCase.when ? [testCase.when] : []);
+    const thenCommands = Array.isArray(testCase.then) ? testCase.then : (testCase.then ? [testCase.then] : []);
+
+    if (whenEvents.length > 0 && thenCommands.length > 0) {
+        const exampleEvent = whenEvents[0];
+        const description = testCase.description ||
+            `should send ${thenCommands.map(c => c.commandRef).join(', ')} when ${exampleEvent.eventRef} is received`;
 %>
-it('<%= description %>', async () => {
-await given([])
-.when({
-type: '<%= exampleEvent.eventRef %>',
-data: <%- formatDataObject(exampleEvent.exampleData, events.find(e => e.type === exampleEvent.eventRef)) %>
-})
-<% if (commands.length === 1) {
-    const commandSchema = commands[0];
+  it('<%= description %>', async () => {
+    await given([])
+      .when({
+        type: '<%= exampleEvent.eventRef %>',
+        data: <%- formatDataObject(exampleEvent.exampleData, events.find(e => e.type === exampleEvent.eventRef)) %>
+      })
+<% if (thenCommands.length === 1) {
+    const commandSchema = thenCommands[0];
 %>
-.then({
-type: '<%= commandSchema.commandRef %>',
-kind: 'Command',
-data: <%- formatDataObject(commandSchema.exampleData, messages.find(m => m.name === commandSchema.commandRef && m.type === 'command')) %>
-});
-<% } else { %>
-    .then([
-    <% for (const cmd of commands) { %>
-        {
-        type: '<%= cmd.commandRef %>',
+      .then({
+        type: '<%= commandSchema.commandRef %>',
         kind: 'Command',
-        data: <%- formatDataObject(cmd.exampleData, messages.find(m => m.name === cmd.commandRef && m.type === 'command')) %>
+        data: <%- formatDataObject(commandSchema.exampleData, messages.find(m => m.name === commandSchema.commandRef && m.type === 'command')) %>
+      });
+<% } else { %>
+      .then([
+<% for (const cmd of thenCommands) { %>
+        {
+          type: '<%= cmd.commandRef %>',
+          kind: 'Command',
+          data: <%- formatDataObject(cmd.exampleData, messages.find(m => m.name === cmd.commandRef && m.type === 'command')) %>
         },
-    <% } %>
-    ]);
 <% } %>
-});
+      ]);
 <% } %>
+  });
+<% } } %>
 });
+<% } -%>

@@ -1,71 +1,193 @@
 <%_
+const targetName = slice?.server?.data?.[0]?.target?.name || 'UnknownState';
+const TargetType = pascalCase(targetName);
+const projName = projectionName || "UnknownProjection";
 const idField = projectionIdField ?? 'id';
-const projectionType = states[0]?.type ?? 'UnknownState';
-const projectionCollection = projectionName ?? 'unknown-collection';
-const testCases = queryGwtMapping ?? [];
-const eventTypes = Array.from(new Set(events.map(e => e.type)));
+const uniqueEventTypes = allEventTypesArray;
+
+const ruleGroups = new Map();
+const rules = slice?.server?.specs?.rules || [];
+for (const rule of rules) {
+    const ruleDescription = rule.description || `${flowName} | ${sliceName}`;
+    if (!ruleGroups.has(ruleDescription)) {
+        ruleGroups.set(ruleDescription, []);
+    }
+
+    for (const example of rule.examples || []) {
+        ruleGroups.get(ruleDescription).push({
+            description: example.description || 'should handle events correctly',
+            given: example.given || [],
+            when: example.when || [],
+            then: example.then || []
+        });
+    }
+}
 _%>
 
 import { describe, it, beforeEach, expect } from 'vitest';
-import {
-InMemoryProjectionSpec,
-} from '@event-driven-io/emmett';
+import { InMemoryProjectionSpec } from '@event-driven-io/emmett';
 import { projection } from './projection';
-import type { <%= eventTypes.join(', ') %> } from '../<%= toKebabCase(events[0]?.sourceSliceName || 'unknown') %>/events';
-import { <%= projectionType %> } from './state';
-
-<% if (eventTypes.length > 0) { -%>
-    type ProjectionEvent = <%= eventTypes.join(' | ') %>;
-<% } else { -%>
-    type ProjectionEvent = never;
+<% for (const group of eventImportGroups) { -%>
+import type { <%= group.eventTypes.join(', ') %> } from '<%= group.importPath %>';
 <% } -%>
+import { <%= TargetType %> } from './state';
 
-describe('<%= projectionName %> Projection', () => {
-let given: InMemoryProjectionSpec<ProjectionEvent>;
+type ProjectionEvent = <%= uniqueEventTypes.length ? uniqueEventTypes.join(' | ') : 'never' %>;
 
-    beforeEach(() => {
+<% for (const [ruleDescription, ruleTests] of ruleGroups.entries()) { %>
+describe('<%= ruleDescription %>', () => {
+  let given: InMemoryProjectionSpec<ProjectionEvent>;
+
+  beforeEach(() => {
     given = InMemoryProjectionSpec.for({ projection });
-    });
+  });
 
-    <%_ for (const [index, gwt] of testCases.entries()) {
-        const isRemoval = gwt.then[0]?.exampleData && Object.keys(gwt.then[0].exampleData).length === 0;
-        const expectedIdValue = JSON.stringify(gwt.then[0]?.exampleData?.[idField] ?? 'unknown-id');
-    _%>
-    it('<%= isRemoval ? 'removes' : 'creates or updates' %> <%= projectionType %> document - case <%= index + 1 %>', () =>
-    given([
-    <%_ for (const event of gwt.given) { _%>
-        {
-        type: '<%= event.eventRef %>',
+<% for (const testCase of ruleTests) {
+  const givenEvents = Array.isArray(testCase.given) ? testCase.given : [];
+  const whenEvents = Array.isArray(testCase.when) ? testCase.when : (testCase.when ? [testCase.when] : []);
+  const thenStates = Array.isArray(testCase.then) ? testCase.then : [];
+  const allTestEvents = [...givenEvents, ...whenEvents].filter(e => e.eventRef && e.eventRef !== '');
+
+  if (thenStates.length > 0) {
+    const expectedState = thenStates.find(t => t.stateRef === targetName);
+    if (!expectedState) continue;
+
+    const description = testCase.description || 'should handle events correctly';
+_%>
+
+  it('<%= description %>', () =>
+    given([<% if (givenEvents.length > 0) {
+      for (const evt of givenEvents) {
+        if (!evt.eventRef || evt.eventRef === '') continue;
+        const eventMessage = messages.find(m => m.name === evt.eventRef);
+        const streamNameValue = slice.stream ? `'${slice.stream}'` : "'test-stream'";
+_%>
+      {
+        type: '<%= evt.eventRef %>',
         data: {
-        <%_ for (const [key, val] of Object.entries(event.exampleData || {})) { _%>
-            <%= key %>: <%- formatTsValue(val, (events.find(e => e.type === event.eventRef)?.fields.find(f => f.name === key)?.tsType || 'string')) %>,
-        <%_ } _%>
+<% const dataKeys = Object.keys(evt.exampleData || {});
+   for (let i = 0; i < dataKeys.length; i++) {
+     const key = dataKeys[i];
+     const value = evt.exampleData[key];
+     const isLast = i === dataKeys.length - 1;
+     const field = eventMessage?.fields?.find(f => f.name === key);
+     const tsType = field?.tsType || field?.type || 'string';
+
+     let formattedValue;
+     if (value === null || value === undefined) {
+       formattedValue = 'null';
+     } else if (tsType === 'string' || tsType === 'ID') {
+       formattedValue = `'${value}'`;
+     } else if (tsType === 'number' || tsType === 'boolean') {
+       formattedValue = String(value);
+     } else if (tsType === 'Date') {
+       formattedValue = `new Date('${value}')`;
+     } else if (Array.isArray(value)) {
+       formattedValue = JSON.stringify(value);
+     } else {
+       formattedValue = `'${value}'`;
+     }
+-%>
+          <%= key %>: <%= formattedValue %><%= isLast ? '' : ',' %>
+<% } -%>
         },
         metadata: {
-        streamName: 'ignored-stream',
-        streamPosition: 1n,
-        globalPosition: 1n,
+          streamName: <%= streamNameValue %>,
+          streamPosition: 1n,
+          globalPosition: 1n,
         },
-        },
-    <%_ } _%>
-    ])
-    .when([])
-    .then(async (state) => {
-    const document = await state.database
-    .collection<<%= projectionType %>>('<%= projectionCollection %>')
-    .findOne((doc) => doc.<%= idField %> === <%- expectedIdValue %>);
+      },<% } } -%>])
+      .when([<% if (whenEvents.length > 0) {
+        for (const evt of whenEvents) {
+          if (!evt.eventRef || evt.eventRef === '') continue;
+          const eventMessage = messages.find(m => m.name === evt.eventRef);
+          const streamNameValue = slice.stream ? `'${slice.stream}'` : "'test-stream'";
+_%>
+        {
+          type: '<%= evt.eventRef %>',
+          data: {
+<% const dataKeys = Object.keys(evt.exampleData || {});
+   for (let i = 0; i < dataKeys.length; i++) {
+     const key = dataKeys[i];
+     const value = evt.exampleData[key];
+     const isLast = i === dataKeys.length - 1;
+     const field = eventMessage?.fields?.find(f => f.name === key);
+     const tsType = field?.tsType || field?.type || 'string';
 
-    <%_ if (isRemoval) { _%>
-    expect(document).toBeNull();
-    <%_ } else { _%>
-        const expected: <%= projectionType %> = {
-        <%_ for (const [key, val] of Object.entries(gwt.then[0].exampleData || {})) { _%>
-            <%= key %>: <%- formatTsValue(val, (states[0]?.fields.find(f => f.name === key)?.tsType || 'string')) %>,
-        <%_ } _%>
+     let formattedValue;
+     if (value === null || value === undefined) {
+       formattedValue = 'null';
+     } else if (tsType === 'string' || tsType === 'ID') {
+       formattedValue = `'${value}'`;
+     } else if (tsType === 'number' || tsType === 'boolean') {
+       formattedValue = String(value);
+     } else if (tsType === 'Date') {
+       formattedValue = `new Date('${value}')`;
+     } else if (Array.isArray(value)) {
+       formattedValue = JSON.stringify(value);
+     } else {
+       formattedValue = `'${value}'`;
+     }
+-%>
+            <%= key %>: <%= formattedValue %><%= isLast ? '' : ',' %>
+<% } -%>
+          },
+          metadata: {
+            streamName: <%= streamNameValue %>,
+            streamPosition: <%= givenEvents.length + whenEvents.indexOf(evt) + 1 %>n,
+            globalPosition: <%= givenEvents.length + whenEvents.indexOf(evt) + 1 %>n,
+          },
+        },<% } } -%>])
+      .then(async (state) => {
+        const document = await state.database
+          .collection<<%= TargetType %>>('<%= projName %>')
+          .findOne((doc) => <%
+const idField = projectionIdField ?? 'id';
+if (idField.includes('-')) {
+    // Handle composite keys
+    const parts = idField.split('-');
+    const conditions = parts.map(part => {
+        const value = expectedState.exampleData?.[part];
+        const valueStr = typeof value === 'string' ? `'${value}'` : value || "'test-value'";
+        return `doc.${part} === ${valueStr}`;
+    }).join(' && ');
+%><%= conditions %><%
+} else {
+    const value = expectedState.exampleData?.[idField];
+    const valueStr = typeof value === 'string' ? `'${value}'` : value || "'test-id'";
+%>doc.<%= idField %> === <%= valueStr %><%
+}
+%>);
+
+        const expected: <%= TargetType %> = {
+<% const stateKeys = Object.keys(expectedState.exampleData || {});
+   for (let i = 0; i < stateKeys.length; i++) {
+     const key = stateKeys[i];
+     const value = expectedState.exampleData[key];
+     const isLast = i === stateKeys.length - 1;
+     const stateMessage = messages.find(m => m.name === targetName);
+     const field = stateMessage?.fields?.find(f => f.name === key);
+     const tsType = field?.tsType || field?.type || 'string';
+
+     let formattedValue;
+     if (value === null || value === undefined) {
+       formattedValue = 'null';
+     } else if (tsType === 'string' || tsType === 'ID') {
+       formattedValue = `'${value}'`;
+     } else if (tsType === 'number' || tsType === 'boolean') {
+       formattedValue = String(value);
+     } else if (Array.isArray(value)) {
+       formattedValue = JSON.stringify(value);
+     } else {
+       formattedValue = `'${value}'`;
+     }
+-%>
+          <%= key %>: <%= formattedValue %><%= isLast ? '' : ',' %>
+<% } -%>
         };
 
         expect(document).toMatchObject(expected);
-    <%_ } _%>
-    }));
-    <%_ } _%>
-    });
+      }));
+<% } } %>
+});
+<% } -%>
