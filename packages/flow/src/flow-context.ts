@@ -16,19 +16,27 @@ interface FlowContext {
 
 let context: FlowContext | null = null;
 let givenTypesByFile: Map<string, GivenTypeInfo[]> = new Map();
+let whenTypesByFile: Map<string, GivenTypeInfo[]> = new Map();
 const givenCallCounters: Map<string, number> = new Map();
+const whenCallCounters: Map<string, number> = new Map();
 
 export function setGivenTypesByFile(types: Map<string, GivenTypeInfo[]>): void {
+  const whenTypes = types.get('__whenTypes') as Map<string, GivenTypeInfo[]> | undefined;
+  if (whenTypes) {
+    whenTypesByFile = whenTypes;
+    types.delete('__whenTypes');
+  }
+
   givenTypesByFile = types;
-  // Reset counters when AST types are set
   givenCallCounters.clear();
+  whenCallCounters.clear();
 }
 
 export function startFlow(name: string, id?: string): Flow {
   const sourceFile = (globalThis as Record<string, unknown>).__aeCurrentModulePath as string | undefined;
-  // Reset the given call counter for this file when starting a new flow
   if (sourceFile !== null && sourceFile !== undefined && sourceFile !== '') {
     givenCallCounters.set(sourceFile, 0);
+    whenCallCounters.set(sourceFile, 0);
   }
 
   const flow: Flow = {
@@ -472,11 +480,49 @@ function convertToEventExample(item: unknown): { eventRef: string; exampleData: 
   };
 }
 
+function getRefTypeFromClassification(classification: string): string {
+  if (classification === 'event') return 'eventRef';
+  if (classification === 'command') return 'commandRef';
+  return 'stateRef';
+}
+
+function tryGetWhenTypeFromAST(item: unknown): { commandRef: string; exampleData: Record<string, unknown> } | null {
+  const sourceFile = context?.flow.sourceFile;
+
+  if (sourceFile === null || sourceFile === undefined || sourceFile === '') {
+    return null;
+  }
+
+  const currentCount = whenCallCounters.get(sourceFile) ?? 0;
+  whenCallCounters.set(sourceFile, currentCount + 1);
+
+  const whenTypes = whenTypesByFile.get(sourceFile) || [];
+  const matchingType = whenTypes[currentCount];
+
+  if (matchingType === null || matchingType === undefined) {
+    debug('No AST match for when at %s ordinal %d, falling back', sourceFile, currentCount);
+    return null;
+  }
+
+  const refType = getRefTypeFromClassification(matchingType.classification);
+  debug('AST match for when at %s ordinal %d: %s -> %s', sourceFile, currentCount, matchingType.typeName, refType);
+
+  return {
+    [refType]: matchingType.typeName,
+    exampleData: ensureMessageFormat(item).data,
+  } as { commandRef: string; exampleData: Record<string, unknown> };
+}
+
 function convertToCommandOrEventExample(
   item: unknown,
 ):
   | { commandRef: string; exampleData: Record<string, unknown> }
   | { eventRef: string; exampleData: Record<string, unknown> }[] {
+  // Try to get AST-extracted when type first
+  const astResult = tryGetWhenTypeFromAST(item);
+  if (astResult) return astResult;
+
+  // Fallback to the original logic
   const message = ensureMessageFormat(item);
   return {
     commandRef: message.type,

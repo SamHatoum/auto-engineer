@@ -398,6 +398,17 @@ describe('getFlows', (_mode) => {
     }
   });
 
+  it('should correctly assign commandRef correctly', async () => {
+    const flows = await getFlows({
+      vfs,
+      root,
+      pattern: /(?:^|\/)questionnaires\.flow\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
+      fastFsScan: true,
+    });
+    const model = flows.toModel();
+    validateCommandRef(model);
+  });
+
   it('should handle experience slice with client specs', async () => {
     const memoryVfs = new InMemoryFileStore();
     const flowWithExperienceContent = `
@@ -685,6 +696,11 @@ flow('questionnaires-test', () => {
     const allMessages = model.messages;
     expect(allMessages.every((message) => message.name.length > 0)).toBe(true);
   });
+
+  it('reproduces the questionnaires bug: submits the questionnaire should use SubmitQuestionnaire, not SendQuestionnaireLink', async () => {
+    const model = await createQuestionnaireBugTestModel();
+    validateQuestionnaireBugFix(model);
+  });
 });
 
 function validateSubmitQuestionnaireCommand(questionnaireFlow: Flow): void {
@@ -811,4 +827,281 @@ function validateMixedGivenTypeMessages(model: Model): void {
   const systemStatusMessage = model.messages.find((m) => m.name === 'SystemStatus');
   expect(systemStatusMessage).toBeDefined();
   expect(systemStatusMessage?.type).toBe('state');
+}
+
+async function createQuestionnaireBugTestModel(): Promise<Model> {
+  const memoryVfs = new InMemoryFileStore();
+  const questionnaireFlowContent = getQuestionnaireFlowContent();
+  await memoryVfs.write('/test/questionnaires-bug.flow.ts', new TextEncoder().encode(questionnaireFlowContent));
+  const flows = await getFlows({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+  return flows.toModel();
+}
+
+function getQuestionnaireFlowContent(): string {
+  return `
+import {
+  command,
+  query,
+  experience,
+  flow,
+  should,
+  specs,
+  rule,
+  example,
+  gql,
+  source,
+  data,
+  sink,
+  type Command,
+  type Event,
+  type State,
+} from '@auto-engineer/flow';
+
+type SendQuestionnaireLink = Command<
+  'SendQuestionnaireLink',
+  {
+    questionnaireId: string;
+    participantId: string;
+  }
+>;
+
+type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
+  {
+    questionnaireId: string;
+    participantId: string;
+    link: string;
+    sentAt: Date;
+  }
+>;
+
+type QuestionnaireSubmitted = Event<
+  'QuestionnaireSubmitted',
+  {
+    questionnaireId: string;
+    participantId: string;
+    submittedAt: Date;
+  }
+>;
+
+type SubmitQuestionnaire = Command<
+  'SubmitQuestionnaire',
+  {
+    questionnaireId: string;
+    participantId: string;
+  }
+>;
+
+flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
+  command('sends the questionnaire link', 'AUTO-S2b5Cp7Dz')
+    .server(() => {
+      specs(() => {
+        rule('questionnaire link is sent to participant', 'AUTO-r0A1Bo8X', () => {
+          example('sends the questionnaire link successfully')
+            .when<SendQuestionnaireLink>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+            })
+            .then<QuestionnaireLinkSent>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              link: 'https://app.example.com/q/q-001?participant=participant-abc',
+              sentAt: new Date('2030-01-01T09:00:00Z'),
+            });
+        });
+      });
+      data([sink().event('QuestionnaireLinkSent').toStream('questionnaire-participantId')]);
+    })
+    .request(gql\`
+      mutation SendQuestionnaireLink($input: SendQuestionnaireLinkInput!) {
+        sendQuestionnaireLink(input: $input) {
+          success
+        }
+      }
+    \`)
+    .client(() => {
+      specs('Questionnaire Link', () => {
+        should('display a confirmation message when the link is sent');
+        should('handle errors when the link cannot be sent');
+      });
+    });
+
+  command('submits the questionnaire', 'AUTO-T5k9Jw3V')
+    .server(() => {
+      specs(() => {
+        rule('questionnaire allowed to be submitted when all questions are answered', 'AUTO-r4H0Lx4U', () => {
+          example('submits the questionnaire successfully')
+            .when<SubmitQuestionnaire>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+            })
+            .then<QuestionnaireSubmitted>({
+              questionnaireId: 'q-001',
+              participantId: 'participant-abc',
+              submittedAt: new Date('2030-01-01T09:00:00Z'),
+            });
+        });
+      });
+      data([sink().event('QuestionnaireSubmitted').toStream('questionnaire-participantId')]);
+    })
+    .request(gql\`
+      mutation SubmitQuestionnaire($input: SubmitQuestionnaireInput!) {
+        submitQuestionnaire(input: $input) {
+          success
+        }
+      }
+    \`)
+    .client(() => {
+      specs('Submission Confirmation', () => {
+        should('display a confirmation message upon successful submission');
+      });
+    });
+});`;
+}
+
+function validateQuestionnaireBugFix(model: Model): void {
+  const questionnaireFlow = getQuestionnaireFlowFromModel(model);
+  const submitSlice = getSubmitSlice(questionnaireFlow);
+  const submitExample = getSubmitExample(submitSlice);
+
+  validateSubmitCommandRef(submitExample);
+  validateLinkSliceCommandRef(questionnaireFlow);
+}
+
+function getQuestionnaireFlowFromModel(model: Model): Flow {
+  const questionnaireFlow = model.flows.find((f) => f.name === 'Questionnaires');
+  expect(questionnaireFlow).toBeDefined();
+  if (questionnaireFlow === null || questionnaireFlow === undefined) {
+    throw new Error('Questionnaire flow not found');
+  }
+  return questionnaireFlow;
+}
+
+function getSubmitSlice(questionnaireFlow: Flow): {
+  type: 'command';
+  server: { specs: { rules: { examples: unknown[] }[] } };
+} {
+  const submitSlice = questionnaireFlow.slices.find((s) => s.name === 'submits the questionnaire');
+  expect(submitSlice).toBeDefined();
+  expect(submitSlice?.type).toBe('command');
+  if (submitSlice?.type !== 'command') {
+    throw new Error('Submit slice is not a command');
+  }
+  return submitSlice as { type: 'command'; server: { specs: { rules: { examples: unknown[] }[] } } };
+}
+
+function getSubmitExample(submitSlice: { server: { specs: { rules: { examples: unknown[] }[] } } }): unknown {
+  const rule = submitSlice.server?.specs?.rules[0];
+  expect(rule).toBeDefined();
+  expect(rule?.examples).toHaveLength(1);
+  const example = rule?.examples[0];
+  expect((example as { description?: string })?.description).toBe('submits the questionnaire successfully');
+  return example;
+}
+
+function validateSubmitCommandRef(example: unknown): void {
+  const ex = example as { when?: { commandRef?: string } };
+  expect(ex?.when).toBeDefined();
+  if (typeof ex?.when === 'object' && ex.when !== null && !Array.isArray(ex.when) && 'commandRef' in ex.when) {
+    expect(ex.when.commandRef).toBe('SubmitQuestionnaire');
+    expect(ex.when.commandRef).not.toBe('SendQuestionnaireLink');
+  } else {
+    throw new Error('Expected when to have commandRef property');
+  }
+}
+
+function validateLinkSliceCommandRef(questionnaireFlow: Flow): void {
+  const linkSlice = questionnaireFlow.slices.find((s) => s.name === 'sends the questionnaire link');
+  expect(linkSlice?.type).toBe('command');
+  if (linkSlice?.type === 'command') {
+    const linkExample = linkSlice.server?.specs?.rules[0]?.examples[0];
+    const ex = linkExample as { when?: { commandRef?: string } };
+    if (typeof ex?.when === 'object' && ex.when !== null && !Array.isArray(ex.when) && 'commandRef' in ex.when) {
+      expect(ex.when.commandRef).toBe('SendQuestionnaireLink');
+    }
+  }
+}
+
+function validateCommandRef(model: Model): void {
+  const questionnaireFlow = getQuestionnaireFlowFromModel(model);
+  const submitSlice = getSubmitSliceFromFlow(questionnaireFlow);
+  const serverSpecs = getServerSpecsFromSlice(submitSlice);
+  const rule = getFirstRuleFromSpecs(serverSpecs);
+  const example = getFirstExampleFromRule(rule);
+
+  validateExampleCommandRef(example);
+  validateThenEvents(example);
+}
+
+function getSubmitSliceFromFlow(questionnaireFlow: Flow): unknown {
+  const submitSlice = questionnaireFlow.slices.find((s) => s.name === 'submits the questionnaire');
+  expect(submitSlice).toBeDefined();
+  expect(submitSlice?.type).toBe('command');
+  if (submitSlice?.type !== 'command') {
+    throw new Error('Submit slice is not a command');
+  }
+  return submitSlice;
+}
+
+function getServerSpecsFromSlice(submitSlice: unknown): unknown {
+  const slice = submitSlice as { server?: { specs?: unknown } };
+  const serverSpecs = slice.server?.specs;
+  expect(serverSpecs).toBeDefined();
+  const specs = serverSpecs as { rules?: unknown[] };
+  expect(specs?.rules).toBeDefined();
+  expect(specs?.rules).toHaveLength(1);
+  return serverSpecs;
+}
+
+function getFirstRuleFromSpecs(serverSpecs: unknown): unknown {
+  const specs = serverSpecs as { rules?: unknown[] };
+  const rule = specs?.rules?.[0];
+  expect(rule).toBeDefined();
+  const r = rule as { description?: string; examples?: unknown[] };
+  expect(r?.description).toBe('questionnaire allowed to be submitted when all questions are answered');
+  expect(r?.examples).toBeDefined();
+  expect(r?.examples).toHaveLength(1);
+  return rule;
+}
+
+function getFirstExampleFromRule(rule: unknown): unknown {
+  const r = rule as { examples?: unknown[] };
+  const example = r?.examples?.[0];
+  expect(example).toBeDefined();
+  const ex = example as { description?: string };
+  expect(ex?.description).toBe('submits the questionnaire successfully');
+  return example;
+}
+
+function validateExampleCommandRef(example: unknown): void {
+  const ex = example as { when?: { commandRef?: string; exampleData?: unknown } };
+  expect(ex?.when).toBeDefined();
+  if (typeof ex?.when === 'object' && ex.when !== null && !Array.isArray(ex.when) && 'commandRef' in ex.when) {
+    expect(ex.when.commandRef).toBe('SubmitQuestionnaire');
+    expect(ex.when.commandRef).not.toBe('SendQuestionnaireLink');
+    expect(ex.when.exampleData).toEqual({
+      questionnaireId: 'q-001',
+      participantId: 'participant-abc',
+    });
+  } else {
+    throw new Error('Expected when to have commandRef property');
+  }
+}
+
+function validateThenEvents(example: unknown): void {
+  const ex = example as { then?: unknown[] };
+  expect(ex?.then).toBeDefined();
+  expect(Array.isArray(ex?.then)).toBe(true);
+  expect(ex?.then).toHaveLength(1);
+
+  const thenEvent = ex?.then?.[0];
+  if (thenEvent !== null && thenEvent !== undefined && 'eventRef' in (thenEvent as object)) {
+    const event = thenEvent as { eventRef?: string; exampleData?: unknown };
+    expect(event.eventRef).toBe('QuestionnaireSubmitted');
+    expect(event.exampleData).toEqual({
+      questionnaireId: 'q-001',
+      participantId: 'participant-abc',
+      submittedAt: new Date('2030-01-01T09:00:00.000Z'),
+    });
+  }
 }

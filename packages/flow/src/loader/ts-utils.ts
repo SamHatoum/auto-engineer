@@ -614,6 +614,59 @@ function collectChainFromStart(
   return chain.sort((a, b) => a.getStart() - b.getStart());
 }
 
+function processWhenCallExpression(
+  ts: typeof import('typescript'),
+  node: import('typescript').CallExpression,
+  checker: import('typescript').TypeChecker,
+  sourceFile: import('typescript').SourceFile,
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+  whenTypes: GivenTypeInfo[],
+  ordinal: number,
+): void {
+  const typeArg = node.typeArguments?.[0];
+  if (!typeArg) return;
+
+  const genericResult = tryUnwrapGeneric(ts, typeArg, checker);
+  if (genericResult) {
+    whenTypes.push(
+      createGivenTypeInfo(sourceFile, node, ordinal, genericResult.typeName, genericResult.classification),
+    );
+    return;
+  }
+
+  const typeName = resolveTypeName(ts, typeArg, checker);
+  if (typeName === null || typeName === undefined) return;
+
+  const typeInfo = findTypeInfo(typeName, typeMap, typesByFile);
+  if (!typeInfo?.classification) return;
+
+  whenTypes.push(createGivenTypeInfo(sourceFile, node, ordinal, typeInfo.stringLiteral, typeInfo.classification));
+}
+
+export function parseWhenTypeArguments(
+  ts: typeof import('typescript'),
+  checker: import('typescript').TypeChecker,
+  sourceFile: import('typescript').SourceFile,
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+): GivenTypeInfo[] {
+  const whenTypes: GivenTypeInfo[] = [];
+
+  const visit = (node: import('typescript').Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const method = node.expression.name.getText();
+      if (method === 'when' && node.typeArguments && node.typeArguments.length > 0) {
+        processWhenCallExpression(ts, node, checker, sourceFile, typeMap, typesByFile, whenTypes, whenTypes.length);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  return whenTypes;
+}
+
 export function parseGivenTypeArguments(
   ts: typeof import('typescript'),
   checker: import('typescript').TypeChecker,

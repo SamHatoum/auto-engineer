@@ -7,6 +7,7 @@ import {
   parseIntegrationExports,
   parseIntegrationImports,
   parseGivenTypeArguments,
+  parseWhenTypeArguments,
   patchImportMeta,
   transpileToCjs,
   TypeInfo,
@@ -302,19 +303,28 @@ export async function buildGraph(
   const program = ts.createProgram([...sourceFiles.keys()], compilerOptions, host);
   const checker = program.getTypeChecker();
 
-  // Process each VFS source file to extract given types using the TypeChecker
+  const whenTypesByFile: Map<string, import('./ts-utils').GivenTypeInfo[]> = new Map();
+
   for (const sourceFile of program.getSourceFiles()) {
     const posixPath = toPosix(sourceFile.fileName);
-    // Skip non-VFS files and declaration files
     if (!sourceFiles.has(posixPath) || posixPath.endsWith('.d.ts')) continue;
 
     const fileTypeMap = typesByFile.get(posixPath) || new Map();
     const extractedGivenTypes = parseGivenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
+    const extractedWhenTypes = parseWhenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
+
     if (extractedGivenTypes.length > 0) {
       givenTypesByFile.set(posixPath, extractedGivenTypes);
       debug('[given-types] extracted %d .given<T>() calls from %s', extractedGivenTypes.length, posixPath);
     }
+
+    if (extractedWhenTypes.length > 0) {
+      whenTypesByFile.set(posixPath, extractedWhenTypes);
+      debug('[when-types] extracted %d .when<T>() calls from %s', extractedWhenTypes.length, posixPath);
+    }
   }
+
+  givenTypesByFile.set('__whenTypes', whenTypesByFile as unknown as import('./ts-utils').GivenTypeInfo[]);
 
   const result: BuildGraphResult = {
     graph,
