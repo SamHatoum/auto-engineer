@@ -160,6 +160,7 @@ const BOGUS_FILE_ID_PATTERNS = [
   'a2b2c2d2e', // shopping-app template
 ];
 
+// FIXME this should be replacing no matter what
 async function replaceBogusFileIds(targetDir: string): Promise<void> {
   const autoConfigPath = path.join(targetDir, 'auto.config.ts');
 
@@ -435,6 +436,7 @@ Visit [Auto Engineer Documentation](https://github.com/solguru310/auto-engineer)
   await fs.writeFile(path.join(targetDir, 'README.md'), readme);
 }
 
+// TODO also make this install the global cli if not present
 async function main() {
   // Get available templates for help text
   const availableTemplates = await getAvailableTemplates();

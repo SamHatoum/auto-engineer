@@ -502,6 +502,7 @@ const startMessageBusServer = async (): Promise<void> => {
   await server.start();
 };
 
+// TODO make this check for the latest version and make it easy for devs to upgrade
 const main = async () => {
   try {
     initializeEnvironment();

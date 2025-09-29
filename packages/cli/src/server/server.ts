@@ -233,12 +233,12 @@ export class MessageBusServer {
         const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 
         if (!isTest) {
-          console.log(`Message bus server running on port ${port}`);
-          console.log(`Dashboard available at http://localhost:${port}`);
-          console.log(`WebSocket server available on ws://localhost:${port}`);
-          if (enableFileSync === true) {
-            console.log(`File sync enabled for ${fileSyncDir} (extensions: ${fileSyncExtensions?.join(', ')})`);
-          }
+          // console.log(`Message bus server running on port ${port}`);
+          console.log(`Server running at http://localhost:${port} 🚀`);
+          // console.log(`WebSocket server available on ws://localhost:${port}`);
+          // if (enableFileSync === true) {
+          //   console.log(`File sync enabled for ${fileSyncDir} (extensions: ${fileSyncExtensions?.join(', ')})`);
+          // }
         }
 
         debug('Message bus server started on port', port);
