@@ -134,6 +134,7 @@ export const EventExampleSchema = z
   .object({
     eventRef: z.string().describe('Reference to event message by name'),
     exampleData: z.record(z.unknown()).describe('Example data matching the event schema'),
+    context: z.record(z.string()).optional().describe('Optional field descriptions and context'),
   })
   .describe('Event example with reference and data');
 
@@ -141,6 +142,7 @@ export const CommandExampleSchema = z
   .object({
     commandRef: z.string().describe('Reference to command message by name'),
     exampleData: z.record(z.unknown()).describe('Example data matching the command schema'),
+    context: z.record(z.string()).optional().describe('Optional field descriptions and context'),
   })
   .describe('Command example with reference and data');
 
@@ -148,6 +150,7 @@ const StateExampleSchema = z
   .object({
     stateRef: z.string().describe('Reference to state message by name'),
     exampleData: z.record(z.unknown()).describe('Example data matching the state schema'),
+    context: z.record(z.string()).optional().describe('Optional field descriptions and context'),
   })
   .describe('State example with reference and data');
 

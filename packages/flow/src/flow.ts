@@ -99,38 +99,52 @@ export const example = (description: string) => {
 };
 
 type ExtractData<T> = T extends { data: infer D } ? D : T;
+type ContextFor<T> = Partial<Record<keyof ExtractData<T>, string>>;
+
+function normalizeContext(context?: Partial<Record<string, string>>): Record<string, string> | undefined {
+  if (!context) return undefined;
+
+  const filtered: Record<string, string> = {};
+  for (const [key, value] of Object.entries(context)) {
+    if (value !== undefined) {
+      filtered[key] = value;
+    }
+  }
+
+  return Object.keys(filtered).length > 0 ? filtered : undefined;
+}
 
 interface TypedExampleBuilder {
-  given<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenBuilder<T>;
-  when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedWhenBuilder<W>;
+  given<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedGivenBuilder<T>;
+  when<W>(data: ExtractData<W> | ExtractData<W>[], context?: ContextFor<W>): TypedWhenBuilder<W>;
 }
 
 interface TypedGivenBuilder<G> {
-  and<U>(data: ExtractData<U> | ExtractData<U>[]): TypedGivenBuilder<G | U>;
-  when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedGivenWhenBuilder<G, W>;
+  and<U>(data: ExtractData<U> | ExtractData<U>[], context?: ContextFor<U>): TypedGivenBuilder<G | U>;
+  when<W>(data: ExtractData<W> | ExtractData<W>[], context?: ContextFor<W>): TypedGivenWhenBuilder<G, W>;
 }
 
 interface TypedWhenBuilder<W> {
-  then<T>(data: ExtractData<T> | ExtractData<T>[]): TypedThenBuilder<W, T>;
+  then<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedThenBuilder<W, T>;
 }
 
 interface TypedGivenWhenBuilder<G, W> {
-  then<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenThenBuilder<G, W, T>;
+  then<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedGivenThenBuilder<G, W, T>;
 }
 
 interface TypedThenBuilder<W, T> {
-  and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedThenBuilder<W, T | A>;
+  and<A>(data: ExtractData<A> | ExtractData<A>[], context?: ContextFor<A>): TypedThenBuilder<W, T | A>;
 }
 
 interface TypedGivenThenBuilder<G, W, T> {
-  and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedGivenThenBuilder<G, W, T | A>;
+  and<A>(data: ExtractData<A> | ExtractData<A>[], context?: ContextFor<A>): TypedGivenThenBuilder<G, W, T | A>;
 }
 
 function createThenBuilder<W, T>(): TypedThenBuilder<W, T> {
   return {
-    and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedThenBuilder<W, T | A> {
+    and<A>(data: ExtractData<A> | ExtractData<A>[], context?: ContextFor<A>): TypedThenBuilder<W, T | A> {
       const andItems = Array.isArray(data) ? data : [data];
-      recordAndThenData(andItems);
+      recordAndThenData(andItems, normalizeContext(context as Partial<Record<string, string>>));
       return createThenBuilder<W, T | A>();
     },
   };
@@ -138,22 +152,28 @@ function createThenBuilder<W, T>(): TypedThenBuilder<W, T> {
 
 function createGivenBuilder<G>(): TypedGivenBuilder<G> {
   return {
-    and<U>(data: ExtractData<U> | ExtractData<U>[]): TypedGivenBuilder<G | U> {
+    and<U>(data: ExtractData<U> | ExtractData<U>[], context?: ContextFor<U>): TypedGivenBuilder<G | U> {
       const andItems = Array.isArray(data) ? data : [data];
-      recordAndGivenData(andItems);
+      recordAndGivenData(andItems, normalizeContext(context as Partial<Record<string, string>>));
       return createGivenBuilder<G | U>();
     },
-    when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedGivenWhenBuilder<G, W> {
+    when<W>(data: ExtractData<W> | ExtractData<W>[], context?: ContextFor<W>): TypedGivenWhenBuilder<G, W> {
       const whenData = Array.isArray(data) ? data : [data];
-      recordWhenData(whenData.length === 1 ? whenData[0] : whenData);
+      recordWhenData(
+        whenData.length === 1 ? whenData[0] : whenData,
+        normalizeContext(context as Partial<Record<string, string>>),
+      );
       return {
-        then<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenThenBuilder<G, W, T> {
+        then<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedGivenThenBuilder<G, W, T> {
           const thenItems = Array.isArray(data) ? data : [data];
-          recordThenData(thenItems);
+          recordThenData(thenItems, normalizeContext(context as Partial<Record<string, string>>));
           return {
-            and<A>(data: ExtractData<A> | ExtractData<A>[]): TypedGivenThenBuilder<G, W, T | A> {
+            and<A>(
+              data: ExtractData<A> | ExtractData<A>[],
+              context?: ContextFor<A>,
+            ): TypedGivenThenBuilder<G, W, T | A> {
               const andItems = Array.isArray(data) ? data : [data];
-              recordAndThenData(andItems);
+              recordAndThenData(andItems, normalizeContext(context as Partial<Record<string, string>>));
               return createThenBuilder<W, T | A>() as TypedGivenThenBuilder<G, W, T | A>;
             },
           };
@@ -165,18 +185,21 @@ function createGivenBuilder<G>(): TypedGivenBuilder<G> {
 
 function createExampleBuilder(): TypedExampleBuilder {
   return {
-    given<T>(data: ExtractData<T> | ExtractData<T>[]): TypedGivenBuilder<T> {
+    given<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedGivenBuilder<T> {
       const items = Array.isArray(data) ? data : [data];
-      recordGivenData(items);
+      recordGivenData(items, normalizeContext(context as Partial<Record<string, string>>));
       return createGivenBuilder<T>();
     },
-    when<W>(data: ExtractData<W> | ExtractData<W>[]): TypedWhenBuilder<W> {
+    when<W>(data: ExtractData<W> | ExtractData<W>[], context?: ContextFor<W>): TypedWhenBuilder<W> {
       const whenData = Array.isArray(data) ? data : [data];
-      recordWhenData(whenData.length === 1 ? whenData[0] : whenData);
+      recordWhenData(
+        whenData.length === 1 ? whenData[0] : whenData,
+        normalizeContext(context as Partial<Record<string, string>>),
+      );
       return {
-        then<Z>(data: ExtractData<Z> | ExtractData<Z>[]): TypedThenBuilder<W, Z> {
+        then<Z>(data: ExtractData<Z> | ExtractData<Z>[], context?: ContextFor<Z>): TypedThenBuilder<W, Z> {
           const thenItems = Array.isArray(data) ? data : [data];
-          recordThenData(thenItems);
+          recordThenData(thenItems, normalizeContext(context as Partial<Record<string, string>>));
           return createThenBuilder<W, Z>();
         },
       };

@@ -3,6 +3,19 @@ import type { DataSinkItem, DataSourceItem, DataItem, DataSink, DataSource } fro
 import type { GivenTypeInfo } from './loader/ts-utils';
 import { Flow, Slice, Example } from './index';
 
+function normalizeContext(context?: Partial<Record<string, string>>): Record<string, string> | undefined {
+  if (!context) return undefined;
+
+  const filtered: Record<string, string> = {};
+  for (const [key, value] of Object.entries(context)) {
+    if (value !== undefined) {
+      filtered[key] = value;
+    }
+  }
+
+  return Object.keys(filtered).length > 0 ? filtered : undefined;
+}
+
 const debug = createDebug('flow:context:given-types');
 
 interface FlowContext {
@@ -324,37 +337,26 @@ function processGivenItems(data: unknown[]): Array<{ [key: string]: unknown; exa
       const currentCount = givenCallCounters.get(sourceFile) ?? 0;
       givenCallCounters.set(sourceFile, currentCount + 1);
 
-      // Look up AST-extracted type info by ordinal position
       const givenTypes = givenTypesByFile.get(sourceFile) || [];
       const matchingType = givenTypes[currentCount];
 
       if (matchingType !== null && matchingType !== undefined) {
-        const refType =
-          matchingType.classification === 'event'
-            ? 'eventRef'
-            : matchingType.classification === 'command'
-              ? 'commandRef'
-              : 'stateRef';
-        debug('AST match for %s at ordinal %d: %s -> %s', sourceFile, currentCount, matchingType.typeName, refType);
-        return {
-          [refType]: matchingType.typeName,
-          exampleData: ensureMessageFormat(item).data,
-        };
+        debug('AST match for %s at ordinal %d: %s', sourceFile, currentCount, matchingType.typeName);
+        return processItemWithASTMatch(item, matchingType, contextParam);
       } else {
-        // Log diagnostic when falling back
         debug('No AST match for %s at ordinal %d, item: %o', sourceFile, currentCount, item);
       }
     }
 
-    // Fallback: emit explicit InferredType for downstream processing
     return {
       eventRef: 'InferredType',
       exampleData: ensureMessageFormat(item).data,
+      ...(contextParam && { context: contextParam }),
     };
   });
 }
 
-export function recordGivenData(data: unknown[]): void {
+export function recordGivenData(data: unknown[], contextParam?: Partial<Record<string, string>>): void {
   if (
     !context ||
     context.currentSpecIndex === null ||
@@ -369,11 +371,11 @@ export function recordGivenData(data: unknown[]): void {
   const example = getCurrentExample(slice);
   if (!example) throw new Error('No active example for current slice');
 
-  const items = processGivenItems(data);
+  const items = processGivenItems(data, normalizeContext(contextParam));
   example.given = items as typeof example.given;
 }
 
-export function recordAndGivenData(data: unknown[]): void {
+export function recordAndGivenData(data: unknown[], contextParam?: Partial<Record<string, string>>): void {
   if (
     !context ||
     context.currentSpecIndex === null ||
@@ -388,7 +390,7 @@ export function recordAndGivenData(data: unknown[]): void {
   const example = getCurrentExample(slice);
   if (!example) throw new Error('No active example for current slice');
 
-  const items = processGivenItems(data);
+  const items = processGivenItems(data, normalizeContext(contextParam));
 
   if (example.given && Array.isArray(example.given)) {
     example.given.push(...(items as NonNullable<typeof example.given>));
@@ -397,7 +399,12 @@ export function recordAndGivenData(data: unknown[]): void {
   }
 }
 
-function updateExampleWhen(example: Example, data: unknown, sliceType: string): void {
+function updateExampleWhen(
+  example: Example,
+  data: unknown,
+  sliceType: string,
+  contextParam?: Record<string, string>,
+): void {
   if (typeof data === 'object' && data !== null && Object.keys(data).length === 0) {
     if (sliceType === 'query') {
       example.when = { eventRef: '', exampleData: {} };
@@ -410,13 +417,13 @@ function updateExampleWhen(example: Example, data: unknown, sliceType: string): 
   if (sliceType === 'react' || (sliceType === 'query' && Array.isArray(data))) {
     // For react slices and query slices with array input, when is an array of events
     const eventsArray = Array.isArray(data) ? data : [data];
-    example.when = eventsArray.map((item) => convertToEventExample(item));
+    example.when = eventsArray.map((item) => convertToEventExample(item, contextParam));
   } else {
-    example.when = convertToCommandOrEventExample(data);
+    example.when = convertToCommandOrEventExample(data, contextParam);
   }
 }
 
-export function recordWhenData(data: unknown): void {
+export function recordWhenData(data: unknown, contextParam?: Partial<Record<string, string>>): void {
   if (
     !context ||
     context.currentSpecIndex === null ||
@@ -431,10 +438,10 @@ export function recordWhenData(data: unknown): void {
   const example = getCurrentExample(slice);
   if (!example) throw new Error('No active example for current slice');
 
-  updateExampleWhen(example, data, slice.type);
+  updateExampleWhen(example, data, slice.type, normalizeContext(contextParam));
 }
 
-export function recordThenData(data: unknown[]): void {
+export function recordThenData(data: unknown[], contextParam?: Record<string, string>): void {
   if (
     !context ||
     context.currentSpecIndex === null ||
@@ -449,11 +456,11 @@ export function recordThenData(data: unknown[]): void {
   const example = getCurrentExample(slice);
   if (!example) throw new Error('No active example for current slice');
 
-  const outcomes = data.map((item) => convertToOutcomeExample(item, slice.type));
+  const outcomes = data.map((item) => convertToOutcomeExample(item, slice.type, normalizeContext(contextParam)));
   example.then = outcomes as typeof example.then;
 }
 
-export function recordAndThenData(data: unknown[]): void {
+export function recordAndThenData(data: unknown[], contextParam?: Partial<Record<string, string>>): void {
   if (
     !context ||
     context.currentSpecIndex === null ||
@@ -468,15 +475,19 @@ export function recordAndThenData(data: unknown[]): void {
   const example = getCurrentExample(slice);
   if (!example) throw new Error('No active example for current slice');
 
-  const outcomes = data.map((item) => convertToOutcomeExample(item, slice.type));
+  const outcomes = data.map((item) => convertToOutcomeExample(item, slice.type, normalizeContext(contextParam)));
   example.then.push(...(outcomes as typeof example.then));
 }
 
-function convertToEventExample(item: unknown): { eventRef: string; exampleData: Record<string, unknown> } {
+function convertToEventExample(
+  item: unknown,
+  contextParam?: Record<string, string>,
+): { eventRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> } {
   const message = ensureMessageFormat(item);
   return {
     eventRef: message.type,
     exampleData: message.data,
+    ...(contextParam && { context: contextParam }),
   };
 }
 
@@ -515,9 +526,10 @@ function tryGetWhenTypeFromAST(item: unknown): { commandRef: string; exampleData
 
 function convertToCommandOrEventExample(
   item: unknown,
+  contextParam?: Record<string, string>,
 ):
-  | { commandRef: string; exampleData: Record<string, unknown> }
-  | { eventRef: string; exampleData: Record<string, unknown> }[] {
+  | { commandRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }
+  | { eventRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }[] {
   // Try to get AST-extracted when type first
   const astResult = tryGetWhenTypeFromAST(item);
   if (astResult) return astResult;
@@ -527,49 +539,55 @@ function convertToCommandOrEventExample(
   return {
     commandRef: message.type,
     exampleData: message.data,
+    ...(contextParam && { context: contextParam }),
+  };
+}
+
+function isErrorOutcome(message: { type: string; data: Record<string, unknown> }): boolean {
+  return message.type === 'Error' || 'errorType' in message.data;
+}
+
+function createErrorResult(message: { data: Record<string, unknown> }): {
+  errorType: 'IllegalStateError' | 'ValidationError' | 'NotFoundError';
+  message?: string;
+} {
+  return {
+    errorType:
+      (message.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
+    message: message.data.message as string | undefined,
   };
 }
 
 function convertToOutcomeExample(
   item: unknown,
   sliceType: string,
+  contextParam?: Record<string, string>,
 ):
-  | { eventRef: string; exampleData: Record<string, unknown> }
-  | { stateRef: string; exampleData: Record<string, unknown> }
-  | { commandRef: string; exampleData: Record<string, unknown> }
+  | { eventRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }
+  | { stateRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }
+  | { commandRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }
   | { errorType: 'IllegalStateError' | 'ValidationError' | 'NotFoundError'; message?: string } {
   const message = ensureMessageFormat(item);
 
-  // Check if it's an error
-  if (message.type === 'Error' || 'errorType' in message.data) {
-    return {
-      errorType:
-        (message.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
-      message: message.data.message as string | undefined,
-    };
+  if (isErrorOutcome(message)) {
+    return createErrorResult(message);
   }
 
-  if (sliceType === 'command') {
-    return {
-      eventRef: message.type,
-      exampleData: message.data,
-    };
-  } else if (sliceType === 'query') {
-    return {
-      stateRef: message.type,
-      exampleData: message.data,
-    };
-  } else if (sliceType === 'react') {
-    return {
-      commandRef: message.type,
-      exampleData: message.data,
-    };
-  }
-
-  return {
-    eventRef: message.type,
+  const baseResult = {
     exampleData: message.data,
+    ...(contextParam && { context: contextParam }),
   };
+
+  switch (sliceType) {
+    case 'command':
+      return { eventRef: message.type, ...baseResult };
+    case 'query':
+      return { stateRef: message.type, ...baseResult };
+    case 'react':
+      return { commandRef: message.type, ...baseResult };
+    default:
+      return { eventRef: message.type, ...baseResult };
+  }
 }
 
 function ensureMessageFormat(item: unknown): { type: string; data: Record<string, unknown> } {
