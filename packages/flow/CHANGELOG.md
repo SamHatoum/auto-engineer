@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.10.5
+
+### Patch Changes
+
+- fix for modelToFlow to handle multiple flows in the same file
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.10.5
+  - @auto-engineer/id@0.10.5
+  - @auto-engineer/message-bus@0.10.5
+
 ## 0.10.4
 
 ### Patch Changes

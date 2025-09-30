@@ -2,6 +2,8 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.10.5
+
 ## 0.10.4
 
 ## 0.10.3
@@ -179,6 +181,15 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.10.5
+  - @auto-engineer/message-bus@0.10.5
+  - @auto-engineer/message-store@0.10.5
 
 ## 0.10.4
 
@@ -778,6 +789,13 @@
 
 # create-auto-app
 
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.10.5
+
 ## 0.10.4
 
 ### Patch Changes
@@ -924,6 +942,13 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -1338,6 +1363,8 @@
 
 # @auto-engineer/file-store
 
+## 0.10.5
+
 ## 0.10.4
 
 ## 0.10.3
@@ -1469,6 +1496,17 @@
 - version bump
 
 # @auto-engineer/flow
+
+## 0.10.5
+
+### Patch Changes
+
+- fix for modelToFlow to handle multiple flows in the same file
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.10.5
+  - @auto-engineer/id@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -2021,6 +2059,13 @@
 
 # @auto-engineer/frontend-checks
 
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.10.5
+
 ## 0.10.4
 
 ### Patch Changes
@@ -2392,6 +2437,14 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -2842,6 +2895,14 @@
   - @auto-engineer/message-bus@0.0.2
 
 # @auto-engineer/frontend-implementer
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -3294,6 +3355,8 @@
 
 # @auto-engineer/id
 
+## 0.10.5
+
 ## 0.10.4
 
 ## 0.10.3
@@ -3367,6 +3430,15 @@
 ## 0.8.6
 
 # @auto-engineer/information-architect
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.10.5
+  - @auto-engineer/ai-gateway@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -3823,6 +3895,8 @@
 
 # @auto-engineer/message-bus
 
+## 0.10.5
+
 ## 0.10.4
 
 ## 0.10.3
@@ -4005,6 +4079,13 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/message-store
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -4204,6 +4285,14 @@
 - @auto-engineer/message-bus@0.8.6
 
 # @auto-engineer/server-checks
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -4511,6 +4600,14 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
@@ -4963,6 +5060,14 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.10.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.10.5
+  - @auto-engineer/message-bus@0.10.5
 
 ## 0.10.4
 
