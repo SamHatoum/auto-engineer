@@ -45,7 +45,7 @@ function formatFieldDocLine(field) {
 
 export const decide = (
 command: <%= Object.keys(gwtMapping).map(pascalCase).join(' | ') %>,
-state: State<%= integrationReturnType ? `,\n  ${camelCase(integrationReturnType)}?: ${integrationReturnType}` : '' %>
+_state: State<%= integrationReturnType ? `,\n  ${camelCase(integrationReturnType)}?: ${integrationReturnType}` : '' %>
 ): <%= uniqueEventTypes.length === 0
         ? 'never'
         : uniqueEventTypes.length === 1
@@ -102,6 +102,6 @@ throw new IllegalStateError('Not yet implemented: ' + command.type);
 }
 <% } -%>
 default:
-throw new IllegalStateError('Unexpected command type: ' + command.type);
+throw new IllegalStateError(`Unexpected command type: ${String(command.type)}`);
 }
 };

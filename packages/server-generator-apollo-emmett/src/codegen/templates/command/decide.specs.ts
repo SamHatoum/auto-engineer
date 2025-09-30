@@ -81,7 +81,7 @@ describe('decide.ts.ejs', () => {
       import type { CreateListing } from './commands';
       import type { ListingCreated } from './events';
 
-      export const decide = (command: CreateListing, state: State): ListingCreated => {
+      export const decide = (command: CreateListing, _state: State): ListingCreated => {
         switch (command.type) {
           case 'CreateListing': {
             /**
@@ -106,7 +106,7 @@ describe('decide.ts.ejs', () => {
             throw new IllegalStateError('Not yet implemented: ' + command.type);
           }
           default:
-            throw new IllegalStateError('Unexpected command type: ' + command.type);
+            throw new IllegalStateError(\`Unexpected command type: \${String(command.type)}\`);
         }
       };
       "
@@ -206,7 +206,7 @@ describe('decide.ts.ejs', () => {
       import type { RemoveListing } from './commands';
       import type { ListingRemoved } from './events';
 
-      export const decide = (command: RemoveListing, state: State): ListingRemoved => {
+      export const decide = (command: RemoveListing, _state: State): ListingRemoved => {
         switch (command.type) {
           case 'RemoveListing': {
             /**
@@ -231,7 +231,7 @@ describe('decide.ts.ejs', () => {
             throw new IllegalStateError('Not yet implemented: ' + command.type);
           }
           default:
-            throw new IllegalStateError('Unexpected command type: ' + command.type);
+            throw new IllegalStateError(\`Unexpected command type: \${String(command.type)}\`);
         }
       };
       "
@@ -346,7 +346,7 @@ describe('decide.ts.ejs', () => {
       import type { CreateListing } from './commands';
       import type { ListingCreated } from './events';
 
-      export const decide = (command: CreateListing, state: State): ListingCreated => {
+      export const decide = (command: CreateListing, _state: State): ListingCreated => {
         switch (command.type) {
           case 'CreateListing': {
             /**
@@ -375,7 +375,7 @@ describe('decide.ts.ejs', () => {
             throw new IllegalStateError('Not yet implemented: ' + command.type);
           }
           default:
-            throw new IllegalStateError('Unexpected command type: ' + command.type);
+            throw new IllegalStateError(\`Unexpected command type: \${String(command.type)}\`);
         }
       };
       "
@@ -532,7 +532,7 @@ describe('decide.ts.ejs', () => {
       import type { ItemsSuggested } from './events';
       import type { Products } from '@auto-engineer/product-catalogue-integration';
 
-      export const decide = (command: SuggestItems, state: State, products?: Products): ItemsSuggested => {
+      export const decide = (command: SuggestItems, _state: State, products?: Products): ItemsSuggested => {
         switch (command.type) {
           case 'SuggestItems': {
             /**
@@ -566,7 +566,7 @@ describe('decide.ts.ejs', () => {
             throw new IllegalStateError('Not yet implemented: ' + command.type);
           }
           default:
-            throw new IllegalStateError('Unexpected command type: ' + command.type);
+            throw new IllegalStateError(\`Unexpected command type: \${String(command.type)}\`);
         }
       };
       "
