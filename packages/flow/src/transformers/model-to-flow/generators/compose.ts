@@ -98,7 +98,7 @@ function buildStatements(
 ): ts.Statement[] {
   const statements: ts.Statement[] = [];
 
-  // Add imports
+  // imports
   const imports = buildImports(ts, opts, messages, typeIntegrationNames, valueIntegrationNames, usedFlowFunctionNames);
   if (imports.importFlowValues !== null) statements.push(imports.importFlowValues);
   if (imports.importFlowTypes !== null) statements.push(imports.importFlowTypes);
@@ -116,13 +116,8 @@ function buildStatements(
     })),
   }));
   statements.push(...buildTypeAliases(ts, adaptedMessages));
-
-  // Flows
-
-  if (flows.length > 0) {
-    statements.push(
-      ...buildFlowStatements(ts, flows[0] as unknown as Parameters<typeof buildFlowStatements>[1], messages),
-    );
+  for (const flow of flows) {
+    statements.push(...buildFlowStatements(ts, flow as unknown as Parameters<typeof buildFlowStatements>[1], messages));
   }
 
   return statements;

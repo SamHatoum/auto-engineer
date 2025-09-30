@@ -37,19 +37,22 @@ function buildClientSpecs(
     ),
   );
 
-  return f.createExpressionStatement(
-    f.createCallExpression(f.createIdentifier('specs'), undefined, [
-      f.createStringLiteral(specs.name),
-      f.createArrowFunction(
-        undefined,
-        undefined,
-        [],
-        undefined,
-        f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-        f.createBlock(shouldCalls, true),
-      ),
-    ]),
+  const arrowFunction = f.createArrowFunction(
+    undefined,
+    undefined,
+    [],
+    undefined,
+    f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+    f.createBlock(shouldCalls, true),
   );
+
+  const args: tsNS.Expression[] = [];
+  if (specs.name && specs.name.trim() !== '') {
+    args.push(f.createStringLiteral(specs.name));
+  }
+  args.push(arrowFunction);
+
+  return f.createExpressionStatement(f.createCallExpression(f.createIdentifier('specs'), undefined, args));
 }
 
 function buildInitialChain(
@@ -451,18 +454,23 @@ function buildServerStatements(
     const allRuleStatements = buildConsolidatedRules(ts, f, ruleGroups, sliceType, messages);
 
     if (allRuleStatements.length > 0) {
+      const arrowFunction = f.createArrowFunction(
+        undefined,
+        undefined,
+        [],
+        undefined,
+        f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+        f.createBlock(allRuleStatements, true),
+      );
+
+      const args: tsNS.Expression[] = [];
+      if (server.specs.name && server.specs.name.trim() !== '') {
+        args.push(f.createStringLiteral(server.specs.name));
+      }
+      args.push(arrowFunction);
+
       const specsStatement = f.createExpressionStatement(
-        f.createCallExpression(f.createIdentifier('specs'), undefined, [
-          f.createStringLiteral(server.specs.name),
-          f.createArrowFunction(
-            undefined,
-            undefined,
-            [],
-            undefined,
-            f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-            f.createBlock(allRuleStatements, true),
-          ),
-        ]),
+        f.createCallExpression(f.createIdentifier('specs'), undefined, args),
       );
       statements.push(specsStatement);
     }

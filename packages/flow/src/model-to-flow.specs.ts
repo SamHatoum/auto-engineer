@@ -398,7 +398,7 @@ flow('Seasonal Assistant', () => {
     expect(code).toEqual(`import { experience, flow, should, specs } from '@auto-engineer/flow';
 flow('Test Experience Flow', 'TEST-001', () => {
   experience('Homepage', 'EXP-001').client(() => {
-    specs('', () => {
+    specs(() => {
       should('show a hero section with a welcome message');
       should('allow user to start the questionnaire');
     });
@@ -952,7 +952,7 @@ type QuestionnaireProgress = State<
 
 flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
   experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {
-    specs('', () => {
+    specs(() => {
       should('show a hero section with a welcome message');
       should('allow user to start the questionnaire');
     });
@@ -983,7 +983,7 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
     )
     .server(() => {
       data([source().state('QuestionnaireProgress').fromProjection('Questionnaires', 'questionnaire-participantId')]);
-      specs('', () => {
+      specs(() => {
         rule('questionnaires show current progress', 'AUTO-r1A3Bp9W', () => {
           example('a question has already been answered')
             .given<QuestionnaireLinkSent>({
@@ -1750,6 +1750,93 @@ flow('Date Handling Flow', 'DATE-FLOW', () => {
             status: 'completed',
           });
       });
+    });
+  });
+});
+`);
+  });
+
+  it('should generate multiple flows when multiple flows have the same sourceFile', async () => {
+    const modelWithMultipleFlowsSameSource: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Home Screen',
+          sourceFile: '/path/to/homepage.flow.ts',
+          slices: [
+            {
+              name: 'Active Surveys Summary',
+              id: 'AUTO-aifPcU3hw',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['show active surveys summary'],
+                },
+              },
+            },
+          ],
+        },
+        {
+          name: 'Create Survey',
+          sourceFile: '/path/to/homepage.flow.ts',
+          slices: [
+            {
+              name: 'Create Survey Form',
+              id: 'AUTO-MPviTMrQC',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['allow entering survey title'],
+                },
+              },
+            },
+          ],
+        },
+        {
+          name: 'Response Analytics',
+          sourceFile: '/path/to/homepage.flow.ts',
+          slices: [
+            {
+              name: 'Response Rate Charts',
+              id: 'AUTO-eME978Euk',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['show daily response rate charts'],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [],
+      integrations: [],
+    };
+
+    const code = await modelToFlow(modelWithMultipleFlowsSameSource);
+
+    expect(code).toEqual(`import { experience, flow, should, specs } from '@auto-engineer/flow';
+flow('Home Screen', () => {
+  experience('Active Surveys Summary', 'AUTO-aifPcU3hw').client(() => {
+    specs(() => {
+      should('show active surveys summary');
+    });
+  });
+});
+flow('Create Survey', () => {
+  experience('Create Survey Form', 'AUTO-MPviTMrQC').client(() => {
+    specs(() => {
+      should('allow entering survey title');
+    });
+  });
+});
+flow('Response Analytics', () => {
+  experience('Response Rate Charts', 'AUTO-eME978Euk').client(() => {
+    specs(() => {
+      should('show daily response rate charts');
     });
   });
 });
