@@ -16,7 +16,6 @@
     "commitlint.config.ts",
     "packages/create-auto-app/templates/shopping-app/example-apis/ai-integration",
     "packages/create-auto-app/templates/shopping-app/example-apis/product-catalogue-integration",
-    "packages/create-auto-app/templates/shopping-app/example-apis/shopping-assistant/integrations",
     "packages/create-auto-app/templates/shopping-app/example-integrations/ai-chat-completion/ai-integration.ts",
     "packages/create-auto-app/templates/shopping-app/example-integrations/cart/cart-integration.ts",
     "packages/create-auto-app/templates/shopping-app/example-integrations/product-catalogue/product-catalogue-integration.ts"

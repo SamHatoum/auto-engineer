@@ -328,8 +328,23 @@ export function recordExample(description: string): void {
   }
 }
 
-function processGivenItems(data: unknown[]): Array<{ [key: string]: unknown; exampleData: unknown }> {
-  // Get normalized source file path for lookup
+function processItemWithASTMatch(
+  item: unknown,
+  matchingType: import('./loader/ts-utils').GivenTypeInfo,
+  contextParam?: Record<string, string>,
+): { [key: string]: unknown; exampleData: unknown; context?: Record<string, string> } {
+  const refType = getRefTypeFromClassification(matchingType.classification);
+  return {
+    [refType]: matchingType.typeName,
+    exampleData: ensureMessageFormat(item).data,
+    ...(contextParam && { context: contextParam }),
+  };
+}
+
+function processGivenItems(
+  data: unknown[],
+  contextParam?: Record<string, string>,
+): Array<{ [key: string]: unknown; exampleData: unknown; context?: Record<string, string> }> {
   const sourceFile = context?.flow.sourceFile;
 
   return data.map((item) => {
@@ -337,6 +352,7 @@ function processGivenItems(data: unknown[]): Array<{ [key: string]: unknown; exa
       const currentCount = givenCallCounters.get(sourceFile) ?? 0;
       givenCallCounters.set(sourceFile, currentCount + 1);
 
+      // Look up AST-extracted type info by ordinal position
       const givenTypes = givenTypesByFile.get(sourceFile) || [];
       const matchingType = givenTypes[currentCount];
 
@@ -344,10 +360,12 @@ function processGivenItems(data: unknown[]): Array<{ [key: string]: unknown; exa
         debug('AST match for %s at ordinal %d: %s', sourceFile, currentCount, matchingType.typeName);
         return processItemWithASTMatch(item, matchingType, contextParam);
       } else {
+        // Log diagnostic when falling back
         debug('No AST match for %s at ordinal %d, item: %o', sourceFile, currentCount, item);
       }
     }
 
+    // Fallback: emit explicit InferredType for downstream processing
     return {
       eventRef: 'InferredType',
       exampleData: ensureMessageFormat(item).data,
@@ -528,8 +546,8 @@ function convertToCommandOrEventExample(
   item: unknown,
   contextParam?: Record<string, string>,
 ):
-  | { commandRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }
-  | { eventRef: string; exampleData: Record<string, unknown>; context?: Record<string, string> }[] {
+  | { commandRef: string; exampleData: Record<string, unknown> }
+  | { eventRef: string; exampleData: Record<string, unknown> }[] {
   // Try to get AST-extracted when type first
   const astResult = tryGetWhenTypeFromAST(item);
   if (astResult) return astResult;
@@ -540,21 +558,6 @@ function convertToCommandOrEventExample(
     commandRef: message.type,
     exampleData: message.data,
     ...(contextParam && { context: contextParam }),
-  };
-}
-
-function isErrorOutcome(message: { type: string; data: Record<string, unknown> }): boolean {
-  return message.type === 'Error' || 'errorType' in message.data;
-}
-
-function createErrorResult(message: { data: Record<string, unknown> }): {
-  errorType: 'IllegalStateError' | 'ValidationError' | 'NotFoundError';
-  message?: string;
-} {
-  return {
-    errorType:
-      (message.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
-    message: message.data.message as string | undefined,
   };
 }
 
@@ -569,25 +572,37 @@ function convertToOutcomeExample(
   | { errorType: 'IllegalStateError' | 'ValidationError' | 'NotFoundError'; message?: string } {
   const message = ensureMessageFormat(item);
 
-  if (isErrorOutcome(message)) {
-    return createErrorResult(message);
+  // Check if it's an error
+  if (message.type === 'Error' || 'errorType' in message.data) {
+    return {
+      errorType:
+        (message.data.errorType as 'IllegalStateError' | 'ValidationError' | 'NotFoundError') || 'IllegalStateError',
+      message: message.data.message as string | undefined,
+    };
   }
 
-  const baseResult = {
+  if (sliceType === 'command') {
+    return {
+      eventRef: message.type,
+      exampleData: message.data,
+    };
+  } else if (sliceType === 'query') {
+    return {
+      stateRef: message.type,
+      exampleData: message.data,
+    };
+  } else if (sliceType === 'react') {
+    return {
+      commandRef: message.type,
+      exampleData: message.data,
+    };
+  }
+
+  return {
+    eventRef: message.type,
     exampleData: message.data,
     ...(contextParam && { context: contextParam }),
   };
-
-  switch (sliceType) {
-    case 'command':
-      return { eventRef: message.type, ...baseResult };
-    case 'query':
-      return { stateRef: message.type, ...baseResult };
-    case 'react':
-      return { commandRef: message.type, ...baseResult };
-    default:
-      return { eventRef: message.type, ...baseResult };
-  }
 }
 
 function ensureMessageFormat(item: unknown): { type: string; data: Record<string, unknown> } {
