@@ -9,9 +9,9 @@ import { IAScheme } from '../types';
 import { configureStarter } from '../configure-starter';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:command');
-const debugBuilder = createDebug('frontend-generator-react-graphql:command:builder');
-const debugGeneration = createDebug('frontend-generator-react-graphql:command:generation');
+const debug = createDebug('auto:frontend-generator-react-graphql:command');
+const debugBuilder = createDebug('auto:frontend-generator-react-graphql:command:builder');
+const debugGeneration = createDebug('auto:frontend-generator-react-graphql:command:generation');
 
 export type GenerateClientCommand = Command<
   'GenerateClient',

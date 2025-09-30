@@ -11,19 +11,9 @@ const GRAPHQL_DIR = 'src/graphql';
 
 function runCommand(cmd: string, cwd: string): string {
   debugCmd('Running command: %s in %s', cmd, cwd);
-  try {
-    const result = execSync(cmd, { cwd, encoding: 'utf-8', stdio: 'pipe' });
-    debugCmd('Command successful');
-    return result;
-  } catch (e) {
-    debugCmd('Command failed: %s', cmd);
-    const error = e as { stdout?: Buffer; stderr?: Buffer; message?: string };
-    let output = '';
-    if (error.stdout) output += error.stdout.toString();
-    if (error.stderr) output += error.stderr.toString();
-    if (!output && error.message != null) output = error.message;
-    return output;
-  }
+  const result = execSync(cmd, { cwd, encoding: 'utf-8', stdio: 'pipe' });
+  debugCmd('Command successful');
+  return result;
 }
 
 export function runCodegen(projectPath: string): void {
@@ -33,14 +23,14 @@ export function runCodegen(projectPath: string): void {
 
   if (!fs.existsSync(resolvedPath)) {
     debug('ERROR: Project path does not exist: %s', resolvedPath);
-    throw new Error(`❌ Project path does not exist: ${resolvedPath}`);
+    throw new Error(`Project path does not exist: ${resolvedPath}`);
   }
 
   const schemaPath = path.join(resolvedPath, 'schema.graphql');
   debug('Checking for schema at: %s', schemaPath);
   if (!fs.existsSync(schemaPath)) {
     debug('ERROR: Schema file not found at %s', schemaPath);
-    throw new Error(`❌ Schema file not found at ${schemaPath}`);
+    throw new Error(`Schema file not found at ${schemaPath}`);
   }
   debug('Schema file found');
 
