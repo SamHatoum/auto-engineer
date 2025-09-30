@@ -38,9 +38,9 @@ function generate(spec: IAScheme): GeneratedFile[] {
     files.push({
       path: `output/components/molecules/${name}.tsx`,
       content,
+      type: 'molecule',
     });
   }
-  // TODO collect all molecule generated events
 
   // Organisms
   debug('Generating %d organism components', Object.keys(spec.organisms.items).length);
@@ -59,9 +59,9 @@ function generate(spec: IAScheme): GeneratedFile[] {
     files.push({
       path: `output/components/organisms/${name}.tsx`,
       content,
+      type: 'organism',
     });
   }
-  // TODO collect all organisms generated events
 
   // Pages
   debug('Generating %d page components', Object.keys(spec.pages.items).length);
@@ -81,9 +81,9 @@ function generate(spec: IAScheme): GeneratedFile[] {
     files.push({
       path: `output/pages/${name}.tsx`,
       content,
+      type: 'page',
     });
   }
-  // TODO collect all pages generated events
 
   // App.tsx
   debug('Generating App.tsx with %d pages', Object.keys(spec.pages.items).length);
@@ -97,6 +97,7 @@ function generate(spec: IAScheme): GeneratedFile[] {
   files.push({
     path: 'output/App.tsx',
     content: appContent,
+    type: 'app',
   });
 
   debug('Generation complete - generated %d files', files.length);
@@ -116,7 +117,7 @@ function writeToDisk(files: GeneratedFile[]) {
   debugOutput('All files written successfully');
 }
 
-export function generateComponents(spec: IAScheme, basePath: string) {
+export function generateComponents(spec: IAScheme, basePath: string): GeneratedFile[] {
   debug('Starting generateComponents with basePath: %s', basePath);
   const allFiles = generate(spec);
 
@@ -124,8 +125,10 @@ export function generateComponents(spec: IAScheme, basePath: string) {
   const rewritten = allFiles.map((file) => ({
     path: path.join(basePath, file.path.replace(/^output[\\/]/, '')),
     content: file.content,
+    type: file.type,
   }));
 
   writeToDisk(rewritten);
   debug('Component generation complete');
+  return rewritten;
 }

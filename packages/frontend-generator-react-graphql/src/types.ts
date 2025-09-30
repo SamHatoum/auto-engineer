@@ -63,7 +63,10 @@ export interface PageSpec {
   data_requirements?: DataRequirement[];
 }
 
+export type ComponentType = 'molecule' | 'organism' | 'page' | 'app';
+
 export interface GeneratedFile {
   path: string;
   content: string;
+  type: ComponentType;
 }
