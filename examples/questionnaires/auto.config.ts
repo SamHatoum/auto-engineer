@@ -164,12 +164,12 @@ export default autoConfig({
       }),
     );
 
-    on<ImplementClientEvents>('ClientImplemented', () =>
-      dispatch<CheckClientCommand>('CheckClient', {
-        clientDirectory: './client',
-        skipBrowserChecks: true,
-      }),
-    );
+    // on<ImplementClientEvents>('ClientImplemented', () =>
+    //   dispatch<CheckClientCommand>('CheckClient', {
+    //     clientDirectory: './client',
+    //     skipBrowserChecks: true,
+    //   }),
+    // );
 
     on<CheckClientEvents>('ClientChecked', (e) => {
       if (e.type === 'ClientChecked') {

@@ -35,12 +35,12 @@ function generate(spec: IAScheme): GeneratedFile[] {
       specs: def.specs ?? [],
       dataRequirements: [],
     });
-
     files.push({
       path: `output/components/molecules/${name}.tsx`,
       content,
     });
   }
+  // TODO collect all molecule generated events
 
   // Organisms
   debug('Generating %d organism components', Object.keys(spec.organisms.items).length);
@@ -61,6 +61,7 @@ function generate(spec: IAScheme): GeneratedFile[] {
       content,
     });
   }
+  // TODO collect all organisms generated events
 
   // Pages
   debug('Generating %d page components', Object.keys(spec.pages.items).length);
@@ -82,6 +83,7 @@ function generate(spec: IAScheme): GeneratedFile[] {
       content,
     });
   }
+  // TODO collect all pages generated events
 
   // App.tsx
   debug('Generating App.tsx with %d pages', Object.keys(spec.pages.items).length);
