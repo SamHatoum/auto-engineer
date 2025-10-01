@@ -1,0 +1,7 @@
+{
+  "name": "todo-list",
+  "displayName": "Todo List with Kanban",
+  "description": "Beautiful Kanban-style todo list with drag-and-drop and smooth animations",
+  "type": "template",
+  "preset": "full"
+}
