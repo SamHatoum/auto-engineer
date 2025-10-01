@@ -1,8 +1,7 @@
 import { experience, flow, should, specs } from '@auto-engineer/flow';
-
-flow('App Structure', () => {
+flow('App Structure', 'AUTO-vLkxrmhz6', () => {
   experience('App Structure', 'AUTO-k6JkQZQnc').client(() => {
-    specs('', () => {
+    specs(() => {
       should('display persistent sidebar on left for navigation');
       should(
         'sidebar includes links: Home, Create Survey, Analytics, Templates, Completion Tracker, Response Goals, Response History',
