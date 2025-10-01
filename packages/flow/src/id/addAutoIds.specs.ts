@@ -213,4 +213,84 @@ describe('addAutoIds', () => {
 
     // Experience slices only have client specs (no server specs to test)
   });
+
+  it('should assign unique IDs to multiple flows with same sourceFile', () => {
+    const modelWithMultipleFlowsSameSource: Model = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'Home Screen',
+          sourceFile: '/path/to/homepage.flow.ts',
+          slices: [
+            {
+              name: 'Active Surveys Summary',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['show active surveys summary'],
+                },
+              },
+            },
+          ],
+        },
+        {
+          name: 'Create Survey',
+          sourceFile: '/path/to/homepage.flow.ts',
+          slices: [
+            {
+              name: 'Create Survey Form',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['allow entering survey title'],
+                },
+              },
+            },
+          ],
+        },
+        {
+          name: 'Response Analytics',
+          sourceFile: '/path/to/homepage.flow.ts',
+          slices: [
+            {
+              name: 'Response Rate Charts',
+              type: 'experience',
+              client: {
+                specs: {
+                  name: '',
+                  rules: ['show daily response rate charts'],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [],
+      integrations: [],
+    };
+
+    const result = addAutoIds(modelWithMultipleFlowsSameSource);
+
+    expect(result.flows[0].id).toMatch(AUTO_ID_REGEX);
+    expect(result.flows[1].id).toMatch(AUTO_ID_REGEX);
+    expect(result.flows[2].id).toMatch(AUTO_ID_REGEX);
+
+    expect(result.flows[0].id).not.toBe(result.flows[1].id);
+    expect(result.flows[0].id).not.toBe(result.flows[2].id);
+    expect(result.flows[1].id).not.toBe(result.flows[2].id);
+
+    expect(result.flows[0].slices[0].id).toMatch(AUTO_ID_REGEX);
+    expect(result.flows[1].slices[0].id).toMatch(AUTO_ID_REGEX);
+    expect(result.flows[2].slices[0].id).toMatch(AUTO_ID_REGEX);
+
+    expect(result.flows[0].slices[0].id).not.toBe(result.flows[1].slices[0].id);
+    expect(result.flows[0].slices[0].id).not.toBe(result.flows[2].slices[0].id);
+    expect(result.flows[1].slices[0].id).not.toBe(result.flows[2].slices[0].id);
+
+    expect(result.flows[0].sourceFile).toBe('/path/to/homepage.flow.ts');
+    expect(result.flows[1].sourceFile).toBe('/path/to/homepage.flow.ts');
+    expect(result.flows[2].sourceFile).toBe('/path/to/homepage.flow.ts');
+  });
 });

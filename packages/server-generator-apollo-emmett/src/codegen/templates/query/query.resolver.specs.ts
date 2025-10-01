@@ -67,7 +67,7 @@ describe('query.resolver.ts.ejs', () => {
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`
-      "import { Query, Resolver, Arg, Ctx, ObjectType, Field } from 'type-graphql';
+      "import { Query, Resolver, Arg, Ctx, ObjectType, Field, Float } from 'type-graphql';
       import { type GraphQLContext, ReadModel } from '../../../shared';
 
       @ObjectType()
@@ -190,7 +190,8 @@ describe('query.resolver.ts.ejs', () => {
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`
-      "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID } from 'type-graphql';
+      "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID, Float } from 'type-graphql';
+      import { GraphQLJSON } from 'graphql-type-json';
       import { type GraphQLContext, ReadModel } from '../../../shared';
 
       @ObjectType()
@@ -421,5 +422,189 @@ describe('query.resolver.ts.ejs', () => {
       }
       "
     `);
+  });
+  it('should import Float when Float fields are used', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'product-flow',
+          slices: [
+            {
+              type: 'query',
+              name: 'get-product-price',
+              request: `
+                query GetProductPrice($productId: ID!) {
+                  productPrice(productId: $productId) {
+                    productId
+                    price
+                    discount
+                  }
+                }
+              `,
+              client: {
+                description: '',
+              },
+              server: {
+                description: '',
+                data: [
+                  {
+                    origin: {
+                      type: 'projection',
+                      idField: 'productId',
+                      name: 'ProductPricesProjection',
+                    },
+                    target: {
+                      type: 'State',
+                      name: 'ProductPrice',
+                    },
+                  },
+                ],
+                specs: { name: '', rules: [] },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'ProductPrice',
+          fields: [
+            { name: 'productId', type: 'string', required: true },
+            { name: 'price', type: 'number', required: true },
+            { name: 'discount', type: 'number', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
+
+    expect(resolverFile?.contents).toContain(
+      "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID, Float } from 'type-graphql';",
+    );
+    expect(resolverFile?.contents).toContain('@Field(() => Float)');
+  });
+  it('should import Float when array of numbers is used', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'stats-flow',
+          slices: [
+            {
+              type: 'query',
+              name: 'get-stats',
+              request: `
+                query GetStats($userId: ID!) {
+                  stats(userId: $userId) {
+                    userId
+                    scores
+                  }
+                }
+              `,
+              client: {
+                description: '',
+              },
+              server: {
+                description: '',
+                data: [
+                  {
+                    origin: {
+                      type: 'projection',
+                      idField: 'userId',
+                      name: 'StatsProjection',
+                    },
+                    target: {
+                      type: 'State',
+                      name: 'Stats',
+                    },
+                  },
+                ],
+                specs: { name: '', rules: [] },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'Stats',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'scores', type: 'Array<number>', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
+
+    expect(resolverFile?.contents).toContain('Float');
+    expect(resolverFile?.contents).toContain('@Field(() => [Float])');
+  });
+  it('should import Float when Float query arg is used', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      flows: [
+        {
+          name: 'search-flow',
+          slices: [
+            {
+              type: 'query',
+              name: 'search-products',
+              request: `
+                query SearchProducts($minPrice: Float, $maxPrice: Float) {
+                  searchProducts(minPrice: $minPrice, maxPrice: $maxPrice) {
+                    productId
+                    name
+                  }
+                }
+              `,
+              client: {
+                description: '',
+              },
+              server: {
+                description: '',
+                data: [
+                  {
+                    origin: {
+                      type: 'projection',
+                      idField: 'productId',
+                      name: 'ProductsProjection',
+                    },
+                    target: {
+                      type: 'State',
+                      name: 'Product',
+                    },
+                  },
+                ],
+                specs: { name: '', rules: [] },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'Product',
+          fields: [
+            { name: 'productId', type: 'string', required: true },
+            { name: 'name', type: 'string', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
+
+    expect(resolverFile?.contents).toContain('Float');
+    expect(resolverFile?.contents).toContain("@Arg('minPrice', () => Float");
   });
 });

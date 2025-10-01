@@ -57,10 +57,100 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
     });
 });`;
 
+    const multipleFlowsSameSource = `
+import { flow, specs, should } from '../flow';
+import { experience } from '../fluent-builder';
+
+flow('Home Screen', 'AUTO-aifPcU3hw', () => {
+  experience('Active Surveys Summary', 'AUTO-slice1').client(() => {
+    specs(() => {
+      should('show active surveys summary');
+    });
+  });
+});
+
+flow('Create Survey', 'AUTO-MPviTMrQC', () => {
+  experience('Create Survey Form', 'AUTO-slice2').client(() => {
+    specs(() => {
+      should('allow entering survey title');
+    });
+  });
+});
+
+flow('Response Analytics', 'AUTO-eME978Euk', () => {
+  experience('Response Rate Charts', 'AUTO-slice3').client(() => {
+    specs(() => {
+      should('show daily response rate charts');
+    });
+  });
+});`;
+
+    const multipleFlowsIncomplete = `
+import { flow, specs, should } from '../flow';
+import { experience } from '../fluent-builder';
+
+flow('Home Screen', 'AUTO-aifPcU3hw', () => {
+  experience('Active Surveys Summary', 'AUTO-slice1').client(() => {
+    specs(() => {
+      should('show active surveys summary');
+    });
+  });
+});
+
+flow('Create Survey', () => {
+  experience('Create Survey Form', 'AUTO-slice2').client(() => {
+    specs(() => {
+      should('allow entering survey title');
+    });
+  });
+});
+
+flow('Response Analytics', 'AUTO-eME978Euk', () => {
+  experience('Response Rate Charts', 'AUTO-slice3').client(() => {
+    specs(() => {
+      should('show daily response rate charts');
+    });
+  });
+});`;
+
+    const multipleFlowsSliceMissing = `
+import { flow, specs, should } from '../flow';
+import { experience } from '../fluent-builder';
+
+flow('Home Screen', 'AUTO-aifPcU3hw', () => {
+  experience('Active Surveys Summary', 'AUTO-slice1').client(() => {
+    specs(() => {
+      should('show active surveys summary');
+    });
+  });
+});
+
+flow('Create Survey', 'AUTO-MPviTMrQC', () => {
+  experience('Create Survey Form').client(() => {
+    specs(() => {
+      should('allow entering survey title');
+    });
+  });
+});
+
+flow('Response Analytics', 'AUTO-eME978Euk', () => {
+  experience('Response Rate Charts', 'AUTO-slice3').client(() => {
+    specs(() => {
+      should('show daily response rate charts');
+    });
+  });
+});`;
+
     const flowContent1 = new TextEncoder().encode(flowWithoutIds);
     const flowContent2 = new TextEncoder().encode(flowWithIds);
+    const flowContent3 = new TextEncoder().encode(multipleFlowsSameSource);
+    const flowContent4 = new TextEncoder().encode(multipleFlowsIncomplete);
+    const flowContent5 = new TextEncoder().encode(multipleFlowsSliceMissing);
     await vfs.write('/test/flow-without-ids.flow.ts', flowContent1);
     await vfs.write('/test/flow-with-ids.flow.ts', flowContent2);
+    await vfs.write('/test/homepage.flow.ts', flowContent3);
+    await vfs.write('/test/homepage-incomplete.flow.ts', flowContent4);
+    await vfs.write('/test/homepage-slice-missing.flow.ts', flowContent5);
   });
   it('should return false for models without IDs', async () => {
     const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
@@ -134,5 +224,44 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
     }
 
     expect(found).toBe(true);
+  });
+
+  it('should return true when multiple flows with same sourceFile all have IDs', async () => {
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const model = result.toModel();
+
+    const homepageFlows = model.flows.filter(
+      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage.flow.ts'),
+    );
+    expect(homepageFlows.length).toBe(3);
+
+    const homepageModel = { ...model, flows: homepageFlows };
+    expect(hasAllIds(homepageModel)).toBe(true);
+  });
+
+  it('should return false when any flow in multiple flows with same sourceFile is missing ID', async () => {
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const model = result.toModel();
+
+    const homepageFlows = model.flows.filter(
+      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage-incomplete.flow.ts'),
+    );
+    expect(homepageFlows.length).toBe(3);
+
+    const homepageModel = { ...model, flows: homepageFlows };
+    expect(hasAllIds(homepageModel)).toBe(false);
+  });
+
+  it('should return false when any slice in multiple flows with same sourceFile is missing ID', async () => {
+    const result = await getFlows({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const model = result.toModel();
+
+    const homepageFlows = model.flows.filter(
+      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage-slice-missing.flow.ts'),
+    );
+    expect(homepageFlows.length).toBe(3);
+
+    const homepageModel = { ...model, flows: homepageFlows };
+    expect(hasAllIds(homepageModel)).toBe(false);
   });
 });

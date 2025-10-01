@@ -20,23 +20,46 @@ function baseTs(ts) {
 }
 function fieldUsesDate(ts) {
     const b = baseTs(ts);
-    if (b === 'Date') return true;
+    const gqlType = graphqlType(b);
+    if (gqlType.includes('GraphQLISODateTime')) return true;
     if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*Date\b/.test(b);
     return false;
 }
 function fieldUsesJSON(ts) {
     const b = baseTs(ts);
-    if (b === 'unknown' || b === 'any' || b === 'object') return true;
+    const gqlType = graphqlType(b);
+    if (gqlType.includes('GraphQLJSON') || gqlType.includes('JSON')) return true;
     if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*(unknown|any|object)\b/.test(b);
+    return false;
+}
+function fieldUsesFloat(ts) {
+    const b = baseTs(ts);
+    const gqlType = graphqlType(b);
+    if (gqlType.includes('Float')) return true;
+    if (isInlineObject(b) || isInlineObjectArray(b)) {
+        const inner = b.trim().startsWith('Array<')
+            ? b.trim().replace(/^Array<\{/, '{').replace(/}>$/, '}')
+            : b.trim().replace(/\[\]$/, '');
+        const match = inner.match(/^\{([\s\S]*)\}$/);
+        const body = match ? match[1] : '';
+        const rawFields = body.split(/[,;]\s*/).filter(Boolean);
+        return rawFields.some(f => {
+            const parts = f.split(':');
+            const type = parts.slice(1).join(':').trim();
+            return type && graphqlType(type).includes('Float');
+        });
+    }
     return false;
 }
 
 const messageFields = message?.fields ?? [];
 const usesDate = messageFields.some(f => fieldUsesDate(f.type)) ||
-        (parsedRequest?.args ?? []).some(a => baseTs(a.tsType) === 'Date');
-const usesJSON = messageFields.some(f => fieldUsesJSON(f.type));
+        (parsedRequest?.args ?? []).some(a => fieldUsesDate(a.tsType));
+const usesJSON = messageFields.some(f => fieldUsesJSON(f.type)) ||
+        (parsedRequest?.args ?? []).some(a => fieldUsesJSON(a.tsType));
+const usesFloat = messageFields.some(f => fieldUsesFloat(f.type)) ||
+        (parsedRequest?.args ?? []).some(a => fieldUsesFloat(a.tsType));
 
-// Collect embedded types up-front so we can emit them before the parent
 const embeddedTypes = [];
 for (const field of messageFields) {
     const tsType = field.type ?? 'string';
@@ -48,13 +71,12 @@ for (const field of messageFields) {
     }
 }
 %>
-import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
+import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesFloat) { %>, Float<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
 <% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
 <% } %>import { type GraphQLContext, ReadModel } from '../../../shared';
 
-<% // Emit embedded types FIRST — this matches your snapshot order
+<%
         for (const { typeName, tsType } of embeddedTypes) {
-    // Extract inner "{ ... }" whether Array<{...}> or "{...}[]"
     const inner = tsType.trim().startsWith('Array<')
             ? tsType.trim().replace(/^Array<\{/, '{').replace(/}>$/, '}')
             : tsType.trim().replace(/\[\]$/, '');
