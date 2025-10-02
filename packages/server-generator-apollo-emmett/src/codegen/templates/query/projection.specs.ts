@@ -339,7 +339,7 @@ describe('projection.ts.ejs', () => {
           @Ctx() ctx: GraphQLContext,
           @Arg('sessionId', () => ID, { nullable: true }) sessionId?: string,
         ): Promise<Wishlist[]> {
-          const model = new ReadModel<Wishlist>(ctx.eventStore, 'WishlistProjection');
+          const model = new ReadModel<Wishlist>(ctx.database, 'WishlistProjection');
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:

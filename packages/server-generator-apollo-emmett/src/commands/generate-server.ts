@@ -415,9 +415,11 @@ async function writePackage(dest: string): Promise<void> {
       'type-check': 'tsc --noEmit',
       test: 'vitest run',
       dev: 'tsx --no-deprecation src/server.ts',
+      postinstall: 'npm rebuild sqlite3 2>/dev/null || true',
     },
     dependencies: resolveDeps([
       '@event-driven-io/emmett',
+      '@event-driven-io/emmett-sqlite',
       'type-graphql',
       'graphql-type-json',
       'graphql',
@@ -426,6 +428,7 @@ async function writePackage(dest: string): Promise<void> {
       'zod',
       'apollo-server',
       'uuid',
+      'sqlite3',
     ]),
     devDependencies: resolveDeps(['typescript', 'vitest', 'tsx']),
   } as const;

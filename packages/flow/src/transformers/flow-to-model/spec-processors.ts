@@ -174,7 +174,7 @@ function processStateRefInGiven(
     return tryAlternativeResolutionsForState(originalRef, g, resolveTypeAndInfo, messages, exampleShapeHints);
   }
 
-  if (typeInfo?.classification === 'event') {
+  if (originalRef === 'InferredType' && typeInfo?.classification === 'event') {
     log('DEBUG original logic conversion to event:', resolvedName);
     delete g.stateRef;
     g.eventRef = resolvedName;
@@ -261,13 +261,13 @@ function processEventRefInGiven(
     }
   }
 
-  if (typeInfo?.classification === 'state') {
+  if (originalRef === 'InferredType' && typeInfo?.classification === 'state') {
     log('DEBUG original logic conversion event to state:', resolvedName);
     delete g.eventRef;
     g.stateRef = resolvedName;
     handleStateRef(g, resolveTypeAndInfo, messages, exampleShapeHints);
     return true;
-  } else if (typeInfo?.classification === 'command') {
+  } else if (originalRef === 'InferredType' && typeInfo?.classification === 'command') {
     log('DEBUG original logic conversion event to command:', resolvedName);
     delete g.eventRef;
     g.commandRef = resolvedName;
@@ -325,19 +325,44 @@ function processSingleWhen(
     return;
   }
 
+  const originalCommandRef = when.commandRef;
   const expected = slice.type === 'command' ? 'command' : 'event';
-  const { resolvedName, typeInfo } = resolveTypeAndInfo(when.commandRef, expected, when.exampleData);
 
-  if (typeInfo?.classification && typeInfo.classification !== 'command') {
-    if (typeInfo.classification === 'event') {
-      delete when.commandRef;
-      when.eventRef = resolvedName;
-    } else if (typeInfo.classification === 'state') {
-      delete when.commandRef;
-      when.stateRef = resolvedName;
-    }
+  log('DEBUG processSingleWhen:', {
+    originalCommandRef,
+    sliceType: slice.type,
+    expected,
+    exampleData: when.exampleData,
+  });
+
+  let resolvedName: string;
+  let typeInfo: TypeInfo | undefined;
+
+  if (originalCommandRef !== 'InferredType') {
+    log('DEBUG preserving AST type:', originalCommandRef);
+    resolvedName = originalCommandRef;
+    when.commandRef = originalCommandRef;
+    const result = resolveTypeAndInfo(originalCommandRef, expected, when.exampleData);
+    typeInfo = result.typeInfo;
   } else {
-    when.commandRef = resolvedName;
+    log('DEBUG using type inference for:', originalCommandRef);
+    const result = resolveTypeAndInfo(originalCommandRef, expected, when.exampleData);
+    resolvedName = result.resolvedName;
+    typeInfo = result.typeInfo;
+    log('DEBUG inference result:', { resolvedName, classification: typeInfo?.classification });
+    if (typeInfo?.classification && typeInfo.classification !== 'command') {
+      if (typeInfo.classification === 'event') {
+        delete when.commandRef;
+        when.eventRef = resolvedName;
+        log('DEBUG converted commandRef to eventRef:', resolvedName);
+      } else if (typeInfo.classification === 'state') {
+        delete when.commandRef;
+        when.stateRef = resolvedName;
+        log('DEBUG converted commandRef to stateRef:', resolvedName);
+      }
+    } else {
+      when.commandRef = resolvedName;
+    }
   }
 
   if (when.exampleData !== undefined) {
@@ -367,15 +392,23 @@ function updateCommandRefTypeInArray(
   resolvedName: string,
   typeInfo: TypeInfo | undefined,
 ) {
-  if (typeInfo?.classification === 'event') {
-    delete item.commandRef;
-    item.eventRef = resolvedName;
-  } else if (typeInfo?.classification === 'state') {
-    delete item.commandRef;
-    item.stateRef = resolvedName;
-  } else {
+  if (item.commandRef !== 'InferredType') {
     item.commandRef = resolvedName;
+  } else {
+    if (typeInfo?.classification === 'event') {
+      delete item.commandRef;
+      item.eventRef = resolvedName;
+    } else if (typeInfo?.classification === 'state') {
+      delete item.commandRef;
+      item.stateRef = resolvedName;
+    } else {
+      item.commandRef = resolvedName;
+    }
   }
+}
+
+function determineCommandRefForArray(originalCommandRef: string, resolvedName: string): string {
+  return originalCommandRef !== 'InferredType' ? originalCommandRef : resolvedName;
 }
 
 function processCommandRefInArray(
@@ -394,20 +427,27 @@ function processCommandRefInArray(
     return;
   }
 
+  const originalCommandRef = item.commandRef;
   const expected = slice.type === 'command' ? 'command' : 'event';
-  const { resolvedName, typeInfo } = resolveTypeAndInfo(item.commandRef, expected, item.exampleData);
+  const { resolvedName, typeInfo } = resolveTypeAndInfo(originalCommandRef, expected, item.exampleData);
 
-  updateCommandRefTypeInArray(item, resolvedName, typeInfo);
+  if (originalCommandRef !== 'InferredType') {
+    item.commandRef = originalCommandRef;
+  } else {
+    updateCommandRefTypeInArray(item, resolvedName, typeInfo);
+  }
+
+  const finalRef = determineCommandRefForArray(originalCommandRef, resolvedName);
 
   if (item.exampleData !== undefined) {
-    collectExampleHintsForData(resolvedName, item.exampleData, exampleShapeHints);
+    collectExampleHintsForData(finalRef, item.exampleData, exampleShapeHints);
   }
 
   const messageType = typeInfo?.classification ?? 'command';
-  const msg = createMessage(resolvedName, typeInfo, messageType);
-  const existing = messages.get(resolvedName);
+  const msg = createMessage(finalRef, typeInfo, messageType);
+  const existing = messages.get(finalRef);
   if (!existing || preferNewFields(msg.fields, existing.fields)) {
-    messages.set(resolvedName, msg);
+    messages.set(finalRef, msg);
   }
 }
 
@@ -513,14 +553,18 @@ function updateThenCommandRefType(
   typeInfo: TypeInfo | undefined,
   exampleShapeHints: ExampleShapeHints,
 ) {
-  if (typeInfo?.classification === 'event') {
-    delete t.commandRef;
-    t.eventRef = resolvedName;
-  } else if (typeInfo?.classification === 'state') {
-    delete t.commandRef;
-    t.stateRef = resolvedName;
-  } else {
+  if (t.commandRef !== 'InferredType') {
     t.commandRef = resolvedName;
+  } else {
+    if (typeInfo?.classification === 'event') {
+      delete t.commandRef;
+      t.eventRef = resolvedName;
+    } else if (typeInfo?.classification === 'state') {
+      delete t.commandRef;
+      t.stateRef = resolvedName;
+    } else {
+      t.commandRef = resolvedName;
+    }
   }
 
   if (t.exampleData !== undefined) {

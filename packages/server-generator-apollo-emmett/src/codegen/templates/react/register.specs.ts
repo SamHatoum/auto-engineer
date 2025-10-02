@@ -219,10 +219,10 @@ describe('register.ts.ejs (react slice)', () => {
     const registerFile = plans.find((p) => p.outputPath.endsWith('send-notification-to-host/register.ts'));
 
     expect(registerFile?.contents).toMatchInlineSnapshot(`
-          "import { type CommandSender, type EventSubscription, type InMemoryEventStore } from '@event-driven-io/emmett';
+          "import { type CommandSender, type EventSubscription, type EventStore } from '@event-driven-io/emmett';
           import type { BookingRequested } from '../guest-submits-booking-request/events';
 
-          export async function register(messageBus: CommandSender & EventSubscription, eventStore: InMemoryEventStore) {
+          export async function register(messageBus: CommandSender & EventSubscription, eventStore: EventStore) {
             messageBus.subscribe(async (event: BookingRequested) => {
               /**
                * ## IMPLEMENTATION INSTRUCTIONS ##

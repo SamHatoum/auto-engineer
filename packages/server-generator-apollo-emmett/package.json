@@ -26,8 +26,10 @@
     "@auto-engineer/flow": "workspace:*",
     "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.2",
+    "@event-driven-io/emmett-sqlite": "^0.38.5",
     "apollo-server": "^3.13.0",
     "apollo-server-express": "^3.13.0",
+    "better-sqlite3": "^12.4.1",
     "change-case": "^5.4.4",
     "ejs": "^3.1.10",
     "execa": "^9.6.0",
@@ -38,10 +40,11 @@
     "graphql-scalars": "^1.24.2",
     "prettier": "^3.6.1",
     "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7",
     "type-fest": "^4.41.0",
     "type-graphql": "^2.0.0-rc.2",
     "graphql-type-json": "^0.3.2",
-    "uuid": "^10.0.0",
+    "uuid": "^11.0.0",
     "web-streams-polyfill": "^4.1.0"
   },
   "publishConfig": {

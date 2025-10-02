@@ -1,10 +1,10 @@
-import type { InMemoryEventStore } from '@event-driven-io/emmett';
+import type { InMemoryDatabase } from '@event-driven-io/emmett';
 
 export class ReadModel<T extends Record<string, unknown>> {
   private collection;
 
-  constructor(eventStore: InMemoryEventStore, collectionName: string) {
-    this.collection = eventStore.database.collection<T>(collectionName);
+  constructor(database: InMemoryDatabase, collectionName: string) {
+    this.collection = database.collection<T>(collectionName);
   }
 
   async getAll(): Promise<T[]> {

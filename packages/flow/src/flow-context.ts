@@ -423,6 +423,8 @@ function updateExampleWhen(
   sliceType: string,
   contextParam?: Record<string, string>,
 ): void {
+  const ordinal = incrementWhenCounter();
+
   if (typeof data === 'object' && data !== null && Object.keys(data).length === 0) {
     if (sliceType === 'query') {
       example.when = { eventRef: '', exampleData: {} };
@@ -437,7 +439,7 @@ function updateExampleWhen(
     const eventsArray = Array.isArray(data) ? data : [data];
     example.when = eventsArray.map((item) => convertToEventExample(item, contextParam));
   } else {
-    example.when = convertToCommandOrEventExample(data, contextParam);
+    example.when = convertToCommandOrEventExample(data, contextParam, ordinal);
   }
 }
 
@@ -515,26 +517,70 @@ function getRefTypeFromClassification(classification: string): string {
   return 'stateRef';
 }
 
-function tryGetWhenTypeFromAST(item: unknown): { commandRef: string; exampleData: Record<string, unknown> } | null {
+function isValidSourceFile(sourceFile: string | null | undefined): sourceFile is string {
+  return sourceFile !== null && sourceFile !== undefined && sourceFile !== '';
+}
+
+function isValidMatchingType(
+  matchingType: import('./loader/ts-utils').GivenTypeInfo | undefined,
+): matchingType is import('./loader/ts-utils').GivenTypeInfo {
+  return matchingType !== null && matchingType !== undefined && matchingType.typeName !== '';
+}
+
+function incrementWhenCounter(): number {
   const sourceFile = context?.flow.sourceFile;
 
-  if (sourceFile === null || sourceFile === undefined || sourceFile === '') {
-    return null;
+  if (!isValidSourceFile(sourceFile)) {
+    return -1;
   }
 
   const currentCount = whenCallCounters.get(sourceFile) ?? 0;
   whenCallCounters.set(sourceFile, currentCount + 1);
 
-  const whenTypes = whenTypesByFile.get(sourceFile) || [];
-  const matchingType = whenTypes[currentCount];
+  debug('[when-counter] incremented counter for %s to %d', sourceFile, currentCount + 1);
 
-  if (matchingType === null || matchingType === undefined) {
-    debug('No AST match for when at %s ordinal %d, falling back', sourceFile, currentCount);
+  return currentCount;
+}
+
+function tryGetWhenTypeFromAST(
+  item: unknown,
+  ordinal: number,
+): { commandRef: string; exampleData: Record<string, unknown> } | null {
+  const sourceFile = context?.flow.sourceFile;
+
+  debug('[when-ast] tryGetWhenTypeFromAST called, sourceFile=%s, ordinal=%d', sourceFile, ordinal);
+  debug('[when-ast] whenTypesByFile has %d files', whenTypesByFile.size);
+  debug('[when-ast] whenTypesByFile keys: %o', [...whenTypesByFile.keys()]);
+
+  if (!isValidSourceFile(sourceFile)) {
+    debug('[when-ast] sourceFile is null/undefined/empty, returning null');
+    return null;
+  }
+
+  const whenTypes = whenTypesByFile.get(sourceFile) || [];
+  debug('[when-ast] sourceFile=%s, ordinal=%d, whenTypes.length=%d', sourceFile, ordinal, whenTypes.length);
+  if (whenTypes.length > 0) {
+    debug(
+      '[when-ast] available types: %o',
+      whenTypes.map((t) => ({ typeName: t.typeName, classification: t.classification })),
+    );
+  }
+
+  const matchingType = whenTypes[ordinal];
+
+  if (!isValidMatchingType(matchingType)) {
+    debug('[when-ast] No valid AST match for when at %s ordinal %d, falling back', sourceFile, ordinal);
     return null;
   }
 
   const refType = getRefTypeFromClassification(matchingType.classification);
-  debug('AST match for when at %s ordinal %d: %s -> %s', sourceFile, currentCount, matchingType.typeName, refType);
+  debug(
+    '[when-ast] ✅ AST match for when at %s ordinal %d: %s -> %s',
+    sourceFile,
+    ordinal,
+    matchingType.typeName,
+    refType,
+  );
 
   return {
     [refType]: matchingType.typeName,
@@ -545,12 +591,14 @@ function tryGetWhenTypeFromAST(item: unknown): { commandRef: string; exampleData
 function convertToCommandOrEventExample(
   item: unknown,
   contextParam?: Record<string, string>,
+  ordinal?: number,
 ):
   | { commandRef: string; exampleData: Record<string, unknown> }
   | { eventRef: string; exampleData: Record<string, unknown> }[] {
-  // Try to get AST-extracted when type first
-  const astResult = tryGetWhenTypeFromAST(item);
-  if (astResult) return astResult;
+  if (ordinal !== undefined && ordinal >= 0) {
+    const astResult = tryGetWhenTypeFromAST(item, ordinal);
+    if (astResult) return astResult;
+  }
 
   // Fallback to the original logic
   const message = ensureMessageFormat(item);

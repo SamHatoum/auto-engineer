@@ -223,12 +223,12 @@ describe('handle.ts.ejs (react slice)', () => {
       import type { BookingRequested } from '../guest-submits-booking-request/events';
       import type { ReactorContext } from '../../../shared';
 
-      export const react = ({ eventStore, commandSender }: ReactorContext) =>
+      export const react = ({ eventStore, commandSender, database }: ReactorContext) =>
         inMemoryReactor<BookingRequested>({
           processorId: 'manage-bookings-send-notification-to-host',
           canHandle: ['BookingRequested'],
           connectionOptions: {
-            database: eventStore.database,
+            database,
           },
           eachMessage: async (event, context): Promise<MessageHandlerResult> => {
             /**
@@ -236,7 +236,7 @@ describe('handle.ts.ejs (react slice)', () => {
              *
              * - Inspect event data to determine if the command should be sent.
              * - Replace the placeholder logic and \\\`throw\\\` below with real implementation.
-             * - Send one or more commands via: context.commandSender.send({...})
+             * - Send one or more commands via: commandSender.send({...})
              * - Optionally return a MessageHandlerResult for SKIP or error cases.
              */
 
@@ -250,7 +250,7 @@ describe('handle.ts.ejs (react slice)', () => {
             //   };
             // }
 
-            // await context.commandSender.send({
+            // await commandSender.send({
             //   type: 'NotifyHost',
             //   kind: 'Command',
             //   data: {

@@ -99,7 +99,7 @@ describe('query.resolver.ts.ejs', () => {
           @Arg('maxPrice', () => Float, { nullable: true }) maxPrice?: number,
           @Arg('minGuests', () => Float, { nullable: true }) minGuests?: number,
         ): Promise<AvailableListings[]> {
-          const model = new ReadModel<AvailableListings>(ctx.eventStore, 'AvailablePropertiesProjection');
+          const model = new ReadModel<AvailableListings>(ctx.database, 'AvailablePropertiesProjection');
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:
@@ -227,7 +227,7 @@ describe('query.resolver.ts.ejs', () => {
           @Ctx() ctx: GraphQLContext,
           @Arg('sessionId', () => ID, { nullable: true }) sessionId?: string,
         ): Promise<SuggestedItems[]> {
-          const model = new ReadModel<SuggestedItems>(ctx.eventStore, 'SuggestedItemsProjection');
+          const model = new ReadModel<SuggestedItems>(ctx.database, 'SuggestedItemsProjection');
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:
@@ -401,7 +401,7 @@ describe('query.resolver.ts.ejs', () => {
           @Ctx() ctx: GraphQLContext,
           @Arg('participantId', () => ID, { nullable: true }) participantId?: string,
         ): Promise<QuestionnaireProgress[]> {
-          const model = new ReadModel<QuestionnaireProgress>(ctx.eventStore, 'Questionnaires');
+          const model = new ReadModel<QuestionnaireProgress>(ctx.database, 'Questionnaires');
 
           // ## IMPLEMENTATION INSTRUCTIONS ##
           // You can query the projection using the ReadModel API:

@@ -184,7 +184,7 @@ describe('react.specs.ts.ejs (react slice)', () => {
         beforeEach(() => {
           eventStore = getInMemoryEventStore({});
           given = ReactorSpecification.for<ReactorEvent, ReactorCommand, ReactorContext>(
-            () => react({ eventStore, commandSender: messageBus }),
+            () => react({ eventStore, commandSender: messageBus, database: eventStore.database }),
             (commandSender) => {
               messageBus = commandSender;
               return {

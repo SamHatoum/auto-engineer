@@ -1,15 +1,17 @@
-import { CommandSender, InMemoryEventStore } from '@event-driven-io/emmett';
+import { CommandSender, EventStore, type InMemoryDatabase } from '@event-driven-io/emmett';
 import { Field, ObjectType } from 'type-graphql';
 
 export interface ReactorContext {
-  eventStore: InMemoryEventStore;
+  eventStore: EventStore;
   commandSender: CommandSender;
+  database: InMemoryDatabase;
   [key: string]: unknown;
 }
 
 export interface GraphQLContext {
-  eventStore: InMemoryEventStore;
+  eventStore: EventStore;
   messageBus: CommandSender;
+  database: InMemoryDatabase;
 }
 
 @ObjectType()

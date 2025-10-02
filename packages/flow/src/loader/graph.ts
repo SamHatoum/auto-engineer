@@ -195,7 +195,6 @@ export async function buildGraph(
     rootDir: rootDir,
     // outDir: 'dist', // not used with transpileModule
     // Performance optimizations
-    noResolve: true,
     skipDefaultLibCheck: true,
     isolatedModules: true, // Faster compilation
     declaration: false,
@@ -294,35 +293,66 @@ export async function buildGraph(
     graph.set(path, { js, imports, resolved });
     vfsFiles.add(path);
   }
+  async function loadTypingFiles(pkgTypings: Map<string, Set<string>>): Promise<void> {
+    const allTypingFiles: string[] = [];
+    for (const typingPaths of pkgTypings.values()) {
+      allTypingFiles.push(...typingPaths);
+    }
+
+    for (const typingFile of allTypingFiles) {
+      const buf = await vfs.read(typingFile);
+      if (buf) {
+        const source = new TextDecoder().decode(buf);
+        const sourceFile = ts.createSourceFile(typingFile, source, ts.ScriptTarget.ES2020, true, ts.ScriptKind.TS);
+        sourceFiles.set(typingFile, sourceFile);
+      }
+    }
+  }
+
+  function extractTypeInfoFromProgram(
+    program: import('typescript').Program,
+    checker: import('typescript').TypeChecker,
+  ): Map<string, import('./ts-utils').GivenTypeInfo[]> {
+    const whenTypesByFile: Map<string, import('./ts-utils').GivenTypeInfo[]> = new Map();
+
+    for (const sourceFile of program.getSourceFiles()) {
+      const posixPath = toPosix(sourceFile.fileName);
+      if (!sourceFiles.has(posixPath) || posixPath.endsWith('.d.ts')) continue;
+
+      const fileTypeMap = typesByFile.get(posixPath) || new Map();
+      const extractedGivenTypes = parseGivenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
+      const extractedWhenTypes = parseWhenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
+
+      if (extractedGivenTypes.length > 0) {
+        givenTypesByFile.set(posixPath, extractedGivenTypes);
+        debug('[given-types] extracted %d .given<T>() calls from %s', extractedGivenTypes.length, posixPath);
+      }
+
+      if (extractedWhenTypes.length > 0) {
+        whenTypesByFile.set(posixPath, extractedWhenTypes);
+        debug(
+          '[when-types] extracted %d .when<T>() calls from %s: %o',
+          extractedWhenTypes.length,
+          posixPath,
+          extractedWhenTypes.map((t) => ({ typeName: t.typeName, classification: t.classification })),
+        );
+      }
+    }
+
+    return whenTypesByFile;
+  }
+
   for (const entry of entryFiles) {
     await buildRec(toPosix(entry));
   }
 
   const pkgTypings = await collectAllTypings(vfs, externalPkgs, rootDir);
+  await loadTypingFiles(pkgTypings);
 
   const program = ts.createProgram([...sourceFiles.keys()], compilerOptions, host);
   const checker = program.getTypeChecker();
 
-  const whenTypesByFile: Map<string, import('./ts-utils').GivenTypeInfo[]> = new Map();
-
-  for (const sourceFile of program.getSourceFiles()) {
-    const posixPath = toPosix(sourceFile.fileName);
-    if (!sourceFiles.has(posixPath) || posixPath.endsWith('.d.ts')) continue;
-
-    const fileTypeMap = typesByFile.get(posixPath) || new Map();
-    const extractedGivenTypes = parseGivenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
-    const extractedWhenTypes = parseWhenTypeArguments(ts, checker, sourceFile, fileTypeMap, typesByFile);
-
-    if (extractedGivenTypes.length > 0) {
-      givenTypesByFile.set(posixPath, extractedGivenTypes);
-      debug('[given-types] extracted %d .given<T>() calls from %s', extractedGivenTypes.length, posixPath);
-    }
-
-    if (extractedWhenTypes.length > 0) {
-      whenTypesByFile.set(posixPath, extractedWhenTypes);
-      debug('[when-types] extracted %d .when<T>() calls from %s', extractedWhenTypes.length, posixPath);
-    }
-  }
+  const whenTypesByFile = extractTypeInfoFromProgram(program, checker);
 
   givenTypesByFile.set('__whenTypes', whenTypesByFile as unknown as import('./ts-utils').GivenTypeInfo[]);
 

@@ -136,7 +136,7 @@ async <%= queryName %>(
 %>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%= tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
 <%   } } %>
 ): Promise<<%= viewType %>[]> {
-const model = new ReadModel<<%= viewType %>>(ctx.eventStore, '<%= projectionType %>');
+const model = new ReadModel<<%= viewType %>>(ctx.database, '<%= projectionType %>');
 
 // ## IMPLEMENTATION INSTRUCTIONS ##
 // You can query the projection using the ReadModel API:

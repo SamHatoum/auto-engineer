@@ -1,5 +1,8 @@
 import type { IFileStore } from '@auto-engineer/file-store';
 import { CANDIDATE_EXTS, dirname, join, normalize } from './fs-path';
+import createDebug from 'debug';
+
+const debug = createDebug('flow:when-types');
 
 export async function fileExists(vfs: IFileStore, p: string): Promise<boolean> {
   const buf = await vfs.read(p);
@@ -198,7 +201,6 @@ function extractTypeLiteralProperties(
   return `{ ${properties.join('; ')} }`;
 }
 
-// Helper to extract TypeScript type from a type node
 // eslint-disable-next-line complexity
 function extractTypeFromNode(ts: typeof import('typescript'), typeNode?: import('typescript').TypeNode): string {
   if (!typeNode) return 'unknown';
@@ -636,10 +638,16 @@ function processWhenCallExpression(
   }
 
   const typeName = resolveTypeName(ts, typeArg, checker);
-  if (typeName === null || typeName === undefined) return;
+  if (typeName === null || typeName === undefined) {
+    debug('[when-types] ordinal %d: resolveTypeName returned null/undefined', ordinal);
+    return;
+  }
 
   const typeInfo = findTypeInfo(typeName, typeMap, typesByFile);
-  if (!typeInfo?.classification) return;
+  if (!typeInfo?.classification) {
+    debug('[when-types] ordinal %d: type=%s, typeInfo not found or no classification', ordinal, typeName);
+    return;
+  }
 
   whenTypes.push(createGivenTypeInfo(sourceFile, node, ordinal, typeInfo.stringLiteral, typeInfo.classification));
 }
@@ -656,14 +664,40 @@ export function parseWhenTypeArguments(
   const visit = (node: import('typescript').Node): void => {
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
       const method = node.expression.name.getText();
-      if (method === 'when' && node.typeArguments && node.typeArguments.length > 0) {
-        processWhenCallExpression(ts, node, checker, sourceFile, typeMap, typesByFile, whenTypes, whenTypes.length);
+      if (method === 'when') {
+        if (node.typeArguments && node.typeArguments.length > 0) {
+          const typeArg = node.typeArguments[0];
+          const typeArgText = typeArg.getText(sourceFile);
+          debug(
+            '[when-types] found .when<%s> at line %d, will process as ordinal %d',
+            typeArgText,
+            sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+            whenTypes.length,
+          );
+          processWhenCallExpression(ts, node, checker, sourceFile, typeMap, typesByFile, whenTypes, whenTypes.length);
+        } else {
+          const { line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+          debug(
+            '[when-types] found .when() without type argument at line %d, adding placeholder at ordinal %d',
+            line + 1,
+            whenTypes.length,
+          );
+          whenTypes.push({
+            fileName: sourceFile.fileName,
+            line: line + 1,
+            column: character + 1,
+            ordinal: whenTypes.length,
+            typeName: '',
+            classification: 'command',
+          });
+        }
       }
     }
     ts.forEachChild(node, visit);
   };
 
   visit(sourceFile);
+  debug('[when-types] total when types extracted: %d', whenTypes.length);
   return whenTypes;
 }
 
