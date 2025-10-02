@@ -367,7 +367,8 @@ Transform the IA schema into a complete, production-ready application. Every cha
 - Responsive mastery: mobile, tablet, desktop must each feel intentionally designed.
 
 ## Layout Rules
-- For multi-feature apps, use an SPA shell (sidebar + topbar + content). No wasted space or page-level scrollbars; scroll within content regions only.
+- **Single Page Applications (SPAs)**: Avoid page-level scrollbars; scrolling must happen only within defined content regions. Preserve a fluid, app-like feel across breakpoints.
+- **Websites**: For marketing or static sites, full-page scrolling and vertical storytelling are acceptable. Employ elegant sections and natural scroll progression.
 - For single-purpose flows (checkout, booking, signup), craft minimal, elegant, stepwise journeys.
 - Avoid generic headings; communicate structure via layout, tokens, and spacing.
 
