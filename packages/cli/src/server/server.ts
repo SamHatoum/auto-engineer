@@ -227,7 +227,7 @@ export class MessageBusServer {
     // Start HTTP/WebSocket server
     await new Promise<void>((resolve) => {
       this.httpServer.listen(port, () => {
-        if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+        if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
           console.log(`Server running at http://localhost:${port} 🚀`);
         }
         debug('Message bus server started on port', port);
