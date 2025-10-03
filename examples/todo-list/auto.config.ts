@@ -1,32 +1,37 @@
 import { autoConfig, on, dispatch } from '@auto-engineer/cli';
-import type { ExportSchemaCommand, ExportSchemaEvents } from '@auto-engineer/flow';
+import type { ExportSchemaEvents } from '@auto-engineer/flow';
 import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
-import type {
-  ImplementServerCommand,
-  ImplementServerEvents,
-  ImplementSliceEvents,
-  ImplementSliceCommand,
-} from '@auto-engineer/server-implementer';
+import type { ImplementSliceEvents, ImplementSliceCommand } from '@auto-engineer/server-implementer';
 import type {
   CheckTestsCommand,
-  CheckTestsEvents,
   CheckTypesCommand,
-  CheckTypesEvents,
   CheckLintCommand,
-  CheckLintEvents,
   TestsCheckFailedEvent,
   TypeCheckFailedEvent,
   LintCheckFailedEvent,
 } from '@auto-engineer/server-checks';
 import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/information-architect';
-import type { ImplementClientCommand, ImplementClientEvents } from '@auto-engineer/frontend-implementer';
+import type { ImplementClientCommand } from '@auto-engineer/frontend-implementer';
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
-import {
-  CheckClientCommand,
-  CheckClientEvents,
-  ClientCheckFailedEvent,
-} from '../../packages/frontend-checks/dist/src/commands/check-client';
+import type { CheckClientEvents } from '../../packages/frontend-checks/dist/src/commands/check-client';
 import { SliceGeneratedEvent } from '../../packages/server-generator-apollo-emmett/dist/src/commands/generate-server';
+
+const sliceRetryState = new Map<string, number>();
+const MAX_RETRIES = 3;
+
+interface CheckFailures {
+  testsCheckFailed?: TestsCheckFailedEvent;
+  typeCheckFailed?: TypeCheckFailedEvent;
+  lintCheckFailed?: LintCheckFailedEvent;
+}
+
+type EventsType = Record<
+  string,
+  Array<{
+    type: string;
+    data: { targetDirectory?: string; errors?: string };
+  }>
+>;
 
 export default autoConfig({
   fileId: 'todoK4nB2',
@@ -85,57 +90,38 @@ export default autoConfig({
       }),
     );
 
-    on<ImplementSliceEvents>('SliceImplemented', (e) =>
-      dispatch<CheckTestsCommand>('CheckTests', {
-        targetDirectory: e.data.slicePath,
-        scope: 'slice',
-      }),
-    );
-
-    on<ImplementSliceEvents>('SliceImplemented', (e) =>
-      dispatch<CheckTypesCommand>('CheckTypes', {
-        targetDirectory: e.data.slicePath,
-        scope: 'slice',
-      }),
-    );
-
-    on<ImplementSliceEvents>('SliceImplemented', (e) =>
-      dispatch<CheckLintCommand>('CheckLint', {
-        targetDirectory: e.data.slicePath,
-        scope: 'slice',
-        fix: true,
-      }),
-    );
-
     on.settled<CheckTestsCommand, CheckTypesCommand, CheckLintCommand>(
       ['CheckTests', 'CheckTypes', 'CheckLint'],
       dispatch<ImplementSliceCommand>(['ImplementSlice'], (events, send) => {
-        const hasFailures =
-          events.CheckTests.some((e: CheckTestsEvents) => e.type === 'TestsCheckFailed') ||
-          events.CheckTypes.some((e: CheckTypesEvents) => e.type === 'TypeCheckFailed') ||
-          events.CheckLint.some((e: CheckLintEvents) => e.type === 'LintCheckFailed');
+        const failures = findCheckFailures(events);
+        const slicePath = getSlicePath(failures, events);
 
-        if (hasFailures) {
-          send({
-            type: 'ImplementSlice',
-            data: {
-              slicePath: (events.CheckTests[0] as CheckTestsEvents).data.targetDirectory,
-              context: {
-                previousOutputs:
-                  events.CheckTests.filter((e): e is TestsCheckFailedEvent => e.type === 'TestsCheckFailed')
-                    .map((e) => e.data.errors)
-                    .join('\n') +
-                  events.CheckTypes.filter((e): e is TypeCheckFailedEvent => e.type === 'TypeCheckFailed')
-                    .map((e) => e.data.errors)
-                    .join('\n') +
-                  events.CheckLint.filter((e): e is LintCheckFailedEvent => e.type === 'LintCheckFailed')
-                    .map((e) => e.data.errors)
-                    .join('\n'),
-                attemptNumber: 0,
-              },
-            },
-          });
+        if (!hasAnyFailures(failures)) {
+          sliceRetryState.delete(slicePath);
+          return { persist: false };
         }
+
+        const currentAttempt = sliceRetryState.get(slicePath) ?? 0;
+
+        if (currentAttempt >= MAX_RETRIES) {
+          sliceRetryState.delete(slicePath);
+          return { persist: false };
+        }
+
+        sliceRetryState.set(slicePath, currentAttempt + 1);
+
+        send({
+          type: 'ImplementSlice',
+          data: {
+            slicePath,
+            context: {
+              previousOutputs: collectErrorMessages(failures),
+              attemptNumber: currentAttempt + 1,
+            },
+          },
+        });
+
+        return { persist: true };
       }),
     );
 
@@ -192,6 +178,57 @@ export default autoConfig({
     });
   },
 });
+
+function findCheckFailures(events: EventsType): CheckFailures {
+  const checkTests = events.CheckTests as Array<
+    TestsCheckFailedEvent | { type: string; data: { targetDirectory: string } }
+  >;
+  const checkTypes = events.CheckTypes as Array<
+    TypeCheckFailedEvent | { type: string; data: { targetDirectory: string } }
+  >;
+  const checkLint = events.CheckLint as Array<
+    LintCheckFailedEvent | { type: string; data: { targetDirectory: string } }
+  >;
+
+  return {
+    testsCheckFailed: checkTests.find((e): e is TestsCheckFailedEvent => e.type === 'TestsCheckFailed'),
+    typeCheckFailed: checkTypes.find((e): e is TypeCheckFailedEvent => e.type === 'TypeCheckFailed'),
+    lintCheckFailed: checkLint.find((e): e is LintCheckFailedEvent => e.type === 'LintCheckFailed'),
+  };
+}
+
+function hasAnyFailures(failures: CheckFailures): boolean {
+  return (
+    failures.testsCheckFailed !== undefined ||
+    failures.typeCheckFailed !== undefined ||
+    failures.lintCheckFailed !== undefined
+  );
+}
+
+function getSlicePath(failures: CheckFailures, events: EventsType): string {
+  return (
+    failures.testsCheckFailed?.data.targetDirectory ??
+    failures.typeCheckFailed?.data.targetDirectory ??
+    failures.lintCheckFailed?.data.targetDirectory ??
+    (events.CheckTests[0]?.data.targetDirectory as string) ??
+    ''
+  );
+}
+
+function collectErrorMessages(failures: CheckFailures): string {
+  const errorMessages: string[] = [];
+  if (failures.testsCheckFailed !== undefined) {
+    errorMessages.push(failures.testsCheckFailed.data.errors);
+  }
+  if (failures.typeCheckFailed !== undefined) {
+    errorMessages.push(failures.typeCheckFailed.data.errors);
+  }
+  if (failures.lintCheckFailed !== undefined) {
+    errorMessages.push(failures.lintCheckFailed.data.errors);
+  }
+  return errorMessages.join('\n');
+}
+
 /*
 
 rm -rf server client .context/schema.json .context/schema.graphql .context/auto-ia-scheme.json 

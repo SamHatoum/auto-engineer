@@ -124,7 +124,7 @@ function settled<
   } else {
     const { dispatches, handler } = callbackOrConfig;
 
-    const wrappedHandler = (events: Record<string, Event[]>) => {
+    const wrappedHandler = (events: Record<string, Event[]>): void | { persist: boolean } => {
       const validatedDispatch = <TCommand extends Command>(command: TCommand): void => {
         if (!dispatches.includes(command.type)) {
           throw new Error(`Command type "${command.type}" is not declared in dispatches list`);
@@ -137,7 +137,7 @@ function settled<
         pendingDispatches.push(action);
       };
 
-      handler(events, validatedDispatch);
+      return handler(events, validatedDispatch);
     };
 
     const registration: SettledRegistration = {

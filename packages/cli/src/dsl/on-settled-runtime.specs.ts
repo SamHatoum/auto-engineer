@@ -120,12 +120,15 @@ describe('on.settled Runtime Execution', () => {
     const bus = server.getMessageBus();
     const settledTracker = server.getSettledTracker();
 
+    // Shared correlationId for this test's transaction
+    const sharedCorrelationId = `corr-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
     // Helper function to send command and notify settled tracker
     const sendCommand = async (command: Command) => {
       // Add correlation and request IDs if missing
       const enhancedCommand = {
         ...command,
-        correlationId: command.correlationId ?? `corr-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        correlationId: command.correlationId ?? sharedCorrelationId,
         requestId: command.requestId ?? `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       };
 
@@ -240,14 +243,30 @@ describe('on.settled Runtime Execution', () => {
 
     await server.start();
     const bus = server.getMessageBus();
+    const settledTracker = server.getSettledTracker();
+
+    // Shared correlationId for this test's transaction
+    const sharedCorrelationId = `corr-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    // Helper function to send command and notify settled tracker
+    const sendCommand = async (command: Command) => {
+      const enhancedCommand = {
+        ...command,
+        correlationId: command.correlationId ?? sharedCorrelationId,
+        requestId: command.requestId ?? `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+
+      settledTracker.onCommandStarted(enhancedCommand);
+      return bus.sendCommand(enhancedCommand);
+    };
 
     // Execute both commands
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTests',
       data: { targetDirectory: './src', scope: 'all' },
     });
 
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTypes',
       data: { targetDirectory: './src', scope: 'all' },
     });
@@ -342,14 +361,30 @@ describe('on.settled Runtime Execution', () => {
 
     await server.start();
     const bus = server.getMessageBus();
+    const settledTracker = server.getSettledTracker();
+
+    // Shared correlationId for this test's transaction
+    const sharedCorrelationId = `corr-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    // Helper function to send command and notify settled tracker
+    const sendCommand = async (command: Command) => {
+      const enhancedCommand = {
+        ...command,
+        correlationId: command.correlationId ?? sharedCorrelationId,
+        requestId: command.requestId ?? `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+
+      settledTracker.onCommandStarted(enhancedCommand);
+      return bus.sendCommand(enhancedCommand);
+    };
 
     // Execute the prerequisite commands
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTests',
       data: { targetDirectory: './src', scope: 'all' },
     });
 
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTypes',
       data: { targetDirectory: './src', scope: 'all' },
     });
@@ -402,9 +437,25 @@ describe('on.settled Runtime Execution', () => {
 
     await server.start();
     const bus = server.getMessageBus();
+    const settledTracker = server.getSettledTracker();
+
+    // Shared correlationId for this test's transaction
+    const sharedCorrelationId = `corr-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+    // Helper function to send command and notify settled tracker
+    const sendCommand = async (command: Command) => {
+      const enhancedCommand = {
+        ...command,
+        correlationId: command.correlationId ?? sharedCorrelationId,
+        requestId: command.requestId ?? `req-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+
+      settledTracker.onCommandStarted(enhancedCommand);
+      return bus.sendCommand(enhancedCommand);
+    };
 
     // Execute the command
-    await bus.sendCommand({
+    await sendCommand({
       type: 'CheckTests',
       data: { targetDirectory: './src', scope: 'all' },
     });

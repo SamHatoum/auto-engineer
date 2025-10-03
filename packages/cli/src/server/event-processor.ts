@@ -4,6 +4,7 @@ import type { StateManager } from './state-manager';
 import type { EventRegistration, DispatchAction } from '../dsl/types';
 import type { SettledTracker } from './settled-tracker';
 import { nanoid } from 'nanoid';
+import { generateChildCorrelationId, generateCorrelationId } from '../utils/correlation-id';
 import createDebug from 'debug';
 
 const debugBus = createDebug('auto-engineer:server:bus');
@@ -26,41 +27,60 @@ export class EventProcessor {
       handle: async (event: Event) => {
         debugBus('Received event:', event.type, JSON.stringify(event));
 
-        // Store event in message store
-        try {
-          await this.messageStore.saveMessages('$all', [event], undefined, 'event');
-          debugBus('Event stored in message store:', event.type);
-        } catch (error) {
-          debugBus('Error storing event:', error);
-        }
-
-        // Apply event to state
+        await this.storeEvent(event);
         this.stateManager.applyEvent(event);
+        this.notifySettledTrackerOfEvent(event);
+        this.attachChildCorrelationIdToEvent(event);
+        this.triggerEventHandlers(event);
 
-        // Notify settled tracker of event
-        if (this.settledTracker) {
-          this.settledTracker.onEventReceived(event);
-        }
-
-        // Trigger registered event handlers
-        const handlers = this.eventHandlers.get(event.type) || [];
-        for (const handler of handlers) {
-          try {
-            handler(event);
-          } catch (error) {
-            const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
-            if (!isTest) {
-              console.error(`Error in event handler for ${event.type}:`, error);
-            }
-            debugBus('Event handler error (suppressed in tests):', error);
-          }
-        }
-
-        // Broadcast event to WebSocket clients
         this.onEventBroadcast(event);
         debugBus('Broadcasted event to clients:', event.type);
       },
     });
+  }
+
+  private async storeEvent(event: Event): Promise<void> {
+    try {
+      await this.messageStore.saveMessages('$all', [event], undefined, 'event');
+      debugBus('Event stored in message store:', event.type);
+    } catch (error) {
+      debugBus('Error storing event:', error);
+    }
+  }
+
+  private notifySettledTrackerOfEvent(event: Event): void {
+    if (this.settledTracker) {
+      this.settledTracker.onEventReceived(event);
+    }
+  }
+
+  private attachChildCorrelationIdToEvent(event: Event): void {
+    const handlers = this.eventHandlers.get(event.type) || [];
+    if (
+      handlers.length > 0 &&
+      event.correlationId !== undefined &&
+      event.correlationId !== null &&
+      event.correlationId !== ''
+    ) {
+      const childCorrelationId = generateChildCorrelationId(event.correlationId);
+      (event as Event & { _frameworkChildCorrelationId?: string })._frameworkChildCorrelationId = childCorrelationId;
+      debugBus('Generated child correlationId for event:', childCorrelationId);
+    }
+  }
+
+  private triggerEventHandlers(event: Event): void {
+    const handlers = this.eventHandlers.get(event.type) || [];
+    for (const handler of handlers) {
+      try {
+        handler(event);
+      } catch (error) {
+        const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+        if (!isTest) {
+          console.error(`Error in event handler for ${event.type}:`, error);
+        }
+        debugBus('Event handler error (suppressed in tests):', error);
+      }
+    }
   }
 
   registerEventHandler(registration: EventRegistration): void {
@@ -70,7 +90,14 @@ export class EventProcessor {
       (async () => {
         try {
           const result = registration.handler(event);
-          await this.processHandlerResult(result);
+          const eventWithChild = event as Event & { _frameworkChildCorrelationId?: string };
+          const correlationId =
+            eventWithChild._frameworkChildCorrelationId !== undefined &&
+            eventWithChild._frameworkChildCorrelationId !== null &&
+            eventWithChild._frameworkChildCorrelationId !== ''
+              ? eventWithChild._frameworkChildCorrelationId
+              : event.correlationId;
+          await this.processHandlerResult(result, correlationId);
         } catch (error) {
           const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
           if (!isTest) {
@@ -94,17 +121,17 @@ export class EventProcessor {
     this.eventHandlers.get(registration.eventType)!.push(handler);
   }
 
-  private async processHandlerResult(result: unknown): Promise<void> {
+  private async processHandlerResult(result: unknown, parentCorrelationId?: string): Promise<void> {
     if (result === null || result === undefined) return;
 
     if (Array.isArray(result)) {
-      await this.processCommandArray(result);
+      await this.processCommandArray(result, parentCorrelationId);
     } else if (typeof result === 'object' && result !== null && 'type' in result) {
-      await this.processActionOrCommand(result);
+      await this.processActionOrCommand(result, parentCorrelationId);
     }
   }
 
-  private async processCommandArray(commands: unknown[]): Promise<void> {
+  private async processCommandArray(commands: unknown[], parentCorrelationId?: string): Promise<void> {
     debugBus('Dispatching multiple commands from event handler');
     for (const command of commands) {
       if (
@@ -114,7 +141,9 @@ export class EventProcessor {
         'type' in command &&
         'data' in command
       ) {
-        const enhancedCommand = this.enhanceCommandWithIds(command as Command);
+        const cmd = command as Command;
+        const cmdWithCorrelation = this.maybeInheritCorrelationId(cmd, parentCorrelationId);
+        const enhancedCommand = this.enhanceCommandWithIds(cmdWithCorrelation, parentCorrelationId);
         debugBus('Dispatching command:', enhancedCommand.type);
         await this.storeCommand(enhancedCommand);
         await this.messageBus.sendCommand(enhancedCommand);
@@ -122,48 +151,60 @@ export class EventProcessor {
     }
   }
 
-  private async processActionOrCommand(action: unknown): Promise<void> {
+  private async processActionOrCommand(action: unknown, parentCorrelationId?: string): Promise<void> {
     const actionObj = action as Record<string, unknown>;
     if (actionObj !== null && typeof actionObj === 'object' && 'data' in actionObj) {
-      const enhancedCommand = this.enhanceCommandWithIds(action as Command);
+      const cmd = action as Command;
+      const cmdWithCorrelation = this.maybeInheritCorrelationId(cmd, parentCorrelationId);
+      const enhancedCommand = this.enhanceCommandWithIds(cmdWithCorrelation, parentCorrelationId);
       debugBus('Dispatching command from event handler:', enhancedCommand.type);
       await this.storeCommand(enhancedCommand);
       await this.messageBus.sendCommand(enhancedCommand);
     } else {
-      await this.processDispatchAction(action as DispatchAction);
+      await this.processDispatchAction(action as DispatchAction, parentCorrelationId);
     }
   }
 
-  async processDispatchAction(action: DispatchAction): Promise<void> {
+  private maybeInheritCorrelationId(cmd: Command, parentCorrelationId?: string): Command {
+    const shouldInherit =
+      parentCorrelationId !== undefined &&
+      parentCorrelationId !== null &&
+      parentCorrelationId !== '' &&
+      (cmd.correlationId === undefined || cmd.correlationId === null || cmd.correlationId === '');
+
+    return shouldInherit ? { ...cmd, correlationId: parentCorrelationId } : cmd;
+  }
+
+  async processDispatchAction(action: DispatchAction, parentCorrelationId?: string): Promise<void> {
     switch (action.type) {
       case 'dispatch':
-        await this.handleSingleDispatch(action);
+        await this.handleSingleDispatch(action, parentCorrelationId);
         break;
       case 'dispatch-parallel':
-        await this.handleParallelDispatch(action);
+        await this.handleParallelDispatch(action, parentCorrelationId);
         break;
       case 'dispatch-sequence':
-        await this.handleSequentialDispatch(action);
+        await this.handleSequentialDispatch(action, parentCorrelationId);
         break;
       case 'dispatch-custom':
-        await this.handleCustomDispatch(action);
+        await this.handleCustomDispatch(action, parentCorrelationId);
         break;
     }
   }
 
-  private async handleSingleDispatch(action: DispatchAction): Promise<void> {
+  private async handleSingleDispatch(action: DispatchAction, parentCorrelationId?: string): Promise<void> {
     if (action.command) {
-      const enhancedCommand = this.enhanceCommandWithIds(action.command);
+      const enhancedCommand = this.enhanceCommandWithIds(action.command, parentCorrelationId);
       debugBus('Dispatching command from dispatch action:', enhancedCommand.type);
       await this.storeCommand(enhancedCommand);
       await this.messageBus.sendCommand(enhancedCommand);
     }
   }
 
-  private async handleParallelDispatch(action: DispatchAction): Promise<void> {
+  private async handleParallelDispatch(action: DispatchAction, parentCorrelationId?: string): Promise<void> {
     if (action.commands) {
       debugBus('Dispatching parallel commands from event handler');
-      const enhancedCommands = action.commands.map((cmd) => this.enhanceCommandWithIds(cmd));
+      const enhancedCommands = action.commands.map((cmd) => this.enhanceCommandWithIds(cmd, parentCorrelationId));
       await Promise.all(
         enhancedCommands.map(async (cmd) => {
           await this.storeCommand(cmd);
@@ -173,23 +214,23 @@ export class EventProcessor {
     }
   }
 
-  private async handleSequentialDispatch(action: DispatchAction): Promise<void> {
+  private async handleSequentialDispatch(action: DispatchAction, parentCorrelationId?: string): Promise<void> {
     if (action.commands) {
       debugBus('Dispatching sequential commands from event handler');
       for (const cmd of action.commands) {
-        const enhancedCommand = this.enhanceCommandWithIds(cmd);
+        const enhancedCommand = this.enhanceCommandWithIds(cmd, parentCorrelationId);
         await this.storeCommand(enhancedCommand);
         await this.messageBus.sendCommand(enhancedCommand);
       }
     }
   }
 
-  private async handleCustomDispatch(action: DispatchAction): Promise<void> {
+  private async handleCustomDispatch(action: DispatchAction, parentCorrelationId?: string): Promise<void> {
     if (action.commandFactory) {
       const cmds = action.commandFactory();
       const commands = Array.isArray(cmds) ? cmds : [cmds];
       for (const cmd of commands) {
-        const enhancedCommand = this.enhanceCommandWithIds(cmd);
+        const enhancedCommand = this.enhanceCommandWithIds(cmd, parentCorrelationId);
         await this.storeCommand(enhancedCommand);
         await this.messageBus.sendCommand(enhancedCommand);
       }
@@ -205,7 +246,7 @@ export class EventProcessor {
    */
   async storeCommand(command: Command): Promise<void> {
     try {
-      const enhancedCommand = this.enhanceCommandWithIds(command);
+      const enhancedCommand = this.enhanceCommandWithIds(command, undefined);
       await this.messageStore.saveMessages('$all', [enhancedCommand], undefined, 'command');
 
       // Notify settled tracker that command started
@@ -232,25 +273,20 @@ export class EventProcessor {
     }
   }
 
-  /**
-   * Enhance command with proper request and correlation IDs
-   */
-  private enhanceCommandWithIds(command: Command): Command {
+  private enhanceCommandWithIds(command: Command, parentCorrelationId?: string): Command {
     const now = new Date();
 
-    // Generate requestId if not present
     const requestId = command.requestId ?? `req-${Date.now()}-${nanoid(8)}`;
 
-    // Handle correlation ID:
-    // 1. Use existing correlationId if present
-    // 2. If triggered by another command/event, inherit its correlationId
-    // 3. Otherwise, create new correlationId
     let correlationId = command.correlationId;
 
     if (correlationId === undefined || correlationId === null || correlationId === '') {
-      // Try to inherit from correlation context (if this command is triggered by an event)
-      const inheritedCorrelationId = this.findInheritedCorrelationId(command);
-      correlationId = inheritedCorrelationId ?? `corr-${Date.now()}-${nanoid(8)}`;
+      if (parentCorrelationId !== undefined && parentCorrelationId !== null && parentCorrelationId !== '') {
+        correlationId = generateChildCorrelationId(parentCorrelationId);
+      } else {
+        const inheritedCorrelationId = this.findInheritedCorrelationId(command);
+        correlationId = inheritedCorrelationId ?? generateCorrelationId();
+      }
     }
 
     return {
