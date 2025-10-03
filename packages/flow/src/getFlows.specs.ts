@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { modelSchema } from './schema';
 import { DataSource, Example, Flow, Model, modelToFlow, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { NodeFileStore, InMemoryFileStore } from '@auto-engineer/file-store';
+import { InMemoryFileStore, NodeFileStore } from '@auto-engineer/file-store';
 import { getFlows } from './getFlows';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -344,29 +344,6 @@ describe('getFlows', (_mode) => {
     expect(rule4?.id).toBe('RULE-004');
   });
 
-  it.skip('extracts correct integration import paths from AST', async () => {
-    const flows = await getFlows({
-      vfs,
-      root: '../../examples/shopping-app',
-      pattern,
-      fastFsScan: true,
-    });
-    const model = flows.toModel();
-    expect(model.integrations).toBeDefined();
-    expect(Array.isArray(model.integrations)).toBe(true);
-    expect((model.integrations?.length ?? 0) > 0).toBe(true);
-    const aiIntegration = model.integrations?.find((i) => i.name === 'AI');
-    const productCatalogIntegration = model.integrations?.find((i) => i.name === 'ProductCatalog');
-
-    if (aiIntegration) {
-      expect(aiIntegration.source).toBe('../server/src/integrations');
-    }
-
-    if (productCatalogIntegration) {
-      expect(productCatalogIntegration.source).toBe('../server/src/integrations');
-    }
-  });
-
   it('should handle when examples correctly', async () => {
     const flows = await getFlows({
       vfs,
@@ -676,9 +653,9 @@ flow('questionnaires-test', () => {
     expect(code).not.toMatch(/\.when<>\(\{\}\)/);
 
     // should render empty whens as `.when({})` for empty when-clauses
-    const emptyWhenCount = (code.match(/\.when\(\{\}\)/g) ?? []).length;
+    const emptyWhenCount = (code.match(/\.when\(\{}\)/g) ?? []).length;
     expect(emptyWhenCount).toBeGreaterThanOrEqual(2);
-    expect(code).not.toMatch(/\.when<\s*\{\s*\}\s*>\(\{\}\)/);
+    expect(code).not.toMatch(/\.when<\s*\{\s*}\s*>\(\{}\)/);
   });
 
   it('should not generate phantom messages with empty names', async () => {
@@ -701,7 +678,169 @@ flow('questionnaires-test', () => {
     const model = await createQuestionnaireBugTestModel();
     validateQuestionnaireBugFix(model);
   });
+
+  it('should convert all given events to eventRef', async function (): Promise<void> {
+    const memoryVfs = new InMemoryFileStore();
+    const todoSummaryFlowContent = `
+import { flow, query, specs, rule, example, type Event, type State } from '@auto-engineer/flow';
+
+type TodoAdded = Event<
+  'TodoAdded',
+  {
+    todoId: string;
+    description: string;
+    status: 'pending';
+    addedAt: Date;
+  }
+>;
+
+type TodoMarkedInProgress = Event<
+  'TodoMarkedInProgress',
+  {
+    todoId: string;
+    markedAt: Date;
+  }
+>;
+
+type TodoMarkedComplete = Event<
+  'TodoMarkedComplete',
+  {
+    todoId: string;
+    completedAt: Date;
+  }
+>;
+
+type TodoListSummary = State<
+  'TodoListSummary',
+  {
+    summaryId: string;
+    totalTodos: number;
+    pendingCount: number;
+    inProgressCount: number;
+    completedCount: number;
+    completionPercentage: number;
+  }
+>;
+
+flow('Todo List', () => {
+  query('views completion summary')
+    .server(() => {
+      specs(() => {
+        rule('summary shows overall todo list statistics', () => {
+          example('calculates summary from multiple todos')
+            .given<TodoAdded>({
+              todoId: 'todo-001',
+              description: 'Buy groceries',
+              status: 'pending',
+              addedAt: new Date('2030-01-01T09:00:00Z'),
+            })
+            .and<TodoAdded>({
+              todoId: 'todo-002',
+              description: 'Write report',
+              status: 'pending',
+              addedAt: new Date('2030-01-01T09:10:00Z'),
+            })
+            .and<TodoAdded>({
+              todoId: 'todo-003',
+              description: 'Call client',
+              status: 'pending',
+              addedAt: new Date('2030-01-01T09:20:00Z'),
+            })
+            .and<TodoMarkedInProgress>({
+              todoId: 'todo-001',
+              markedAt: new Date('2030-01-01T10:00:00Z'),
+            })
+            .and<TodoMarkedComplete>({
+              todoId: 'todo-002',
+              completedAt: new Date('2030-01-01T11:00:00Z'),
+            })
+            .when({})
+            .then<TodoListSummary>({
+              summaryId: 'main-summary',
+              totalTodos: 3,
+              pendingCount: 1,
+              inProgressCount: 1,
+              completedCount: 1,
+              completionPercentage: 33,
+            });
+        });
+      });
+    });
 });
+    `;
+
+    await memoryVfs.write('/test/todo-summary.flow.ts', new TextEncoder().encode(todoSummaryFlowContent));
+
+    const flows = await getFlows({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+    const model = flows.toModel();
+
+    const todoFlow = model.flows.find((f) => f.name === 'Todo List');
+    expect(todoFlow).toBeDefined();
+
+    if (!todoFlow) return;
+
+    const summarySlice = todoFlow.slices.find((s) => s.name === 'views completion summary');
+    expect(summarySlice?.type).toBe('query');
+
+    if (summarySlice?.type !== 'query') return;
+
+    const example = summarySlice.server.specs.rules[0]?.examples[0];
+    expect(example).toBeDefined();
+    expect(example.given).toBeDefined();
+    expect(Array.isArray(example.given)).toBe(true);
+    expect(example.given).toHaveLength(5);
+
+    if (!example.given) {
+      throw new Error('expected example.given to be defined');
+    }
+
+    validateGivenItemsHaveEventRef(example.given);
+    validateTodoEventRefs(example.given);
+    validateTodoMessages(model);
+  });
+});
+
+function validateGivenItemsHaveEventRef(given: unknown[]): void {
+  for (let i = 0; i < given.length; i++) {
+    const givenItem = given[i];
+    if (typeof givenItem === 'object' && givenItem !== null) {
+      expect('eventRef' in givenItem).toBe(true);
+      expect('stateRef' in givenItem).toBe(false);
+    }
+  }
+}
+
+function expectEventRef(item: unknown, expectedType: string): void {
+  if (item !== null && item !== undefined && typeof item === 'object' && 'eventRef' in item) {
+    expect(item.eventRef).toBe(expectedType);
+  }
+}
+
+function validateTodoEventRefs(given: unknown[]): void {
+  expectEventRef(given[0], 'TodoAdded');
+  expectEventRef(given[1], 'TodoAdded');
+  expectEventRef(given[2], 'TodoAdded');
+  expectEventRef(given[3], 'TodoMarkedInProgress');
+  expectEventRef(given[4], 'TodoMarkedComplete');
+}
+
+function validateTodoMessages(model: Model): void {
+  const todoAddedEvent = model.messages.find((m) => m.name === 'TodoAdded');
+  expect(todoAddedEvent).toBeDefined();
+  expect(todoAddedEvent?.type).toBe('event');
+
+  const todoMarkedInProgressEvent = model.messages.find((m) => m.name === 'TodoMarkedInProgress');
+  expect(todoMarkedInProgressEvent).toBeDefined();
+  expect(todoMarkedInProgressEvent?.type).toBe('event');
+
+  const todoMarkedCompleteEvent = model.messages.find((m) => m.name === 'TodoMarkedComplete');
+  expect(todoMarkedCompleteEvent).toBeDefined();
+  expect(todoMarkedCompleteEvent?.type).toBe('event');
+
+  const todoListSummaryState = model.messages.find((m) => m.name === 'TodoListSummary');
+  expect(todoListSummaryState).toBeDefined();
+  expect(todoListSummaryState?.type).toBe('state');
+}
 
 function validateSubmitQuestionnaireCommand(questionnaireFlow: Flow): void {
   const submitSlice = questionnaireFlow.slices.find((s) => s.name === 'submits questionnaire');

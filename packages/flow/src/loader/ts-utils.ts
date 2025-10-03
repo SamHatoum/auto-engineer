@@ -479,14 +479,12 @@ function classifyBaseGeneric(
   return null;
 }
 
-function tryUnwrapGeneric(
+function tryUnwrapDirectGeneric(
   ts: typeof import('typescript'),
-  typeArg: import('typescript').TypeNode,
+  typeArg: import('typescript').TypeReferenceNode,
   checker: import('typescript').TypeChecker,
 ): { typeName: string; classification: 'event' | 'command' | 'state' } | null {
-  if (!ts.isTypeReferenceNode(typeArg) || typeArg.typeArguments === undefined || typeArg.typeArguments.length === 0) {
-    return null;
-  }
+  if (typeArg.typeArguments === undefined || typeArg.typeArguments.length === 0) return null;
 
   const kind = classifyBaseGeneric(ts, checker, typeArg);
   const first = typeArg.typeArguments[0];
@@ -501,22 +499,37 @@ function tryUnwrapGeneric(
   return null;
 }
 
-function resolveTypeName(
+function tryUnwrapTypeAlias(
+  ts: typeof import('typescript'),
+  typeArg: import('typescript').TypeReferenceNode,
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+): { typeName: string; classification: 'event' | 'command' | 'state' } | null {
+  if (!ts.isIdentifier(typeArg.typeName)) return null;
+
+  const typeName = typeArg.typeName.text;
+  const typeInfo = findTypeInfo(typeName, typeMap, typesByFile);
+
+  if (typeInfo?.classification) {
+    return {
+      typeName: typeInfo.stringLiteral,
+      classification: typeInfo.classification,
+    };
+  }
+
+  return null;
+}
+
+function tryUnwrapGeneric(
   ts: typeof import('typescript'),
   typeArg: import('typescript').TypeNode,
   checker: import('typescript').TypeChecker,
-): string | null {
-  if (ts.isTypeReferenceNode(typeArg) && ts.isIdentifier(typeArg.typeName)) {
-    return typeArg.typeName.text;
-  }
+  typeMap: Map<string, TypeInfo>,
+  typesByFile: Map<string, Map<string, TypeInfo>>,
+): { typeName: string; classification: 'event' | 'command' | 'state' } | null {
+  if (!ts.isTypeReferenceNode(typeArg)) return null;
 
-  const t = checker.getTypeFromTypeNode(typeArg);
-  if (t === null || t === undefined) return null;
-
-  const sym = t.aliasSymbol ?? t.getSymbol();
-  if (!sym) return null;
-
-  return checker.getFullyQualifiedName(sym).replace(/^".*"\./, '');
+  return tryUnwrapDirectGeneric(ts, typeArg, checker) ?? tryUnwrapTypeAlias(ts, typeArg, typeMap, typesByFile);
 }
 
 function findTypeInfo(
@@ -567,21 +580,12 @@ function processGivenOrAndCallExpression(
   const typeArg = node.typeArguments?.[0];
   if (!typeArg) return;
 
-  const genericResult = tryUnwrapGeneric(ts, typeArg, checker);
+  const genericResult = tryUnwrapGeneric(ts, typeArg, checker, typeMap, typesByFile);
   if (genericResult) {
     givenTypes.push(
       createGivenTypeInfo(sourceFile, node, ordinal, genericResult.typeName, genericResult.classification),
     );
-    return;
   }
-
-  const typeName = resolveTypeName(ts, typeArg, checker);
-  if (typeName === null || typeName === undefined) return;
-
-  const typeInfo = findTypeInfo(typeName, typeMap, typesByFile);
-  if (!typeInfo?.classification) return;
-
-  givenTypes.push(createGivenTypeInfo(sourceFile, node, ordinal, typeInfo.stringLiteral, typeInfo.classification));
 }
 
 function isChainStart(ts: typeof import('typescript'), node: import('typescript').CallExpression): boolean {
@@ -601,18 +605,27 @@ function collectChainFromStart(
   startNode: import('typescript').CallExpression,
 ): import('typescript').CallExpression[] {
   const chain: import('typescript').CallExpression[] = [];
-  const collectNext = (node: import('typescript').Node): void => {
-    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
-      const method = node.expression.name.getText();
-      if (method === 'given' || method === 'and') {
-        chain.push(node);
+
+  chain.push(startNode);
+
+  let currentNode: import('typescript').Node | undefined = startNode.parent;
+  while (currentNode !== undefined) {
+    if (ts.isCallExpression(currentNode)) {
+      if (ts.isPropertyAccessExpression(currentNode.expression)) {
+        const method = currentNode.expression.name.getText();
+        if (method === 'and') {
+          chain.push(currentNode);
+        } else {
+          break;
+        }
+      } else {
+        break;
       }
     }
-    ts.forEachChild(node, collectNext);
-  };
-  const nodeToProcess = startNode.parent ?? startNode;
-  collectNext(nodeToProcess);
-  // Sort by source position to get correct execution order
+
+    currentNode = currentNode.parent;
+  }
+
   return chain.sort((a, b) => a.getStart() - b.getStart());
 }
 
@@ -629,27 +642,12 @@ function processWhenCallExpression(
   const typeArg = node.typeArguments?.[0];
   if (!typeArg) return;
 
-  const genericResult = tryUnwrapGeneric(ts, typeArg, checker);
+  const genericResult = tryUnwrapGeneric(ts, typeArg, checker, typeMap, typesByFile);
   if (genericResult) {
     whenTypes.push(
       createGivenTypeInfo(sourceFile, node, ordinal, genericResult.typeName, genericResult.classification),
     );
-    return;
   }
-
-  const typeName = resolveTypeName(ts, typeArg, checker);
-  if (typeName === null || typeName === undefined) {
-    debug('[when-types] ordinal %d: resolveTypeName returned null/undefined', ordinal);
-    return;
-  }
-
-  const typeInfo = findTypeInfo(typeName, typeMap, typesByFile);
-  if (!typeInfo?.classification) {
-    debug('[when-types] ordinal %d: type=%s, typeInfo not found or no classification', ordinal, typeName);
-    return;
-  }
-
-  whenTypes.push(createGivenTypeInfo(sourceFile, node, ordinal, typeInfo.stringLiteral, typeInfo.classification));
 }
 
 export function parseWhenTypeArguments(

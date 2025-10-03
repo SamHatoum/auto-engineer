@@ -360,11 +360,9 @@ function processGivenItems(
         debug('AST match for %s at ordinal %d: %s', sourceFile, currentCount, matchingType.typeName);
         return processItemWithASTMatch(item, matchingType, contextParam);
       } else {
-        // Log diagnostic when falling back
         debug('No AST match for %s at ordinal %d, item: %o', sourceFile, currentCount, item);
       }
     }
-
     // Fallback: emit explicit InferredType for downstream processing
     return {
       eventRef: 'InferredType',
