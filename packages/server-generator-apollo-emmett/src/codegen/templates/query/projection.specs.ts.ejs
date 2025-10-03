@@ -176,6 +176,8 @@ if (idField.includes('-')) {
        formattedValue = `'${value}'`;
      } else if (tsType === 'number' || tsType === 'boolean') {
        formattedValue = String(value);
+     } else if (tsType === 'Date') {
+       formattedValue = `new Date('${value}')`;
      } else if (Array.isArray(value)) {
        formattedValue = JSON.stringify(value);
      } else {
