@@ -19,7 +19,6 @@ const debug = createDebug('auto-engineer:server');
 
 export interface MessageBusServerConfig {
   port?: number;
-  wsPort?: number;
   fileSyncDir?: string;
   fileSyncExtensions?: string[];
   enableFileSync?: boolean;
@@ -45,7 +44,6 @@ export class MessageBusServer {
   constructor(config: MessageBusServerConfig = {}) {
     this.config = {
       port: config.port ?? 5555,
-      wsPort: config.wsPort ?? 5556,
       fileSyncDir: config.fileSyncDir ?? '.',
       fileSyncExtensions: config.fileSyncExtensions ?? ['.js', '.html', '.css'],
       enableFileSync: config.enableFileSync !== false,
@@ -229,18 +227,9 @@ export class MessageBusServer {
     // Start HTTP/WebSocket server
     await new Promise<void>((resolve) => {
       this.httpServer.listen(port, () => {
-        // Only show console output if not in test environment
-        const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
-
-        if (!isTest) {
-          // console.log(`Message bus server running on port ${port}`);
+        if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
           console.log(`Server running at http://localhost:${port} 🚀`);
-          // console.log(`WebSocket server available on ws://localhost:${port}`);
-          // if (enableFileSync === true) {
-          //   console.log(`File sync enabled for ${fileSyncDir} (extensions: ${fileSyncExtensions?.join(', ')})`);
-          // }
         }
-
         debug('Message bus server started on port', port);
         resolve();
       });

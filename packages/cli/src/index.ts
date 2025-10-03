@@ -467,38 +467,26 @@ let serverStarted = false;
 let serverInstance: any = null; // Store server instance globally
 
 const startMessageBusServer = async (): Promise<void> => {
-  if (serverStarted) {
-    return;
-  }
-  serverStarted = true;
+  if (serverStarted) return;
+  else serverStarted = true;
 
   const { MessageBusServer } = await import('./server/server');
   const { loadMessageBusConfig } = await import('./server/config-loader');
 
-  console.log(chalk.cyan('Starting Auto Engineer Message Bus Server...'));
-
-  // Check for config file
-  let configPath = path.resolve(process.cwd(), 'auto.config.ts');
-  if (!fs.existsSync(configPath)) {
-    configPath = path.resolve(process.cwd(), 'auto.config.js');
-  }
+  debug('Starting Auto Engineer Server...');
 
   const server = new MessageBusServer({
     port: await getPort({ port: portNumbers(5555, 6000) }),
-    wsPort: await getPort({ port: portNumbers(5551, 6000) }),
     enableFileSync: true,
     fileSyncDir: process.cwd(),
     fileSyncExtensions: ['.js', '.ts', '.tsx', '.jsx', '.html', '.css', 'auto.config'],
   });
 
-  // Load message bus configuration if it exists
+  const configPath = path.resolve(process.cwd(), 'auto.config.ts');
   if (fs.existsSync(configPath)) {
     await loadMessageBusConfig(configPath, server);
   }
-
-  // Store server instance globally for cleanup
   serverInstance = server;
-
   await server.start();
 };
 
