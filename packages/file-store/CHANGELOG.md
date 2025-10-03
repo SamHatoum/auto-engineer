@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.11.0
+
+### Minor Changes
+
+- Version bump
+
 ## 0.10.5
 
 ## 0.10.4

@@ -1,5 +1,16 @@
 # create-auto-app
 
+## 0.11.0
+
+### Minor Changes
+
+- Version bump
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.11.0
+
 ## 0.10.5
 
 ### Patch Changes
