@@ -68,7 +68,6 @@ const setupSignalHandlers = () => {
     if (serverInstance !== null && serverInstance !== undefined) {
       console.log('\n' + chalk.yellow('Shutting down server...'));
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         void serverInstance.stop();
       } catch (error) {
         console.error('Error stopping server:', error);
@@ -83,7 +82,6 @@ const setupSignalHandlers = () => {
     if (serverInstance !== null && serverInstance !== undefined) {
       console.log('\n' + chalk.yellow('Shutting down server...'));
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         void serverInstance.stop();
       } catch (error) {
         console.error('Error stopping server:', error);
@@ -116,7 +114,8 @@ const createCLI = () => {
     .option('--no-color', 'Disable colored output')
     .option('--json', 'Output in JSON format')
     .option('--api-token <token>', 'API token for external services')
-    .option('--project-path <path>', 'Project path to work with');
+    .option('--project-path <path>', 'Project path to work with')
+    .option('--host <url>', 'Message bus server URL (e.g., localhost:5555)');
 
   return program;
 };
@@ -150,6 +149,92 @@ const prepareCommandData = (
   });
 
   return baseData;
+};
+
+interface CommanderCommand {
+  opts: () => Record<string, unknown>;
+  parent?: CommanderCommand;
+}
+
+const filterNonEmptyArgs = (args: unknown[]): (string | string[])[] => {
+  return args.filter((arg) => {
+    if (typeof arg === 'string') return arg !== '';
+    if (Array.isArray(arg)) return true;
+    return false;
+  }) as (string | string[])[];
+};
+
+const debugCommandExecution = (args: unknown[], cmdArgs: unknown[], options: Record<string, unknown>): void => {
+  if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
+    console.error('DEBUG cli: Raw args:', args);
+    console.error('DEBUG cli: Command args:', cmdArgs);
+    console.error('DEBUG cli: Options:', options);
+  }
+};
+
+const debugCommandData = (commandData: CommandData): void => {
+  if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
+    console.error('DEBUG cli: Prepared command data:', commandData);
+  }
+};
+
+const handleVersionOption = (
+  options: Record<string, unknown>,
+  alias: string,
+  loadedCommands: Map<string, LoadedCommand>,
+): boolean => {
+  if (options.version === true) {
+    const commandInfo = loadedCommands.get(alias);
+    const version =
+      commandInfo && 'version' in commandInfo && typeof commandInfo.version === 'string'
+        ? commandInfo.version
+        : 'unknown';
+    console.log(version);
+    return true;
+  }
+  return false;
+};
+
+const executeCommandAction = async (
+  args: unknown[],
+  alias: string,
+  pluginLoader: PluginLoader,
+  loadedCommands: Map<string, LoadedCommand>,
+  config: ReturnType<typeof loadConfig>,
+  analytics: Analytics,
+): Promise<void> => {
+  const cmdObject = args[args.length - 1] as CommanderCommand;
+  const cmdArgs = args.slice(0, -1);
+
+  const options: Record<string, unknown> = cmdObject.opts();
+
+  const globalOpts = cmdObject.parent?.opts();
+  const hostOption = globalOpts?.host as string | undefined;
+
+  if (handleVersionOption(options, alias, loadedCommands)) {
+    return;
+  }
+
+  await analytics.track({ command: alias, success: true });
+
+  debugCommandExecution(args, cmdArgs, options);
+
+  const nonEmptyArgs = filterNonEmptyArgs(cmdArgs);
+  const commandData = prepareCommandData(alias, nonEmptyArgs, options, pluginLoader);
+
+  debugCommandData(commandData);
+
+  if (hostOption !== undefined) {
+    pluginLoader.setHost(hostOption);
+  }
+
+  await pluginLoader.executeCommand(alias, commandData);
+
+  if (hostOption !== undefined) {
+    pluginLoader.setHost(config.host);
+  }
+
+  await analytics.track({ command: alias, success: true });
 };
 
 interface LoadedCommand {
@@ -246,7 +331,7 @@ export default {
   debug('Loading plugins from %s', configPath);
 
   try {
-    const pluginLoader = new PluginLoader();
+    const pluginLoader = new PluginLoader(config.host);
     const commands = await pluginLoader.loadPlugins(configPath);
 
     // Store loaded commands for dynamic help generation
@@ -298,59 +383,14 @@ export default {
 
       cmd.action(async (...args: unknown[]) => {
         try {
-          // In Commander 12, the last argument is the command object itself
-          // Options are properties on the command object
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-          const cmdObject = args[args.length - 1] as any;
-          const cmdArgs = args.slice(0, -1); // Remove command object
-
-          // Extract options from the command object
-          const options: Record<string, unknown> = {};
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-          const opts = cmdObject.opts();
-          Object.assign(options, opts);
-
-          // Check if --version flag was passed
-          if (options.version === true) {
-            const commandInfo = loadedCommands.get(alias);
-            const version =
-              commandInfo && 'version' in commandInfo && typeof commandInfo.version === 'string'
-                ? commandInfo.version
-                : 'unknown';
-            console.log(version);
-            return;
-          }
-
-          await analytics.track({ command: alias, success: true });
-
-          // Debug logging
-          if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
-            console.error('DEBUG cli: Raw args:', args);
-            console.error('DEBUG cli: Command args:', cmdArgs);
-            console.error('DEBUG cli: Options:', options);
-          }
-
-          // Filter out empty strings but keep arrays (for variadic args)
-          const nonEmptyArgs = cmdArgs.filter((arg) => {
-            if (typeof arg === 'string') return arg !== '';
-            if (Array.isArray(arg)) return true;
-            return false;
-          });
-
-          // Prepare command data based on the command type
-          const commandData = prepareCommandData(alias, nonEmptyArgs as (string | string[])[], options, pluginLoader);
-
-          if (process.env.DEBUG !== undefined && process.env.DEBUG.includes('cli:')) {
-            console.error('DEBUG cli: Prepared command data:', commandData);
-          }
-
-          // Execute through the plugin loader which will dispatch via message bus
-          await pluginLoader.executeCommand(alias, commandData);
-
-          await analytics.track({ command: alias, success: true });
+          await executeCommandAction(args, alias, pluginLoader, loadedCommands, config, analytics);
         } catch (error) {
           await analytics.track({ command: alias, success: false });
-          handleError(error as Error);
+          if (error instanceof Error) {
+            handleError(error);
+          } else {
+            handleError(new Error(String(error)));
+          }
         }
       });
       program.addCommand(cmd);
@@ -463,8 +503,7 @@ const handleProgramError = (error: unknown) => {
 };
 
 let serverStarted = false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let serverInstance: any = null; // Store server instance globally
+let serverInstance: { stop: () => Promise<void> } | null = null;
 
 const startMessageBusServer = async (): Promise<void> => {
   if (serverStarted) return;
@@ -496,10 +535,15 @@ const main = async () => {
     initializeEnvironment();
 
     // For help/version, we need to load the config with defaults to show all commands
+    const hostArgIndex = process.argv.indexOf('--host');
+    const hostValue =
+      hostArgIndex !== -1 && hostArgIndex + 1 < process.argv.length ? process.argv[hostArgIndex + 1] : undefined;
+
     const config = loadConfig({
       debug: process.argv.includes('-d') || process.argv.includes('--debug'),
       noColor: process.argv.includes('--no-color'),
       output: process.argv.includes('--json') ? 'json' : 'text',
+      host: hostValue,
     });
 
     validateConfig(config);

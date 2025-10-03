@@ -6,6 +6,7 @@ export interface Config {
   output: 'text' | 'json';
   apiToken?: string;
   projectPath?: string;
+  host?: string;
 }
 
 const parseNoColor = (): boolean => {

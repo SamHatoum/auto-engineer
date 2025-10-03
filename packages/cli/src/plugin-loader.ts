@@ -56,9 +56,13 @@ export class PluginLoader {
   public loadConfig?: (configPath: string) => Promise<PluginConfig>;
   public importPlugin?: (packageName: string) => Promise<unknown>;
 
-  constructor() {
+  constructor(private host?: string) {
     this.messageBus = createMessageBus();
     this.setupGlobalEventSubscription();
+  }
+
+  setHost(host: string | undefined): void {
+    this.host = host;
   }
 
   private setupGlobalEventSubscription(): void {
@@ -926,30 +930,41 @@ export class PluginLoader {
       requestId: `cli-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     };
 
-    // Try to send to running server first
-    try {
-      const response = await fetch('http://localhost:5555/command', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(command),
-      });
+    if (this.host !== undefined) {
+      const url =
+        this.host.startsWith('http://') || this.host.startsWith('https://')
+          ? `${this.host}/command`
+          : `http://${this.host}/command`;
 
-      if (response.ok) {
-        debugBus('Command sent to remote message bus server');
-        this.displayMessage(command);
+      try {
+        debugBus('Sending command to remote server at %s', url);
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(command),
+        });
 
-        // Get the response data
-        const result = await response.json();
-        debugBus('Server response:', result);
-        return;
+        if (response.ok) {
+          debugBus('Command sent to remote message bus server at %s', url);
+          this.displayMessage(command);
+
+          const result = await response.json();
+          debugBus('Server response:', result);
+          return;
+        } else {
+          debugBus('Server responded with status %d', response.status);
+          throw new Error(`Server at ${url} responded with status ${response.status}`);
+        }
+      } catch (error) {
+        debugBus('Failed to send command to remote server at %s: %O', url, error);
+        throw new Error(
+          `Failed to send command to remote server at ${url}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
-    } catch {
-      debugBus('No message bus server running on port 5555, executing locally');
     }
 
-    // Fall back to local execution
     debugBus('Executing command locally through message bus');
     this.displayMessage(command);
     await this.messageBus.sendCommand(command);

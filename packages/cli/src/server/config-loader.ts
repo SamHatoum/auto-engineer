@@ -1,7 +1,7 @@
 import createJiti from 'jiti';
 import createDebug from 'debug';
-import { on, dispatch, fold, getRegistrations, getPendingDispatches } from '../dsl';
-import type { EventRegistration, FoldRegistration, SettledRegistration, ConfigDefinition } from '../dsl/types';
+import { getRegistrations, getPendingDispatches } from '../dsl';
+import type { ConfigDefinition } from '../dsl/types';
 import type { MessageBusServer } from './server';
 
 const debug = createDebug('auto-engineer:server:config');
