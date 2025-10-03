@@ -77,6 +77,7 @@ type TodoState = State<
 type TodoListSummary = State<
   'TodoListSummary',
   {
+    summaryId: string;
     totalTodos: number;
     pendingCount: number;
     inProgressCount: number;
@@ -331,6 +332,7 @@ flow('Todo List', 'AUTO-T8dL3k9Xw', () => {
             })
             .when({})
             .then<TodoListSummary>({
+              summaryId: 'main-summary',
               totalTodos: 3,
               pendingCount: 1,
               inProgressCount: 1,
@@ -339,7 +341,7 @@ flow('Todo List', 'AUTO-T8dL3k9Xw', () => {
             });
         });
       });
-      data([source().state('TodoListSummary').fromProjection('TodoSummary', 'summary')]);
+      data([source().state('TodoListSummary').fromProjection('TodoSummary', 'summaryId')]);
     })
     .request(gql`
       query TodoListSummary {
