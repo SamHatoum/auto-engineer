@@ -1,5 +1,15 @@
 # @auto-engineer/server-generator-apollo-emmett
 
+## 0.11.2
+
+### Patch Changes
+
+- Fixes pipeline not showing
+
+- Updated dependencies []:
+  - @auto-engineer/flow@0.11.2
+  - @auto-engineer/message-bus@0.11.2
+
 ## 0.11.1
 
 ### Patch Changes

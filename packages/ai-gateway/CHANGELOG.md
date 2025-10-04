@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.11.2
+
+### Patch Changes
+
+- Fixes pipeline not showing
+
 ## 0.11.1
 
 ### Patch Changes

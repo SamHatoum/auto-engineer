@@ -1,5 +1,14 @@
 # @auto-engineer/message-store
 
+## 0.11.2
+
+### Patch Changes
+
+- Fixes pipeline not showing
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.2
+
 ## 0.11.1
 
 ### Patch Changes
