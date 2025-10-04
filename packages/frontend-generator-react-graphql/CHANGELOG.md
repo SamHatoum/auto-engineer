@@ -1,5 +1,15 @@
 # @auto-engineer/frontend-react-graphql-generator
 
+## 0.11.4
+
+### Patch Changes
+
+- Fixes paths and deps
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.11.4
+  - @auto-engineer/message-bus@0.11.4
+
 ## 0.11.3
 
 ### Patch Changes
