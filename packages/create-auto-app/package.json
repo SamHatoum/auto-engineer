@@ -8,7 +8,12 @@
   },
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "!templates/**/.env",
+    "!templates/**/.env.local",
+    "templates/**/.context",
+    "templates/**/.env.example",
+    "templates/**/.gitignore"
   ],
   "scripts": {
     "copy-templates": "tsx scripts/copy-templates.ts",
