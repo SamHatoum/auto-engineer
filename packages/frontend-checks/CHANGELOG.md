@@ -1,5 +1,14 @@
 # @auto-engineer/frontend-checks
 
+## 0.11.7
+
+### Patch Changes
+
+- Fix template paths issue
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.7
+
 ## 0.11.6
 
 ### Patch Changes

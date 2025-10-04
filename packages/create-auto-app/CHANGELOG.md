@@ -1,5 +1,14 @@
 # create-auto-app
 
+## 0.11.7
+
+### Patch Changes
+
+- Fix template paths issue
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.11.7
+
 ## 0.11.6
 
 ### Patch Changes
