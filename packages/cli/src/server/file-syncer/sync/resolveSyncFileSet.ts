@@ -2,12 +2,15 @@ import { NodeFileStore } from '@auto-engineer/file-store';
 import { collectBareImportsFromFiles } from '../discovery/bareImports';
 import { nmRootsForBases, probeEntryDtsForPackagesFromRoots } from '../discovery/dts';
 import { dirOf, logArray, pkgNameFromPath, scorePathForDedupe, uniq } from '../utils/path';
+import createDebug from 'debug';
 
 function flattenPaths(x: string[] | Record<string, string[]> | undefined): string[] {
   if (!x) return [];
   if (Array.isArray(x)) return x;
   return Object.values(x).flat();
 }
+
+const debug = createDebug('auto-engineer:file-syncer:resolve');
 
 /**
  * Stable fallback node_modules roots derived from projectRoot and common monorepo layouts.
@@ -45,8 +48,8 @@ export async function resolveSyncFileSet(opts: { vfs: NodeFileStore; watchDir: s
         getFlows: (opts: { vfs: NodeFileStore; root: string }) => Promise<FlowResult>;
       };
       flows = await flowModule.getFlows({ vfs, root: watchDir });
-    } catch {
-      console.warn('[sync] @auto-engineer/flow not available, using fallback mode');
+    } catch (e) {
+      debug('[sync] @auto-engineer/flow not available, using fallback mode', e);
     }
 
     const files = flows !== null ? flattenPaths(flows.vfsFiles) : [];
