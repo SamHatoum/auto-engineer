@@ -1,5 +1,7 @@
 import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
 import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { FrontendScaffoldBuilder } from '../builder';
 import { generateComponents } from '../generator/generateComponents';
 import { writeGqlOperationsToFolder } from '../scaffold-gql-operations';
@@ -13,10 +15,20 @@ const debug = createDebug('auto:frontend-generator-react-graphql:command');
 const debugBuilder = createDebug('auto:frontend-generator-react-graphql:command:builder');
 const debugGeneration = createDebug('auto:frontend-generator-react-graphql:command:generation');
 
+const getCurrentDirname = (): string => {
+  return path.dirname(fileURLToPath(import.meta.url));
+};
+
+const resolveStarterPath = (starter: 'shadcn' | 'mui'): string => {
+  const currentDir = getCurrentDirname();
+  return path.resolve(currentDir, '../../', `${starter}-starter`);
+};
+
 export type GenerateClientCommand = Command<
   'GenerateClient',
   {
-    starterDir: string;
+    starter?: 'shadcn' | 'mui';
+    starterDir?: string;
     targetDir: string;
     iaSchemaPath: string;
     gqlSchemaPath: string;
@@ -119,19 +131,21 @@ export const commandHandler = defineCommandHandler({
 });
 
 async function handleGenerateClientCommandInternal(command: GenerateClientCommand): Promise<GenerateClientEvents[]> {
-  const { starterDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath } = command.data;
+  const { starter, starterDir, targetDir, iaSchemaPath, gqlSchemaPath, figmaVariablesPath } = command.data;
   const events: GenerateClientEvents[] = [];
 
+  const resolvedStarterDir = starterDir ?? resolveStarterPath(starter ?? 'shadcn');
+
   debug('Starting client generation');
-  debug('Starter directory: %s', starterDir);
+  debug('Starter directory: %s', resolvedStarterDir);
   debug('Target directory: %s', targetDir);
 
   try {
     debugBuilder('Creating FrontendScaffoldBuilder');
     const builder = new FrontendScaffoldBuilder();
 
-    debugBuilder('Cloning starter from: %s', starterDir);
-    await builder.cloneStarter(starterDir);
+    debugBuilder('Cloning starter from: %s', resolvedStarterDir);
+    await builder.cloneStarter(resolvedStarterDir);
 
     debugBuilder('Building to target: %s', targetDir);
     await builder.build(targetDir);
