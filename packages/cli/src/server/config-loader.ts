@@ -3,6 +3,8 @@ import createDebug from 'debug';
 import { getRegistrations, getPendingDispatches } from '../dsl';
 import type { ConfigDefinition } from '../dsl/types';
 import type { MessageBusServer } from './server';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 const debug = createDebug('auto-engineer:server:config');
 
@@ -29,9 +31,16 @@ export async function loadAutoConfig(configPath: string): Promise<AutoConfig> {
     configLoading = true;
     debug('Loading config from:', configPath);
 
-    // Use jiti to load TypeScript config
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const dslExportsPath = join(__dirname, '..', 'dsl-exports.js');
+
     const jiti = createJiti(import.meta.url, {
       interopDefault: true,
+      moduleCache: false,
+      alias: {
+        '@auto-engineer/cli': dslExportsPath,
+      },
     });
 
     const configModule = await jiti.import<{ default?: AutoConfig } & AutoConfig>(configPath);
