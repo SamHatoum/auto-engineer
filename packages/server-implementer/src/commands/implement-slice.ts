@@ -100,7 +100,10 @@ async function loadContextFiles(sliceDir: string): Promise<Record<string, string
 }
 
 // Find files that need implementation
-function findFilesToImplement(contextFiles: Record<string, string>): Array<[string, string]> {
+function findFilesToImplement(contextFiles: Record<string, string>, hasErrors: boolean): Array<[string, string]> {
+  if (hasErrors) {
+    return Object.entries(contextFiles);
+  }
   return Object.entries(contextFiles).filter(
     ([, content]) => content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS'),
   );
@@ -210,11 +213,14 @@ async function implementSlice(
   try {
     // Load all context files
     const contextFiles = await loadContextFiles(slicePath);
-    const filesToImplement = findFilesToImplement(contextFiles);
+    debugProcess(`Loaded ${Object.keys(contextFiles).join(', ')} files from slice`);
+    const hasErrors = Boolean(context?.previousOutputs);
+    const filesToImplement = findFilesToImplement(contextFiles, hasErrors);
+    debugProcess(`Found ${filesToImplement.length} files needing implementation`);
     const implementedFiles: string[] = [];
 
     if (filesToImplement.length === 0) {
-      debugProcess('No files with TODO or IMPLEMENTATION INSTRUCTIONS found');
+      debugProcess('No files with TODO or IMPLEMENTATION INSTRUCTIONS found, and no errors found');
       return { success: true, filesImplemented: [] };
     }
 

@@ -4,7 +4,7 @@
   "description": "Create Auto Engineer apps with no configuration",
   "type": "module",
   "bin": {
-    "create-auto-app": "./dist/index.js"
+    "create-auto-app": "./dist/src/index.js"
   },
   "files": [
     "dist",
@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "copy-templates": "tsx scripts/copy-templates.ts",
-    "build": "npm run copy-templates && tsc && chmod +x dist/index.js",
+    "build": "npm run copy-templates && tsc && chmod +x dist/src/index.js",
     "prepublishOnly": "npm run build",
     "test": "vitest run --reporter=dot",
     "type-check": "tsc --noEmit",
