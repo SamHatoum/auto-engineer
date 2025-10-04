@@ -148,7 +148,6 @@ export default autoConfig({
 
     on<GenerateIAEvents>('IAGenerated', () =>
       dispatch<GenerateClientCommand>('GenerateClient', {
-        starterDir: '../../packages/frontend-generator-react-graphql/shadcn-starter',
         targetDir: './client',
         iaSchemaPath: './.context/auto-ia-scheme.json',
         gqlSchemaPath: './.context/schema.graphql',
