@@ -1,5 +1,15 @@
 # @auto-engineer/frontend-implementer
 
+## 0.11.8
+
+### Patch Changes
+
+- fix kanban todo paths
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.8
+  - @auto-engineer/ai-gateway@0.11.8
+
 ## 0.11.7
 
 ### Patch Changes

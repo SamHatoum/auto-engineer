@@ -1,5 +1,15 @@
 # @auto-engineer/server-checks
 
+## 0.11.8
+
+### Patch Changes
+
+- fix kanban todo paths
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.8
+  - @auto-engineer/cli@0.11.8
+
 ## 0.11.7
 
 ### Patch Changes

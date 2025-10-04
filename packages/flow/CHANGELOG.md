@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.8
+
+### Patch Changes
+
+- fix kanban todo paths
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.8
+  - @auto-engineer/file-store@0.11.8
+  - @auto-engineer/id@0.11.8
+
 ## 0.11.7
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.11.8
+
+### Patch Changes
+
+- fix kanban todo paths
+
 ## 0.11.7
 
 ### Patch Changes

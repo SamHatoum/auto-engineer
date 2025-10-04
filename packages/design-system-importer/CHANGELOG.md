@@ -1,5 +1,14 @@
 # @auto-engineer/design-system-importer
 
+## 0.11.8
+
+### Patch Changes
+
+- fix kanban todo paths
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.8
+
 ## 0.11.7
 
 ### Patch Changes
