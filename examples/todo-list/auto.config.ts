@@ -1,6 +1,10 @@
 import { autoConfig, on, dispatch } from '@auto-engineer/cli';
 import type { ExportSchemaEvents } from '@auto-engineer/flow';
-import type { GenerateServerCommand, GenerateServerEvents } from '@auto-engineer/server-generator-apollo-emmett';
+import type {
+  GenerateServerCommand,
+  GenerateServerEvents,
+  SliceGeneratedEvent,
+} from '@auto-engineer/server-generator-apollo-emmett';
 import type { ImplementSliceEvents, ImplementSliceCommand } from '@auto-engineer/server-implementer';
 import type {
   CheckTestsCommand,
@@ -13,8 +17,7 @@ import type {
 import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/information-architect';
 import type { ImplementClientCommand } from '@auto-engineer/frontend-implementer';
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
-import type { CheckClientEvents } from '../../packages/frontend-checks/dist/src/commands/check-client';
-import { SliceGeneratedEvent } from '../../packages/server-generator-apollo-emmett/dist/src/commands/generate-server';
+import type { CheckClientEvents } from '@auto-engineer/frontend-checks';
 
 const sliceRetryState = new Map<string, number>();
 const MAX_RETRIES = 3;

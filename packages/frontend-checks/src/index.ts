@@ -16,4 +16,5 @@ export {
   type CheckClientCommand,
   type ClientCheckedEvent,
   type ClientCheckFailedEvent,
+  type CheckClientEvents,
 } from './commands/check-client';

@@ -6,4 +6,5 @@ export {
   type GenerateServerEvents,
   type ServerGeneratedEvent,
   type ServerGenerationFailedEvent,
+  type SliceGeneratedEvent,
 } from './commands/generate-server';
