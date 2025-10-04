@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.11.6
+
+### Patch Changes
+
+- fix test retries
+
 ## 0.11.5
 
 ### Patch Changes

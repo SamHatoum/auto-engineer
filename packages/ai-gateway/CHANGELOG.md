@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.11.6
+
+### Patch Changes
+
+- fix test retries
+
 ## 0.11.5
 
 ### Patch Changes
