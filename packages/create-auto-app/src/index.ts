@@ -271,7 +271,7 @@ function printSuccessMessage(name: string, packageManager: string, installDeps: 
 }
 
 async function getAvailableTemplates(): Promise<TemplateMetadata[]> {
-  const templatesDir = path.join(__dirname, '..', 'templates');
+  const templatesDir = path.join(__dirname, '../..', 'templates');
   const templates: TemplateMetadata[] = [];
 
   try {
@@ -306,7 +306,7 @@ async function handleTemplateCreation(
   packageManager: string,
 ) {
   if (template !== undefined) {
-    const templatePath = path.join(__dirname, '..', 'templates', template);
+    const templatePath = path.join(__dirname, '../..', 'templates', template);
 
     if (await fs.pathExists(templatePath)) {
       await createFromTemplate(templatePath, targetDir, projectName, template);
