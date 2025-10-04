@@ -168,17 +168,17 @@ async function generateAndWriteScaffold(spec: Model, serverDir: string): Promise
 }
 
 async function copyAllFiles(serverDir: string): Promise<void> {
-  const packageRoot = path.resolve(__dirname, '../../../src');
-  debugFiles('Package root: %s', packageRoot);
+  const packageDistRoot = path.resolve(__dirname, '../..');
+  debugFiles('Package dist root: %s', packageDistRoot);
 
   debugFiles('Copying utility files...');
-  await copyRootFilesFromSrc(path.join(packageRoot, 'utils'), path.join(serverDir, 'src', 'utils'));
+  await copyRootFilesFromSrc(path.join(packageDistRoot, 'src', 'utils'), path.join(serverDir, 'src', 'utils'));
 
   debugFiles('Copying server.ts...');
-  await copyRootFilesFromSrc(path.join(packageRoot, 'server.ts'), path.join(serverDir, 'src'));
+  await copyRootFilesFromSrc(path.join(packageDistRoot, 'src', 'server.ts'), path.join(serverDir, 'src'));
 
   debugFiles('Copying domain shared files...');
-  await copySharedAndRootFiles(path.join(packageRoot, 'domain'), path.join(serverDir, 'src', 'domain'));
+  await copySharedAndRootFiles(path.join(packageDistRoot, 'src', 'domain'), path.join(serverDir, 'src', 'domain'));
 }
 
 async function writeConfigurationFiles(serverDir: string, absDest: string): Promise<void> {
@@ -377,7 +377,7 @@ async function writePackage(dest: string): Promise<void> {
     devDependencies?: Record<string, string>;
   };
 
-  const rootPkg = (await fs.readJson(rootPkgPath)) as {
+  const rootPkg = (await fs.readJson(rootPkgPath).catch(() => ({}))) as {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
