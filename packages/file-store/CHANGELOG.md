@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
 ## 0.11.0
 
 ### Minor Changes

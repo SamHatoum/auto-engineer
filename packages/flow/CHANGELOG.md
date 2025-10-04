@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/file-store@0.11.1
+  - @auto-engineer/id@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes

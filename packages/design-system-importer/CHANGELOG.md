@@ -1,5 +1,14 @@
 # @auto-engineer/design-system-importer
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes

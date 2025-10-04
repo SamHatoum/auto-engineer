@@ -1,5 +1,16 @@
 # @auto-engineer/information-architect
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/ai-gateway@0.11.1
+  - @auto-engineer/flow@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes

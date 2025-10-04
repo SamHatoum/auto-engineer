@@ -2,6 +2,12 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
 ## 0.11.0
 
 ### Minor Changes
@@ -187,6 +193,17 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-store@0.11.1
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/file-store@0.11.1
 
 ## 0.11.0
 
@@ -808,6 +825,15 @@
 
 # create-auto-app
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes
@@ -972,6 +998,15 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
 
 ## 0.11.0
 
@@ -1404,6 +1439,12 @@
 
 # @auto-engineer/file-store
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
 ## 0.11.0
 
 ### Minor Changes
@@ -1543,6 +1584,17 @@
 - version bump
 
 # @auto-engineer/flow
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/file-store@0.11.1
+  - @auto-engineer/id@0.11.1
 
 ## 0.11.0
 
@@ -2119,6 +2171,15 @@
 
 # @auto-engineer/frontend-checks
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes
@@ -2508,6 +2569,16 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/ai-gateway@0.11.1
 
 ## 0.11.0
 
@@ -2978,6 +3049,16 @@
   - @auto-engineer/message-bus@0.0.2
 
 # @auto-engineer/frontend-implementer
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/ai-gateway@0.11.1
 
 ## 0.11.0
 
@@ -3450,6 +3531,12 @@
 
 # @auto-engineer/id
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
 ## 0.11.0
 
 ### Minor Changes
@@ -3531,6 +3618,17 @@
 ## 0.8.6
 
 # @auto-engineer/information-architect
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/ai-gateway@0.11.1
+  - @auto-engineer/flow@0.11.1
 
 ## 0.11.0
 
@@ -4009,6 +4107,12 @@
 
 # @auto-engineer/message-bus
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
 ## 0.11.0
 
 ### Minor Changes
@@ -4199,6 +4303,15 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/message-store
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
 
 ## 0.11.0
 
@@ -4416,6 +4529,16 @@
 - @auto-engineer/message-bus@0.8.6
 
 # @auto-engineer/server-checks
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/cli@0.11.1
 
 ## 0.11.0
 
@@ -4743,6 +4866,16 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/flow@0.11.1
 
 ## 0.11.0
 
@@ -5215,6 +5348,16 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/ai-gateway@0.11.1
 
 ## 0.11.0
 

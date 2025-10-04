@@ -1,5 +1,15 @@
 # @auto-engineer/server-checks
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/cli@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes

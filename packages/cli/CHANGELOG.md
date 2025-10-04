@@ -1,5 +1,16 @@
 # @auto-engineer/cli
 
+## 0.11.1
+
+### Patch Changes
+
+- Updates missing deps for todo-list example
+
+- Updated dependencies []:
+  - @auto-engineer/message-store@0.11.1
+  - @auto-engineer/message-bus@0.11.1
+  - @auto-engineer/file-store@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes
