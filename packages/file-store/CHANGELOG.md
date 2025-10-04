@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.11.5
+
+### Patch Changes
+
+- Fix paths and deps issues
+
 ## 0.11.4
 
 ## 0.11.3

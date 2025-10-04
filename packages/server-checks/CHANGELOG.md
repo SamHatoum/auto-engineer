@@ -1,5 +1,15 @@
 # @auto-engineer/server-checks
 
+## 0.11.5
+
+### Patch Changes
+
+- Fix paths and deps issues
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.5
+  - @auto-engineer/cli@0.11.5
+
 ## 0.11.4
 
 ### Patch Changes

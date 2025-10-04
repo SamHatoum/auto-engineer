@@ -1,5 +1,14 @@
 # create-auto-app
 
+## 0.11.5
+
+### Patch Changes
+
+- Fix paths and deps issues
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.11.5
+
 ## 0.11.4
 
 ### Patch Changes
