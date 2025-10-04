@@ -6,10 +6,10 @@ import { readFile, writeFile } from 'fs/promises';
 import fg from 'fast-glob';
 import createDebug from 'debug';
 
-const debug = createDebug('server-impl:slice');
-const debugHandler = createDebug('server-impl:slice:handler');
-const debugProcess = createDebug('server-impl:slice:process');
-const debugResult = createDebug('server-impl:slice:result');
+const debug = createDebug('auto:server-implementer:slice');
+const debugHandler = createDebug('auto:server-implementer:slice:handler');
+const debugProcess = createDebug('auto:server-implementer:slice:process');
+const debugResult = createDebug('auto:server-implementer:slice:result');
 
 export type ImplementSliceCommand = Command<
   'ImplementSlice',

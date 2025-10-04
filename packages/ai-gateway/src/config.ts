@@ -4,8 +4,8 @@ import { dirname, resolve } from 'path';
 import createDebug from 'debug';
 import { CustomProviderConfig } from './constants';
 
-const debug = createDebug('ai-gateway:config');
-const debugEnv = createDebug('ai-gateway:config:env');
+const debug = createDebug('auto:ai-gateway:config');
+const debugEnv = createDebug('auto:ai-gateway:config:env');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

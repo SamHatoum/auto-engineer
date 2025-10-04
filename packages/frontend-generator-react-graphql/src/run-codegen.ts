@@ -3,8 +3,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:codegen');
-const debugCmd = createDebug('frontend-generator-react-graphql:codegen:cmd');
+const debug = createDebug('auto:frontend-generator-react-graphql:codegen');
+const debugCmd = createDebug('auto:frontend-generator-react-graphql:codegen:cmd');
 
 const QUERY_FILES = ['queries.ts', 'mutations.ts'];
 const GRAPHQL_DIR = 'src/graphql';

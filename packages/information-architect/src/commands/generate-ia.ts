@@ -7,11 +7,11 @@ import { type UXSchema } from '../types';
 import createDebug from 'debug';
 import { Model } from '@auto-engineer/flow';
 
-const debug = createDebug('ia:generate-command');
-const debugSchema = createDebug('ia:generate-command:schema');
-const debugFiles = createDebug('ia:generate-command:files');
-const debugAtoms = createDebug('ia:generate-command:atoms');
-const debugResult = createDebug('ia:generate-command:result');
+const debug = createDebug('auto:information-architect:generate-command');
+const debugSchema = createDebug('auto:information-architect:generate-command:schema');
+const debugFiles = createDebug('auto:information-architect:generate-command:files');
+const debugAtoms = createDebug('auto:information-architect:generate-command:atoms');
+const debugResult = createDebug('auto:information-architect:generate-command:result');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

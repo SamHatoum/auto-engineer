@@ -5,10 +5,10 @@ import fg from 'fast-glob';
 import { access } from 'fs/promises';
 import createDebug from 'debug';
 
-const debug = createDebug('server-checks:lint');
-const debugHandler = createDebug('server-checks:lint:handler');
-const debugProcess = createDebug('server-checks:lint:process');
-const debugResult = createDebug('server-checks:lint:result');
+const debug = createDebug('auto:server-checks:lint');
+const debugHandler = createDebug('auto:server-checks:lint:handler');
+const debugProcess = createDebug('auto:server-checks:lint:process');
+const debugResult = createDebug('auto:server-checks:lint:result');
 
 export type CheckLintCommand = Command<
   'CheckLint',

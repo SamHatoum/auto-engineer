@@ -1,10 +1,10 @@
 import { Command, Event, CommandHandler, EventHandler, EventSubscription } from './types';
 import createDebug from 'debug';
 
-const debug = createDebug('message-bus');
-const debugCommand = createDebug('message-bus:command');
-const debugEvent = createDebug('message-bus:event');
-const debugHandler = createDebug('message-bus:handler');
+const debug = createDebug('auto:message-bus');
+const debugCommand = createDebug('auto:message-bus:command');
+const debugEvent = createDebug('auto:message-bus:event');
+const debugHandler = createDebug('auto:message-bus:handler');
 
 // Set non-error-like colors for debug namespaces
 // Colors: 0=gray, 1=red, 2=green, 3=yellow, 4=blue, 5=magenta, 6=cyan

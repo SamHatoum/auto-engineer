@@ -3,10 +3,10 @@ import { importDesignSystemComponentsFromFigma, ImportStrategy, type FilterFunct
 import { FilterLoader } from '../utils/FilterLoader';
 import createDebug from 'debug';
 
-const debug = createDebug('design-system-importer:command');
-const debugFilter = createDebug('design-system-importer:command:filter');
-const debugHandler = createDebug('design-system-importer:command:handler');
-const debugResult = createDebug('design-system-importer:command:result');
+const debug = createDebug('auto:design-system-importer:command');
+const debugFilter = createDebug('auto:design-system-importer:command:filter');
+const debugHandler = createDebug('auto:design-system-importer:command:handler');
+const debugResult = createDebug('auto:design-system-importer:command:result');
 
 export type ImportDesignSystemCommand = Command<
   'ImportDesignSystem',

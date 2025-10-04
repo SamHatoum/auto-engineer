@@ -2,7 +2,7 @@ import { type Command, type Event, defineCommandHandler } from '@auto-engineer/m
 import { runAIAgent } from '../agent';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-implementer:implement-client');
+const debug = createDebug('auto:frontend-implementer:implement-client');
 
 export type ImplementClientCommand = Command<
   'ImplementClient',

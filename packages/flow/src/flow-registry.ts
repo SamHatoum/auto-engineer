@@ -2,7 +2,7 @@ import { FlowSchema } from './schema';
 import { Flow } from './index';
 import createDebug from 'debug';
 
-const debug = createDebug('flow:registry');
+const debug = createDebug('auto:flow:registry');
 // Set non-error-like colors for debug namespace
 // Colors: 0=gray, 1=red, 2=green, 3=yellow, 4=blue, 5=magenta, 6=cyan
 if ('color' in debug && typeof debug === 'object') {

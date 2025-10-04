@@ -2,7 +2,7 @@ import { type Command, type Event, defineCommandHandler } from '@auto-engineer/m
 import { getFs } from './filestore.node.js';
 import createDebug from 'debug';
 
-const debug = createDebug('flow:export-schema');
+const debug = createDebug('auto:flow:export-schema');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '4';
 }

@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import createDebug from 'debug';
 import { getAllTsxFiles, getComponentNameFromFile } from './file-operations.js';
 
-const debugMarkdown = createDebug('design-system-importer:markdown');
+const debugMarkdown = createDebug('auto:design-system-importer:markdown');
 
 export async function generateDesignSystemMarkdown(inputDir: string, outputDir: string): Promise<void> {
   debugMarkdown('Generating design system markdown from: %s to: %s', inputDir, outputDir);

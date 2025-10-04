@@ -4,10 +4,10 @@ import { existsSync } from 'fs';
 import { runFlows } from '../agent/runFlows';
 import createDebug from 'debug';
 
-const debug = createDebug('server-impl:command');
-const debugHandler = createDebug('server-impl:command:handler');
-const debugProcess = createDebug('server-impl:command:process');
-const debugResult = createDebug('server-impl:command:result');
+const debug = createDebug('auto:server-implementer:command');
+const debugHandler = createDebug('auto:server-implementer:command:handler');
+const debugProcess = createDebug('auto:server-implementer:command:process');
+const debugResult = createDebug('auto:server-implementer:command:result');
 
 export type ImplementServerCommand = Command<
   'ImplementServer',

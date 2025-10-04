@@ -11,23 +11,23 @@ import { CommandSlice, QuerySlice, ReactSlice, ExperienceSlice } from './index';
 import { print, ASTNode } from 'graphql';
 import createDebug from 'debug';
 
-const debug = createDebug('flow:fluent-builder');
+const debug = createDebug('auto:flow:fluent-builder');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '6';
 } // cyan
-const debugCommand = createDebug('flow:fluent-builder:command');
+const debugCommand = createDebug('auto:flow:fluent-builder:command');
 if ('color' in debugCommand && typeof debugCommand === 'object') {
   (debugCommand as { color: string }).color = '4';
 } // blue
-const debugQuery = createDebug('flow:fluent-builder:query');
+const debugQuery = createDebug('auto:flow:fluent-builder:query');
 if ('color' in debugQuery && typeof debugQuery === 'object') {
   (debugQuery as { color: string }).color = '4';
 } // blue
-const debugReact = createDebug('flow:fluent-builder:react');
+const debugReact = createDebug('auto:flow:fluent-builder:react');
 if ('color' in debugReact && typeof debugReact === 'object') {
   (debugReact as { color: string }).color = '2';
 } // green
-const debugExperience = createDebug('flow:fluent-builder:experience');
+const debugExperience = createDebug('auto:flow:fluent-builder:experience');
 if ('color' in debugExperience && typeof debugExperience === 'object') {
   (debugExperience as { color: string }).color = '5';
 } // magenta

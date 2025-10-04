@@ -5,7 +5,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import createDebug from 'debug';
 import { NodeFileStore } from '@auto-engineer/file-store';
 
-const debug = createDebug('flow:export-schema-runner');
+const debug = createDebug('auto:flow:export-schema-runner');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '4';
 } // blue

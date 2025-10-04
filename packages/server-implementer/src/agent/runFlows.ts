@@ -3,8 +3,8 @@ import path from 'path';
 import { runAllSlices } from './runAllSlices';
 import createDebug from 'debug';
 
-const debug = createDebug('server-impl:flows');
-const debugFlow = createDebug('server-impl:flows:flow');
+const debug = createDebug('auto:server-implementer:flows');
+const debugFlow = createDebug('auto:server-implementer:flows:flow');
 
 export async function runFlows(baseDir: string): Promise<void> {
   debug('Running flows from base directory: %s', baseDir);

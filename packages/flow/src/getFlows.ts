@@ -12,7 +12,7 @@ const dirnamePosix = (p: string) => {
   return i > 0 ? s.slice(0, i) : '/';
 };
 
-const debug = createDebug('flow:getFlows');
+const debug = createDebug('auto:flow:getFlows');
 
 const toPosix = (p: string) => p.replace(/\\/g, '/');
 const DEFAULT_PATTERN = /\.(flow|integration)\.(ts|tsx|js|jsx|mjs|cjs)$/;

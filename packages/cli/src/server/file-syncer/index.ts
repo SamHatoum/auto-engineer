@@ -9,7 +9,7 @@ import { md5, readBase64, statSize } from './utils/hash';
 import { toWirePath, fromWirePath, rebuildWirePathCache } from './utils/path';
 import type { WireChange, WireInitial } from './types/wire';
 
-const debug = createDebug('cli:file-syncer');
+const debug = createDebug('auto:cli:file-syncer');
 
 type FileMeta = { hash: string; size: number };
 

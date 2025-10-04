@@ -5,10 +5,10 @@ import fg from 'fast-glob';
 import { access } from 'fs/promises';
 import createDebug from 'debug';
 
-const debug = createDebug('server-checks:tests');
-const debugHandler = createDebug('server-checks:tests:handler');
-const debugProcess = createDebug('server-checks:tests:process');
-const debugResult = createDebug('server-checks:tests:result');
+const debug = createDebug('auto:server-checks:tests');
+const debugHandler = createDebug('auto:server-checks:tests:handler');
+const debugProcess = createDebug('auto:server-checks:tests:process');
+const debugResult = createDebug('auto:server-checks:tests:result');
 
 export type CheckTestsCommand = Command<
   'CheckTests',

@@ -3,11 +3,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import createDebug from 'debug';
 
-const debug = createDebug('ai-gateway:mcp');
-const debugServer = createDebug('ai-gateway:mcp:server');
-const debugTools = createDebug('ai-gateway:mcp:tools');
-const debugRegistry = createDebug('ai-gateway:mcp:registry');
-const debugExecution = createDebug('ai-gateway:mcp:execution');
+const debug = createDebug('auto:ai-gateway:mcp');
+const debugServer = createDebug('auto:ai-gateway:mcp:server');
+const debugTools = createDebug('auto:ai-gateway:mcp:tools');
+const debugRegistry = createDebug('auto:ai-gateway:mcp:registry');
+const debugExecution = createDebug('auto:ai-gateway:mcp:execution');
 
 interface ToolResult {
   content: Array<{

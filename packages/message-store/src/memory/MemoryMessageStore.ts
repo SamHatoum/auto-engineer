@@ -11,7 +11,7 @@ import type {
 import type { ILocalMessageStore } from '../interfaces/IMessageStore';
 import createDebug from 'debug';
 
-const debug = createDebug('message-store:memory');
+const debug = createDebug('auto:message-store:memory');
 
 interface StreamData {
   messages: PositionalMessage[];

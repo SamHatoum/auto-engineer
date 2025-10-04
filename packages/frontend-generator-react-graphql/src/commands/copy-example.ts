@@ -4,7 +4,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:copy-example');
+const debug = createDebug('auto:frontend-generator-react-graphql:copy-example');
 
 export type CopyExampleCommand = Command<
   'CopyExample',

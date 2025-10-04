@@ -3,7 +3,7 @@ import type { MessageBus, Command } from '@auto-engineer/message-bus';
 import type { StateManager } from './state-manager';
 import createDebug from 'debug';
 
-const debugWs = createDebug('auto-engineer:server:ws');
+const debugWs = createDebug('auto:cli:server:ws');
 
 export function setupWebSocketHandlers(
   io: SocketIOServer,

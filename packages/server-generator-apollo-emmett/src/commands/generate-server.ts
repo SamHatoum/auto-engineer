@@ -13,11 +13,11 @@ import { execa } from 'execa';
 import createDebug from 'debug';
 import { defineCommandHandler, Command, Event } from '@auto-engineer/message-bus';
 
-const debug = createDebug('auto:generate-server');
-const debugModel = createDebug('auto:generate-server:schema');
-const debugFiles = createDebug('auto:generate-server:files');
-const debugDeps = createDebug('auto:generate-server:deps');
-const debugScaffold = createDebug('auto:generate-server:scaffold');
+const debug = createDebug('auto:server-generator-apollo-emmett');
+const debugModel = createDebug('auto:server-generator-apollo-emmett:schema');
+const debugFiles = createDebug('auto:server-generator-apollo-emmett:files');
+const debugDeps = createDebug('auto:server-generator-apollo-emmett:deps');
+const debugScaffold = createDebug('auto:server-generator-apollo-emmett:scaffold');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

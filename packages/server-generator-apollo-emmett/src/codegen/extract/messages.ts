@@ -7,11 +7,11 @@ import { extractProjectionIdField } from './projection';
 import { extractStatesFromData, extractStatesFromTarget } from './states';
 import createDebug from 'debug';
 
-const debug = createDebug('emmett:extract:messages');
-const debugCommand = createDebug('emmett:extract:messages:command');
-const debugQuery = createDebug('emmett:extract:messages:query');
-const debugReact = createDebug('emmett:extract:messages:react');
-const debugDedupe = createDebug('emmett:extract:messages:dedupe');
+const debug = createDebug('auto:server-generator-apollo-emmett:extract:messages');
+const debugCommand = createDebug('auto:server-generator-apollo-emmett:extract:messages:command');
+const debugQuery = createDebug('auto:server-generator-apollo-emmett:extract:messages:query');
+const debugReact = createDebug('auto:server-generator-apollo-emmett:extract:messages:react');
+const debugDedupe = createDebug('auto:server-generator-apollo-emmett:extract:messages:dedupe');
 
 export interface ExtractedMessages {
   commands: Message[];

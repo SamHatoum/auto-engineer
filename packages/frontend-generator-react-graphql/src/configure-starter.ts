@@ -3,7 +3,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:configure');
+const debug = createDebug('auto:frontend-generator-react-graphql:configure');
 
 function runCommand(cmd: string, cwd: string): string {
   try {

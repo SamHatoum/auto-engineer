@@ -2,7 +2,7 @@ import type { IFileStore } from '@auto-engineer/file-store';
 import { CANDIDATE_EXTS, dirname, join, normalize } from './fs-path';
 import createDebug from 'debug';
 
-const debug = createDebug('flow:when-types');
+const debug = createDebug('auto:flow:when-types');
 
 export async function fileExists(vfs: IFileStore, p: string): Promise<boolean> {
   const buf = await vfs.read(p);

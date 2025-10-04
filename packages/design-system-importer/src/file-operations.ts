@@ -2,9 +2,9 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import createDebug from 'debug';
 
-const debugFiles = createDebug('design-system-importer:files');
-const debugComponents = createDebug('design-system-importer:components');
-const debugCopy = createDebug('design-system-importer:copy');
+const debugFiles = createDebug('auto:design-system-importer:files');
+const debugComponents = createDebug('auto:design-system-importer:components');
+const debugCopy = createDebug('auto:design-system-importer:copy');
 
 export async function getAllTsxFiles(dir: string): Promise<string[]> {
   debugFiles('Scanning directory for TSX files: %s', dir);

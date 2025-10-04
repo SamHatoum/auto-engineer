@@ -21,7 +21,7 @@ import {
 import type { DataItem } from './types';
 import createDebug from 'debug';
 
-const debug = createDebug('flow:flow');
+const debug = createDebug('auto:flow:flow');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '6';
 } // cyan

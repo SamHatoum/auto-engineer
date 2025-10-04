@@ -5,9 +5,9 @@ import { fileURLToPath } from 'url';
 import { GeneratedFile, IAScheme } from '../types';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:generateComponents');
-const debugTemplates = createDebug('frontend-generator-react-graphql:generateComponents:templates');
-const debugOutput = createDebug('frontend-generator-react-graphql:generateComponents:output');
+const debug = createDebug('auto:frontend-generator-react-graphql:generateComponents');
+const debugTemplates = createDebug('auto:frontend-generator-react-graphql:generateComponents:templates');
+const debugOutput = createDebug('auto:frontend-generator-react-graphql:generateComponents:output');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

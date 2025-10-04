@@ -4,7 +4,7 @@ import type { StateManager, FoldFunction } from './state-manager';
 import { CommandMetadataService, type CommandMetadata } from './command-metadata-service';
 import createDebug from 'debug';
 
-const debugBus = createDebug('auto-engineer:server:bus');
+const debugBus = createDebug('auto:cli:server:bus');
 
 export class CommandRegistry {
   private commandHandlerNames: string[] = [];

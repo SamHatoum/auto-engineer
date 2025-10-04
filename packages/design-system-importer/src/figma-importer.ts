@@ -4,10 +4,10 @@ import createDebug from 'debug';
 import { type FilterFunctionType } from './FigmaComponentsBuilder.js';
 import { generateMarkdownFromComponents } from './markdown-generator.js';
 
-const debug = createDebug('design-system-importer');
-const debugComponents = createDebug('design-system-importer:components');
-const debugMarkdown = createDebug('design-system-importer:markdown');
-const debugFiles = createDebug('design-system-importer:files');
+const debug = createDebug('auto:design-system-importer');
+const debugComponents = createDebug('auto:design-system-importer:components');
+const debugMarkdown = createDebug('auto:design-system-importer:markdown');
+const debugFiles = createDebug('auto:design-system-importer:files');
 
 export enum ImportStrategy {
   WITH_COMPONENTS = 'WITH_COMPONENTS',

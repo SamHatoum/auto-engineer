@@ -16,7 +16,7 @@ function normalizeContext(context?: Partial<Record<string, string>>): Record<str
   return Object.keys(filtered).length > 0 ? filtered : undefined;
 }
 
-const debug = createDebug('flow:context:given-types');
+const debug = createDebug('auto:flow:context:given-types');
 
 interface FlowContext {
   flow: Flow;

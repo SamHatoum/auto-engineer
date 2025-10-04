@@ -5,8 +5,8 @@ import { integrationRegistry } from '../integration-registry';
 import { registry } from '../flow-registry';
 import type { Integration } from '../types';
 
-const debug = createDebug('flow:runtime');
-const dImp = createDebug('flow:runtime:require');
+const debug = createDebug('auto:flow:runtime');
+const dImp = createDebug('auto:flow:runtime:require');
 
 function isNode(): boolean {
   return typeof process !== 'undefined' && typeof (process as NodeJS.Process | undefined)?.versions?.node === 'string';

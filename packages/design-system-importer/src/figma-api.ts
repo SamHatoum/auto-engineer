@@ -4,7 +4,7 @@ import createDebug from 'debug';
 
 dotenv.config();
 
-const debugFigma = createDebug('design-system-importer:figma');
+const debugFigma = createDebug('auto:design-system-importer:figma');
 
 debugFigma('Initializing Figma API with personal access token');
 const api = new Figma.Api({

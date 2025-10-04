@@ -1,7 +1,7 @@
 import type { Event } from '@auto-engineer/message-bus';
 import createDebug from 'debug';
 
-const debug = createDebug('auto-engineer:server:state');
+const debug = createDebug('auto:cli:server:state');
 
 export type FoldFunction<S = unknown, E = Event> = (state: S, event: E) => S;
 

@@ -7,11 +7,11 @@ import chalk from 'chalk';
 import { createMessageBus, type MessageBus } from '@auto-engineer/message-bus';
 import type { CommandHandler, Command, Event, UnifiedCommandHandler } from '@auto-engineer/message-bus';
 
-const debug = createDebug('cli:plugin-loader');
-const debugConfig = createDebug('cli:plugin-loader:config');
-const debugPlugins = createDebug('cli:plugin-loader:plugins');
-const debugConflicts = createDebug('cli:plugin-loader:conflicts');
-const debugBus = createDebug('cli:plugin-loader:bus');
+const debug = createDebug('auto:cli:plugin-loader');
+const debugConfig = createDebug('auto:cli:plugin-loader:config');
+const debugPlugins = createDebug('auto:cli:plugin-loader:plugins');
+const debugConflicts = createDebug('auto:cli:plugin-loader:conflicts');
+const debugBus = createDebug('auto:cli:plugin-loader:bus');
 
 // Set non-error-like colors (avoid red/orange)
 // Colors: 0=gray, 1=red, 2=green, 3=yellow, 4=blue, 5=magenta, 6=cyan

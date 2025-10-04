@@ -6,7 +6,7 @@ import type { MessageBusServer } from './server';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const debug = createDebug('auto-engineer:server:config');
+const debug = createDebug('auto:cli:server:config');
 
 export interface AutoConfig extends ConfigDefinition {
   fileSync?: {

@@ -2,9 +2,9 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:builder');
-const debugFiles = createDebug('frontend-generator-react-graphql:builder:files');
-const debugBuild = createDebug('frontend-generator-react-graphql:builder:build');
+const debug = createDebug('auto:frontend-generator-react-graphql:builder');
+const debugFiles = createDebug('auto:frontend-generator-react-graphql:builder:files');
+const debugBuild = createDebug('auto:frontend-generator-react-graphql:builder:build');
 
 export class FrontendScaffoldBuilder {
   private starterFiles: Map<string, Buffer> = new Map();

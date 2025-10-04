@@ -9,13 +9,13 @@ import prettier from 'prettier';
 import { Flow, Slice, Model } from '@auto-engineer/flow';
 import createDebug from 'debug';
 
-const debug = createDebug('emmett:scaffold');
-const debugTemplate = createDebug('emmett:scaffold:template');
-const debugFiles = createDebug('emmett:scaffold:files');
-const debugFlow = createDebug('emmett:scaffold:flow');
-const debugSlice = createDebug('emmett:scaffold:slice');
-const debugPlan = createDebug('emmett:scaffold:plan');
-const debugFormat = createDebug('emmett:scaffold:format');
+const debug = createDebug('auto:server-generator-apollo-emmett:scaffold');
+const debugTemplate = createDebug('auto:server-generator-apollo-emmett:scaffold:template');
+const debugFiles = createDebug('auto:server-generator-apollo-emmett:scaffold:files');
+const debugFlow = createDebug('auto:server-generator-apollo-emmett:scaffold:flow');
+const debugSlice = createDebug('auto:server-generator-apollo-emmett:scaffold:slice');
+const debugPlan = createDebug('auto:server-generator-apollo-emmett:scaffold:plan');
+const debugFormat = createDebug('auto:server-generator-apollo-emmett:scaffold:format');
 import {
   buildCommandGwtMapping,
   buildQueryGwtMapping,

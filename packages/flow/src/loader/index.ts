@@ -8,7 +8,7 @@ import { runGraph } from './runtime-cjs';
 import { createEnhancedImportMap } from './importmap';
 import { setGivenTypesByFile } from '../flow-context';
 
-const debug = createDebug('flow:ast-loader:index');
+const debug = createDebug('auto:flow:ast-loader:index');
 
 export type ExecuteResult = BuildGraphResult & {
   flowsCount: number;

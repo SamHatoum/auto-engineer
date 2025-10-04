@@ -2,7 +2,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { CustomProviderConfig } from '../constants';
 import createDebug from 'debug';
 
-const debug = createDebug('ai-gateway:custom');
+const debug = createDebug('auto:ai-gateway:custom');
 
 export interface CustomProviderOptions {
   config: CustomProviderConfig;

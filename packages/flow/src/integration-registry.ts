@@ -2,7 +2,7 @@
 import { Integration } from './types';
 import createDebug from 'debug';
 
-const debug = createDebug('flow:integrations');
+const debug = createDebug('auto:flow:integrations');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '6';
 } // cyan

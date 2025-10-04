@@ -13,13 +13,13 @@ import { getRegisteredToolsForAI } from './mcp-server';
 import { startServer } from './mcp-server';
 import createDebug from 'debug';
 
-// const debug = createDebug('ai-gateway'); // TODO: Use for general debugging
-const debugConfig = createDebug('ai-gateway:config');
-const debugAPI = createDebug('ai-gateway:api');
-const debugError = createDebug('ai-gateway:error');
-const debugTools = createDebug('ai-gateway:tools');
-const debugStream = createDebug('ai-gateway:stream');
-const debugValidation = createDebug('ai-gateway:validation');
+// const debug = createDebug('auto:ai-gateway'); // TODO: Use for general debugging
+const debugConfig = createDebug('auto:ai-gateway:config');
+const debugAPI = createDebug('auto:ai-gateway:api');
+const debugError = createDebug('auto:ai-gateway:error');
+const debugTools = createDebug('auto:ai-gateway:tools');
+const debugStream = createDebug('auto:ai-gateway:stream');
+const debugValidation = createDebug('auto:ai-gateway:validation');
 
 // Error type definitions
 const ERROR_PATTERNS = [

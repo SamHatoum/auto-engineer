@@ -17,14 +17,14 @@ import { resolveSpecifier } from './resolver';
 import { integrationExportRegistry } from '../integration-export-registry';
 import { createVfsCompilerHost } from './vfs-compiler-host';
 
-const debug = createDebug('flow:graph');
+const debug = createDebug('auto:flow:graph');
 
 async function collectAllTypings(
   vfs: IFileStore,
   externalPkgs: Set<string>,
   rootDir: string,
 ): Promise<Map<string, Set<string>>> {
-  const debug = createDebug('flow:graph');
+  const debug = createDebug('auto:flow:graph');
   const pkgTypings = new Map<string, Set<string>>();
   const normRoot = toPosix(rootDir).replace(/\/+$/, '');
 

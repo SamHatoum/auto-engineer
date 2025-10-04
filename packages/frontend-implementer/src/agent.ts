@@ -4,15 +4,15 @@ import * as path from 'path';
 import * as ts from 'typescript';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-impl:agent');
-const debugPlan = createDebug('frontend-impl:agent:plan');
-// const debugErrors = createDebug('frontend-impl:agent:errors');
-// const debugScreenshots = createDebug('frontend-impl:agent:screenshots');
-// const debugFixes = createDebug('frontend-impl:agent:fixes');
-const debugContext = createDebug('frontend-impl:agent:context');
-const debugAI = createDebug('frontend-impl:agent:ai');
-const debugFiles = createDebug('frontend-impl:agent:files');
-const debugComponents = createDebug('frontend-impl:agent:components');
+const debug = createDebug('auto:frontend-implementer:agent');
+const debugPlan = createDebug('auto:frontend-implementer:agent:plan');
+// const debugErrors = createDebug('auto:frontend-implementer:agent:errors');
+// const debugScreenshots = createDebug('auto:frontend-implementer:agent:screenshots');
+// const debugFixes = createDebug('auto:frontend-implementer:agent:fixes');
+const debugContext = createDebug('auto:frontend-implementer:agent:context');
+const debugAI = createDebug('auto:frontend-implementer:agent:ai');
+const debugFiles = createDebug('auto:frontend-implementer:agent:files');
+const debugComponents = createDebug('auto:frontend-implementer:agent:components');
 
 // Utility to extract props from interface
 function extractPropsFromInterface(

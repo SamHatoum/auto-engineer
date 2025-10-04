@@ -15,7 +15,7 @@ import { CommandRegistry } from './command-registry';
 import { CommandMetadataService } from './command-metadata-service';
 import { SettledTracker } from './settled-tracker';
 
-const debug = createDebug('auto-engineer:server');
+const debug = createDebug('auto:cli:server');
 
 export interface MessageBusServerConfig {
   port?: number;

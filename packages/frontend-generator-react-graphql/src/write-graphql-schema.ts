@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import createDebug from 'debug';
 
-const debug = createDebug('frontend-generator-react-graphql:schema');
+const debug = createDebug('auto:frontend-generator-react-graphql:schema');
 
 function getSchema(gqlSchemaPath: string): string {
   // gqlSchemaPath should already be an absolute path from the CLI

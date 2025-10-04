@@ -12,7 +12,7 @@ import type { CommandMetadataService } from '../server/command-metadata-service'
 import type { ILocalMessageStore } from '@auto-engineer/message-store';
 import createDebug from 'debug';
 
-const debug = createDebug('auto-engineer:dsl:pipeline-graph');
+const debug = createDebug('auto:cli:dsl:pipeline-graph');
 
 let registrations: DslRegistration[] = [];
 let pendingDispatches: DispatchAction[] = [];

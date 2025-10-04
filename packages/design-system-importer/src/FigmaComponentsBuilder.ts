@@ -2,11 +2,11 @@ import * as dotenv from 'dotenv';
 import * as Figma from 'figma-api';
 import createDebug from 'debug';
 
-const debug = createDebug('design-system-importer:figma-builder');
-const debugComponents = createDebug('design-system-importer:figma-builder:components');
-const debugFilters = createDebug('design-system-importer:figma-builder:filters');
-const debugAPI = createDebug('design-system-importer:figma-builder:api');
-const debugTree = createDebug('design-system-importer:figma-builder:tree');
+const debug = createDebug('auto:design-system-importer:figma-builder');
+const debugComponents = createDebug('auto:design-system-importer:figma-builder:components');
+const debugFilters = createDebug('auto:design-system-importer:figma-builder:filters');
+const debugAPI = createDebug('auto:design-system-importer:figma-builder:api');
+const debugTree = createDebug('auto:design-system-importer:figma-builder:tree');
 
 dotenv.config();
 

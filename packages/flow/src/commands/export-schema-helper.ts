@@ -2,7 +2,7 @@ import createDebug from 'debug';
 import { getFs } from './filestore.node';
 import { IExtendedFileStore, NodeFileStore } from '@auto-engineer/file-store';
 
-const debug = createDebug('flow:export-schema-helper');
+const debug = createDebug('auto:flow:export-schema-helper');
 if ('color' in debug && typeof debug === 'object') {
   (debug as { color: string }).color = '4';
 } // blue

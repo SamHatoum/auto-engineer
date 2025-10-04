@@ -6,11 +6,11 @@ import { tmpdir } from 'os';
 import type { FilterFunctionType } from '../FigmaComponentsBuilder';
 import createDebug from 'debug';
 
-const debug = createDebug('design-system-importer:filter-loader');
-const debugLoad = createDebug('design-system-importer:filter-loader:load');
-const debugTS = createDebug('design-system-importer:filter-loader:typescript');
-const debugStrategy = createDebug('design-system-importer:filter-loader:strategy');
-const debugTemplate = createDebug('design-system-importer:filter-loader:template');
+const debug = createDebug('auto:design-system-importer:filter-loader');
+const debugLoad = createDebug('auto:design-system-importer:filter-loader:load');
+const debugTS = createDebug('auto:design-system-importer:filter-loader:typescript');
+const debugStrategy = createDebug('auto:design-system-importer:filter-loader:strategy');
+const debugTemplate = createDebug('auto:design-system-importer:filter-loader:template');
 
 export class FilterLoader {
   private templatesDir: string;
