@@ -1,5 +1,15 @@
 # @auto-engineer/frontend-implementer
 
+## 0.11.9
+
+### Patch Changes
+
+- Upgrade oai to gpt-5
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.9
+  - @auto-engineer/ai-gateway@0.11.9
+
 ## 0.11.8
 
 ### Patch Changes

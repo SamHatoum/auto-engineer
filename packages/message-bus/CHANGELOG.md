@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.11.9
+
+### Patch Changes
+
+- Upgrade oai to gpt-5
+
 ## 0.11.8
 
 ### Patch Changes

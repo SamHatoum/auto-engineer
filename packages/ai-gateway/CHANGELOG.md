@@ -1,5 +1,11 @@
 # @auto-engineer/ai-gateway
 
+## 0.11.9
+
+### Patch Changes
+
+- Upgrade oai to gpt-5
+
 ## 0.11.8
 
 ### Patch Changes
