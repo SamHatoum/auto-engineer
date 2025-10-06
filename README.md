@@ -82,6 +82,8 @@ Once the run is complete, you can go to `https://localhost:3000` and preview you
 Congratulations, you built your first app using Auto! 🚀
 
 ## Explore more
+Head over to the [Discord Community](https://discord.gg/B8BKcKMRm8) to chat with the team and community directly for more.
+
 Let's go through some of the other features Auto provides you.
 
 ### Configuring your pipeline
@@ -125,7 +127,6 @@ Auto Engineer is licensed under the [Elastic License 2.0 (EL2)](LICENSE.md).
 ## 🔗 Links
 
 - [Discord Community](https://discord.gg/B8BKcKMRm8)
-- [Documentation](https://github.com/SamHatoum/auto-engineer/wiki)
 - [Issue Tracker](https://github.com/SamHatoum/auto-engineer/issues)
 
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.on.auto/a.png?x-pxid=3e68b410-a966-4c96-887b-34102030fd15&page=README.md" />
