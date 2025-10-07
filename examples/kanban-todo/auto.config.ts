@@ -94,7 +94,7 @@ export default autoConfig({
     function dispatchComponentsOfType(type: ComponentType) {
       const components = getComponentsOfType(type);
       return components.map((component) => {
-        const componentName = path.basename(component.filePath);
+        const componentName = path.basename(component.filePath).replace('.tsx', '');
         return dispatch<ImplementComponentCommand>('ImplementComponent', {
           projectDir: clientTargetDir,
           iaSchemeDir: './.context',
@@ -246,7 +246,7 @@ export default autoConfig({
       dispatchedPhases.add('molecule');
 
       return molecules.map((component) => {
-        const componentName = path.basename(component.filePath);
+        const componentName = path.basename(component.filePath).replace('.tsx', '');
         return dispatch<ImplementComponentCommand>('ImplementComponent', {
           projectDir: clientTargetDir,
           iaSchemeDir: './.context',

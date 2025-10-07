@@ -105,7 +105,7 @@ async function handleImplementComponentCommandInternal(
     const componentDef = items[componentName] as Record<string, unknown> | undefined;
     if (!componentDef) throw new Error(`Component ${componentType}:${componentName} not found in IA schema`);
 
-    const outPath = path.join(projectDir, 'src/components', `${componentType}s`, `${componentName}.tsx`);
+    const outPath = path.join(projectDir, '..', filePath);
 
     const t2 = performance.now();
     let existingScaffold = '';
@@ -428,6 +428,14 @@ ${JSON.stringify(componentDef, null, 2)}
 
 ${hasScaffold ? 'Existing Scaffold:' : 'No Scaffold Found:'}
 ${hasScaffold ? `\n\n${existingScaffold}` : '\n(no existing file)'}
+
+---
+
+### Type Safety Requirements
+- Never use \`as\` or non-null assertions (\`!\`) to bypass TypeScript type checking.
+- Always infer or define proper types instead of forcing them.
+- Do not use \`any\` or \`unknown\` unless absolutely necessary.
+- Write code that passes \`--strict\` TypeScript checks without manual type coercion.
 
 ---
 
