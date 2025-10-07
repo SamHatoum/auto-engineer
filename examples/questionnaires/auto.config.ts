@@ -38,6 +38,7 @@ export default autoConfig({
     '@auto-engineer/flow',
     '@auto-engineer/frontend-checks',
     '@auto-engineer/frontend-implementer',
+    '@auto-engineer/component-implementer',
     '@auto-engineer/information-architect',
     '@auto-engineer/frontend-generator-react-graphql',
     '@auto-engineer/server-implementer',

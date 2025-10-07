@@ -348,6 +348,40 @@ importers:
         specifier: ^4.20.3
         version: 4.20.5
 
+  packages/component-implementer:
+    dependencies:
+      '@auto-engineer/ai-gateway':
+        specifier: workspace:*
+        version: link:../ai-gateway
+      '@auto-engineer/message-bus':
+        specifier: workspace:*
+        version: link:../message-bus
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.3.0
+        version: 1.17.4
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0
+      openai:
+        specifier: ^5.7.0
+        version: 5.16.0(ws@8.18.3)(zod@3.25.76)
+      vite:
+        specifier: ^5.4.1
+        version: 5.4.19(@types/node@24.3.1)
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
+    devDependencies:
+      '@auto-engineer/cli':
+        specifier: workspace:*
+        version: link:../cli
+      playwright:
+        specifier: ^1.54.1
+        version: 1.55.0
+
   packages/create-auto-app:
     dependencies:
       '@auto-engineer/id':

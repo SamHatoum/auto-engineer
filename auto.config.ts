@@ -8,6 +8,7 @@ export default {
     '@auto-engineer/design-system-importer',
     '@auto-engineer/frontend-checks',
     '@auto-engineer/frontend-implementer',
+    '@auto-engineer/component-implementer',
     '@auto-engineer/information-architect',
     '@auto-engineer/frontend-generator-react-graphql',
     '@auto-engineer/server-checks',

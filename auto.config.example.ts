@@ -8,6 +8,7 @@ export default {
     '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
     '@auto-engineer/frontend-implementer',
+    '@auto-engineer/component-implementer',
     '@auto-engineer/design-system-importer',
     '@auto-engineer/information-architect',
     '@auto-engineer/server-checks',
