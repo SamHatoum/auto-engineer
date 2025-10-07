@@ -18,9 +18,27 @@ import type { GenerateIACommand, GenerateIAEvents } from '@auto-engineer/informa
 import type { ImplementClientCommand } from '@auto-engineer/frontend-implementer';
 import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer/frontend-generator-react-graphql';
 import type { CheckClientEvents } from '@auto-engineer/frontend-checks';
+import type {
+  ImplementComponentCommand,
+  ComponentImplementedEvent,
+  ComponentImplementationFailedEvent,
+} from '@auto-engineer/component-implementer';
+import * as path from 'path';
+import createDebug from 'debug';
+
+const debug = createDebug('auto:config:component');
 
 const sliceRetryState = new Map<string, number>();
 const MAX_RETRIES = 4;
+
+type ComponentType = 'molecule' | 'organism' | 'page';
+const componentPhaseOrder: ComponentType[] = ['molecule', 'organism', 'page'];
+
+let clientComponents: Array<{ type: string; filePath: string }> = [];
+let clientTargetDir = '';
+const processedComponents = new Set<string>();
+const dispatchedPhases = new Set<string>();
+const failedComponents = new Set<string>();
 
 interface CheckFailures {
   testsCheckFailed?: TestsCheckFailedEvent;
@@ -56,6 +74,50 @@ export default autoConfig({
     // 'test:types': checkTypesCommandHandler,
   },
   pipeline: () => {
+    function getComponentsOfType(type: string) {
+      return clientComponents.filter((c) => c.type === type);
+    }
+
+    function areAllProcessed(type: string): boolean {
+      const components = getComponentsOfType(type);
+      if (components.length === 0) return false;
+
+      const allDone = components.every((c) => processedComponents.has(c.filePath) || failedComponents.has(c.filePath));
+
+      if (!allDone) return false;
+
+      const anyFailed = components.some((c) => failedComponents.has(c.filePath));
+
+      return !anyFailed;
+    }
+
+    function dispatchComponentsOfType(type: ComponentType) {
+      const components = getComponentsOfType(type);
+      return components.map((component) => {
+        const componentName = path.basename(component.filePath);
+        return dispatch<ImplementComponentCommand>('ImplementComponent', {
+          projectDir: clientTargetDir,
+          iaSchemeDir: './.context',
+          designSystemPath: './.context/design-system.md',
+          componentType: type,
+          filePath: component.filePath,
+          componentName,
+        });
+      });
+    }
+
+    function tryAdvanceToNextPhase() {
+      for (let i = 0; i < componentPhaseOrder.length - 1; i++) {
+        const currentPhase = componentPhaseOrder[i];
+        const nextPhase = componentPhaseOrder[i + 1];
+        if (areAllProcessed(currentPhase) && !dispatchedPhases.has(nextPhase)) {
+          dispatchedPhases.add(nextPhase);
+          return dispatchComponentsOfType(nextPhase);
+        }
+      }
+      return [];
+    }
+
     on<ExportSchemaEvents>('SchemaExported', () =>
       dispatch<GenerateServerCommand>('GenerateServer', {
         modelPath: './.context/schema.json',
@@ -145,13 +207,73 @@ export default autoConfig({
       }),
     );
 
-    on<GenerateClientEvents>('ClientGenerated', () =>
-      dispatch<ImplementClientCommand>('ImplementClient', {
-        projectDir: './client',
-        iaSchemeDir: './.context',
-        designSystemPath: './.context/design-system.md',
-      }),
-    );
+    on<GenerateClientEvents>('ClientGenerated', (e) => {
+      if (e.type !== 'ClientGenerated') return;
+
+      if (e.data === null || e.data === undefined || !Array.isArray(e.data.components)) {
+        return [
+          dispatch<ImplementComponentCommand>('ImplementComponent', {
+            projectDir: './client',
+            iaSchemeDir: './.context',
+            designSystemPath: './.context/design-system.md',
+            componentType: 'molecule',
+            filePath: 'client/src/components/molecules/Example.tsx',
+            componentName: 'Example.tsx',
+          }),
+        ];
+      }
+
+      debug('ClientGenerated event received');
+      debug('Total components: %d', e.data.components.length);
+      debug(
+        'Component types: %o',
+        e.data.components.map((c) => c.type),
+      );
+
+      clientComponents = e.data.components;
+      clientTargetDir = e.data.targetDir;
+      processedComponents.clear();
+      dispatchedPhases.clear();
+      failedComponents.clear();
+
+      const molecules = clientComponents.filter((c) => c.type === 'molecule');
+      debug('Found %d molecules', molecules.length);
+      debug(
+        'Molecule paths: %o',
+        molecules.map((m) => m.filePath),
+      );
+
+      dispatchedPhases.add('molecule');
+
+      return molecules.map((component) => {
+        const componentName = path.basename(component.filePath);
+        return dispatch<ImplementComponentCommand>('ImplementComponent', {
+          projectDir: clientTargetDir,
+          iaSchemeDir: './.context',
+          designSystemPath: './.context/design-system.md',
+          componentType: 'molecule',
+          filePath: component.filePath,
+          componentName,
+        });
+      });
+    });
+
+    const handleComponentProcessed = (e: ComponentImplementedEvent | ComponentImplementationFailedEvent) => {
+      if (e.data === null || e.data === undefined || e.data.filePath === null || e.data.filePath === undefined) {
+        return [];
+      }
+
+      if (e.type === 'ComponentImplemented') {
+        processedComponents.add(e.data.filePath);
+      } else {
+        failedComponents.add(e.data.filePath);
+      }
+
+      return tryAdvanceToNextPhase();
+    };
+
+    on<ComponentImplementedEvent>('ComponentImplemented', handleComponentProcessed);
+    on<ComponentImplementationFailedEvent>('ComponentImplementationFailed', handleComponentProcessed);
 
     // on<ImplementClientEvents>('ClientImplemented', () =>
     //   dispatch<CheckClientCommand>('CheckClient', {
