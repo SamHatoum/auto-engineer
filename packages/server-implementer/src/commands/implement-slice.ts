@@ -139,6 +139,7 @@ Your Goal:
 - Maintain immutability and adhere to functional best practices.
 - Use only the types and domain constructs already present in the slice.
 - Do not remove existing imports or types that are still referenced or required in the file.
+- Preserve index signatures like [key: string]: unknown as they are required for TypeScript compatibility.
 - Return the entire updated file, not just the modified parts and remove any TODO comments or instructions after implementing the logic
 
 Key rules:
