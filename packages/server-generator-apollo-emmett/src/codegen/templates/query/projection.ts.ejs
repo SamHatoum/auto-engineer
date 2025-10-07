@@ -76,8 +76,10 @@ case '<%= event.type %>': {
     * - If the intent is to **soft delete**, consider adding a `status` field (e.g., `status: 'removed'`).
     * - Ensure consumers of this projection (e.g., UI) handle the chosen approach appropriately.
 <% } else { -%>
-    * This event adds or updates the document.
-    * Implement the correct fields as needed for your read model.
+    * Implement how this event updates the projection.
+    *
+    * The `document` parameter contains the current state. If you need additional context
+    * beyond what's in the public state type, extend it with internal fields.
 <% } -%>
 */
 <% if (isRemovalEvent) { -%>

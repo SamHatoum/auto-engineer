@@ -95,57 +95,57 @@ describe('spec.ts.ejs', () => {
     const specFile = plans.find((p) => p.outputPath.endsWith('specs.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`
-          "import { describe, it } from 'vitest';
-          import { DeciderSpecification } from '@event-driven-io/emmett';
-          import { decide } from './decide';
-          import { evolve } from './evolve';
-          import { initialState, State } from './state';
-          import type { ListingCreated } from './events';
-          import type { CreateListing } from './commands';
+      "import { describe, it } from 'vitest';
+      import { DeciderSpecification } from '@event-driven-io/emmett';
+      import { decide } from './decide';
+      import { evolve } from './evolve';
+      import { initialState, State } from './state';
+      import type { ListingCreated } from './events';
+      import type { CreateListing } from './commands';
 
-          describe('Should create listing successfully', () => {
-            type Events = ListingCreated;
+      describe('Should create listing successfully', () => {
+        type Events = ListingCreated;
 
-            const given = DeciderSpecification.for<CreateListing, Events, State>({
-              decide,
-              evolve,
-              initialState,
-            });
+        const given = DeciderSpecification.for<CreateListing, Events, State>({
+          decide,
+          evolve,
+          initialState,
+        });
 
-            it('User creates listing with valid data', () => {
-              given([])
-                .when({
-                  type: 'CreateListing',
-                  data: {
-                    propertyId: 'listing_123',
-                    title: 'blah',
-                    pricePerNight: 250,
-                    maxGuests: 4,
-                    amenities: ['wifi', 'kitchen'],
-                    available: true,
-                    tags: ['some tag'],
-                    rating: 4.8,
-                    metadata: { foo: 'bar' },
-                    listedAt: new Date('2024-01-15T10:00:00Z'),
-                  },
-                  metadata: { now: new Date() },
-                })
+        it('User creates listing with valid data', () => {
+          given([])
+            .when({
+              type: 'CreateListing',
+              data: {
+                propertyId: 'listing_123',
+                title: 'blah',
+                pricePerNight: 250,
+                maxGuests: 4,
+                amenities: ['wifi', 'kitchen'],
+                available: true,
+                tags: ['some tag'],
+                rating: 4.8,
+                metadata: { foo: 'bar' },
+                listedAt: new Date('2024-01-15T10:00:00Z'),
+              },
+              metadata: { now: new Date() },
+            })
 
-                .then([
-                  {
-                    type: 'ListingCreated',
-                    data: {
-                      propertyId: 'listing_123',
-                      listedAt: new Date('2024-01-15T10:00:00Z'),
-                      rating: 4.8,
-                      metadata: { foo: 'bar' },
-                    },
-                  },
-                ]);
-            });
-          });
-          "
-        `);
+            .then([
+              {
+                type: 'ListingCreated',
+                data: {
+                  propertyId: 'listing_123',
+                  listedAt: new Date('2024-01-15T10:00:00Z'),
+                  rating: 4.8,
+                  metadata: { foo: 'bar' },
+                },
+              },
+            ]);
+        });
+      });
+      "
+    `);
   });
   it('should include given events in the spec file when provided', async () => {
     const spec: SpecsSchema = {

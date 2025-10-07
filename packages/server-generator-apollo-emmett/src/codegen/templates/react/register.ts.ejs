@@ -1,5 +1,4 @@
 <%
-// Extract the first example from specs/rules structure
 const specs = slice.server?.specs;
 const firstExample = specs?.rules?.flatMap(rule => rule.examples)[0] ?? null;
 const gwt = firstExample ? {

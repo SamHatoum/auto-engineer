@@ -4,9 +4,6 @@ import type { <%= commands.map(c => pascalCase(c.type)).join(', ') %> } from './
 
 export function register(messageBus: CommandProcessor, eventStore: EventStore) {
 <% for (const command of commands) { -%>
-    messageBus.handle(
-    (command: <%= pascalCase(command.type) %>) => handle(eventStore, command),
-    '<%= command.type %>'
-    );
+  messageBus.handle<<%= pascalCase(command.type) %>>((command: <%= pascalCase(command.type) %>) => handle(eventStore, command), '<%= command.type %>');
 <% } -%>
 }
