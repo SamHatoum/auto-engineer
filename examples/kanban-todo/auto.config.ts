@@ -20,7 +20,7 @@ import type { GenerateClientCommand, GenerateClientEvents } from '@auto-engineer
 import type { CheckClientEvents } from '@auto-engineer/frontend-checks';
 
 const sliceRetryState = new Map<string, number>();
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 4;
 
 interface CheckFailures {
   testsCheckFailed?: TestsCheckFailedEvent;
