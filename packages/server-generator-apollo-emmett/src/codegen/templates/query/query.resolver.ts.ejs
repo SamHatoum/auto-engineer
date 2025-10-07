@@ -118,9 +118,12 @@ export class <%= viewType %> {
     @Field(() => <%= gqlType %><%= isNullable(tsType) ? ', { nullable: true }' : '' %>)
     <%= field.name %><%= isNullable(tsType) ? '?' : '!' %>: <%= toTsFieldType(tsType) %>;
 <% } } %>
-[key: string]: unknown;
+
+  // IMPORTANT: Index signature required for ReadModel<T extends Record<string, unknown>> compatibility
+  [key: string]: unknown;
 <% } else { %>
-    [key: string]: unknown;
+  // IMPORTANT: Index signature required for ReadModel<T extends Record<string, unknown>> compatibility
+  [key: string]: unknown;
 <% } %>
 }
 
