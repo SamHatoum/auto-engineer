@@ -448,6 +448,17 @@ ${hasScaffold ? `\n\n${existingScaffold}` : '\n(no existing file)'}
 
 ---
 
+### Context-Aware UX Enhancements
+- When implementing this component, analyze its purpose and definition to identify **natural opportunities for advanced interaction**.
+- If the component involves **lists, cards, workflows, task ordering, layout editing, or visual grouping**, consider adding intuitive interactions such as:
+  - drag-and-drop reordering (using existing libraries like \`@dnd-kit\` or similar if present),
+  - inline editing or keyboard navigation,
+  - smooth animations for movement or rearrangement.
+- Only include such enhancements if they **fit the component’s role and improve the user experience** without overcomplicating the design.
+- Never add drag-and-drop or other advanced behavior by default — only when it meaningfully enhances usability and aligns with the IA schema’s intent.
+
+---
+
 Return only the final, complete TypeScript React component source code for ${componentName}.
 `;
 }
