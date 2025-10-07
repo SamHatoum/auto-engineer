@@ -12,7 +12,8 @@ export type ImplementComponentCommand = Command<
     projectDir: string;
     iaSchemeDir: string;
     designSystemPath: string;
-    componentType: 'atom' | 'molecule' | 'organism' | 'page';
+    componentType: 'atom' | 'molecule' | 'organism' | 'page' | 'app';
+    filePath: string;
     componentName: string;
     failures?: string[];
   }
@@ -35,6 +36,7 @@ export type ComponentImplementationFailedEvent = Event<
     error: string;
     componentType: string;
     componentName: string;
+    filePath: string;
   }
 >;
 
@@ -52,9 +54,10 @@ export const commandHandler = defineCommandHandler<
     iaSchemeDir: { description: 'IA schema directory path', required: true },
     designSystemPath: { description: 'Design system file path', required: true },
     componentType: {
-      description: 'Type of component: atom|molecule|organism|page',
+      description: 'Type of component: atom|molecule|organism|page|app',
       required: true,
     },
+    filePath: { description: 'Component file path', required: true },
     componentName: { description: 'Name of component to implement', required: true },
     failures: {
       description: 'Any failures from previous implementations',
@@ -86,7 +89,15 @@ export const commandHandler = defineCommandHandler<
 async function handleImplementComponentCommandInternal(
   command: ImplementComponentCommand,
 ): Promise<ComponentImplementedEvent | ComponentImplementationFailedEvent> {
-  const { projectDir, iaSchemeDir, designSystemPath, componentType, componentName, failures = [] } = command.data;
+  const {
+    projectDir,
+    iaSchemeDir,
+    designSystemPath,
+    componentType,
+    filePath,
+    componentName,
+    failures = [],
+  } = command.data;
 
   try {
     const userPreferencesFile = path.resolve(projectDir, 'design-system-principles.md');
@@ -142,6 +153,7 @@ async function handleImplementComponentCommandInternal(
         error: error instanceof Error ? error.message : String(error),
         componentType,
         componentName,
+        filePath,
       },
       timestamp: new Date(),
       requestId: command.requestId,
