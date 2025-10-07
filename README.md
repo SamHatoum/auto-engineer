@@ -20,7 +20,6 @@
 
 Stay up to date by watching 👀 and giving us a star ⭐ - join the 💬 Discord for conversations.
 
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -28,9 +27,9 @@ Stay up to date by watching 👀 and giving us a star ⭐ - join the 💬 Discor
 Please ensure you have the following dependencies installed:
 
 - **Node.js**: Version 20.0.0 or higher
-- ***A package manager**: pnpm (recommended) / npm / yarn / bun
+- **\*A package manager**: pnpm (recommended) / npm / yarn / bun
 - **AI Provider API Key**: Anthropic (recommended) / OpenAI / Google / xAI Grok / Custom
-    - For custom models and/or routers, see the .env.template
+  - For custom models and/or routers, see the .env.template
 
 ### Installation Steps
 
@@ -41,17 +40,19 @@ npx create-auto-app@latest # Tip: the todo example is a good start
 ```
 
 2. **Configure API keys**
-Copy the `.env.template` variables into a new `.env` and configure your API keys for your preferred model(s).
+   Copy the `.env.template` variables into a new `.env` and configure your API keys for your preferred model(s).
 
 3. **Run the app**
-Go into the generated directory `cd <project-name>` and run:
+   Go into the generated directory `cd <project-name>` and run:
 
 ```bash
 auto
 ```
+
 You should see `server running on http://localhost:5555` in your console. You're ready to start exploring!
 
 ### Explore Flows
+
 Open one of the flow files in your IDE. Flow files are located under `/flows` in the example you installed.
 
 Next, navigate to http://localhost:5555 in your browser. Click the button to go to your sandbox, and you'll see the visual counterpart of the flow that you saw in your IDE. 🤯
@@ -63,12 +64,14 @@ Click on a slice, which are the purple boxes that you see inside the flows, and 
 As you make changes, you'll see an "sync" icon with a number in the top right. This is an indication of the number of differences between the sandbox and your IDE. You can think of the sandbox you're working in as a git remote that you need to push and pull from.
 
 ### Collaborate on your Flows
+
 Grab the `sandbox.on.auto/...` link that you see in your browser and share it with your colleagues. They can immediately collaborate with you on your canvas! No apps to download, just instant access to the flows. Any changes they make will also appear for you in the top right sync icon. This allows you to collaborate with non-technical people and get their input, while still keeping it real. 🤘
 
 ### Build your Flows
-Ok, so you've authored a flow to your liking, sliced and diced it, you've collaborated on it, and got a 👍 from  your colleagues. Now let's build your app!
 
-On the left toolbar, you'll see a pipelines icon. Click it and you'll see a visual of a pipeline. 
+Ok, so you've authored a flow to your liking, sliced and diced it, you've collaborated on it, and got a 👍 from your colleagues. Now let's build your app!
+
+On the left toolbar, you'll see a pipelines icon. Click it and you'll see a visual of a pipeline.
 
 Select "Export Schema" and click run, then continue reading as you marvel at cogs turning.
 
@@ -77,33 +80,39 @@ The pipelines are where all the magic happens. First the flows are converted int
 The pipeline gives you full control over how you want apps to be built. The example has a set of default that the Auto team put together, but everything is customizable to the nth degree, including the Flow DSL itself!
 
 ### Preview your Flows
+
 Once the run is complete, you can go to `https://localhost:3000` and preview your newly created app.
 
 Congratulations, you built your first app using Auto! 🚀
 
 ## Explore more
+
 Head over to the [Discord Community](https://discord.gg/B8BKcKMRm8) to chat with the team and community directly for more.
 
 Let's go through some of the other features Auto provides you.
 
 ### Configuring your pipeline
+
 The pipelines are a little bit like CI/CD pipelines, but on steroids! Just like CI/CD, you can configure the steps required to build, test, and deploy. However unlike CI/CD these pipelines have feedback loops. The output of one job can retrigger another job. Some jobs may even ask for asynchronous input from humans. This is why we call them Software Development Lifecycle pipelines. They help you automated your whole SDLC.
 
 You can configure these pipelines in `auto.config.ts` file. In there you will find a set of reactions that read something like this: `on(SomeEvent).dispatch(SomeCommand)`. By chaining these reactions together you can build SDLC pipelines that are as simple or complex as you like.
 
-Some jobs are procedural and deterministic, some are stochastic and non-deterministic, and some are a mix of both. 
+Some jobs are procedural and deterministic, some are stochastic and non-deterministic, and some are a mix of both.
 
-Job are triggered by a single command and emit one or more events – of they might emit an error if they fail or timeout unexpectedly. 
+Job are triggered by a single command and emit one or more events – of they might emit an error if they fail or timeout unexpectedly.
 
 You can read more about pipelines in the core-concepts section.
 
 ### Running commands from the CLI
+
 Just like you can run commands from the UI, you can also run from them from the CLI.
 
 If you'd like to see which commands are available, type this in your console:
+
 ```bash
 auto --help
 ```
+
 You'll get a list of commands based on the plugins you have configured in your `auto.config.ts` file
 
 ```

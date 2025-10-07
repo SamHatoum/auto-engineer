@@ -136,25 +136,13 @@ export const commandHandler = defineCommandHandler<
         debugResult('Failed tests: %d', testsFailed);
         debugResult('Failed files: %s', failedTests.join(', '));
 
-        // Extract only error messages, not full output
-        const errorLines = output
-          .split('\n')
-          .filter(
-            (line) =>
-              (line.includes('✓') === false && line.includes('✗')) ||
-              line.includes('Error:') ||
-              line.includes('AssertionError') ||
-              line.includes('expected') ||
-              line.includes('received') ||
-              line.includes('FAIL'),
-          )
-          .join('\n');
+        const errorMessages = extractTestErrors(output);
 
         return {
           type: 'TestsCheckFailed',
           data: {
             targetDirectory,
-            errors: errorLines || output.substring(0, 1000),
+            errors: errorMessages || output.substring(0, 2000),
             failedTests: failedTests.map((f) => path.relative(targetDir, f)),
             testsRun,
             testsFailed,
@@ -212,6 +200,46 @@ async function findProjectRoot(startDir: string): Promise<string> {
     }
   }
   throw new Error('Could not find project root (no package.json found)');
+}
+
+function stripAnsiCodes(text: string): string {
+  const ansiEscape = String.fromCharCode(27);
+  const ansiPattern = new RegExp(`${ansiEscape}\\[[0-9;]*m`, 'g');
+  return text.replace(ansiPattern, '');
+}
+
+function extractTestErrors(output: string): string {
+  const lines = output.split('\n');
+  const errorSections: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const cleanLine = stripAnsiCodes(line);
+
+    if (
+      cleanLine.includes('FAIL') ||
+      cleanLine.includes('AssertionError') ||
+      cleanLine.includes('Error:') ||
+      (cleanLine.includes('expected') && cleanLine.includes('to match'))
+    ) {
+      const contextStart = Math.max(0, i - 2);
+      const contextEnd = Math.min(lines.length, i + 30);
+      const errorBlock = lines.slice(contextStart, contextEnd);
+
+      const cleanedBlock = errorBlock
+        .map((l) => stripAnsiCodes(l))
+        .filter((l) => {
+          const trimmed = l.trim();
+          return trimmed.length > 0 && !trimmed.startsWith('✓') && !trimmed.match(/^\d+ (passed|tests?)/);
+        });
+
+      errorSections.push(cleanedBlock.join('\n'));
+
+      i = contextEnd;
+    }
+  }
+
+  return errorSections.join('\n\n---\n\n');
 }
 
 function parseVitestOutput(output: string): {
