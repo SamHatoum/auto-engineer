@@ -93,10 +93,8 @@ export default autoConfig({
 
     function dispatchComponentsOfType(type: ComponentType) {
       const components = getComponentsOfType(type);
-      debug('Dispatching %d components of type %s', components.length, type);
       return components.map((component) => {
         const componentName = path.basename(component.filePath).replace('.tsx', '');
-        debug('Dispatching component: %s', componentName);
         return dispatch<ImplementComponentCommand>('ImplementComponent', {
           projectDir: clientTargetDir,
           iaSchemeDir: './.context',
@@ -118,18 +116,6 @@ export default autoConfig({
         }
       }
       return [];
-    }
-
-    function processComponentEvent(event: ComponentImplementedEvent | ComponentImplementationFailedEvent) {
-      if (event.data?.filePath) {
-        if (event.type === 'ComponentImplemented') {
-          processedComponents.add(event.data.filePath);
-          debug('✓ Component succeeded: %s', event.data.filePath);
-        } else {
-          failedComponents.add(event.data.filePath);
-          debug('✗ Component failed: %s', event.data.filePath);
-        }
-      }
     }
 
     on<ExportSchemaEvents>('SchemaExported', () =>
@@ -272,33 +258,22 @@ export default autoConfig({
       });
     });
 
-    on.settled<ImplementComponentCommand>(
-      ['ImplementComponent'],
-      dispatch<ImplementComponentCommand>(['ImplementComponent'], (events) => {
-        debug('Component batch settled with %d events', events.ImplementComponent?.length ?? 0);
+    const handleComponentProcessed = (e: ComponentImplementedEvent | ComponentImplementationFailedEvent) => {
+      if (e.data === null || e.data === undefined || e.data.filePath === null || e.data.filePath === undefined) {
+        return [];
+      }
 
-        const componentEvents = events.ImplementComponent as Array<
-          ComponentImplementedEvent | ComponentImplementationFailedEvent
-        >;
+      if (e.type === 'ComponentImplemented') {
+        processedComponents.add(e.data.filePath);
+      } else {
+        failedComponents.add(e.data.filePath);
+      }
 
-        if (componentEvents === null || componentEvents === undefined || componentEvents.length === 0) {
-          return { persist: false };
-        }
+      return tryAdvanceToNextPhase();
+    };
 
-        componentEvents.forEach(processComponentEvent);
-
-        const succeeded = componentEvents.filter((e) => e.type === 'ComponentImplemented').length;
-        const failed = componentEvents.filter((e) => e.type === 'ComponentImplementationFailed').length;
-        debug('Batch complete: %d succeeded, %d failed', succeeded, failed);
-
-        const nextPhaseDispatches = tryAdvanceToNextPhase();
-        if (nextPhaseDispatches.length > 0) {
-          debug('Advancing to next phase with %d dispatches', nextPhaseDispatches.length);
-        }
-
-        return { persist: false };
-      }),
-    );
+    on<ComponentImplementedEvent>('ComponentImplemented', handleComponentProcessed);
+    on<ComponentImplementationFailedEvent>('ComponentImplementationFailed', handleComponentProcessed);
 
     // on<ImplementClientEvents>('ClientImplemented', () =>
     //   dispatch<CheckClientCommand>('CheckClient', {
