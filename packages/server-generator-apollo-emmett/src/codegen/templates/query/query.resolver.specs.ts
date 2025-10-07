@@ -87,6 +87,7 @@ describe('query.resolver.ts.ejs', () => {
         @Field(() => Float)
         maxGuests!: number;
 
+        // IMPORTANT: Index signature required for ReadModel<T extends Record<string, unknown>> compatibility
         [key: string]: unknown;
       }
 
@@ -217,6 +218,7 @@ describe('query.resolver.ts.ejs', () => {
         @Field(() => [SuggestedItemsItems])
         items!: SuggestedItemsItems[];
 
+        // IMPORTANT: Index signature required for ReadModel<T extends Record<string, unknown>> compatibility
         [key: string]: unknown;
       }
 
@@ -391,6 +393,7 @@ describe('query.resolver.ts.ejs', () => {
         @Field(() => [QuestionnaireProgressAnswers])
         answers!: QuestionnaireProgressAnswers[];
 
+        // IMPORTANT: Index signature required for ReadModel<T extends Record<string, unknown>> compatibility
         [key: string]: unknown;
       }
 

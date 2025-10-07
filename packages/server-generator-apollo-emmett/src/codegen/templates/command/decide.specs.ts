@@ -93,6 +93,7 @@ describe('decide.ts.ejs', () => {
              * - Validate the command input fields
              * - Inspect the current domain \`state\` to determine if the command is allowed
              * - If invalid, throw one of the following domain errors: \`NotFoundError\`, \`ValidationError\`, or \`IllegalStateError\`
+             *   ⚠️ Error constructors: NotFoundError takes { id, type, message? }, while IllegalStateError/ValidationError take string
              * - If valid, return one or more events with the correct structure
              *
              * ⚠️ Only read from inputs — never mutate them. \`evolve.ts\` handles state updates.
@@ -218,6 +219,7 @@ describe('decide.ts.ejs', () => {
              * - Validate the command input fields
              * - Inspect the current domain \`state\` to determine if the command is allowed
              * - If invalid, throw one of the following domain errors: \`NotFoundError\`, \`ValidationError\`, or \`IllegalStateError\`
+             *   ⚠️ Error constructors: NotFoundError takes { id, type, message? }, while IllegalStateError/ValidationError take string
              * - If valid, return one or more events with the correct structure
              *
              * ⚠️ Only read from inputs — never mutate them. \`evolve.ts\` handles state updates.
@@ -358,6 +360,7 @@ describe('decide.ts.ejs', () => {
              * - Validate the command input fields
              * - Inspect the current domain \`state\` to determine if the command is allowed
              * - If invalid, throw one of the following domain errors: \`NotFoundError\`, \`ValidationError\`, or \`IllegalStateError\`
+             *   ⚠️ Error constructors: NotFoundError takes { id, type, message? }, while IllegalStateError/ValidationError take string
              * - If valid, return one or more events with the correct structure
              *
              * ⚠️ Only read from inputs — never mutate them. \`evolve.ts\` handles state updates.
@@ -545,6 +548,7 @@ describe('decide.ts.ejs', () => {
              * - Inspect the current domain \`state\` to determine if the command is allowed
              * - Use \`products\` (integration result) to enrich or filter the output
              * - If invalid, throw one of the following domain errors: \`NotFoundError\`, \`ValidationError\`, or \`IllegalStateError\`
+             *   ⚠️ Error constructors: NotFoundError takes { id, type, message? }, while IllegalStateError/ValidationError take string
              * - If valid, return one or more events with the correct structure
              *
              * ⚠️ Only read from inputs — never mutate them. \`evolve.ts\` handles state updates.

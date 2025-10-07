@@ -227,8 +227,10 @@ describe('projection.ts.ejs', () => {
             case 'ListingCreated': {
               /**
                * ## IMPLEMENTATION INSTRUCTIONS ##
-               * This event adds or updates the document.
-               * Implement the correct fields as needed for your read model.
+               * Implement how this event updates the projection.
+               *
+               * The \`document\` parameter contains the current state. If you need additional context
+               * beyond what's in the public state type, extend it with internal fields.
                */
               return {
                 propertyId: /* TODO: map from event.data */ '',
@@ -329,6 +331,7 @@ describe('projection.ts.ejs', () => {
         @Field(() => String)
         items!: string;
 
+        // IMPORTANT: Index signature required for ReadModel<T extends Record<string, unknown>> compatibility
         [key: string]: unknown;
       }
 
