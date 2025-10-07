@@ -1,6 +1,5 @@
 import { CommandSender, EventStore, type InMemoryDatabase } from '@event-driven-io/emmett';
-import { Field, ObjectType } from 'type-graphql';
-
+import { Field, ObjectType, registerEnumType } from 'type-graphql';
 export interface ReactorContext {
   eventStore: EventStore;
   commandSender: CommandSender;
@@ -31,3 +30,13 @@ export class MutationResponse {
   @Field(() => MutationError, { nullable: true })
   error?: MutationError;
 }
+
+export enum Status {
+  IN_PROGRESS = 'in_progress',
+  READY_TO_SUBMIT = 'ready_to_submit',
+  SUBMITTED = 'submitted',
+}
+
+registerEnumType(Status, {
+  name: 'Status',
+});

@@ -8,50 +8,6 @@ const message = messages?.find(m => m.name === viewType);
 const resolverClassName = `${pascalCase(slice.name)}QueryResolver`;
 const usesID = parsedRequest?.args?.some(arg => graphqlType(arg.tsType) === 'ID');
 
-function isInlineObject(ts) {
-    return /^\{[\s\S]*\}$/.test((ts ?? '').trim());
-}
-function isInlineObjectArray(ts) {
-    const t = (ts ?? '').trim();
-    return /^Array<\{[\s\S]*\}>$/.test(t) || /^\{[\s\S]*\}\[\]$/.test(t);
-}
-function baseTs(ts) {
-    return (ts ?? 'string').replace(/\s*\|\s*null\b/g, '').trim();
-}
-function fieldUsesDate(ts) {
-    const b = baseTs(ts);
-    const gqlType = graphqlType(b);
-    if (gqlType.includes('GraphQLISODateTime')) return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*Date\b/.test(b);
-    return false;
-}
-function fieldUsesJSON(ts) {
-    const b = baseTs(ts);
-    const gqlType = graphqlType(b);
-    if (gqlType.includes('GraphQLJSON') || gqlType.includes('JSON')) return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*(unknown|any|object)\b/.test(b);
-    return false;
-}
-function fieldUsesFloat(ts) {
-    const b = baseTs(ts);
-    const gqlType = graphqlType(b);
-    if (gqlType.includes('Float')) return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) {
-        const inner = b.trim().startsWith('Array<')
-            ? b.trim().replace(/^Array<\{/, '{').replace(/}>$/, '}')
-            : b.trim().replace(/\[\]$/, '');
-        const match = inner.match(/^\{([\s\S]*)\}$/);
-        const body = match ? match[1] : '';
-        const rawFields = body.split(/[,;]\s*/).filter(Boolean);
-        return rawFields.some(f => {
-            const parts = f.split(':');
-            const type = parts.slice(1).join(':').trim();
-            return type && graphqlType(type).includes('Float');
-        });
-    }
-    return false;
-}
-
 const messageFields = message?.fields ?? [];
 const usesDate = messageFields.some(f => fieldUsesDate(f.type)) ||
         (parsedRequest?.args ?? []).some(a => fieldUsesDate(a.tsType));
@@ -59,6 +15,8 @@ const usesJSON = messageFields.some(f => fieldUsesJSON(f.type)) ||
         (parsedRequest?.args ?? []).some(a => fieldUsesJSON(a.tsType));
 const usesFloat = messageFields.some(f => fieldUsesFloat(f.type)) ||
         (parsedRequest?.args ?? []).some(a => fieldUsesFloat(a.tsType));
+
+const enumList = collectEnumNames([...messageFields, ...(parsedRequest?.args ?? [])]);
 
 const embeddedTypes = [];
 for (const field of messageFields) {
@@ -70,10 +28,11 @@ for (const field of messageFields) {
         });
     }
 }
+const hasArgs = parsedRequest?.args?.length > 0;
 %>
-import { Query, Resolver, Arg, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesFloat) { %>, Float<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
+import { Query, Resolver<% if (hasArgs) { %>, Arg<% } %>, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesFloat) { %>, Float<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
 <% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
-<% } %>import { type GraphQLContext, ReadModel } from '../../../shared';
+<% } %>import { type GraphQLContext, ReadModel<% if (enumList.length > 0) { %>, <%= enumList.join(', ') %><% } %> } from '../../../shared';
 
 <%
         for (const { typeName, tsType } of embeddedTypes) {
@@ -151,7 +110,7 @@ const model = new ReadModel<<%= viewType %>>(ctx.database, '<%= projectionType %
 // Example below uses \`.find()\` to filter
 // change the logic for the query as needed to meet the requirements for the current slice.
 
-return model.find((item) => {
+return model.find((<%= hasArgs ? 'item' : '_item' %>) => {
 <% if (parsedRequest?.args?.length) {
         for (const arg of parsedRequest.args) { %>
     if (<%= arg.name %> !== undefined && item.<%= arg.name %> !== <%= arg.name %>) return false;

@@ -1,29 +1,8 @@
 <%
-function isInlineObject(ts) {
-    return /^\{[\s\S]*\}$/.test((ts ?? '').trim());
-}
-function isInlineObjectArray(ts) {
-    const t = (ts ?? '').trim();
-    return /^Array<\{[\s\S]*\}>$/.test(t) || /^\{[\s\S]*\}\[\]$/.test(t);
-}
-function baseTs(ts) {
-    return (ts ?? 'string').replace(/\s*\|\s*null\b/g, '').trim();
-}
-function fieldUsesDate(ts) {
-    const b = baseTs(ts);
-    if (b === 'Date') return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*Date\b/.test(b);
-    return false;
-}
-function fieldUsesJSON(ts) {
-    const b = baseTs(ts);
-    if (b === 'unknown' || b === 'any' || b === 'object') return true;
-    if (isInlineObject(b) || isInlineObjectArray(b)) return /:\s*(unknown|any|object)\b/.test(b);
-    return false;
-}
 const cmd = commands[0];
 const usesDate = cmd.fields.some(f => fieldUsesDate(f.tsType));
 const usesJSON = cmd.fields.some(f => fieldUsesJSON(f.tsType));
+const enumList = collectEnumNames(cmd.fields);
 
 const embeddedInputs = [];
 for (const f of cmd.fields) {
@@ -38,7 +17,7 @@ for (const f of cmd.fields) {
 %>
 import { Mutation, Resolver, Arg, Ctx, Field, InputType<% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
 <% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
-<% } %>import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
+<% } %>import { type GraphQLContext, sendCommand, MutationResponse<% if (enumList.length > 0) { %>, <%= enumList.join(', ') %><% } %> } from '../../../shared';
 
 <% for (const { typeName, tsType } of embeddedInputs) {
     const inner = tsType.trim().startsWith('Array<')

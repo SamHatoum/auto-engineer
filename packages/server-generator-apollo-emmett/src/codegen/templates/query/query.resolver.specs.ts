@@ -362,7 +362,7 @@ describe('query.resolver.ts.ejs', () => {
     expect(queryFile?.contents).toMatchInlineSnapshot(`
       "import { Query, Resolver, Arg, Ctx, ObjectType, Field, ID } from 'type-graphql';
       import { GraphQLJSON } from 'graphql-type-json';
-      import { type GraphQLContext, ReadModel } from '../../../shared';
+      import { type GraphQLContext, ReadModel, Status } from '../../../shared';
 
       @ObjectType()
       export class QuestionnaireProgressAnswers {
@@ -381,8 +381,8 @@ describe('query.resolver.ts.ejs', () => {
         @Field(() => String)
         participantId!: string;
 
-        @Field(() => String)
-        status!: 'in_progress' | 'ready_to_submit' | 'submitted';
+        @Field(() => Status)
+        status!: Status;
 
         @Field(() => String, { nullable: true })
         currentQuestionId?: string | null;

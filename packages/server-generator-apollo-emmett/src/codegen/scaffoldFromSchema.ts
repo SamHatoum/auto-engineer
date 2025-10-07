@@ -25,6 +25,14 @@ import {
   getAllEventTypes,
   getLocalEvents,
   createEventUnionType,
+  isInlineObject as isInlineObjectHelper,
+  isInlineObjectArray as isInlineObjectArrayHelper,
+  baseTs,
+  createIsEnumType,
+  createFieldUsesDate,
+  createFieldUsesJSON,
+  createFieldUsesFloat,
+  createCollectEnumNames,
 } from './extract';
 
 function extractGwtSpecs(slice: Slice) {
@@ -61,12 +69,204 @@ const defaultFilesByType: Record<string, string[]> = {
   react: ['react.ts.ejs', 'react.specs.ts.ejs', 'register.ts.ejs'],
 };
 
+interface EnumDefinition {
+  name: string;
+  values: string[];
+  unionString: string;
+}
+
+interface EnumContext {
+  enums: EnumDefinition[];
+  unionToEnumName: Map<string, string>;
+}
+
+function isStringLiteralUnion(s: string): boolean {
+  return /^"[^"]+"(\s*\|\s*"[^"]+")+$/.test(s.trim()) || /^'[^']+'(\s*\|\s*'[^']+)+$/.test(s.trim());
+}
+
+function extractStringLiteralValues(unionString: string): string[] {
+  const doubleQuoted = unionString.match(/"([^"]+)"/g);
+  const singleQuoted = unionString.match(/'([^']+)'/g);
+  const matches = doubleQuoted ?? singleQuoted;
+  if (matches === null) return [];
+  return matches.map((m) => m.slice(1, -1));
+}
+
+function normalizeUnionString(values: string[]): string {
+  return values
+    .slice()
+    .sort()
+    .map((v) => `'${v}'`)
+    .join(' | ');
+}
+
+function generateEnumName(fieldName: string, existingNames: Set<string>): string {
+  const baseName = pascalCase(fieldName);
+  if (!existingNames.has(baseName)) {
+    return baseName;
+  }
+  let counter = 2;
+  while (existingNames.has(`${baseName}${counter}`)) {
+    counter++;
+  }
+  return `${baseName}${counter}`;
+}
+
+function processFieldForEnum(
+  field: { name: string; type: string },
+  unionToEnumName: Map<string, string>,
+  existingEnumNames: Set<string>,
+): EnumDefinition | null {
+  const tsType = field.type;
+  debug('    Field: %s, type: %O', field.name, tsType);
+  if (tsType === null || tsType === undefined) return null;
+
+  const cleanType = tsType.replace(/\s*\|\s*null\b/g, '').trim();
+  const isUnion = isStringLiteralUnion(cleanType);
+  debug('      cleanType: %O, isStringLiteralUnion: %s', cleanType, isUnion);
+  if (!isUnion) return null;
+
+  const values = extractStringLiteralValues(cleanType);
+  debug('      extracted values: %O', values);
+  if (values.length === 0) return null;
+
+  const normalized = normalizeUnionString(values);
+
+  if (unionToEnumName.has(normalized)) {
+    debug('      already has enum for this union, skipping');
+    return null;
+  }
+
+  const enumName = generateEnumName(field.name, existingEnumNames);
+  existingEnumNames.add(enumName);
+  debug('      ✓ Creating enum: %s with values %O', enumName, values);
+
+  const enumDef: EnumDefinition = {
+    name: enumName,
+    values,
+    unionString: normalized,
+  };
+
+  unionToEnumName.set(normalized, enumName);
+  return enumDef;
+}
+
+function extractEnumsFromMessages(messages: MessageDefinition[]): EnumContext {
+  const unionToEnumName = new Map<string, string>();
+  const enums: EnumDefinition[] = [];
+  const existingEnumNames = new Set<string>();
+
+  debug('extractEnumsFromMessages: processing %d messages', messages.length);
+
+  for (const message of messages) {
+    debug('  Message: %s, has fields: %s', message.name, message.fields !== undefined && message.fields !== null);
+    if (message.fields === undefined || message.fields === null) continue;
+
+    for (const field of message.fields) {
+      const enumDef = processFieldForEnum(field, unionToEnumName, existingEnumNames);
+      if (enumDef !== null) {
+        enums.push(enumDef);
+      }
+    }
+  }
+
+  debug('extractEnumsFromMessages: found %d enums total', enums.length);
+  return { enums, unionToEnumName };
+}
+
+function generateEnumTypeScript(enumDef: EnumDefinition): string {
+  const entries = enumDef.values.map((val) => {
+    const key = val.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+    return `  ${key} = '${val}',`;
+  });
+
+  return `export enum ${enumDef.name} {
+${entries.join('\n')}
+}
+
+registerEnumType(${enumDef.name}, {
+  name: '${enumDef.name}',
+});`;
+}
+
+async function appendEnumsToSharedTypes(baseDir: string, enums: EnumDefinition[]): Promise<void> {
+  if (enums.length === 0) return;
+
+  const sharedTypesPath = path.join(baseDir, 'shared', 'types.ts');
+
+  let existingContent = '';
+  try {
+    existingContent = await fs.readFile(sharedTypesPath, 'utf8');
+  } catch {
+    throw new Error(`Failed to read existing types file at ${sharedTypesPath}`);
+  }
+
+  const enumsToAdd = enums.filter((e) => {
+    const enumPattern = new RegExp(`export\\s+enum\\s+${e.name}\\s*\\{`, 'm');
+    return !enumPattern.test(existingContent);
+  });
+
+  if (enumsToAdd.length === 0) {
+    debug('All enums already exist in %s, skipping', sharedTypesPath);
+    return;
+  }
+
+  debug('Adding %d new enums to %s', enumsToAdd.length, sharedTypesPath);
+
+  const hasRegisterEnumImport = existingContent.includes('registerEnumType');
+  const enumCode = enumsToAdd.map((e) => generateEnumTypeScript(e)).join('\n\n');
+
+  let newContent: string;
+  if (hasRegisterEnumImport) {
+    newContent = `${existingContent.trimEnd()}\n\n${enumCode}\n`;
+  } else {
+    const importMatch = existingContent.match(/^([\s\S]*?)(import.*from\s+['"]type-graphql['"];?\s*\n)/m);
+    if (importMatch !== null) {
+      const beforeImport = importMatch[1];
+      const typeGraphqlImport = importMatch[2];
+      const afterImport = existingContent.slice(beforeImport.length + typeGraphqlImport.length);
+
+      const updatedImport = typeGraphqlImport.replace(
+        /^import\s*\{([^}]*)\}\s*from\s*['"]type-graphql['"];?\s*$/m,
+        (_match: string, imports: string): string => {
+          const importsList = imports
+            .split(',')
+            .map((s) => s.trim())
+            .filter((item) => item.length > 0);
+          if (!importsList.includes('registerEnumType')) {
+            importsList.push('registerEnumType');
+          }
+          return `import { ${importsList.join(', ')} } from 'type-graphql';`;
+        },
+      );
+
+      newContent = `${beforeImport}${updatedImport}${afterImport.trimEnd()}\n\n${enumCode}\n`;
+    } else {
+      newContent = `import { registerEnumType } from 'type-graphql';\n\n${existingContent.trimEnd()}\n\n${enumCode}\n`;
+    }
+  }
+
+  const prettierConfig = await prettier.resolveConfig(sharedTypesPath);
+  const formatted = await prettier.format(newContent, {
+    ...prettierConfig,
+    parser: 'typescript',
+    filepath: sharedTypesPath,
+  });
+
+  await fs.writeFile(sharedTypesPath, formatted, 'utf8');
+  debug('Appended %d enums to %s', enums.length, sharedTypesPath);
+}
+
 export interface FilePlan {
   outputPath: string;
   contents: string;
 }
 
-async function renderTemplate(templatePath: string, data: Record<string, unknown>): Promise<string> {
+async function renderTemplate(
+  templatePath: string,
+  data: Record<string, unknown>,
+  unionToEnumName: Map<string, string> = new Map(),
+): Promise<string> {
   debugTemplate('Rendering template: %s', templatePath);
   debugTemplate('Data keys: %o', Object.keys(data));
 
@@ -78,14 +278,13 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
   });
   debugTemplate('Template compiled successfully');
 
-  const isInlineObject = (s: string) => /^\{[\s\S]*\}$/.test(s.trim());
-  const isStringLiteralUnion = (s: string) => /^"(?:[^"]+)"\s*(\|\s*"(?:[^"]+)")+$/.test(s.trim());
+  const isInlineObject = isInlineObjectHelper;
+  const isInlineObjectArray = isInlineObjectArrayHelper;
+
   const convertPrimitiveType = (base: string): string => {
-    // GraphQL-native scalars
     if (base === 'ID') return 'ID';
     if (base === 'Int') return 'Int';
     if (base === 'Float') return 'Float';
-    // TS primitives
     if (base === 'string') return 'String';
     if (base === 'number') return 'Float';
     if (base === 'boolean') return 'Boolean';
@@ -93,32 +292,57 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
     return 'String';
   };
 
+  const resolveEnumOrString = (base: string): string => {
+    if (!isStringLiteralUnion(base)) return 'String';
+    const values = extractStringLiteralValues(base);
+    const normalized = normalizeUnionString(values);
+    const enumName = unionToEnumName.get(normalized);
+    return enumName ?? 'String';
+  };
+
   const graphqlType = (rawTs: string): string => {
     const t = (rawTs ?? '').trim();
     if (!t) return 'String';
     const base = t.replace(/\s*\|\s*null\b/g, '').trim();
-    // arrays
+
     const arr1 = base.match(/^Array<(.*)>$/);
     const arr2 = base.match(/^(.*)\[\]$/);
-    if (arr1) return `[${graphqlType(arr1[1].trim())}]`;
-    if (arr2) return `[${graphqlType(arr2[1].trim())}]`;
-    // JSON
+    if (arr1 !== null) return `[${graphqlType(arr1[1].trim())}]`;
+    if (arr2 !== null) return `[${graphqlType(arr2[1].trim())}]`;
+
     if (base === 'unknown' || base === 'any') return 'GraphQLJSON';
     if (base === 'object') return 'JSON';
     if (isInlineObject(base)) return 'JSON';
-    if (isStringLiteralUnion(base)) return 'String';
+    if (isStringLiteralUnion(base)) return resolveEnumOrString(base);
+
     return convertPrimitiveType(base);
   };
 
   const toTsFieldType = (ts: string): string => {
     if (!ts) return 'string';
     const t = ts.trim();
-    const arr = t.match(/^Array<(.*)>$/);
-    if (arr) return `${arr[1].trim()}[]`;
+    const cleanType = t.replace(/\s*\|\s*null\b/g, '').trim();
+
+    const arr = cleanType.match(/^Array<(.*)>$/);
+    if (arr !== null) return `${toTsFieldType(arr[1].trim())}[]`;
+
+    if (isStringLiteralUnion(cleanType)) {
+      const values = extractStringLiteralValues(cleanType);
+      const normalized = normalizeUnionString(values);
+      const enumName = unionToEnumName.get(normalized);
+      if (enumName !== undefined) return enumName;
+    }
+
     return t;
   };
 
   const isNullable = (rawTs: string): boolean => /\|\s*null\b/.test(rawTs);
+
+  const isEnumType = createIsEnumType(toTsFieldType);
+  const fieldUsesDate = createFieldUsesDate(graphqlType);
+  const fieldUsesJSON = createFieldUsesJSON(graphqlType);
+  const fieldUsesFloat = createFieldUsesFloat(graphqlType);
+  const collectEnumNames = createCollectEnumNames(isEnumType, toTsFieldType);
 
   const result = await template({
     ...data,
@@ -132,6 +356,14 @@ async function renderTemplate(templatePath: string, data: Record<string, unknown
     formatDataObject,
     messages: data.messages,
     message: data.message,
+    isInlineObject,
+    isInlineObjectArray,
+    baseTs,
+    isEnumType,
+    fieldUsesDate,
+    fieldUsesJSON,
+    fieldUsesFloat,
+    collectEnumNames,
   });
 
   debugTemplate('Template rendered, output size: %d bytes', result.length);
@@ -188,6 +420,7 @@ async function generateFileForTemplate(
   slice: Slice,
   sliceDir: string,
   templateData: Record<string, unknown>,
+  unionToEnumName: Map<string, string> = new Map(),
 ): Promise<FilePlan> {
   debugFiles('Generating file from template: %s', templateFile);
   debugFiles('  Slice type: %s', slice.type);
@@ -201,7 +434,7 @@ async function generateFileForTemplate(
   debugFiles('  Template path: %s', templatePath);
   debugFiles('  Output path: %s', outputPath);
 
-  const contents = await renderTemplate(templatePath, templateData);
+  const contents = await renderTemplate(templatePath, templateData, unionToEnumName);
   debugFiles('  Rendered content size: %d bytes', contents.length);
 
   debugFiles('  Formatting with Prettier...');
@@ -407,6 +640,7 @@ async function generateFilesForSlice(
   sliceDir: string,
   messages: MessageDefinition[],
   flows: Flow[],
+  unionToEnumName: Map<string, string>,
   integrations?: Model['integrations'],
 ): Promise<FilePlan[]> {
   debugSlice('Generating files for slice: %s (type: %s)', slice.name, slice.type);
@@ -447,7 +681,7 @@ async function generateFilesForSlice(
 
   debugSlice('  Generating %d files from templates', templates.length);
   const plans = await Promise.all(
-    templates.map((template) => generateFileForTemplate(template, slice, sliceDir, templateData)),
+    templates.map((template) => generateFileForTemplate(template, slice, sliceDir, templateData, unionToEnumName)),
   );
   debugSlice('  Generated %d file plans for slice: %s', plans.length, slice.name);
   return plans;
@@ -464,6 +698,12 @@ export async function generateScaffoldFilePlans(
   debug('  Number of messages: %d', messages?.length ?? 0);
   debug('  Base directory: %s', baseDir);
 
+  const { enums, unionToEnumName } = extractEnumsFromMessages(messages ?? []);
+  debug('  Extracted %d enums from messages', enums.length);
+
+  const domainBaseDir = baseDir.replace(/\/flows$/, '');
+  await appendEnumsToSharedTypes(domainBaseDir, enums);
+
   const allPlans: FilePlan[] = [];
 
   for (const flow of flows) {
@@ -476,7 +716,15 @@ export async function generateScaffoldFilePlans(
       debugFlow('  Processing slice: %s (type: %s)', slice.name, slice.type);
       const sliceDir = ensureDirPath(flowDir, toKebabCase(slice.name));
       debugFlow('    Slice directory: %s', sliceDir);
-      const plans = await generateFilesForSlice(slice, flow, sliceDir, messages, flows, integrations);
+      const plans = await generateFilesForSlice(
+        slice,
+        flow,
+        sliceDir,
+        messages ?? [],
+        flows,
+        unionToEnumName,
+        integrations,
+      );
       debugFlow('    Generated %d plans for slice', plans.length);
       allPlans.push(...plans);
     }

@@ -1,11 +1,16 @@
-import { Command } from "@event-driven-io/emmett";
+<%
+const enumList = collectEnumNames(commands.flatMap(c => c.fields));
+%>import { Command } from "@event-driven-io/emmett";
+<% if (enumList.length > 0) { -%>
+import { <%= enumList.join(', ') %> } from '../../../shared';
+<% } -%>
 <% for (const command of commands) { -%>
-    export type <%= pascalCase(command.type) %> = Command<
-    '<%= command.type %>',
-    {
-    <% for (const field of command.fields) { -%>
-        <%- field.name %>: <%- field.tsType %>;
-    <% } -%>
-    }
-    >;
+export type <%= pascalCase(command.type) %> = Command<
+  '<%= command.type %>',
+  {
+  <% for (const field of command.fields) { -%>
+    <%- field.name %>: <%- toTsFieldType(field.tsType) %>;
+  <% } -%>
+  }
+>;
 <% } -%>

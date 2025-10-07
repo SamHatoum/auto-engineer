@@ -88,7 +88,6 @@ function extractCodeBlock(text: string): string {
     .trim();
 }
 
-// Load all TypeScript files from the slice directory
 async function loadContextFiles(sliceDir: string): Promise<Record<string, string>> {
   const files = await fg(['*.ts'], { cwd: sliceDir });
   const context: Record<string, string> = {};
@@ -96,6 +95,13 @@ async function loadContextFiles(sliceDir: string): Promise<Record<string, string
     const absPath = path.join(sliceDir, file);
     context[file] = await readFile(absPath, 'utf-8');
   }
+
+  const sharedTypesPath = path.resolve(sliceDir, '../../../shared/types.ts');
+  if (existsSync(sharedTypesPath)) {
+    const sharedTypesContent = await readFile(sharedTypesPath, 'utf-8');
+    context['domain-shared-types.ts'] = sharedTypesContent;
+  }
+
   return context;
 }
 
@@ -122,7 +128,6 @@ function findFilesToImplement(contextFiles: Record<string, string>): Array<[stri
   return Object.entries(contextFiles).filter(([, content]) => hasImplementationMarker(content));
 }
 
-// System prompt for AI implementation
 const SYSTEM_PROMPT = `
 You are a software engineer implementing missing logic in a sliced event-driven TypeScript server. Each slice contains partially scaffolded code, and your task is to complete the logic following implementation instructions embedded in each file.
 
@@ -132,12 +137,14 @@ Project Characteristics:
 - Each slice has scaffolded files with implementation instructions clearly marked with comments (e.g., '## IMPLEMENTATION INSTRUCTIONS ##') or TODOs.
 - Tests (e.g., *.specs.ts) must pass.
 - Type errors are not allowed.
+- The domain uses shared enums defined in domain/shared/types.ts for type-safe values. When a field type is an enum (e.g., Status), you MUST use enum constants (e.g., Status.IN_PROGRESS) instead of string literals (e.g., 'in_progress').
 
 Your Goal:
 - Read the implementation instructions from the provided file.
 - Generate only the code needed to fulfill the instructions, nothing extra and provide back the whole file without the instructions.
 - Maintain immutability and adhere to functional best practices.
 - Use only the types and domain constructs already present in the slice.
+- CRITICAL: When a field has an enum type (e.g., status: Status), you MUST use the enum constant (e.g., Status.IN_PROGRESS) NOT a string literal (e.g., 'in_progress'). Check domain-shared-types.ts for the exact enum constant names.
 - Do not remove existing imports or types that are still referenced or required in the file.
 - Preserve index signatures like [key: string]: unknown as they are required for TypeScript compatibility.
 - Return the entire updated file, not just the modified parts and remove any TODO comments or instructions after implementing the logic
@@ -152,23 +159,32 @@ Key rules:
 - All code must be TypeScript compliant and follow functional patterns.
 - If a test exists, make it pass.
 - Keep implementations minimal and idiomatic.
+- CRITICAL: When assigning values to enum-typed fields, use the enum constant name from domain-shared-types.ts. For example, if Status enum has IN_PROGRESS = 'in_progress', use Status.IN_PROGRESS not 'in_progress'.
 
 Avoid:
 - Adding new dependencies.
 - Refactoring unrelated code.
 - Changing the structure of already scaffolded files unless instructed.
+- Using string literals for enum-typed fields. ALWAYS use the enum constant from domain-shared-types.ts (e.g., if status field type is Status and Status enum defines IN_PROGRESS = 'in_progress', use Status.IN_PROGRESS not the string 'in_progress').
 
 You will receive:
 - The path of the file to implement.
 - The current contents of the file, with instruction comments.
 - Other relevant files from the same slice (e.g., types, test, state, etc.).
+- Shared domain types including enum definitions (domain-shared-types.ts).
 
 You must:
 -  Return the entire updated file (no commentary and remove all implementation instructions).
 - Ensure the output is valid TypeScript.
+- Use enum constants from domain-shared-types.ts when appropriate.
 `;
 
 function buildInitialPrompt(targetFile: string, context: Record<string, string>): string {
+  const sharedTypes = context['domain-shared-types.ts'];
+  const sliceFiles = Object.entries(context).filter(
+    ([name]) => name !== targetFile && name !== 'domain-shared-types.ts',
+  );
+
   return `
 ${SYSTEM_PROMPT}
 
@@ -177,19 +193,30 @@ ${SYSTEM_PROMPT}
 
 ${context[targetFile]}
 
----
+${
+  sharedTypes !== undefined
+    ? `---
+📦 Shared domain types (available via import from '../../../shared'):
+${sharedTypes}
+IMPORTANT: Use enum constants (e.g., Status.PENDING) instead of string literals (e.g., 'pending') when working with enum types.
+
+`
+    : ''
+}---
 🧠 Other files in the same slice:
-${Object.entries(context)
-  .filter(([name]) => name !== targetFile)
-  .map(([name, content]) => `// File: ${name}\n${content}`)
-  .join('\n\n')}
+${sliceFiles.map(([name, content]) => `// File: ${name}\n${content}`).join('\n\n')}
 
 ---
-Return only the whole updated file of ${targetFile}. Do not remove existing imports or types that are still referenced or required in the file. The file returned has to be production ready.
+Return only the whole updated file of ${targetFile}. Do not remove existing imports or types that are still referenced or required in the file. The file returned has to be production ready. Remember to use enum constants from domain-shared-types.ts instead of string literals.
 `.trim();
 }
 
 function buildRetryPrompt(targetFile: string, context: Record<string, string>, previousOutputs: string): string {
+  const sharedTypes = context['domain-shared-types.ts'];
+  const sliceFiles = Object.entries(context).filter(
+    ([name]) => name !== targetFile && name !== 'domain-shared-types.ts',
+  );
+
   return `
 ${SYSTEM_PROMPT}
 
@@ -202,14 +229,21 @@ ${previousOutputs}
 
 ${context[targetFile]}
 
+${
+  sharedTypes !== undefined
+    ? `---
+📦 Shared domain types (available via import from '../../../shared'):
+${sharedTypes}
+IMPORTANT: Use enum constants (e.g., Status.PENDING) instead of string literals (e.g., 'pending') when working with enum types.
+
+`
+    : ''
+}---
 🧠 Other files in the same slice:
-${Object.entries(context)
-  .filter(([name]) => name !== targetFile)
-  .map(([name, content]) => `// File: ${name}\n${content}`)
-  .join('\n\n')}
+${sliceFiles.map(([name, content]) => `// File: ${name}\n${content}`).join('\n\n')}
 
 ---
-Return only the corrected full contents of ${targetFile}, no commentary, no markdown.
+Return only the corrected full contents of ${targetFile}, no commentary, no markdown. Remember to use enum constants from domain-shared-types.ts instead of string literals.
 `.trim();
 }
 

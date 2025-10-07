@@ -1,14 +1,17 @@
-<% if (localEvents.length) { -%>
-    import type { Event } from '@event-driven-io/emmett';
-
-    <% for (const event of localEvents) { -%>
-        export type <%= pascalCase(event.type) %> = Event<
-        '<%= event.type %>',
-        {
-        <% for (const field of event.fields) { -%>
-            <%- field.name %>: <%- field.tsType %>;
-        <% } -%>
-        }
-        >;
-    <% } -%>
+<%
+const enumList = collectEnumNames(localEvents.flatMap(e => e.fields));
+%><% if (localEvents.length) { -%>
+import type { Event } from '@event-driven-io/emmett';
+<% if (enumList.length > 0) { %>import { <%= enumList.join(', ') %> } from '../../../shared';
+<% } %>
+<% for (const event of localEvents) { -%>
+export type <%= pascalCase(event.type) %> = Event<
+  '<%= event.type %>',
+  {
+  <% for (const field of event.fields) { -%>
+    <%- field.name %>: <%- toTsFieldType(field.tsType) %>;
+  <% } -%>
+  }
+>;
+<% } -%>
 <% } -%>

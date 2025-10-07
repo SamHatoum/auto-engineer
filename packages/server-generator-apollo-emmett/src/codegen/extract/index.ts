@@ -6,3 +6,4 @@ export * from './messages';
 export * from './query';
 export * from './projection';
 export * from './imports';
+export * from './type-helpers';
