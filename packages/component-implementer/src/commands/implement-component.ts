@@ -431,6 +431,15 @@ ${hasScaffold ? `\n\n${existingScaffold}` : '\n(no existing file)'}
 
 ---
 
+### GraphQL and Type Definition Rules
+- **Always derive types from the provided GraphQL schema or generated types under \`src/gql/\`.**
+- If a GraphQL query or mutation is used, import its **exact generated type** from \`src/gql/\` (e.g., \`GetUserQuery\`, \`UpdateTaskMutation\`).
+- When creating local types for entities, ensure they **mirror the GraphQL schema** — names, fields, nullability, and nesting must match.
+- Never invent or rename fields that are not present in the schema.
+- Avoid guessing structures; infer shapes from the provided queries, mutations, or generated TypeScript definitions.
+
+---
+
 ### Type Safety Requirements
 - Never use \`as\` or non-null assertions (\`!\`) to bypass TypeScript type checking.
 - Always infer or define proper types instead of forcing them.
