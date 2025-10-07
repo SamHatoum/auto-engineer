@@ -99,14 +99,27 @@ async function loadContextFiles(sliceDir: string): Promise<Record<string, string
   return context;
 }
 
-// Find files that need implementation
-function findFilesToImplement(contextFiles: Record<string, string>, hasErrors: boolean): Array<[string, string]> {
-  if (hasErrors) {
-    return Object.entries(contextFiles);
+const IMPLEMENTATION_MARKER = '// @auto-implement';
+
+function hasImplementationMarker(content: string): boolean {
+  return content.includes(IMPLEMENTATION_MARKER);
+}
+
+function addImplementationMarker(content: string): string {
+  if (hasImplementationMarker(content)) {
+    return content;
   }
-  return Object.entries(contextFiles).filter(
-    ([, content]) => content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS'),
+  return `${IMPLEMENTATION_MARKER}\n${content}`;
+}
+
+function needsImplementation(content: string): boolean {
+  return (
+    hasImplementationMarker(content) || content.includes('TODO:') || content.includes('IMPLEMENTATION INSTRUCTIONS')
   );
+}
+
+function findFilesToImplement(contextFiles: Record<string, string>): Array<[string, string]> {
+  return Object.entries(contextFiles).filter(([, content]) => hasImplementationMarker(content));
 }
 
 // System prompt for AI implementation
@@ -115,7 +128,7 @@ You are a software engineer implementing missing logic in a sliced event-driven 
 
 Project Characteristics:
 - Architecture: sliced event-sourced CQRS (Command, Query, Reaction slices)
-- Language: TypeScript with type-graphql and Emmett
+- Language: TypeScript with type-graphql and @event-driven-io/emmett
 - Each slice has scaffolded files with implementation instructions clearly marked with comments (e.g., '## IMPLEMENTATION INSTRUCTIONS ##') or TODOs.
 - Tests (e.g., *.specs.ts) must pass.
 - Type errors are not allowed.
@@ -154,7 +167,6 @@ You must:
 - Ensure the output is valid TypeScript.
 `;
 
-// Build prompt for initial implementation
 function buildInitialPrompt(targetFile: string, context: Record<string, string>): string {
   return `
 ${SYSTEM_PROMPT}
@@ -176,7 +188,6 @@ Return only the whole updated file of ${targetFile}. Do not remove existing impo
 `.trim();
 }
 
-// Build prompt for retry with context
 function buildRetryPrompt(targetFile: string, context: Record<string, string>, previousOutputs: string): string {
   return `
 ${SYSTEM_PROMPT}
@@ -201,7 +212,49 @@ Return only the corrected full contents of ${targetFile}, no commentary, no mark
 `.trim();
 }
 
-// Main implementation function
+async function addMarkersToFiles(slicePath: string, contextFiles: Record<string, string>): Promise<void> {
+  const filesToMark = Object.entries(contextFiles).filter(([, content]) => needsImplementation(content));
+  debugProcess(`Found ${filesToMark.length} files needing implementation markers`);
+
+  for (const [filename, content] of filesToMark) {
+    if (!hasImplementationMarker(content)) {
+      const markedContent = addImplementationMarker(content);
+      await writeFile(path.join(slicePath, filename), markedContent, 'utf-8');
+      contextFiles[filename] = markedContent;
+      debugProcess(`Added implementation marker to ${filename}`);
+    }
+  }
+}
+
+async function implementFile(
+  slicePath: string,
+  targetFile: string,
+  contextFiles: Record<string, string>,
+  retryContext?: { previousOutputs?: string; attemptNumber?: number },
+): Promise<void> {
+  debugProcess(`Implementing ${targetFile}`);
+
+  const previousOutputs = retryContext?.previousOutputs;
+  const isRetry = previousOutputs !== undefined && previousOutputs.length > 0;
+  const prompt = isRetry
+    ? buildRetryPrompt(targetFile, contextFiles, previousOutputs)
+    : buildInitialPrompt(targetFile, contextFiles);
+
+  if (isRetry) {
+    debugProcess(`Using retry prompt for attempt #${retryContext?.attemptNumber ?? 2}`);
+  }
+
+  const aiOutput = await generateTextWithAI(prompt);
+  let cleanedCode = extractCodeBlock(aiOutput);
+  cleanedCode = addImplementationMarker(cleanedCode);
+
+  const filePath = path.join(slicePath, targetFile);
+  await writeFile(filePath, cleanedCode, 'utf-8');
+  debugProcess(`Successfully implemented ${targetFile}`);
+
+  contextFiles[targetFile] = cleanedCode;
+}
+
 async function implementSlice(
   slicePath: string,
   context?: { previousOutputs?: string; attemptNumber?: number },
@@ -211,46 +264,23 @@ async function implementSlice(
   debugProcess(`Implementing slice: ${sliceName}`);
 
   try {
-    // Load all context files
     const contextFiles = await loadContextFiles(slicePath);
     debugProcess(`Loaded ${Object.keys(contextFiles).join(', ')} files from slice`);
-    const hasErrors = Boolean(context?.previousOutputs);
-    const filesToImplement = findFilesToImplement(contextFiles, hasErrors);
-    debugProcess(`Found ${filesToImplement.length} files needing implementation`);
-    const implementedFiles: string[] = [];
+
+    await addMarkersToFiles(slicePath, contextFiles);
+
+    const filesToImplement = findFilesToImplement(contextFiles);
+    debugProcess(`Found ${filesToImplement.length} files with markers to implement`);
 
     if (filesToImplement.length === 0) {
-      debugProcess('No files with TODO or IMPLEMENTATION INSTRUCTIONS found, and no errors found');
+      debugProcess('No files with markers found');
       return { success: true, filesImplemented: [] };
     }
 
-    // Implement each file that needs it
+    const implementedFiles: string[] = [];
     for (const [targetFile] of filesToImplement) {
-      debugProcess(`Implementing ${targetFile}`);
-
-      let prompt: string;
-      if (context !== undefined && context.previousOutputs !== undefined && context.previousOutputs.length > 0) {
-        // Use retry prompt if we have previous context
-        prompt = buildRetryPrompt(targetFile, contextFiles, context.previousOutputs);
-        debugProcess(`Using retry prompt for attempt #${context.attemptNumber ?? 2}`);
-      } else {
-        // Use initial prompt for first attempt
-        prompt = buildInitialPrompt(targetFile, contextFiles);
-      }
-
-      // Generate implementation with AI
-      const aiOutput = await generateTextWithAI(prompt);
-      const cleanedCode = extractCodeBlock(aiOutput);
-
-      // Write the implemented file
-      const filePath = path.join(slicePath, targetFile);
-      await writeFile(filePath, cleanedCode, 'utf-8');
-
-      debugProcess(`Successfully implemented ${targetFile}`);
+      await implementFile(slicePath, targetFile, contextFiles, context);
       implementedFiles.push(targetFile);
-
-      // Update context for next file
-      contextFiles[targetFile] = cleanedCode;
     }
 
     return { success: true, filesImplemented: implementedFiles };
@@ -323,7 +353,6 @@ function logRetryContext(context: { previousOutputs?: string; attemptNumber?: nu
 export async function handleImplementSliceCommand(
   command: ImplementSliceCommand,
 ): Promise<SliceImplementedEvent | SliceImplementationFailedEvent> {
-  // Handle both 'slicePath' and 'path' parameters for backward compatibility
   const rawData = command.data as ImplementSliceCommand['data'] & { path?: string };
   const slicePath = rawData.slicePath ?? rawData.path;
   const { context } = command.data;
@@ -367,5 +396,4 @@ export async function handleImplementSliceCommand(
   }
 }
 
-// Default export is the command handler
 export default commandHandler;
