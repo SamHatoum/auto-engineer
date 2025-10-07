@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@auto-engineer/cli": "workspace:*",
+    "@auto-engineer/component-implementer": "workspace:*",
     "@auto-engineer/design-system-importer": "workspace:*",
     "@auto-engineer/flow": "workspace:*",
     "@auto-engineer/frontend-checks": "workspace:*",
