@@ -40,38 +40,12 @@ export type ClientGeneratedEvent = Event<
   'ClientGenerated',
   {
     targetDir: string;
+    components: Array<{
+      type: ComponentType;
+      filePath: string;
+    }>;
   }
 >;
-
-export type MoleculeGeneratedEvent = Event<
-  'MoleculeGenerated',
-  {
-    filePath: string;
-  }
->;
-
-export type OrganismGeneratedEvent = Event<
-  'OrganismGenerated',
-  {
-    filePath: string;
-  }
->;
-
-export type PageGeneratedEvent = Event<
-  'PageGenerated',
-  {
-    filePath: string;
-  }
->;
-
-export type AppGeneratedEvent = Event<
-  'AppGenerated',
-  {
-    filePath: string;
-  }
->;
-
-type ComponentGeneratedEvent = MoleculeGeneratedEvent | OrganismGeneratedEvent | PageGeneratedEvent | AppGeneratedEvent;
 
 export type ClientGenerationFailedEvent = Event<
   'ClientGenerationFailed',
@@ -81,7 +55,7 @@ export type ClientGenerationFailedEvent = Event<
   }
 >;
 
-export type GenerateClientEvents = ClientGeneratedEvent | ClientGenerationFailedEvent | ComponentGeneratedEvent;
+export type GenerateClientEvents = ClientGeneratedEvent | ClientGenerationFailedEvent;
 
 export const commandHandler = defineCommandHandler({
   name: 'GenerateClient',
@@ -159,30 +133,7 @@ async function handleGenerateClientCommandInternal(command: GenerateClientComman
 
     debugGeneration('Generating components to: %s/src', targetDir);
     const generatedComponents = generateComponents(iaSchemeJson, `${targetDir}/src`) ?? [];
-    debugGeneration(generatedComponents.length, 'components generated');
-
-    const componentTypeToEventType: Record<ComponentType, ComponentGeneratedEvent['type']> = {
-      molecule: 'MoleculeGenerated',
-      organism: 'OrganismGenerated',
-      page: 'PageGenerated',
-      app: 'AppGenerated',
-    };
-
-    generatedComponents.forEach((component) => {
-      const eventType = componentTypeToEventType[component.type];
-      if (eventType) {
-        debugGeneration('Emitting event for generated %s: %s', component.type, component.path);
-        events.push({
-          type: eventType,
-          data: {
-            filePath: component.path,
-          },
-          timestamp: new Date(),
-          requestId: command.requestId,
-          correlationId: command.correlationId,
-        });
-      }
-    });
+    debugGeneration('%d components generated', generatedComponents.length);
 
     debugGeneration('Writing GraphQL operations to: %s/src', targetDir);
     writeGqlOperationsToFolder(iaSchemeJson, `${targetDir}/src`);
@@ -202,11 +153,16 @@ async function handleGenerateClientCommandInternal(command: GenerateClientComman
 
     debug('Client generation completed successfully');
     debug('Target directory: %s', targetDir);
+    debug('Generated %d components', generatedComponents.length);
 
     events.push({
       type: 'ClientGenerated',
       data: {
         targetDir,
+        components: generatedComponents.map((component) => ({
+          type: component.type,
+          filePath: component.path,
+        })),
       },
       timestamp: new Date(),
       requestId: command.requestId,
@@ -231,5 +187,4 @@ async function handleGenerateClientCommandInternal(command: GenerateClientComman
   }
 }
 
-// Default export is the command handler
 export default commandHandler;
