@@ -9,7 +9,8 @@
 *
 * Guidelines:
 * - Include only fields that are **read** during command validation.
-* - Use discriminated unions (e.g., `status: 'Pending' | 'Done'`) to model state transitions.
+* - Use discriminated unions with string literal types (e.g., `status: 'pending' | 'done'`) to model state transitions.
+* - IMPORTANT: If an enum exists in domain/shared/types.ts for your field (e.g., Status enum), use the enum constant type instead (e.g., `status: Status.PENDING`).
 * - Prefer primitive types: `string`, `boolean`, `number`.
 * - Use objects or maps only when structure is essential for decision logic.
 *
@@ -21,21 +22,24 @@
 *
 * ```ts
 * export type PendingTask = {
-*   status: 'Pending';
+*   status: 'pending';
 * };
 *
 * export type InProgressTask = {
-*   status: 'InProgress';
+*   status: 'in_progress';
 *   startedAt: string;
 * };
 *
 * export type CompletedTask = {
-*   status: 'Completed';
+*   status: 'completed';
 *   completedAt: string;
 * };
 *
 * export type State = PendingTask | InProgressTask | CompletedTask;
 * ```
+*
+* Note: Status string literals should match your schema's enum values (usually snake_case).
+* If an enum is defined in domain/shared/types.ts, reference the enum type instead of literals.
 */
 
 // TODO: Replace with a discriminated union of domain states for the current slice

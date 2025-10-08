@@ -229,8 +229,22 @@ describe('projection.ts.ejs', () => {
                * ## IMPLEMENTATION INSTRUCTIONS ##
                * Implement how this event updates the projection.
                *
-               * The \`document\` parameter contains the current state. If you need additional context
-               * beyond what's in the public state type, extend it with internal fields.
+               * **IMPORTANT - Internal State Pattern:**
+               * If you need to track state beyond the public AvailableListings type (e.g., to calculate
+               * aggregations, track previous values, etc.), follow this pattern:
+               *
+               * 1. Define an extended interface BEFORE the projection:
+               *    interface InternalAvailableListings extends AvailableListings {
+               *      internalField: SomeType;
+               *    }
+               *
+               * 2. Cast document parameter to extended type:
+               *    const current: InternalAvailableListings = (document as InternalAvailableListings) || { ...defaults };
+               *
+               * 3. Cast return values to extended type:
+               *    return { ...allFields, internalField } as InternalAvailableListings;
+               *
+               * This keeps internal state separate from the public GraphQL schema.
                */
               return {
                 propertyId: /* TODO: map from event.data */ '',

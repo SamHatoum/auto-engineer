@@ -146,6 +146,33 @@ function logFlowDetails(spec: Model): void {
   }
 }
 
+async function cleanStaleCompiledFiles(serverDir: string): Promise<void> {
+  const sharedTypesDir = join(serverDir, 'src', 'domain', 'shared');
+  debugScaffold('Cleaning stale compiled files from %s', sharedTypesDir);
+
+  if (!(await fs.pathExists(sharedTypesDir))) {
+    debugScaffold('  Shared types directory does not exist, skipping cleanup');
+    return;
+  }
+
+  const files = await fs.readdir(sharedTypesDir);
+  const staleFiles = files.filter((file) => file.endsWith('.js') || file.endsWith('.d.ts') || file.endsWith('.js.map'));
+
+  if (staleFiles.length === 0) {
+    debugScaffold('  No stale compiled files found');
+    return;
+  }
+
+  debugScaffold('  Found %d stale compiled files to remove', staleFiles.length);
+  for (const file of staleFiles) {
+    const filePath = join(sharedTypesDir, file);
+    await fs.remove(filePath);
+    debugScaffold('    Removed: %s', file);
+  }
+
+  debugScaffold('  Cleanup completed');
+}
+
 async function generateAndWriteScaffold(spec: Model, serverDir: string): Promise<void> {
   const domainFlowsPath = join(serverDir, 'src', 'domain', 'flows');
   debugScaffold('Generating scaffold file plans');
@@ -164,6 +191,8 @@ async function generateAndWriteScaffold(spec: Model, serverDir: string): Promise
 
   await writeScaffoldFilePlans(filePlans);
   debugScaffold('Written all scaffold files');
+
+  await cleanStaleCompiledFiles(serverDir);
 }
 
 async function copyAllFiles(serverDir: string): Promise<void> {
@@ -346,7 +375,16 @@ async function copySharedAndRootFiles(from: string, to: string): Promise<void> {
   const sharedFrom = path.join(from, 'shared');
   const sharedTo = path.join(to, 'shared');
   if (await fs.pathExists(sharedFrom)) {
-    await fs.copy(sharedFrom, sharedTo);
+    await fs.ensureDir(sharedTo);
+    const sharedFiles = await fs.readdir(sharedFrom);
+    for (const file of sharedFiles) {
+      if (file.endsWith('.ts')) {
+        const srcFile = path.join(sharedFrom, file);
+        const destFile = path.join(sharedTo, file);
+        await fs.copy(srcFile, destFile);
+        debugFiles('  Copied shared file: %s', file);
+      }
+    }
   }
   await fs.ensureDir(to);
   const rootFiles = await fs.readdir(from);

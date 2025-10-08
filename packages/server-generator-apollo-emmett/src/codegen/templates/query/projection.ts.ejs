@@ -10,6 +10,30 @@ if (eventImportGroups.length > 0) {
 import type { <%= group.eventTypes.join(', ') %> } from '<%= group.importPath %>';
 <%
     }
+}
+
+// Collect enums used in state fields
+const stateEnums = [];
+const targetName = slice.server?.data?.[0]?.target?.name;
+if (targetName && messages) {
+    const targetDef = messages.find(m => m.name === targetName);
+    if (targetDef?.fields) {
+        for (const field of targetDef.fields) {
+            const fieldType = (field.type || '').replace(/\s*\|\s*null/g, '').trim();
+            if (fieldType.includes('|') && (fieldType.includes('"') || fieldType.includes("'"))) {
+                const enumName = toTsFieldType(field.type);
+                if (enumName && enumName !== 'String' && !stateEnums.includes(enumName)) {
+                    stateEnums.push(enumName);
+                }
+            }
+        }
+    }
+}
+
+if (stateEnums.length > 0) {
+%>
+import { <%= stateEnums.join(', ') %> } from '../../../shared';
+<%
 } -%>
 
 type AllEvents = <%= allEventTypes %>;
@@ -78,8 +102,22 @@ case '<%= event.type %>': {
 <% } else { -%>
     * Implement how this event updates the projection.
     *
-    * The `document` parameter contains the current state. If you need additional context
-    * beyond what's in the public state type, extend it with internal fields.
+    * **IMPORTANT - Internal State Pattern:**
+    * If you need to track state beyond the public <%= pascalCase(targetName || 'State') %> type (e.g., to calculate
+    * aggregations, track previous values, etc.), follow this pattern:
+    *
+    * 1. Define an extended interface BEFORE the projection:
+    *    interface Internal<%= pascalCase(targetName || 'State') %> extends <%= pascalCase(targetName || 'State') %> {
+    *      internalField: SomeType;
+    *    }
+    *
+    * 2. Cast document parameter to extended type:
+    *    const current: Internal<%= pascalCase(targetName || 'State') %> = (document as Internal<%= pascalCase(targetName || 'State') %>) || { ...defaults };
+    *
+    * 3. Cast return values to extended type:
+    *    return { ...allFields, internalField } as Internal<%= pascalCase(targetName || 'State') %>;
+    *
+    * This keeps internal state separate from the public GraphQL schema.
 <% } -%>
 */
 <% if (isRemovalEvent) { -%>
@@ -96,16 +134,28 @@ case '<%= event.type %>': {
         const type = def?.type ?? 'string';
 
         let placeholder = 'undefined';
-        if (type === 'string' || type === 'ID') {
-            placeholder = "/* TODO: map from event.data */ ''";
-        } else if (type === 'number') {
-            placeholder = '/* TODO: map from event.data */ 0';
-        } else if (type === 'boolean') {
-            placeholder = '/* TODO: map from event.data */ false';
-        } else if (type === 'Date') {
-            placeholder = '/* TODO: map from event.data */ new Date()';
-        } else if (type.startsWith('Array<')) {
-            placeholder = '/* TODO: map from event.data */ []';
+        const isNullable = type.includes('| null') || type.includes('|null');
+        const baseType = isNullable ? type.replace(/\s*\|\s*null/g, '').trim() : type;
+
+        if (baseType === 'string' || baseType === 'ID') {
+            placeholder = isNullable ? "/* TODO: map from event.data */ null" : "/* TODO: map from event.data */ ''";
+        } else if (baseType === 'number') {
+            placeholder = isNullable ? '/* TODO: map from event.data */ null' : '/* TODO: map from event.data */ 0';
+        } else if (baseType === 'boolean') {
+            placeholder = isNullable ? '/* TODO: map from event.data */ null' : '/* TODO: map from event.data */ false';
+        } else if (baseType === 'Date') {
+            placeholder = isNullable ? '/* TODO: map from event.data */ null' : '/* TODO: map from event.data */ new Date()';
+        } else if (baseType.startsWith('Array<')) {
+            placeholder = isNullable ? '/* TODO: map from event.data */ null' : '/* TODO: map from event.data */ []';
+        } else if (baseType.includes('|') && (baseType.includes('"') || baseType.includes("'"))) {
+            const enumName = toTsFieldType(type);
+            const firstValue = baseType.match(/['"]([^'"]+)['"]/)?.[1] ?? '';
+            const enumConstant = firstValue ? firstValue.toUpperCase().replace(/[^A-Z0-9]/g, '_') : '';
+            if (enumName && enumName !== 'String') {
+                placeholder = `${enumName}.${enumConstant} /* TODO: verify this enum constant is correct */`;
+            } else {
+                placeholder = `/* TODO: use enum constant from types.ts */ '${firstValue}'`;
+            }
         } else {
             placeholder = '/* TODO: map from event.data */ undefined as any';
         }

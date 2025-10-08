@@ -114,6 +114,7 @@ function generateEnumName(fieldName: string, existingNames: Set<string>): string
 
 function processFieldForEnum(
   field: { name: string; type: string },
+  messageName: string,
   unionToEnumName: Map<string, string>,
   existingEnumNames: Set<string>,
 ): EnumDefinition | null {
@@ -137,7 +138,7 @@ function processFieldForEnum(
     return null;
   }
 
-  const enumName = generateEnumName(field.name, existingEnumNames);
+  const enumName = generateEnumName(`${messageName}${pascalCase(field.name)}`, existingEnumNames);
   existingEnumNames.add(enumName);
   debug('      ✓ Creating enum: %s with values %O', enumName, values);
 
@@ -163,7 +164,7 @@ function extractEnumsFromMessages(messages: MessageDefinition[]): EnumContext {
     if (message.fields === undefined || message.fields === null) continue;
 
     for (const field of message.fields) {
-      const enumDef = processFieldForEnum(field, unionToEnumName, existingEnumNames);
+      const enumDef = processFieldForEnum(field, message.name, unionToEnumName, existingEnumNames);
       if (enumDef !== null) {
         enums.push(enumDef);
       }
@@ -171,6 +172,14 @@ function extractEnumsFromMessages(messages: MessageDefinition[]): EnumContext {
   }
 
   debug('extractEnumsFromMessages: found %d enums total', enums.length);
+  debug(
+    '  Enum names: %O',
+    enums.map((e) => e.name),
+  );
+  debug('  unionToEnumName map size: %d', unionToEnumName.size);
+  for (const [union, enumName] of unionToEnumName.entries()) {
+    debug('    "%s" -> %s', union, enumName);
+  }
   return { enums, unionToEnumName };
 }
 
