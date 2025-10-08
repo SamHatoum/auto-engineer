@@ -198,7 +198,7 @@ async function appendEnumsToSharedTypes(baseDir: string, enums: EnumDefinition[]
   try {
     existingContent = await fs.readFile(sharedTypesPath, 'utf8');
   } catch {
-    throw new Error(`Failed to read existing types file at ${sharedTypesPath}`);
+    debug('Types file does not exist yet at %s, will create it', sharedTypesPath);
   }
 
   const enumsToAdd = enums.filter((e) => {
@@ -253,6 +253,7 @@ async function appendEnumsToSharedTypes(baseDir: string, enums: EnumDefinition[]
     filepath: sharedTypesPath,
   });
 
+  await fs.mkdir(path.dirname(sharedTypesPath), { recursive: true });
   await fs.writeFile(sharedTypesPath, formatted, 'utf8');
   debug('Appended %d enums to %s', enums.length, sharedTypesPath);
 }

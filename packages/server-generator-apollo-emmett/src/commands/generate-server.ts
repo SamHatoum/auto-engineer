@@ -260,6 +260,8 @@ export async function handleGenerateServerCommandInternal(
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
 
+    await copyAllFiles(serverDir);
+
     await generateAndWriteScaffold(spec, serverDir);
 
     if (Array.isArray(spec.flows) && spec.flows.length > 0) {
@@ -286,9 +288,6 @@ export async function handleGenerateServerCommandInternal(
         }
       }
     }
-
-    // Copy files
-    await copyAllFiles(serverDir);
 
     // Write configuration files
     await writeConfigurationFiles(serverDir, absDest);
