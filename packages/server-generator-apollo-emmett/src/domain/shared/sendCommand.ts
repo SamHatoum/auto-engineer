@@ -1,5 +1,5 @@
 import type { Command, CommandSender } from '@event-driven-io/emmett';
-import type { MutationResponse } from './types';
+import type { MutationResponse } from './graphql-types';
 
 export async function sendCommand<T extends Command>(
   commandSender: CommandSender,

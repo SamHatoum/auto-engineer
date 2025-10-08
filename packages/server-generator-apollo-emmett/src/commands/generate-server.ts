@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import fs from 'fs-extra';
 import * as path from 'path';
 import { readFile, writeFile } from 'fs/promises';
@@ -528,27 +527,16 @@ async function installDependenciesAndGenerateSchema(serverDir: string, workingDi
   debugDeps('Starting dependency installation in %s', serverDir);
   debugDeps('Hint: You can debug by manually running: cd server && pnpm install && npx tsx scripts/generate-schema.ts');
 
-  try {
-    debugDeps('Running pnpm install');
-    await execa('pnpm', ['install', '--ignore-workspace'], { cwd: serverDir });
-    debugDeps('Dependencies installed successfully');
-  } catch (error) {
-    debugDeps('Failed to pnpm install: %s', error instanceof Error ? error.message : 'Unknown error');
-  }
+  debugDeps('Running pnpm install');
+  await execa('pnpm', ['install', '--ignore-workspace'], { cwd: serverDir });
+  debugDeps('Dependencies installed successfully');
 
-  try {
-    debugDeps('Generating GraphQL schema...');
-    debugDeps('Running: tsx scripts/generate-schema.ts', serverDir + '/scripts/generate-schema.ts');
-    await execa('tsx', ['scripts/generate-schema.ts'], { cwd: serverDir });
-    const schemaPath = join(workingDir, '.context', 'schema.graphql');
-    debugDeps('GraphQL schema generated at: %s', schemaPath);
-  } catch (error) {
-    debugDeps(
-      'Failed to run tsx scripts/generate-schema.ts: %s',
-      error instanceof Error ? error.message : 'Unknown error',
-    );
-  }
+  debugDeps('Generating GraphQL schema...');
+  debugDeps('Running: npx tsx scripts/generate-schema.ts');
+  const result = await execa('npx', ['tsx', 'scripts/generate-schema.ts'], { cwd: serverDir });
+  debugDeps('Schema generation output: %s', result.stdout);
+  const schemaPath = join(workingDir, '.context', 'schema.graphql');
+  debugDeps('GraphQL schema generated at: %s', schemaPath);
 }
 
-// Default export is the command handler
 export default commandHandler;
