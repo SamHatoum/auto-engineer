@@ -41,8 +41,7 @@
     "codegen.ts",
     "tailwind.config.ts",
     "eslint.config.ts",
-    "auto-configure.ts",
     "postcss.config.ts"
   ],
-  "exclude": ["node_modules/**", "dist"]
+  "exclude": ["node_modules/**", "dist", "auto-configure.ts"]
 }

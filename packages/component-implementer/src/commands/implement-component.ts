@@ -8,8 +8,10 @@ import { callAI, loadScheme } from '../agent';
 import { execa } from 'execa';
 import { performance } from 'perf_hooks';
 
-const debug = createDebug('frontend-implementer:implement-component');
-const debugTypeCheck = createDebug('frontend-implementer:implement-component:typecheck');
+const debug = createDebug('auto:client-implementer:component');
+const debugTypeCheck = createDebug('auto:client-implementer:component:typecheck');
+const debugProcess = createDebug('auto:client-implementer:component:process');
+const debugResult = createDebug('auto:client-implementer:component:result');
 
 export type ImplementComponentCommand = Command<
   'ImplementComponent',
@@ -59,7 +61,7 @@ export const commandHandler = defineCommandHandler<
     iaSchemeDir: { description: 'IA schema directory path', required: true },
     designSystemPath: { description: 'Design system file path', required: true },
     componentType: {
-      description: 'Type of component: atom|molecule|organism|page|app',
+      description: 'Type of component: atom|molecule|organism|page',
       required: true,
     },
     filePath: { description: 'Component file path', required: true },
@@ -83,6 +85,7 @@ export const commandHandler = defineCommandHandler<
   },
 });
 
+// eslint-disable-next-line complexity
 async function handleImplementComponentCommandInternal(
   command: ImplementComponentCommand,
 ): Promise<ComponentImplementedEvent | ComponentImplementationFailedEvent> {
@@ -90,11 +93,11 @@ async function handleImplementComponentCommandInternal(
 
   try {
     const start = performance.now();
-    debug(`Starting ${componentType}:${componentName}`);
+    debugProcess(`Starting ${componentType}:${componentName}`);
 
     const t1 = performance.now();
     const scheme = await loadScheme(iaSchemeDir);
-    debug(`[1] Loaded IA scheme in ${(performance.now() - t1).toFixed(2)} ms`);
+    debugProcess(`[1] Loaded IA scheme in ${(performance.now() - t1).toFixed(2)} ms`);
     if (!scheme) throw new Error('IA scheme not found');
 
     const pluralKey = `${componentType}s`;
@@ -111,21 +114,20 @@ async function handleImplementComponentCommandInternal(
     let existingScaffold = '';
     try {
       existingScaffold = await fs.readFile(outPath, 'utf-8');
-      debug(`[2] Found existing scaffold in ${(performance.now() - t2).toFixed(2)} ms`);
+      debugProcess(`[2] Found existing scaffold in ${(performance.now() - t2).toFixed(2)} ms`);
     } catch {
-      debug(`[2] No existing scaffold found (${(performance.now() - t2).toFixed(2)} ms)`);
+      debugProcess(`[2] No existing scaffold found (${(performance.now() - t2).toFixed(2)} ms)`);
     }
 
     const t3 = performance.now();
     const projectConfig = await readAllTopLevelFiles(projectDir);
-    debug(`[3] Loaded project + gql/graphql files in ${(performance.now() - t3).toFixed(2)} ms`);
+    debugProcess(`[3] Loaded project + gql/graphql files in ${(performance.now() - t3).toFixed(2)} ms`);
 
     const t4 = performance.now();
     const designSystemReference = await readDesignSystem(designSystemPath, { projectDir, iaSchemeDir });
-    debug(`[4] Loaded design system reference in ${(performance.now() - t4).toFixed(2)} ms`);
+    debugProcess(`[4] Loaded design system reference in ${(performance.now() - t4).toFixed(2)} ms`);
 
-    const t5 = performance.now();
-    const prompt = makeComponentPrompt(
+    const basePrompt = makeBasePrompt(
       componentType,
       componentName,
       componentDef,
@@ -133,26 +135,36 @@ async function handleImplementComponentCommandInternal(
       projectConfig,
       designSystemReference,
     );
-    debug(`[5] Prepared AI prompt in ${(performance.now() - t5).toFixed(2)} ms`);
 
-    const t6 = performance.now();
     await fs.mkdir(path.dirname(outPath), { recursive: true });
-    let code = sanitizeCodeOutput(await callAI(prompt));
-    debug('Generated code preview:\n%s', code.substring(0, 400));
-    await fs.writeFile(outPath, code, 'utf-8');
-    debug(`[6] AI generated component in ${(performance.now() - t6).toFixed(2)} ms`);
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    let attempt = 1;
+    let code = '';
+    let lastErrors = '';
+    const maxAttempts = 3;
+
+    while (attempt <= maxAttempts) {
+      const genStart = performance.now();
+      const prompt =
+        attempt === 1
+          ? makeImplementPrompt(basePrompt)
+          : makeRetryPrompt(basePrompt, componentType, componentName, code, lastErrors);
+
+      const aiRaw = await callAI(prompt);
+      code = extractCodeBlock(aiRaw);
+      await fs.writeFile(outPath, code, 'utf-8');
+      debugProcess(
+        `[6.${attempt}] AI output written (${code.length} chars) in ${(performance.now() - genStart).toFixed(2)} ms`,
+      );
+
       const checkStart = performance.now();
       const { success, errors } = await runTypeCheckForFile(projectDir, outPath);
       debugTypeCheck(
-        `[7.${attempt}] Type check attempt ${attempt} completed in ${(performance.now() - checkStart).toFixed(
-          2,
-        )} ms (success: ${success})`,
+        `[7.${attempt}] Type check in ${(performance.now() - checkStart).toFixed(2)} ms (success: ${success})`,
       );
 
       if (success) {
-        debug(`[✓] Implementation succeeded in ${(performance.now() - start).toFixed(2)} ms total`);
+        debugResult(`[✓] Implementation succeeded in ${(performance.now() - start).toFixed(2)} ms total`);
         return {
           type: 'ComponentImplemented',
           data: {
@@ -168,27 +180,9 @@ async function handleImplementComponentCommandInternal(
         };
       }
 
-      if (attempt < 3) {
-        const fixStart = performance.now();
-        const fixPrompt = `
-You previously generated this ${componentType}: **${componentName}**.
-TypeScript errors occurred in "${componentName}.tsx".
-Fix ONLY these errors without changing logic or structure.
-
-Errors:
-${errors}
-
-Current code:
-${code}
-
-Return the corrected TypeScript file only.
-        `;
-        code = sanitizeCodeOutput(await callAI(fixPrompt));
-        await fs.writeFile(outPath, code, 'utf-8');
-        debugTypeCheck(`[8.${attempt}] AI attempted fix in ${(performance.now() - fixStart).toFixed(2)} ms`);
-      } else {
-        throw new Error(`Type errors persist after ${attempt} fixes:\n${errors}`);
-      }
+      lastErrors = errors;
+      if (attempt === maxAttempts) throw new Error(`Type errors persist after ${attempt} attempts:\n${errors}`);
+      attempt += 1;
     }
 
     throw new Error('Unreachable state');
@@ -209,8 +203,15 @@ Return the corrected TypeScript file only.
   }
 }
 
+function extractCodeBlock(text: string): string {
+  return text
+    .replace(/```(?:tsx|ts|typescript)?/g, '')
+    .replace(/```/g, '')
+    .trim();
+}
+
 async function readAllTopLevelFiles(projectDir: string): Promise<Record<string, string>> {
-  debug('[readAllTopLevelFiles] Reading project files from %s', projectDir);
+  debugProcess('[readAllTopLevelFiles] Reading project files from %s', projectDir);
   const start = performance.now();
   const config: Record<string, string> = {};
 
@@ -226,14 +227,14 @@ async function readAllTopLevelFiles(projectDir: string): Promise<Record<string, 
         try {
           config[relativePath] = await fs.readFile(fullPath, 'utf-8');
         } catch (err) {
-          debug(`Failed to read ${relativePath}: ${(err as Error).message}`);
+          debugProcess(`Failed to read ${relativePath}: ${(err as Error).message}`);
         }
       }
     }
   }
 
   await readRecursive(projectDir);
-  debug(`[readAllTopLevelFiles] Completed in ${(performance.now() - start).toFixed(2)} ms`);
+  debugProcess(`[readAllTopLevelFiles] Completed in ${(performance.now() - start).toFixed(2)} ms`);
   return config;
 }
 
@@ -244,7 +245,8 @@ async function runTypeCheckForFile(
   const start = performance.now();
   try {
     const tsconfigRoot = await findProjectRoot(projectDir);
-    const relativeFilePath = path.relative(tsconfigRoot, filePath);
+    const relativeFilePath = path.relative(tsconfigRoot, filePath).replace(/\\/g, '/');
+    const normalizedRelative = relativeFilePath.replace(/^client\//, ''); // remove client prefix
     const result = await execa('npx', ['tsc', '--noEmit', '--skipLibCheck', '--pretty', 'false'], {
       cwd: tsconfigRoot,
       stdio: 'pipe',
@@ -261,8 +263,11 @@ async function runTypeCheckForFile(
       .filter((line) => {
         const hasError = line.includes('error TS');
         const notNodeModules = !line.includes('node_modules');
-        const inTargetFile = line.includes(relativeFilePath) || line.includes(filePath);
-        return hasError && notNodeModules && inTargetFile;
+        const matchesTarget =
+          line.includes(relativeFilePath) ||
+          line.includes(normalizedRelative) || // path without client/
+          line.includes(path.basename(filePath));
+        return hasError && notNodeModules && matchesTarget;
       })
       .join('\n');
 
@@ -288,42 +293,8 @@ async function findProjectRoot(startDir: string): Promise<string> {
   throw new Error('Could not find project root (no package.json or tsconfig.json found)');
 }
 
-async function readDesignSystem(
-  providedPath: string,
-  refs: { projectDir: string; iaSchemeDir: string },
-): Promise<string> {
-  const start = performance.now();
-  const candidates: string[] = [];
-  if (providedPath) {
-    candidates.push(providedPath);
-    if (!path.isAbsolute(providedPath)) {
-      candidates.push(path.resolve(refs.projectDir, providedPath));
-      candidates.push(path.resolve(refs.iaSchemeDir, providedPath));
-    }
-  }
-
-  for (const candidate of candidates) {
-    try {
-      const content = await fs.readFile(candidate, 'utf-8');
-      debug(`[readDesignSystem] Loaded from ${candidate} in ${(performance.now() - start).toFixed(2)} ms`);
-      return content;
-    } catch {
-      debug(`[readDesignSystem] Could not read design system from %s`, candidate);
-    }
-  }
-
-  debug(`[readDesignSystem] Design system not found, elapsed ${(performance.now() - start).toFixed(2)} ms`);
-  return '';
-}
-
-function sanitizeCodeOutput(output: string): string {
-  if (!output) return '';
-  const cleaned = output.replace(/```[a-zA-Z]*\n?([\s\S]*?)```/gm, '$1').trim();
-  return cleaned || output.trim();
-}
-
 // eslint-disable-next-line complexity
-function makeComponentPrompt(
+function makeBasePrompt(
   componentType: string,
   componentName: string,
   componentDef: Record<string, unknown>,
@@ -405,14 +376,6 @@ ${mutationsFile || '(mutations.ts not found)'}
 
 ---
 
-### Usage Guideline
-- Always import existing operations from \`src/graphql/queries\` or \`src/graphql/mutations\`.
-- Never redefine gql or graphql strings inline.
-- Use typed hooks from \`src/gql/\` if available.
-- Follow the existing design system and maintain project style consistency.
-
----
-
 ${designSystemBlock}
 
 ---
@@ -428,40 +391,36 @@ ${JSON.stringify(componentDef, null, 2)}
 
 ${hasScaffold ? 'Existing Scaffold:' : 'No Scaffold Found:'}
 ${hasScaffold ? `\n\n${existingScaffold}` : '\n(no existing file)'}
-
----
-
-### GraphQL and Type Definition Rules
-- **Always derive types from the provided GraphQL schema or generated types under \`src/gql/\`.**
-- If a GraphQL query or mutation is used, import its **exact generated type** from \`src/gql/\` (e.g., \`GetUserQuery\`, \`UpdateTaskMutation\`).
-- When creating local types for entities, ensure they **mirror the GraphQL schema** — names, fields, nullability, and nesting must match.
-- Never invent or rename fields that are not present in the schema.
-- Avoid guessing structures; infer shapes from the provided queries, mutations, or generated TypeScript definitions.
-
----
-
-### Type Safety Requirements
-- Never use \`as\` or non-null assertions (\`!\`) to bypass TypeScript type checking.
-- Always infer or define proper types instead of forcing them.
-- Do not use \`any\` or \`unknown\` unless absolutely necessary.
-- Write code that passes \`--strict\` TypeScript checks without manual type coercion.
-
----
-
-### Context-Aware UX Enhancements
-- When implementing this component, analyze its purpose and definition to identify **natural opportunities for advanced interaction**.
-- If the component involves **lists, cards, workflows, task ordering, layout editing, or visual grouping**, consider adding intuitive interactions such as:
-  - drag-and-drop reordering (using existing libraries like \`@dnd-kit\` or similar if present),
-  - inline editing or keyboard navigation,
-  - smooth animations for movement or rearrangement.
-- Only include such enhancements if they **fit the component’s role and improve the user experience** without overcomplicating the design.
-- Never add drag-and-drop or other advanced behavior by default — only when it meaningfully enhances usability and aligns with the IA schema’s intent.
-
----
-
-Return only the final, complete TypeScript React component source code for ${componentName}.
 `;
 }
+
+function makeImplementPrompt(basePrompt: string): string {
+  return `${basePrompt}
+
+Return only the final, complete TypeScript React component source code.`;
+}
+
+function makeRetryPrompt(
+  basePrompt: string,
+  componentType: string,
+  componentName: string,
+  previousCode: string,
+  previousErrors: string,
+): string {
+  return `${basePrompt}
+
+The previously generated ${componentType}:${componentName} has TypeScript errors. Fix ONLY these errors without changing logic or structure.
+
+Errors:
+${previousErrors}
+
+Current code:
+${previousCode}
+
+Return the corrected TypeScript file only.`;
+}
+
+/* -------------------------------------------------------------------------- */
 
 function extractComposition(componentDef: Record<string, unknown>): string[] {
   if ('composition' in componentDef && Boolean(componentDef.composition)) {
@@ -484,4 +443,30 @@ function isValidCollection(collection: unknown): collection is { items: Record<s
   return typeof items === 'object' && items !== null;
 }
 
-export default commandHandler;
+async function readDesignSystem(
+  providedPath: string,
+  refs: { projectDir: string; iaSchemeDir: string },
+): Promise<string> {
+  const start = performance.now();
+  const candidates: string[] = [];
+  if (providedPath) {
+    candidates.push(providedPath);
+    if (!path.isAbsolute(providedPath)) {
+      candidates.push(path.resolve(refs.projectDir, providedPath));
+      candidates.push(path.resolve(refs.iaSchemeDir, providedPath));
+    }
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const content = await fs.readFile(candidate, 'utf-8');
+      debugProcess(`[readDesignSystem] Loaded from ${candidate} in ${(performance.now() - start).toFixed(2)} ms`);
+      return content;
+    } catch {
+      debugProcess(`[readDesignSystem] Could not read design system from %s`, candidate);
+    }
+  }
+
+  debugProcess(`[readDesignSystem] Design system not found, elapsed ${(performance.now() - start).toFixed(2)} ms`);
+  return '';
+}
