@@ -179,6 +179,35 @@ You must:
 - Use enum constants from domain-shared-types.ts when appropriate.
 `;
 
+function extractEnumExamples(sharedTypesContent: string): string {
+  const enumMatches = sharedTypesContent.matchAll(/export enum (\w+) \{([^}]+)\}/g);
+  const examples: string[] = [];
+
+  for (const match of enumMatches) {
+    const enumName = match[1];
+    const enumBody = match[2];
+    const firstConstant = enumBody.match(/\s*(\w+)\s*=\s*['"]([^'"]+)['"]/);
+
+    if (firstConstant !== null) {
+      const constantName = firstConstant[1];
+      const constantValue = firstConstant[2];
+      examples.push(`  - ${enumName}.${constantName} (NOT '${constantValue}')`);
+    }
+  }
+
+  if (examples.length === 0) {
+    return '';
+  }
+
+  return `
+📌 CRITICAL: Enum Usage Examples from Your Context:
+${examples.join('\n')}
+
+Pattern: Always use EnumName.CONSTANT_NAME for enum-typed fields.
+Never use string literals like 'pending' or 'Pending' when an enum constant exists.
+`;
+}
+
 function buildInitialPrompt(targetFile: string, context: Record<string, string>): string {
   const sharedTypes = context['domain-shared-types.ts'];
   const sliceFiles = Object.entries(context).filter(
@@ -198,6 +227,8 @@ ${
     ? `---
 📦 Shared domain types (available via import from '../../../shared'):
 ${sharedTypes}
+
+${extractEnumExamples(sharedTypes)}
 IMPORTANT: Use enum constants (e.g., Status.PENDING) instead of string literals (e.g., 'pending') when working with enum types.
 
 `
@@ -234,6 +265,8 @@ ${
     ? `---
 📦 Shared domain types (available via import from '../../../shared'):
 ${sharedTypes}
+
+${extractEnumExamples(sharedTypes)}
 IMPORTANT: Use enum constants (e.g., Status.PENDING) instead of string literals (e.g., 'pending') when working with enum types.
 
 `
@@ -279,7 +312,7 @@ async function implementFile(
     debugProcess(`Using retry prompt for attempt #${retryContext?.attemptNumber ?? 2}`);
   }
 
-  const aiOutput = await generateTextWithAI(prompt);
+  const aiOutput = await generateTextWithAI(prompt, { maxTokens: 8000 });
   let cleanedCode = extractCodeBlock(aiOutput);
   cleanedCode = addImplementationMarker(cleanedCode);
 
