@@ -127,6 +127,20 @@ async function handleImplementComponentCommandInternal(
     const designSystemReference = await readDesignSystem(designSystemPath, { projectDir, iaSchemeDir });
     debugProcess(`[4] Loaded design system reference in ${(performance.now() - t4).toFixed(2)} ms`);
 
+    const dependencyList = await resolveDependenciesRecursively(
+      scheme as Record<string, unknown>,
+      componentType,
+      componentName,
+    );
+
+    debugProcess(`[5] Resolved ${dependencyList.length} dependencies for ${componentName}`);
+
+    const dependencySources: Record<string, string> = {};
+    for (const dep of dependencyList) {
+      const depSource = await readComponentSource(projectDir, dep.type, dep.name);
+      if (depSource != null) dependencySources[`${dep.type}/${dep.name}`] = depSource;
+    }
+
     const basePrompt = makeBasePrompt(
       componentType,
       componentName,
@@ -134,6 +148,7 @@ async function handleImplementComponentCommandInternal(
       existingScaffold,
       projectConfig,
       designSystemReference,
+      dependencySources,
     );
 
     await fs.mkdir(path.dirname(outPath), { recursive: true });
@@ -203,6 +218,50 @@ async function handleImplementComponentCommandInternal(
   }
 }
 
+// eslint-disable-next-line complexity
+async function resolveDependenciesRecursively(
+  scheme: Record<string, any>,
+  type: string,
+  name: string,
+  visited: Set<string> = new Set(),
+): Promise<{ type: string; name: string }[]> {
+  const key = `${type}:${name}`;
+  if (visited.has(key)) return [];
+  visited.add(key);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const collection = scheme[`${type}s`];
+  //
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (!collection || !isValidCollection(collection)) return [];
+
+  const def = collection.items[name];
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (!def || typeof def !== 'object' || !('composition' in def)) return [];
+
+  const result: { type: string; name: string }[] = [];
+
+  const composition = def.composition as Record<string, string[]>;
+  for (const [subType, subNames] of Object.entries(composition)) {
+    if (!Array.isArray(subNames)) continue;
+    for (const subName of subNames) {
+      result.push({ type: subType, name: subName });
+      const nested = await resolveDependenciesRecursively(scheme, subType, subName, visited);
+      result.push(...nested);
+    }
+  }
+  return result;
+}
+
+async function readComponentSource(projectDir: string, type: string, name: string): Promise<string | null> {
+  const file = path.join(projectDir, 'src', 'components', type, `${name}.tsx`);
+  try {
+    return await fs.readFile(file, 'utf-8');
+  } catch {
+    return null;
+  }
+}
+
 function extractCodeBlock(text: string): string {
   return text
     .replace(/```(?:tsx|ts|typescript)?/g, '')
@@ -246,7 +305,7 @@ async function runTypeCheckForFile(
   try {
     const tsconfigRoot = await findProjectRoot(projectDir);
     const relativeFilePath = path.relative(tsconfigRoot, filePath).replace(/\\/g, '/');
-    const normalizedRelative = relativeFilePath.replace(/^client\//, ''); // remove client prefix
+    const normalizedRelative = relativeFilePath.replace(/^client\//, '');
     const result = await execa('npx', ['tsc', '--noEmit', '--skipLibCheck', '--pretty', 'false'], {
       cwd: tsconfigRoot,
       stdio: 'pipe',
@@ -265,7 +324,7 @@ async function runTypeCheckForFile(
         const notNodeModules = !line.includes('node_modules');
         const matchesTarget =
           line.includes(relativeFilePath) ||
-          line.includes(normalizedRelative) || // path without client/
+          line.includes(normalizedRelative) ||
           line.includes(path.basename(filePath));
         return hasError && notNodeModules && matchesTarget;
       })
@@ -301,6 +360,7 @@ function makeBasePrompt(
   existingScaffold: string,
   projectConfig: Record<string, string>,
   designSystemReference: string,
+  dependencySources: Record<string, string>,
 ): string {
   const hasScaffold = Boolean(existingScaffold) && existingScaffold.trim().length > 0;
 
@@ -343,6 +403,13 @@ function makeBasePrompt(
     designSystemReference && designSystemReference.trim().length > 0
       ? `\n\n## 4. Design System Reference\n${designSystemReference}\n`
       : '\n\n## 4. Design System Reference\n(No design system content provided)\n';
+
+  const dependencySection =
+    Object.keys(dependencySources).length > 0
+      ? `\n\n## 6. Dependency Components\n${Object.entries(dependencySources)
+          .map(([name, src]) => `### ${name}\n${src}`)
+          .join('\n\n')}\n`
+      : '\n\n## 6. Dependency Components\n(No dependencies found)\n';
 
   return `
 You are Auto, a senior frontend engineer specializing in TypeScript React + Apollo Client.
@@ -391,6 +458,8 @@ ${JSON.stringify(componentDef, null, 2)}
 
 ${hasScaffold ? 'Existing Scaffold:' : 'No Scaffold Found:'}
 ${hasScaffold ? `\n\n${existingScaffold}` : '\n(no existing file)'}
+
+${dependencySection}
 `;
 }
 
