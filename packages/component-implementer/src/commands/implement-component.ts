@@ -220,7 +220,7 @@ async function handleImplementComponentCommandInternal(
 
 // eslint-disable-next-line complexity
 async function resolveDependenciesRecursively(
-  scheme: Record<string, any>,
+  scheme: Record<string, unknown>,
   type: string,
   name: string,
   visited: Set<string> = new Set(),
@@ -229,7 +229,6 @@ async function resolveDependenciesRecursively(
   if (visited.has(key)) return [];
   visited.add(key);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const collection = scheme[`${type}s`];
   //
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -362,16 +361,16 @@ function makeBasePrompt(
   designSystemReference: string,
   dependencySources: Record<string, string>,
 ): string {
-  const hasScaffold = Boolean(existingScaffold) && existingScaffold.trim().length > 0;
+  const hasScaffold = Boolean(existingScaffold?.trim());
 
   const gqlFiles: Record<string, string> = {};
   const graphqlFiles: Record<string, string> = {};
   const otherFiles: Record<string, string> = {};
 
   for (const [filePath, content] of Object.entries(projectConfig)) {
-    const normalized = filePath.toLowerCase();
-    if (normalized.includes('src/gql/')) gqlFiles[filePath] = content;
-    else if (normalized.includes('src/graphql/')) graphqlFiles[filePath] = content;
+    const lower = filePath.toLowerCase();
+    if (lower.includes('src/gql/')) gqlFiles[filePath] = content;
+    else if (lower.includes('src/graphql/')) graphqlFiles[filePath] = content;
     else otherFiles[filePath] = content;
   }
 
@@ -379,94 +378,152 @@ function makeBasePrompt(
   const mutationsFile = Object.entries(graphqlFiles).find(([n]) => n.endsWith('mutations.ts'))?.[1] ?? '';
 
   const gqlSection =
-    Object.keys(gqlFiles).length > 0
-      ? Object.entries(gqlFiles)
-          .map(([path, content]) => `### ${path}\n${content}`)
-          .join('\n\n')
-      : '(No gql folder or generated GraphQL types found)';
+    Object.entries(gqlFiles)
+      .map(([p, c]) => `### ${p}\n${c}`)
+      .join('\n\n') || '(No gql folder found)';
 
   const graphqlSection =
-    Object.keys(graphqlFiles).length > 0
-      ? Object.entries(graphqlFiles)
-          .map(([path, content]) => `### ${path}\n${content}`)
-          .join('\n\n')
-      : '(No graphql files found)';
+    Object.entries(graphqlFiles)
+      .map(([p, c]) => `### ${p}\n${c}`)
+      .join('\n\n') || '(No graphql folder found)';
 
   const configSection =
-    Object.keys(otherFiles).length > 0
-      ? Object.entries(otherFiles)
-          .map(([path, content]) => `### ${path}\n${content}`)
-          .join('\n\n')
-      : '(No additional config files found)';
+    Object.entries(otherFiles)
+      .map(([p, c]) => `### ${p}\n${c}`)
+      .join('\n\n') || '(No additional config files)';
 
-  const designSystemBlock =
-    designSystemReference && designSystemReference.trim().length > 0
-      ? `\n\n## 4. Design System Reference\n${designSystemReference}\n`
-      : '\n\n## 4. Design System Reference\n(No design system content provided)\n';
+  const designSystemBlock = designSystemReference.trim()
+    ? designSystemReference
+    : '(No design system content provided)';
 
   const dependencySection =
-    Object.keys(dependencySources).length > 0
-      ? `\n\n## 6. Dependency Components\n${Object.entries(dependencySources)
-          .map(([name, src]) => `### ${name}\n${src}`)
-          .join('\n\n')}\n`
-      : '\n\n## 6. Dependency Components\n(No dependencies found)\n';
+    Object.entries(dependencySources)
+      .map(([name, src]) => `### ${name}\n${src}`)
+      .join('\n\n') || '(No dependencies found)';
 
   return `
-You are Auto, a senior frontend engineer specializing in TypeScript React + Apollo Client.
+# Implementation Brief: ${componentName} (${componentType})
 
-Implement or complete the ${componentType} **${componentName}** using the provided IA schema, project configuration, and existing GraphQL setup.
+You are a senior frontend engineer specializing in **React + TypeScript + Apollo Client**.  
+Your task is to build a visually excellent, type-safe, and production-ready ${componentType} component.  
+The goal is to deliver elegant, minimal, and robust code that integrates perfectly with the existing system.
 
 ---
 
-## 1. Project Configuration Context
+## Objective
+Implement **${componentName}** as defined in the IA schema and design system.  
+Your component must:
+- Compile cleanly with no TypeScript errors.
+- Follow established design tokens, colors, and spacing.
+- Be visually polished, responsive, and accessible.
+- Reuse existing atoms/molecules/organisms wherever possible.
+- Use valid imports only — no new dependencies or mock data.
+
+---
+
+## Project Context
+
+**File Path:** src/components/${componentType}/${componentName}.tsx  
+**Purpose:** A reusable UI element connected to the GraphQL layer and design system.  
+
+### IA Schema
+${JSON.stringify(componentDef, null, 2)}
+
+### Existing Scaffold
+${hasScaffold ? existingScaffold : '(No existing scaffold found)'}
+
+### Design System Reference
+${designSystemBlock}
+
+### Related Components (Dependencies)
+${dependencySection}
+
+### GraphQL Context (src/graphql)
+${graphqlSection}
+
+#### queries.ts
+${queriesFile || '(queries.ts not found)'}
+
+#### mutations.ts
+${mutationsFile || '(mutations.ts not found)'}
+
+### GraphQL Codegen (src/gql)
+${gqlSection}
+
+### Other Relevant Files
 ${configSection}
 
 ---
 
-## 2. GraphQL Codegen Output (src/gql)
-${gqlSection}
+## Engineering Guidelines
+
+**Type Safety**
+- Explicitly type all props, state, and GraphQL responses.
+- Avoid \`any\` — prefer discriminated unions, interfaces, and generics.
+
+**React Practices**
+- Never call setState during render.
+- Always use dependency arrays in effects.
+- Memoize computed values and callbacks.
+- Keep rendering pure and predictable.
+
+**Error Handling**
+- Wrap async operations in try/catch with graceful fallback UI.
+- Check for null/undefined using optional chaining (?.) and defaults (??).
+
+**Visual & UX Quality**
+- Perfect spacing and alignment using Tailwind or the design system tokens.
+- Add subtle hover, focus, and loading states.
+- Use accessible HTML semantics and ARIA attributes.
+- Animate with Framer Motion when appropriate.
+
+**Performance**
+- Prevent unnecessary re-renders with React.memo and stable references.
+- Avoid redundant state and computations.
+
+**Consistency**
+- Follow established color, typography, and spacing scales.
+- Match button, card, and badge styles with existing components.
+
+**Prohibited**
+- No placeholder data, TODOs, or pseudo-logic.
+- No new external packages.
+- No commented-out or partial implementations.
 
 ---
 
-## 3. GraphQL Queries and Mutations (src/graphql)
-${graphqlSection}
-
-### Full Content of src/graphql/queries.ts
-\`\`\`ts
-${queriesFile || '(queries.ts not found)'}
-\`\`\`
-
-### Full Content of src/graphql/mutations.ts
-\`\`\`ts
-${mutationsFile || '(mutations.ts not found)'}
-\`\`\`
+## Visual Quality Checklist
+- Consistent vertical rhythm and alignment.  
+- Smooth hover and transition states.  
+- Responsive design that looks intentional at all breakpoints.  
+- Uses design tokens and existing components wherever possible.  
+- Clear visual hierarchy and accessible structure.
 
 ---
 
-${designSystemBlock}
+## Validation Checklist
+- Compiles cleanly with \`tsc --noEmit\`.  
+- Imports exist and resolve correctly.  
+- Component matches the design system and IA schema.  
+- No unused props, variables, or imports.  
+- Visually and functionally complete.
 
 ---
 
-## 5. Component Specification
-**Component:** ${componentName}  
-**Type:** ${componentType}
-
-Definition (from IA Schema):
-\`\`\`json
-${JSON.stringify(componentDef, null, 2)}
-\`\`\`
-
-${hasScaffold ? 'Existing Scaffold:' : 'No Scaffold Found:'}
-${hasScaffold ? `\n\n${existingScaffold}` : '\n(no existing file)'}
-
-${dependencySection}
-`;
+**Final Output Requirement:**  
+Return only the complete \`.tsx\` source code for this component — no markdown fences, commentary, or extra text.
+`.trim();
 }
 
 function makeImplementPrompt(basePrompt: string): string {
   return `${basePrompt}
 
-Return only the final, complete TypeScript React component source code.`;
+---
+
+Generate the **complete final implementation** for \`${basePrompt}\`.  
+Begin directly with import statements and end with the export statement.  
+Do not include markdown fences, comments, or explanations — only the valid .tsx file content.
+`.trim();
 }
 
 function makeRetryPrompt(
@@ -476,17 +533,29 @@ function makeRetryPrompt(
   previousCode: string,
   previousErrors: string,
 ): string {
-  return `${basePrompt}
+  return `
+${basePrompt}
 
-The previously generated ${componentType}:${componentName} has TypeScript errors. Fix ONLY these errors without changing logic or structure.
+---
 
-Errors:
+### Correction Task
+The previously generated ${componentType} component **${componentName}** failed TypeScript validation.  
+Fix only the issues listed below without altering logic or layout.
+
+**Errors**
 ${previousErrors}
 
-Current code:
+**Previous Code**
 ${previousCode}
 
-Return the corrected TypeScript file only.`;
+---
+
+### Correction Rules
+- Fix only TypeScript or import errors.  
+- Do not change working logic or structure.  
+- Keep eslint directives and formatting intact.  
+- Return the corrected \`.tsx\` file only, with no markdown fences or commentary.
+`.trim();
 }
 
 /* -------------------------------------------------------------------------- */
