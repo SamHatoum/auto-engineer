@@ -1,5 +1,13 @@
 # @auto-engineer/frontend-implementer
 
+## 0.11.10
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.11.10
+  - @auto-engineer/message-bus@0.11.10
+
 ## 0.11.9
 
 ### Patch Changes
