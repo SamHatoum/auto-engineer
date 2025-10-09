@@ -1,5 +1,4 @@
 import { experience, flow, should, specs } from '@auto-engineer/flow';
-
 flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
   experience('Kanban Board View', 'AUTO-K7j0St3Hz').client(() => {
     specs(() => {
@@ -15,7 +14,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('maintain consistent card spacing and grid alignment');
     });
   });
-
   experience('Task Cards', 'AUTO-T8k1Uu4Iz').client(() => {
     specs(() => {
       should('display task description with clear readable typography');
@@ -28,33 +26,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('use gradient borders matching task status');
     });
   });
-
-  experience('Completion Progress Ring', 'AUTO-P9l2Vv5Jz').client(() => {
-    specs(() => {
-      should('display circular progress ring with gradient stroke');
-      should('show completion percentage prominently in center');
-      should('animate progress changes with smooth easing');
-      should('display total task count below percentage');
-      should('use vibrant colors for high completion rates');
-      should('show subtle pulse animation on milestone achievements');
-      should('position prominently at top of dashboard or sidebar');
-    });
-  });
-
-  experience('Quick Add Todo Widget', 'AUTO-Q0m3Ww6Kz').client(() => {
-    specs(() => {
-      should('display floating action button with plus icon');
-      should('position fixed in bottom-right corner for easy access');
-      should('expand into input form with smooth scale animation on click');
-      should('include elegant input field with placeholder text');
-      should('show submit button with icon when text is entered');
-      should('support keyboard shortcut (Ctrl/Cmd + K) to focus input');
-      should('auto-focus input when opened');
-      should('clear and collapse after successful task addition');
-      should('show loading state during task submission');
-    });
-  });
-
   experience('Statistics Dashboard', 'AUTO-S1n4Xx7Lz').client(() => {
     specs(() => {
       should('show total tasks count with large prominent number');
@@ -67,7 +38,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('animate number changes with counting effect');
     });
   });
-
   experience('Recent Activity Feed', 'AUTO-R2o5Yy8Mz').client(() => {
     specs(() => {
       should('display recent task completions in chronological order');
@@ -80,7 +50,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('auto-scroll new completions into view with smooth animation');
     });
   });
-
   experience('View Toggle Controls', 'AUTO-V3p6Zz9Nz').client(() => {
     specs(() => {
       should('provide toggle between Kanban and List views');
@@ -92,7 +61,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('remember user preference in local storage');
     });
   });
-
   experience('Theme Toggle', 'AUTO-T4q7Aa0Oz').client(() => {
     specs(() => {
       should('support light and dark theme modes');
@@ -104,7 +72,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('use system preference as default');
     });
   });
-
   experience('Celebration Animations', 'AUTO-C5r8Bb1Pz').client(() => {
     specs(() => {
       should('trigger confetti animation when task is completed');
@@ -116,7 +83,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('respect reduced motion preferences for accessibility');
     });
   });
-
   experience('Column Management', 'AUTO-M6s9Cc2Qz').client(() => {
     specs(() => {
       should('allow reordering tasks within same column via drag-and-drop');
@@ -128,7 +94,6 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('maintain smooth 60fps animations during all interactions');
     });
   });
-
   experience('Empty States', 'AUTO-E7t0Dd3Rz').client(() => {
     specs(() => {
       should('display welcoming illustration when no tasks exist');
@@ -137,6 +102,30 @@ flow('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('show column-specific empty states with relevant illustrations');
       should('use consistent visual style matching overall design system');
       should('include helpful tips for new users');
+    });
+  });
+  experience('Completion Progress Ring', 'AUTO-P9l2Vv5Jz').client(() => {
+    specs(() => {
+      should('display circular progress ring with gradient stroke');
+      should('show completion percentage prominently in center');
+      should('animate progress changes with smooth easing');
+      should('display total task count below percentage');
+      should('use vibrant colors for high completion rates');
+      should('show subtle pulse animation on milestone achievements');
+      should('position prominently at top of dashboard or sidebar');
+    });
+  });
+  experience('Quick Add Todo Widget', 'AUTO-Q0m3Ww6Kz').client(() => {
+    specs(() => {
+      should('display floating action button with plus icon');
+      should('position fixed in bottom-right corner for easy access');
+      should('expand into input form with smooth scale animation on click');
+      should('include elegant input field with placeholder text');
+      should('show submit button with icon when text is entered');
+      should('support keyboard shortcut (Ctrl/Cmd + K) to focus input');
+      should('auto-focus input when opened');
+      should('clear and collapse after successful task addition');
+      should('show loading state during task submission');
     });
   });
 });

@@ -1,5 +1,4 @@
 import { experience, flow, should, specs } from '@auto-engineer/flow';
-
 flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
   experience('Application Layout', 'AUTO-L9v2Ff5Tz').client(() => {
     specs(() => {
@@ -12,7 +11,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('apply subtle shadow to separate top bar from content');
     });
   });
-
   experience('Main Content Area', 'AUTO-C0w3Gg6Uz').client(() => {
     specs(() => {
       should('occupy full viewport height below top bar');
@@ -24,7 +22,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('use CSS Grid for Kanban column layout');
     });
   });
-
   experience('Kanban Board Container', 'AUTO-K1x4Hh7Vz').client(() => {
     specs(() => {
       should('display three equal-width columns in desktop view');
@@ -36,7 +33,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('show subtle scrollbar styling matching theme');
     });
   });
-
   experience('Column Headers', 'AUTO-H2y5Ii8Wz').client(() => {
     specs(() => {
       should('display column title with clear typography');
@@ -47,7 +43,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('maintain consistent height across all columns');
     });
   });
-
   experience('Floating Action Button', 'AUTO-F3z6Jj9Xz').client(() => {
     specs(() => {
       should('position fixed in bottom-right corner of viewport');
@@ -61,7 +56,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('hide on mobile when keyboard is visible');
     });
   });
-
   experience('Statistics Sidebar', 'AUTO-S4a7Kk0Yz').client(() => {
     specs(() => {
       should('display on right side of screen in desktop view');
@@ -74,7 +68,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('support toggle to show/hide for more workspace');
     });
   });
-
   experience('Task Detail Panel', 'AUTO-D5b8Ll1Zz').client(() => {
     specs(() => {
       should('slide in from right side when task is clicked');
@@ -87,7 +80,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('trap focus within panel when open for accessibility');
     });
   });
-
   experience('Search Overlay', 'AUTO-S6c9Mm2Az').client(() => {
     specs(() => {
       should('trigger with keyboard shortcut Cmd/Ctrl + K');
@@ -100,7 +92,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('focus input automatically when opened');
     });
   });
-
   experience('Mobile Navigation', 'AUTO-M7d0Nn3Bz').client(() => {
     specs(() => {
       should('collapse top bar controls into hamburger menu on small screens');
@@ -112,7 +103,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('apply safe area insets for notched devices');
     });
   });
-
   experience('Responsive Breakpoints', 'AUTO-R8e1Oo4Cz').client(() => {
     specs(() => {
       should('support desktop layout for screens 1024px and wider');
@@ -124,7 +114,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('test on common device dimensions for consistency');
     });
   });
-
   experience('Loading States', 'AUTO-L9f2Pp5Dz').client(() => {
     specs(() => {
       should('show skeleton loaders for initial page load');
@@ -136,7 +125,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('provide timeout fallback with retry option');
     });
   });
-
   experience('Error States', 'AUTO-E0g3Qq6Ez').client(() => {
     specs(() => {
       should('display inline error messages near relevant fields');
@@ -148,7 +136,6 @@ flow('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('support error boundary for graceful failure recovery');
     });
   });
-
   experience('Accessibility Features', 'AUTO-A1h4Rr7Fz').client(() => {
     specs(() => {
       should('support full keyboard navigation throughout app');
