@@ -85,6 +85,32 @@ async function discoverFiles(vfs: IFileStore, root: string, pattern: RegExp, fas
   return files;
 }
 
+async function validateCache(
+  cached: CacheEntry,
+  seedFiles: string[],
+  vfs: IFileStore,
+): Promise<CacheEntry['result'] | null> {
+  const prevGraphFiles = cached.result.vfsFiles;
+  const seedSet = new Set(seedFiles);
+  const prevSet = new Set(prevGraphFiles);
+
+  const hasNewFiles = seedFiles.some((f) => !prevSet.has(f));
+  const hasRemovedFiles = prevGraphFiles.some((f) => !seedSet.has(f));
+
+  if (hasNewFiles || hasRemovedFiles) {
+    debug('cache invalidated (file list changed: +%d -%d)', hasNewFiles ? 1 : 0, hasRemovedFiles ? 1 : 0);
+    return null;
+  }
+
+  const prevHash = await hashFiles(vfs, prevGraphFiles);
+  if (prevHash === cached.contentHash) {
+    debug('cache hit (graph unchanged)');
+    return cached.result;
+  }
+  debug('cache invalidated (graph changed)');
+  return null;
+}
+
 export const getFlows = async (
   opts: GetFlowsOptions,
 ): Promise<{
@@ -124,15 +150,11 @@ export const getFlows = async (
   const cacheKey = [CACHE_VERSION, normRoot, String(pattern), stableStringify(importMap)].join('|');
   const cached = compilationCache.get(cacheKey);
 
-  // --- Phase 1: Use cache if graph files unchanged ---
   if (cached) {
-    const prevGraphFiles = cached.result.vfsFiles;
-    const prevHash = await hashFiles(vfs, prevGraphFiles);
-    if (prevHash === cached.contentHash) {
-      debug('cache hit (graph unchanged)');
-      return cached.result;
+    const cachedResult = await validateCache(cached, seedFiles, vfs);
+    if (cachedResult) {
+      return cachedResult;
     }
-    debug('cache invalidated (graph changed)');
   }
   registry.clearAll();
 
