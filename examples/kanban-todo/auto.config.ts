@@ -111,7 +111,9 @@ export default autoConfig({
       for (let i = 0; i < componentPhaseOrder.length - 1; i++) {
         const currentPhase = componentPhaseOrder[i];
         const nextPhase = componentPhaseOrder[i + 1];
-        if (areAllProcessed(currentPhase) && !dispatchedPhases.has(nextPhase)) {
+        const allProcessed = areAllProcessed(currentPhase);
+        const alreadyDispatched = dispatchedPhases.has(nextPhase);
+        if (allProcessed && !alreadyDispatched) {
           dispatchedPhases.add(nextPhase);
           return dispatchComponentsOfType(nextPhase);
         }

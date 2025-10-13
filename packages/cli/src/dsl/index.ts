@@ -350,6 +350,180 @@ function getCommandFromEventType(eventType: string, metadataService?: CommandMet
   return eventToCommandMap[eventType] || null;
 }
 
+function hasEventError(event: { message: { data: unknown } }): boolean {
+  const data = event.message.data;
+  return data !== null && typeof data === 'object' && ('error' in data || 'errors' in data);
+}
+
+function extractTargetIdentifier(commandData: unknown): string {
+  if (commandData === null || typeof commandData !== 'object') {
+    return JSON.stringify(commandData);
+  }
+
+  const data = commandData as Record<string, unknown>;
+  const targetFields = ['targetDirectory', 'slicePath', 'filePath', 'componentName', 'path'];
+
+  for (const field of targetFields) {
+    if (field in data && typeof data[field] === 'string') {
+      return String(data[field]);
+    }
+  }
+
+  return JSON.stringify(commandData);
+}
+
+function traceCorrelationChain(
+  requestId: string,
+  allMessages: Array<{ messageType: string; message: { requestId?: string; correlationId?: string; type: string } }>,
+): string[] {
+  const chain: string[] = [requestId];
+  let currentId = requestId;
+
+  let commandMessage = allMessages.find((msg) => msg.messageType === 'command' && msg.message.requestId === currentId);
+
+  while (
+    commandMessage !== undefined &&
+    commandMessage.message.correlationId !== undefined &&
+    commandMessage.message.correlationId !== null &&
+    commandMessage.message.correlationId !== ''
+  ) {
+    const correlationId = commandMessage.message.correlationId;
+    chain.push(correlationId);
+
+    const parentCommand = allMessages.find(
+      (msg) => msg.messageType === 'command' && msg.message.requestId === correlationId,
+    );
+
+    if (
+      parentCommand === undefined ||
+      parentCommand.message.correlationId === undefined ||
+      parentCommand.message.correlationId === null ||
+      parentCommand.message.correlationId === ''
+    ) {
+      break;
+    }
+
+    currentId = correlationId;
+    commandMessage = parentCommand;
+  }
+
+  return chain;
+}
+
+function getWorkflowRoot(
+  requestId: string,
+  allMessages: Array<{ messageType: string; message: { requestId?: string; correlationId?: string; type: string } }>,
+): string | null {
+  const chain = traceCorrelationChain(requestId, allMessages);
+  const rootRequestId = chain[chain.length - 1];
+
+  const rootCommand = allMessages.find(
+    (msg) => msg.messageType === 'command' && msg.message.requestId === rootRequestId,
+  );
+
+  return rootCommand?.message.type ?? null;
+}
+
+function isServerWorkflowCommand(workflowRoot: string | null): boolean {
+  const serverWorkflowCommands = ['ImplementSlice', 'SliceGenerated', 'GenerateServer'];
+  return workflowRoot !== null && workflowRoot !== '' && serverWorkflowCommands.includes(workflowRoot);
+}
+
+function isClientWorkflowCommand(workflowRoot: string | null): boolean {
+  const clientWorkflowCommands = ['ImplementComponent', 'ClientGenerated', 'GenerateClient'];
+  return workflowRoot !== null && workflowRoot !== '' && clientWorkflowCommands.includes(workflowRoot);
+}
+
+function shouldIncludeCommandInNodeStatus(
+  command: { message: { type: string; requestId?: string } },
+  commandType: string,
+  allMessages: Array<{ messageType: string; message: { requestId?: string; correlationId?: string; type: string } }>,
+): boolean {
+  const sharedCheckCommands = ['CheckTypes', 'CheckTests', 'CheckLint'];
+
+  if (!sharedCheckCommands.includes(commandType)) {
+    return true;
+  }
+
+  const requestId = command.message.requestId;
+  if (requestId === undefined || requestId === null || requestId === '') {
+    return true;
+  }
+
+  const workflowRoot = getWorkflowRoot(requestId, allMessages);
+
+  if (isServerWorkflowCommand(workflowRoot)) {
+    return true;
+  }
+
+  return !isClientWorkflowCommand(workflowRoot);
+}
+
+function groupCommandsByTarget<T extends { message: { data: unknown } }>(commands: T[]): Map<string, T> {
+  const commandsByTarget = new Map<string, T>();
+  for (const command of commands) {
+    const targetId = extractTargetIdentifier(command.message.data);
+    commandsByTarget.set(targetId, command);
+  }
+  return commandsByTarget;
+}
+
+function checkCommandStatus(
+  command: { message: { requestId?: string } },
+  allMessages: Array<{ messageType: string; message: { requestId?: string; type: string; data: unknown } }>,
+  commandEvents: string[],
+): { hasCompletion: boolean; hasFailed: boolean } {
+  const requestId = command.message.requestId;
+  if (requestId === undefined || requestId === null || requestId === '') {
+    return { hasCompletion: false, hasFailed: false };
+  }
+
+  const relatedEvents = allMessages.filter((msg) => msg.messageType === 'event' && msg.message.requestId === requestId);
+
+  const hasCompletion = relatedEvents.some((event) => commandEvents.includes(event.message.type));
+  const hasFailed = relatedEvents.some(hasEventError);
+
+  return { hasCompletion, hasFailed };
+}
+
+function determineStatusFromCommands(
+  commandsByTarget: Map<string, { message: { requestId?: string } }>,
+  allMessages: Array<{ messageType: string; message: { requestId?: string; type: string; data: unknown } }>,
+  commandEvents: string[],
+): NodeStatus {
+  let hasAnyRunning = false;
+  let hasAnyFailure = false;
+  let allCompleted = true;
+
+  for (const command of commandsByTarget.values()) {
+    const { hasCompletion, hasFailed } = checkCommandStatus(command, allMessages, commandEvents);
+
+    if (!hasCompletion) {
+      hasAnyRunning = true;
+      allCompleted = false;
+      continue;
+    }
+
+    if (hasFailed) {
+      hasAnyFailure = true;
+    }
+  }
+
+  if (hasAnyFailure) {
+    return 'fail';
+  }
+
+  if (hasAnyRunning) {
+    return 'running';
+  }
+
+  if (allCompleted) {
+    return 'pass';
+  }
+
+  return 'running';
+}
+
 /**
  * Calculate status for a pipeline node based on message store
  */
@@ -359,24 +533,14 @@ async function calculateNodeStatus(
   metadataService?: CommandMetadataService,
 ): Promise<NodeStatus> {
   try {
-    // Get all messages from the message store
     const allMessages = await messageStore.getAllMessages();
 
-    // Find all commands for this command type
-    const commands = allMessages
+    const allCommands = allMessages
       .filter((msg) => msg.messageType === 'command' && msg.message.type === commandType)
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-    if (commands.length === 0) {
+    if (allCommands.length === 0) {
       return 'idle';
-    }
-
-    // Get the latest command
-    const latestCommand = commands[commands.length - 1];
-
-    const requestId = latestCommand.message.requestId;
-    if (requestId === undefined || requestId === null || requestId === '') {
-      throw new Error(`Command ${commandType} is missing requestId`);
     }
 
     const commandEventMappings = buildCommandEventMappings(metadataService);
@@ -385,34 +549,15 @@ async function calculateNodeStatus(
       return 'None';
     }
 
-    // Find events that match this command's requestId
-    const relatedEvents = allMessages.filter(
-      (msg) => msg.messageType === 'event' && msg.message.requestId === requestId,
-    );
+    const commands = allCommands.filter((cmd) => shouldIncludeCommandInNodeStatus(cmd, commandType, allMessages));
 
-    if (relatedEvents.length === 0) {
-      return 'running';
+    if (commands.length === 0) {
+      return 'idle';
     }
 
-    // Check if there's any completion event from this command's event list
-    const hasCompletion = relatedEvents.some((event) => commandEvents.includes(event.message.type));
-    if (!hasCompletion) {
-      return 'running';
-    }
+    const commandsByTarget = groupCommandsByTarget(commands);
 
-    // Check if there's any failure event (any event with error/errors field)
-    // This check must come AFTER completion check to ensure we have completed events
-    // but takes precedence for determining final status
-    const hasFailure = relatedEvents.some((event) => {
-      const data = event.message.data;
-      return data !== null && typeof data === 'object' && ('error' in data || 'errors' in data);
-    });
-    if (hasFailure) {
-      return 'fail';
-    }
-
-    // If we have completion events but no failures, it's a pass
-    return 'pass';
+    return determineStatusFromCommands(commandsByTarget, allMessages, commandEvents);
   } catch (error) {
     debug('Error calculating node status for %s: %O', commandType, error);
     throw error;
