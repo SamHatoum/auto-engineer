@@ -285,6 +285,10 @@ export async function handleGenerateServerCommandInternal(
     debug('Server directory: %s', serverDir);
     debug('🔄 Generating server... %s', serverDir);
 
+    debug('Clearing existing server directory if it exists');
+    await fs.remove(serverDir);
+    debug('Server directory cleared');
+
     await ensureDirExists(serverDir);
     debugFiles('Created server directory: %s', serverDir);
 
