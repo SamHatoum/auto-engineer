@@ -24,18 +24,6 @@ describe('modelToFlow', () => {
 import type { Command, Event, State } from '@auto-engineer/flow';
 import { AI, ProductCatalog } from '../server/src/integrations';
 import type { Products } from '../server/src/integrations';
-
-type AddItemsToCart = Command<
-  'AddItemsToCart',
-  {
-    sessionId: string;
-    items: {
-      productId: string;
-      quantity: number;
-    }[];
-  }
->;
-
 type EnterShoppingCriteria = Command<
   'EnterShoppingCriteria',
   {
@@ -43,18 +31,6 @@ type EnterShoppingCriteria = Command<
     criteria: string;
   }
 >;
-
-type ItemsAddedToCart = Event<
-  'ItemsAddedToCart',
-  {
-    sessionId: string;
-    items: {
-      productId: string;
-      quantity: number;
-    }[];
-  }
->;
-
 type ShoppingCriteriaEntered = Event<
   'ShoppingCriteriaEntered',
   {
@@ -62,7 +38,13 @@ type ShoppingCriteriaEntered = Event<
     criteria: string;
   }
 >;
-
+type SuggestShoppingItems = Command<
+  'SuggestShoppingItems',
+  {
+    sessionId: string;
+    prompt: string;
+  }
+>;
 type ShoppingItemsSuggested = Event<
   'ShoppingItemsSuggested',
   {
@@ -75,7 +57,6 @@ type ShoppingItemsSuggested = Event<
     }[];
   }
 >;
-
 type SuggestedItems = State<
   'SuggestedItems',
   {
@@ -88,15 +69,26 @@ type SuggestedItems = State<
     }[];
   }
 >;
-
-type SuggestShoppingItems = Command<
-  'SuggestShoppingItems',
+type AddItemsToCart = Command<
+  'AddItemsToCart',
   {
     sessionId: string;
-    prompt: string;
+    items: {
+      productId: string;
+      quantity: number;
+    }[];
   }
 >;
-
+type ItemsAddedToCart = Event<
+  'ItemsAddedToCart',
+  {
+    sessionId: string;
+    items: {
+      productId: string;
+      quantity: number;
+    }[];
+  }
+>;
 flow('Seasonal Assistant', () => {
   command('enters shopping criteria into assistant')
     .client(() => {
@@ -588,15 +580,6 @@ flow('Test Flow with IDs', 'FLOW-123', () => {
 
     expect(code).toEqual(`import { command, example, flow, rule, specs } from '@auto-engineer/flow';
 import type { Command, Event } from '@auto-engineer/flow';
-
-type CommandProcessed = Event<
-  'CommandProcessed',
-  {
-    id: string;
-    status: string;
-  }
->;
-
 type ProcessCommand = Command<
   'ProcessCommand',
   {
@@ -604,7 +587,13 @@ type ProcessCommand = Command<
     action: string;
   }
 >;
-
+type CommandProcessed = Event<
+  'CommandProcessed',
+  {
+    id: string;
+    status: string;
+  }
+>;
 flow('Test Flow with Rule IDs', 'FLOW-456', () => {
   command('process command', 'SLICE-789').server(() => {
     specs('Command Processing', () => {
@@ -663,7 +652,15 @@ flow('Test Flow with Rule IDs', 'FLOW-456', () => {
 
     expect(code).toEqual(`import { flow } from '@auto-engineer/flow';
 import type { Event } from '@auto-engineer/flow';
-
+type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
+  {
+    questionnaireId: string;
+    participantId: string;
+    link: string;
+    sentAt: Date;
+  }
+>;
 type QuestionAnswered = Event<
   'QuestionAnswered',
   {
@@ -674,17 +671,6 @@ type QuestionAnswered = Event<
     savedAt: Date;
   }
 >;
-
-type QuestionnaireLinkSent = Event<
-  'QuestionnaireLinkSent',
-  {
-    questionnaireId: string;
-    participantId: string;
-    link: string;
-    sentAt: Date;
-  }
->;
-
 flow('Questionnaire Flow', 'QUEST-001', () => {});
 `);
   });
@@ -913,7 +899,15 @@ flow('Questionnaire Flow', 'QUEST-001', () => {});
     expect(code)
       .toEqual(`import { data, example, experience, flow, gql, query, rule, should, source, specs } from '@auto-engineer/flow';
 import type { Event, State } from '@auto-engineer/flow';
-
+type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
+  {
+    questionnaireId: string;
+    participantId: string;
+    link: string;
+    sentAt: Date;
+  }
+>;
 type QuestionAnswered = Event<
   'QuestionAnswered',
   {
@@ -924,17 +918,6 @@ type QuestionAnswered = Event<
     savedAt: Date;
   }
 >;
-
-type QuestionnaireLinkSent = Event<
-  'QuestionnaireLinkSent',
-  {
-    questionnaireId: string;
-    participantId: string;
-    link: string;
-    sentAt: Date;
-  }
->;
-
 type QuestionnaireProgress = State<
   'QuestionnaireProgress',
   {
@@ -949,7 +932,6 @@ type QuestionnaireProgress = State<
     }[];
   }
 >;
-
 flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
   experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {
     specs(() => {
@@ -1140,7 +1122,13 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
 
     expect(code).toEqual(`import { example, flow, query, rule, specs } from '@auto-engineer/flow';
 import type { Event, State } from '@auto-engineer/flow';
-
+type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
+  {
+    questionnaireId: string;
+    participantId: string;
+  }
+>;
 type QuestionAnswered = Event<
   'QuestionAnswered',
   {
@@ -1149,15 +1137,6 @@ type QuestionAnswered = Event<
     answer: unknown;
   }
 >;
-
-type QuestionnaireLinkSent = Event<
-  'QuestionnaireLinkSent',
-  {
-    questionnaireId: string;
-    participantId: string;
-  }
->;
-
 type QuestionnaireProgress = State<
   'QuestionnaireProgress',
   {
@@ -1165,7 +1144,6 @@ type QuestionnaireProgress = State<
     status: string;
   }
 >;
-
 flow('Test Flow', 'TEST-FLOW', () => {
   query('test slice', 'TEST-SLICE').server(() => {
     specs('Test Rules', () => {
@@ -1341,7 +1319,22 @@ flow('Test Flow', 'TEST-FLOW', () => {
 
     expect(code).toEqual(`import { example, flow, query, rule, specs } from '@auto-engineer/flow';
 import type { Event, State } from '@auto-engineer/flow';
-
+type QuestionnaireConfig = State<
+  'QuestionnaireConfig',
+  {
+    questionnaireId: string;
+    numberOfQuestions: number;
+  }
+>;
+type QuestionnaireLinkSent = Event<
+  'QuestionnaireLinkSent',
+  {
+    questionnaireId: string;
+    participantId: string;
+    link: string;
+    sentAt: Date;
+  }
+>;
 type QuestionAnswered = Event<
   'QuestionAnswered',
   {
@@ -1352,25 +1345,6 @@ type QuestionAnswered = Event<
     savedAt: Date;
   }
 >;
-
-type QuestionnaireConfig = State<
-  'QuestionnaireConfig',
-  {
-    questionnaireId: string;
-    numberOfQuestions: number;
-  }
->;
-
-type QuestionnaireLinkSent = Event<
-  'QuestionnaireLinkSent',
-  {
-    questionnaireId: string;
-    participantId: string;
-    link: string;
-    sentAt: Date;
-  }
->;
-
 type QuestionnaireProgress = State<
   'QuestionnaireProgress',
   {
@@ -1385,7 +1359,6 @@ type QuestionnaireProgress = State<
     }[];
   }
 >;
-
 flow('Multi Given Flow', 'MULTI-GIVEN', () => {
   query('multi given slice', 'MULTI-SLICE').server(() => {
     specs('Multi Given Rules', () => {
@@ -1552,16 +1525,6 @@ flow('Multi Given Flow', 'MULTI-GIVEN', () => {
 
     expect(code).toEqual(`import { data, example, flow, query, rule, source, specs } from '@auto-engineer/flow';
 import type { State } from '@auto-engineer/flow';
-
-type QuestionnaireConfig = State<
-  'QuestionnaireConfig',
-  {
-    questionnaireId: string;
-    numberOfQuestions: number;
-    title: string;
-  }
->;
-
 type QuestionnaireProgress = State<
   'QuestionnaireProgress',
   {
@@ -1571,7 +1534,14 @@ type QuestionnaireProgress = State<
     totalQuestions: number;
   }
 >;
-
+type QuestionnaireConfig = State<
+  'QuestionnaireConfig',
+  {
+    questionnaireId: string;
+    numberOfQuestions: number;
+    title: string;
+  }
+>;
 flow('Referenced States Flow', 'REF-STATES', () => {
   query('query with database states', 'REF-SLICE').server(() => {
     data([
@@ -1703,23 +1673,6 @@ flow('Referenced States Flow', 'REF-STATES', () => {
 
     expect(code).toEqual(`import { example, flow, query, rule, specs } from '@auto-engineer/flow';
 import type { Event, State } from '@auto-engineer/flow';
-
-type ProcessEvent = Event<
-  'ProcessEvent',
-  {
-    processedAt: Date;
-  }
->;
-
-type ProcessState = State<
-  'ProcessState',
-  {
-    id: string;
-    completedAt: Date;
-    status: string;
-  }
->;
-
 type TimestampedEvent = Event<
   'TimestampedEvent',
   {
@@ -1730,7 +1683,20 @@ type TimestampedEvent = Event<
     submittedAt: Date;
   }
 >;
-
+type ProcessEvent = Event<
+  'ProcessEvent',
+  {
+    processedAt: Date;
+  }
+>;
+type ProcessState = State<
+  'ProcessState',
+  {
+    id: string;
+    completedAt: Date;
+    status: string;
+  }
+>;
 flow('Date Handling Flow', 'DATE-FLOW', () => {
   query('date handling slice', 'DATE-SLICE').server(() => {
     specs('Date Field Rules', () => {

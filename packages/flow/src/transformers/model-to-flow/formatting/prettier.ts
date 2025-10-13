@@ -1,5 +1,3 @@
-import { sortTypeDeclarations } from './sort-types';
-
 function modDefault<T>(m: unknown): T {
   const moduleObj = m as { default?: T };
   return moduleObj?.default ?? (m as T);
@@ -22,9 +20,7 @@ export async function formatWithPrettier(rawCode: string): Promise<string> {
       plugins: [tsPlugin, estreePlugin],
     };
 
-    let formatted = await prettier.format(rawCode, cfg);
-    formatted = sortTypeDeclarations(formatted);
-    formatted = await prettier.format(formatted, cfg);
+    const formatted = await prettier.format(rawCode, cfg);
 
     return formatted;
   } catch (err) {
