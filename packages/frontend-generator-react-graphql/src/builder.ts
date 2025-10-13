@@ -182,6 +182,10 @@ export class FrontendScaffoldBuilder {
       throw new Error('Starter files not loaded. Call cloneStarter() first.');
     }
 
+    debugBuild('Clearing existing output directory if it exists: %s', outputDir);
+    await fs.rm(outputDir, { recursive: true, force: true });
+    debugBuild('Output directory cleared');
+
     debugBuild('Creating output directory: %s', outputDir);
     await fs.mkdir(outputDir, { recursive: true });
 
