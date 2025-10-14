@@ -19,7 +19,7 @@ describe('getNarratives', (_mode) => {
     root = path.resolve(__dirname);
   });
   // eslint-disable-next-line complexity
-  it('loads multiple flows and generates correct models', async () => {
+  it('loads multiple narratives and generates correct models', async () => {
     const flows = await getNarratives({ vfs, root: path.resolve(__dirname), pattern, fastFsScan: true });
     const schemas = flows.toModel();
 
@@ -191,7 +191,7 @@ describe('getNarratives', (_mode) => {
     expect(Array.isArray(parsed.integrations)).toBe(true);
   });
 
-  it('should handle flows with integrations', async () => {
+  it('should handle narratives with integrations', async () => {
     const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const specsSchema = flows.toModel();
 
@@ -267,7 +267,7 @@ describe('getNarratives', (_mode) => {
     ).toBe(true);
   });
 
-  it('should have ids for flows and slices that have ids', async () => {
+  it('should have ids for narratives and slices that have ids', async () => {
     const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
 
     const schemas = flows.toModel();

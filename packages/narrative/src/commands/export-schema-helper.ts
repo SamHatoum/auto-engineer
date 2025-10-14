@@ -12,7 +12,6 @@ const main = async () => {
   debug('Starting export-schema-helper with directory: %s', directory);
 
   try {
-    // Import getFlows from the project's node_modules to ensure we use the same module context
     const getFileStore = getFs as () => Promise<IExtendedFileStore>;
     const fs: IExtendedFileStore = await getFileStore();
     const projectNarrativePath = fs.join(
@@ -24,7 +23,7 @@ const main = async () => {
       'src',
       'getNarratives.js',
     );
-    debug('Importing getFlows from: %s', projectNarrativePath);
+    debug('Importing getNarratives from: %s', projectNarrativePath);
 
     const { pathToFileURL } = await import('url');
     const narrativeModule = (await import(pathToFileURL(projectNarrativePath).href)) as {
