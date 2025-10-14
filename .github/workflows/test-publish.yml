@@ -27,7 +27,9 @@ jobs:
           version: 10.15.0
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - name: Create Release Pull Request or Publish
         id: changesets
