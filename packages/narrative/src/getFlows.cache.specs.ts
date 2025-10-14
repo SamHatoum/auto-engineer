@@ -15,7 +15,7 @@ const importMap = {
   'graphql-tag': { default: gql, gql },
 };
 
-const pattern = /\.(flow)\.(ts)$/;
+const pattern = /\.(narrative)\.(ts)$/;
 
 describe('getNarratives caching', () => {
   let vfs: IFileStore;
@@ -42,7 +42,7 @@ describe('getNarratives caching', () => {
     `;
 
     await vfs.write('/test/helper.ts', new TextEncoder().encode(helperContent1));
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const firstCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
     const hash1 = firstCallResult.vfsFiles.sort().join(',');
@@ -69,7 +69,7 @@ describe('getNarratives caching', () => {
         const x = 1;
       });
     `;
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const importMap1 = { 'test-module': { default: 'value1' } };
     const result1 = await getNarratives({ vfs, root, importMap: importMap1, pattern, fastFsScan: true });
@@ -96,7 +96,7 @@ describe('getNarratives caching', () => {
     `;
 
     await vfs.write('/test/helper.ts', new TextEncoder().encode(helperContent1));
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const firstCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
     const filesCount1 = firstCallResult.vfsFiles.length;
@@ -133,7 +133,7 @@ describe('getNarratives caching', () => {
       });
     `;
 
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
     await vfs.write('/test/unrelated.txt', new TextEncoder().encode('initial content'));
 
     const firstCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
@@ -162,13 +162,13 @@ describe('getNarratives caching', () => {
       });
     `;
 
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent1));
-    await vfs.write('/test/test2.flow.ts', new TextEncoder().encode(flowContent2));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent1));
+    await vfs.write('/test/test2.narrative.ts', new TextEncoder().encode(flowContent2));
 
     const firstCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
     expect(firstCallResult.narratives.length).toBeGreaterThanOrEqual(2);
 
-    await vfs.remove('/test/test2.flow.ts');
+    await vfs.remove('/test/test2.narrative.ts');
 
     const secondCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
 
@@ -185,21 +185,21 @@ describe('getNarratives caching', () => {
       });
     `;
 
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const firstCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
-    expect(firstCallResult.vfsFiles.some((f) => f.includes('test.flow.ts'))).toBe(true);
+    expect(firstCallResult.vfsFiles.some((f) => f.includes('test.narrative.ts'))).toBe(true);
 
-    const content = await vfs.read('/test/test.flow.ts');
+    const content = await vfs.read('/test/test.narrative.ts');
     if (content) {
-      await vfs.write('/test/renamed.flow.ts', content);
-      await vfs.remove('/test/test.flow.ts');
+      await vfs.write('/test/renamed.narrative.ts', content);
+      await vfs.remove('/test/test.narrative.ts');
     }
 
     const secondCallResult = await getNarratives({ vfs, root, pattern, fastFsScan: true });
 
-    expect(secondCallResult.vfsFiles.some((f) => f.includes('renamed.flow.ts'))).toBe(true);
-    expect(secondCallResult.vfsFiles.some((f) => f.includes('test.flow.ts'))).toBe(false);
+    expect(secondCallResult.vfsFiles.some((f) => f.includes('renamed.narrative.ts'))).toBe(true);
+    expect(secondCallResult.vfsFiles.some((f) => f.includes('test.narrative.ts'))).toBe(false);
   });
 
   it('should handle .d.ts files if they affect the graph', async () => {
@@ -217,7 +217,7 @@ describe('getNarratives caching', () => {
     `;
 
     await vfs.write('/test/types.d.ts', new TextEncoder().encode(dtsContent));
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const result = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
 
@@ -233,7 +233,7 @@ describe('getNarratives caching', () => {
       });
     `;
 
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const importMap1 = { 'module-a': 'value', 'module-b': 'value' };
     const result1 = await getNarratives({ vfs, root, importMap: importMap1, pattern, fastFsScan: true });
@@ -268,7 +268,7 @@ describe('getNarratives caching', () => {
     await vfs.write('/test/chain3.ts', new TextEncoder().encode(chain3Content));
     await vfs.write('/test/chain2.ts', new TextEncoder().encode(chain2Content));
     await vfs.write('/test/chain1.ts', new TextEncoder().encode(chain1Content));
-    await vfs.write('/test/test.flow.ts', new TextEncoder().encode(flowContent));
+    await vfs.write('/test/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const result1 = await getNarratives({ vfs, root, pattern, fastFsScan: true, importMap });
 

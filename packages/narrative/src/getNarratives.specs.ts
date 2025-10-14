@@ -8,7 +8,7 @@ import { getNarratives } from './getNarratives';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const pattern = /\.(flow)\.(ts)$/;
+const pattern = /\.(narrative)\.(ts)$/;
 
 describe('getNarratives', (_mode) => {
   let vfs: NodeFileStore;
@@ -182,7 +182,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('validates the complete schema with Zod', async () => {
-    const flows = await getNarratives({ vfs: vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const schemas = flows.toModel();
     const parsed = modelSchema.parse(schemas);
     expect(parsed.variant).toBe('specs');
@@ -192,7 +192,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should handle flows with integrations', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const specsSchema = flows.toModel();
 
     const flowsWithIntegrations = specsSchema.narratives.filter((f) =>
@@ -216,7 +216,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should handle react slices correctly', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const specsSchema = flows.toModel();
 
     const reactSlices = specsSchema.narratives.flatMap((f) => f.slices.filter((s) => s.type === 'react'));
@@ -241,7 +241,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should parse and validate a complete flow with all slice types', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const schemas = flows.toModel();
 
     const validationResult = modelSchema.safeParse(schemas);
@@ -268,7 +268,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should have ids for flows and slices that have ids', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
 
     const schemas = flows.toModel();
 
@@ -286,7 +286,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should have ids for command slice rules', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.narratives.find((f) => f.name === 'Test Flow with IDs');
@@ -309,7 +309,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should have ids for query slice rules', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.narratives.find((f) => f.name === 'Test Flow with IDs');
@@ -327,7 +327,7 @@ describe('getNarratives', (_mode) => {
   });
 
   it('should have ids for react slice rules', async () => {
-    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true });
+    const flows = await getNarratives({ vfs: vfs, root: root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true });
     const schemas = flows.toModel();
 
     const testFlowWithIds = schemas.narratives.find((f) => f.name === 'Test Flow with IDs');
@@ -348,7 +348,7 @@ describe('getNarratives', (_mode) => {
     const flows = await getNarratives({
       vfs,
       root,
-      pattern: /(?:^|\/)questionnaires\.flow\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
+      pattern: /(?:^|\/)questionnaires\.narrative\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
     });
     const model = flows.toModel();
 
@@ -379,7 +379,7 @@ describe('getNarratives', (_mode) => {
     const flows = await getNarratives({
       vfs,
       root,
-      pattern: /(?:^|\/)questionnaires\.flow\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
+      pattern: /(?:^|\/)questionnaires\.narrative\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
       fastFsScan: true,
     });
     const model = flows.toModel();
@@ -401,7 +401,7 @@ flow('Test Experience Flow', () => {
 });
       `;
 
-    await memoryVfs.write('/test/experience.flow.ts', new TextEncoder().encode(flowWithExperienceContent));
+    await memoryVfs.write('/test/experience.narrative.ts', new TextEncoder().encode(flowWithExperienceContent));
 
     const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
     const model = flows.toModel();
@@ -444,14 +444,14 @@ flow('Browser Test Flow', () => {
 });
       `;
 
-    await memoryVfs.write('/browser/test.flow.ts', new TextEncoder().encode(flowContent));
+    await memoryVfs.write('/browser/test.narrative.ts', new TextEncoder().encode(flowContent));
 
     const { executeAST } = await import('./loader');
     const { registry } = await import('./narrative-registry');
 
     registry.clearAll();
 
-    await executeAST(['/browser/test.flow.ts'], memoryVfs, {}, '/browser');
+    await executeAST(['/browser/test.narrative.ts'], memoryVfs, {}, '/browser');
 
     const flows = registry.getAllNarratives();
     expect(flows).toHaveLength(1);
@@ -484,11 +484,13 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
 });
       `;
 
-    await memoryVfs.write('/browser/questionnaires.flow.ts', new TextEncoder().encode(flowContent));
+    await memoryVfs.write('/browser/questionnaires.narrative.ts', new TextEncoder().encode(flowContent));
 
     registry.clearAll();
 
-    await expect(executeAST(['/browser/questionnaires.flow.ts'], memoryVfs, {}, '/browser')).resolves.toBeDefined();
+    await expect(
+      executeAST(['/browser/questionnaires.narrative.ts'], memoryVfs, {}, '/browser'),
+    ).resolves.toBeDefined();
 
     const flows = registry.getAllNarratives();
     expect(flows).toHaveLength(1);
@@ -598,7 +600,7 @@ flow('questionnaires-test', () => {
 });
     `;
 
-    await memoryVfs.write('/test/questionnaires.flow.ts', new TextEncoder().encode(questionnaireFlowContent));
+    await memoryVfs.write('/test/questionnaires.narrative.ts', new TextEncoder().encode(questionnaireFlowContent));
 
     const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
     const model = flows.toModel();
@@ -642,7 +644,7 @@ flow('questionnaires-test', () => {
     const flows = await getNarratives({
       vfs,
       root,
-      pattern: /(?:^|\/)questionnaires\.flow\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
+      pattern: /(?:^|\/)questionnaires\.narrative\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
       fastFsScan: true,
     });
 
@@ -662,7 +664,7 @@ flow('questionnaires-test', () => {
     const flows = await getNarratives({
       vfs,
       root: root,
-      pattern: /(?:^|\/)questionnaires\.flow\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
+      pattern: /(?:^|\/)questionnaires\.narrative\.(?:ts|tsx|js|jsx|mjs|cjs)$/,
       fastFsScan: true,
     });
     const model = flows.toModel();
@@ -769,7 +771,7 @@ flow('Todo List', () => {
 });
     `;
 
-    await memoryVfs.write('/test/todo-summary.flow.ts', new TextEncoder().encode(todoSummaryFlowContent));
+    await memoryVfs.write('/test/todo-summary.narrative.ts', new TextEncoder().encode(todoSummaryFlowContent));
 
     const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
     const model = flows.toModel();
@@ -971,7 +973,7 @@ function validateMixedGivenTypeMessages(model: Model): void {
 async function createQuestionnaireBugTestModel(): Promise<Model> {
   const memoryVfs = new InMemoryFileStore();
   const questionnaireFlowContent = getQuestionnaireFlowContent();
-  await memoryVfs.write('/test/questionnaires-bug.flow.ts', new TextEncoder().encode(questionnaireFlowContent));
+  await memoryVfs.write('/test/questionnaires-bug.narrative.ts', new TextEncoder().encode(questionnaireFlowContent));
   const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
   return flows.toModel();
 }

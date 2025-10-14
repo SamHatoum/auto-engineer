@@ -11,7 +11,7 @@ export interface OrderPlaced {
   };
 }
 
-export interface PlaceOrderFlow {
+export interface PlaceOrderNarrative {
   type: 'PlaceOrder';
   data: {
     productId: string;
@@ -41,7 +41,7 @@ flow('Place order', () => {
       specs('User submits a new order', () => {
         rule('Valid orders should be processed successfully', () => {
           example('User places order for available product')
-            .when<PlaceOrderFlow>({
+            .when<PlaceOrderNarrative>({
               productId: 'product_789',
               quantity: 3,
             })

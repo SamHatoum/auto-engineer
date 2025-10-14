@@ -146,14 +146,14 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
     const flowContent3 = new TextEncoder().encode(multipleFlowsSameSource);
     const flowContent4 = new TextEncoder().encode(multipleFlowsIncomplete);
     const flowContent5 = new TextEncoder().encode(multipleFlowsSliceMissing);
-    await vfs.write('/test/flow-without-ids.flow.ts', flowContent1);
-    await vfs.write('/test/flow-with-ids.flow.ts', flowContent2);
-    await vfs.write('/test/homepage.flow.ts', flowContent3);
-    await vfs.write('/test/homepage-incomplete.flow.ts', flowContent4);
-    await vfs.write('/test/homepage-slice-missing.flow.ts', flowContent5);
+    await vfs.write('/test/flow-without-ids.narrative.ts', flowContent1);
+    await vfs.write('/test/flow-with-ids.narrative.ts', flowContent2);
+    await vfs.write('/test/homepage.narrative.ts', flowContent3);
+    await vfs.write('/test/homepage-incomplete.narrative.ts', flowContent4);
+    await vfs.write('/test/homepage-slice-missing.narrative.ts', flowContent5);
   });
   it('should return false for models without IDs', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const flowWithoutIds = model.narratives.find((f) => f.name === 'Test Flow Without IDs');
@@ -166,7 +166,7 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return true for models with complete IDs', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -174,7 +174,7 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return true for flows that already have IDs', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const testFlowWithIds = model.narratives.find((f) => f.name === 'Test Flow with IDs');
@@ -187,7 +187,7 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return false if any slice is missing an ID', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -200,7 +200,7 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return false if any rule is missing an ID', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const modelWithIds = addAutoIds(model);
@@ -227,11 +227,11 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return true when multiple flows with same sourceFile all have IDs', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const homepageFlows = model.narratives.filter(
-      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage.flow.ts'),
+      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage.narrative.ts'),
     );
     expect(homepageFlows.length).toBe(3);
 
@@ -240,11 +240,11 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return false when any flow in multiple flows with same sourceFile is missing ID', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const homepageFlows = model.narratives.filter(
-      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage-incomplete.flow.ts'),
+      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage-incomplete.narrative.ts'),
     );
     expect(homepageFlows.length).toBe(3);
 
@@ -253,11 +253,11 @@ flow('Response Analytics', 'AUTO-eME978Euk', () => {
   });
 
   it('should return false when any slice in multiple flows with same sourceFile is missing ID', async () => {
-    const result = await getNarratives({ vfs, root, pattern: /\.(flow)\.(ts)$/, fastFsScan: true, importMap });
+    const result = await getNarratives({ vfs, root, pattern: /\.(narrative)\.(ts)$/, fastFsScan: true, importMap });
     const model = result.toModel();
 
     const homepageFlows = model.narratives.filter(
-      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage-slice-missing.flow.ts'),
+      (f) => f.sourceFile !== undefined && f.sourceFile.includes('homepage-slice-missing.narrative.ts'),
     );
     expect(homepageFlows.length).toBe(3);
 

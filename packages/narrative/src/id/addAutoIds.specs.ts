@@ -220,7 +220,7 @@ describe('addAutoIds', () => {
       narratives: [
         {
           name: 'Home Screen',
-          sourceFile: '/path/to/homepage.flow.ts',
+          sourceFile: '/path/to/homepage.narrative.ts',
           slices: [
             {
               name: 'Active Surveys Summary',
@@ -236,7 +236,7 @@ describe('addAutoIds', () => {
         },
         {
           name: 'Create Survey',
-          sourceFile: '/path/to/homepage.flow.ts',
+          sourceFile: '/path/to/homepage.narrative.ts',
           slices: [
             {
               name: 'Create Survey Form',
@@ -252,7 +252,7 @@ describe('addAutoIds', () => {
         },
         {
           name: 'Response Analytics',
-          sourceFile: '/path/to/homepage.flow.ts',
+          sourceFile: '/path/to/homepage.narrative.ts',
           slices: [
             {
               name: 'Response Rate Charts',
@@ -289,8 +289,8 @@ describe('addAutoIds', () => {
     expect(result.narratives[0].slices[0].id).not.toBe(result.narratives[2].slices[0].id);
     expect(result.narratives[1].slices[0].id).not.toBe(result.narratives[2].slices[0].id);
 
-    expect(result.narratives[0].sourceFile).toBe('/path/to/homepage.flow.ts');
-    expect(result.narratives[1].sourceFile).toBe('/path/to/homepage.flow.ts');
-    expect(result.narratives[2].sourceFile).toBe('/path/to/homepage.flow.ts');
+    expect(result.narratives[0].sourceFile).toBe('/path/to/homepage.narrative.ts');
+    expect(result.narratives[1].sourceFile).toBe('/path/to/homepage.narrative.ts');
+    expect(result.narratives[2].sourceFile).toBe('/path/to/homepage.narrative.ts');
   });
 });

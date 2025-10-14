@@ -1739,7 +1739,7 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
       narratives: [
         {
           name: 'Home Screen',
-          sourceFile: '/path/to/homepage.flow.ts',
+          sourceFile: '/path/to/homepage.narrative.ts',
           slices: [
             {
               name: 'Active Surveys Summary',
@@ -1756,7 +1756,7 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
         },
         {
           name: 'Create Survey',
-          sourceFile: '/path/to/homepage.flow.ts',
+          sourceFile: '/path/to/homepage.narrative.ts',
           slices: [
             {
               name: 'Create Survey Form',
@@ -1773,7 +1773,7 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
         },
         {
           name: 'Response Analytics',
-          sourceFile: '/path/to/homepage.flow.ts',
+          sourceFile: '/path/to/homepage.narrative.ts',
           slices: [
             {
               name: 'Response Rate Charts',
