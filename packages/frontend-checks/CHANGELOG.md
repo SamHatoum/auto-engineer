@@ -1,5 +1,14 @@
 # @auto-engineer/frontend-checks
 
+## 0.11.11
+
+### Patch Changes
+
+- Change flow to Narrative
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.11
+
 ## 0.11.10
 
 ### Patch Changes

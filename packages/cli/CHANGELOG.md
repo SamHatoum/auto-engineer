@@ -1,5 +1,16 @@
 # @auto-engineer/cli
 
+## 0.11.11
+
+### Patch Changes
+
+- Change flow to Narrative
+
+- Updated dependencies []:
+  - @auto-engineer/message-store@0.11.11
+  - @auto-engineer/message-bus@0.11.11
+  - @auto-engineer/file-store@0.11.11
+
 ## 0.11.10
 
 ### Patch Changes

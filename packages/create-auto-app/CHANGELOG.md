@@ -1,5 +1,14 @@
 # create-auto-app
 
+## 0.11.11
+
+### Patch Changes
+
+- Change flow to Narrative
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.11.11
+
 ## 0.11.10
 
 ### Patch Changes

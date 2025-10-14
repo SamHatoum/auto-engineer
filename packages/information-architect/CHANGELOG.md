@@ -1,5 +1,16 @@
 # @auto-engineer/information-architect
 
+## 0.11.11
+
+### Patch Changes
+
+- Change flow to Narrative
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.11
+  - @auto-engineer/ai-gateway@0.11.11
+  - @auto-engineer/narrative@0.11.11
+
 ## 0.11.10
 
 ### Patch Changes
