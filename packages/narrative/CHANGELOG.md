@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.12
+
+### Patch Changes
+
+- default search pattern for getNarratives set to .narrative.ts
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.12
+  - @auto-engineer/id@0.11.12
+  - @auto-engineer/message-bus@0.11.12
+
 ## 0.11.11
 
 ### Patch Changes

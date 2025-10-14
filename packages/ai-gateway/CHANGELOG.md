@@ -1,5 +1,7 @@
 # @auto-engineer/ai-gateway
 
+## 0.11.12
+
 ## 0.11.11
 
 ### Patch Changes
