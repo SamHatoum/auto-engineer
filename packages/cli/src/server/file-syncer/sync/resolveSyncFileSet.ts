@@ -31,34 +31,48 @@ function stableCandidateNmRoots(projectRoot: string): string[] {
   return [...roots].map((p) => p.replace(/\/+/g, '/'));
 }
 
+interface NarrativeResult {
+  vfsFiles: string[];
+  externals: string[];
+  typings: Record<string, string[]>;
+}
+
+function isNarrativeModule(mod: unknown): mod is {
+  getNarratives: (opts: { vfs: NodeFileStore; root: string }) => Promise<NarrativeResult>;
+} {
+  if (typeof mod !== 'object' || mod === null) {
+    return false;
+  }
+  if (!('getNarratives' in mod)) {
+    return false;
+  }
+  const modWithMethod = mod as Record<string, unknown>;
+  return typeof modWithMethod['getNarratives'] === 'function';
+}
+
 export async function resolveSyncFileSet(opts: { vfs: NodeFileStore; watchDir: string; projectRoot: string }) {
   const { vfs, watchDir, projectRoot } = opts;
   try {
-    // Try to dynamically import flow package - it may not be available
-    interface FlowResult {
-      vfsFiles?: string[] | Record<string, string[]>;
-      externals?: string[];
-      typings?: string[] | Record<string, string[]>;
-    }
-
-    let flows: FlowResult | null = null;
+    let flows: NarrativeResult | null = null;
     try {
       const flowPackage = '@auto-engineer/narrative';
-      const flowModule = (await import(flowPackage)) as {
-        getFlows: (opts: { vfs: NodeFileStore; root: string }) => Promise<FlowResult>;
-      };
-      flows = await flowModule.getFlows({ vfs, root: watchDir });
+      const flowModule: unknown = await import(flowPackage);
+      if (isNarrativeModule(flowModule)) {
+        flows = await flowModule.getNarratives({ vfs, root: watchDir });
+      } else {
+        debug('[sync] getNarratives not found in @auto-engineer/narrative');
+      }
     } catch (e) {
       debug('[sync] @auto-engineer/narrative not available, using fallback mode', e);
     }
 
-    const files = flows !== null ? flattenPaths(flows.vfsFiles) : [];
+    const files = flows?.vfsFiles ?? [];
     const baseDirs = uniq([projectRoot, ...files.map(dirOf)]);
     const dynamicRoots = nmRootsForBases(baseDirs);
     const fallbackRoots = stableCandidateNmRoots(projectRoot);
     const nmRoots = uniq([...dynamicRoots, ...fallbackRoots]);
 
-    // Gather externals from flow graph + bare imports in source files
+    // Gather externals from narrative graph + bare imports in source files
     const externalsFromFlows = flows?.externals ?? [];
     const extraPkgs = await collectBareImportsFromFiles(files, vfs);
     const externals = Array.from(new Set([...externalsFromFlows, ...extraPkgs]));
