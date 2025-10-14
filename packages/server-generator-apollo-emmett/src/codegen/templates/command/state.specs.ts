@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 
 describe('state.ts.ejs', () => {
   it('should generate an initial state', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host creates a listing',
           slices: [
@@ -78,7 +78,7 @@ describe('state.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const stateFile = plans.find((p) => p.outputPath.endsWith('state.ts'));
 
     expect(stateFile?.contents).toMatchInlineSnapshot(`

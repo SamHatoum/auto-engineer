@@ -43,13 +43,13 @@ export async function resolveSyncFileSet(opts: { vfs: NodeFileStore; watchDir: s
 
     let flows: FlowResult | null = null;
     try {
-      const flowPackage = '@auto-engineer/flow';
+      const flowPackage = '@auto-engineer/narrative';
       const flowModule = (await import(flowPackage)) as {
         getFlows: (opts: { vfs: NodeFileStore; root: string }) => Promise<FlowResult>;
       };
       flows = await flowModule.getFlows({ vfs, root: watchDir });
     } catch (e) {
-      debug('[sync] @auto-engineer/flow not available, using fallback mode', e);
+      debug('[sync] @auto-engineer/narrative not available, using fallback mode', e);
     }
 
     const files = flows !== null ? flattenPaths(flows.vfsFiles) : [];

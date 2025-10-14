@@ -6,7 +6,7 @@ import ejs from 'ejs';
 import { ensureDirExists, ensureDirPath, toKebabCase } from './utils/path';
 import { camelCase, pascalCase } from 'change-case';
 import prettier from 'prettier';
-import { Flow, Slice, Model } from '@auto-engineer/flow';
+import { Narrative, Slice, Model } from '@auto-engineer/narrative';
 import createDebug from 'debug';
 
 const debug = createDebug('auto:server-generator-apollo-emmett:scaffold');
@@ -484,7 +484,7 @@ function extractUsedErrors(gwtMapping: Record<string, (GwtCondition & { failingF
 
 async function prepareTemplateData(
   slice: Slice,
-  flow: Flow,
+  flow: Narrative,
   commands: Message[],
   events: Message[],
   states: Message[],
@@ -556,7 +556,7 @@ async function prepareTemplateData(
 
 function annotateEventSources(
   events: Message[],
-  flows: Flow[],
+  flows: Narrative[],
   fallbackFlowName: string,
   fallbackSliceName: string,
 ): void {
@@ -582,7 +582,7 @@ function canSliceProduceEvent(slice: Slice): boolean {
   return ['command', 'react'].includes(slice.type) && 'server' in slice && Boolean(slice.server?.specs);
 }
 
-function findEventSource(flows: Flow[], eventType: string): { flowName: string; sliceName: string } | null {
+function findEventSource(flows: Narrative[], eventType: string): { flowName: string; sliceName: string } | null {
   debugSlice('Finding source for event: %s', eventType);
 
   for (const flow of flows) {
@@ -603,7 +603,7 @@ function findEventSource(flows: Flow[], eventType: string): { flowName: string; 
 
 function annotateCommandSources(
   commands: Message[],
-  flows: Flow[],
+  flows: Narrative[],
   fallbackFlowName: string,
   fallbackSliceName: string,
 ): void {
@@ -616,7 +616,7 @@ function annotateCommandSources(
   }
 }
 
-function findCommandSource(flows: Flow[], commandType: string): { flowName: string; sliceName: string } | null {
+function findCommandSource(flows: Narrative[], commandType: string): { flowName: string; sliceName: string } | null {
   debugSlice('Finding source for command: %s', commandType);
   for (const flow of flows) {
     for (const slice of flow.slices) {
@@ -646,10 +646,10 @@ function findCommandSource(flows: Flow[], commandType: string): { flowName: stri
 
 async function generateFilesForSlice(
   slice: Slice,
-  flow: Flow,
+  flow: Narrative,
   sliceDir: string,
   messages: MessageDefinition[],
-  flows: Flow[],
+  flows: Narrative[],
   unionToEnumName: Map<string, string>,
   integrations?: Model['integrations'],
 ): Promise<FilePlan[]> {
@@ -698,7 +698,7 @@ async function generateFilesForSlice(
 }
 
 export async function generateScaffoldFilePlans(
-  flows: Flow[],
+  flows: Narrative[],
   messages: Model['messages'],
   integrations?: Model['integrations'],
   baseDir = 'src/domain/flows',
@@ -766,7 +766,7 @@ export async function writeScaffoldFilePlans(plans: FilePlan[]) {
 }
 
 export async function scaffoldFromSchema(
-  flows: Flow[],
+  flows: Narrative[],
   messages: Model['messages'],
   baseDir = 'src/domain/flows',
 ): Promise<void> {

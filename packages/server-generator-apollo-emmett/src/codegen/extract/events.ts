@@ -1,4 +1,4 @@
-import { EventExample } from '@auto-engineer/flow';
+import { EventExample } from '@auto-engineer/narrative';
 import { Message, MessageDefinition } from '../types';
 import { extractFieldsFromMessage } from './fields';
 import { ReactGwtSpec } from './messages';

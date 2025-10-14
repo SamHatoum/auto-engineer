@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 
 describe('query.resolver.ts.ejs', () => {
   it('should generate a valid query resolver from request field', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'listing-flow',
           slices: [
@@ -63,7 +63,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`
@@ -129,7 +129,7 @@ describe('query.resolver.ts.ejs', () => {
   it('should generate a valid query resolver with array of inline object field', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'assistant-flow',
           slices: [
@@ -187,7 +187,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`
@@ -254,7 +254,7 @@ describe('query.resolver.ts.ejs', () => {
   it('should generate the query resolver for "views the questionnaire"', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Questionnaires',
           slices: [
@@ -354,7 +354,7 @@ describe('query.resolver.ts.ejs', () => {
       integrations: [],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const queryFile = plans.find(
       (p) => p.outputPath.endsWith('query.resolver.ts') && p.contents.includes('ViewsTheQuestionnaireQueryResolver'),
     );
@@ -429,7 +429,7 @@ describe('query.resolver.ts.ejs', () => {
   it('should import Float when Float fields are used', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'product-flow',
           slices: [
@@ -482,7 +482,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toContain(
@@ -493,7 +493,7 @@ describe('query.resolver.ts.ejs', () => {
   it('should import Float when array of numbers is used', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'stats-flow',
           slices: [
@@ -544,7 +544,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toContain('Float');
@@ -553,7 +553,7 @@ describe('query.resolver.ts.ejs', () => {
   it('should import Float when Float query arg is used', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'search-flow',
           slices: [
@@ -604,7 +604,7 @@ describe('query.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toContain('Float');

@@ -1,8 +1,8 @@
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 
 const specVariant1: SpecsSchema = {
   variant: 'specs',
-  flows: [
+  narratives: [
     {
       name: 'Add item',
       description: 'Flow to add items to a system',

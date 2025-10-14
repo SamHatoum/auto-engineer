@@ -1,4 +1,4 @@
-import { Slice } from '@auto-engineer/flow';
+import { Slice } from '@auto-engineer/narrative';
 
 interface ProjectionOrigin {
   type: 'projection';

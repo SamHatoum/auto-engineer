@@ -5,7 +5,7 @@ import { resolve, join } from 'path';
 import { existsSync } from 'fs';
 import { generateScaffoldFilePlans, writeScaffoldFilePlans } from '../codegen/scaffoldFromSchema';
 import { ensureDirExists, ensureDirPath, toKebabCase } from '../codegen/utils/path';
-import { Model } from '@auto-engineer/flow';
+import { Model } from '@auto-engineer/narrative';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execa } from 'execa';
@@ -123,7 +123,7 @@ async function readAndParseModel(absModel: string): Promise<Model> {
   const spec = JSON.parse(content) as Model;
 
   debugModel('Parsed model:');
-  debugModel('  Flows: %d', spec.flows?.length || 0);
+  debugModel('  Flows: %d', spec.narratives?.length || 0);
   debugModel('  Messages: %d', spec.messages?.length || 0);
   debugModel('  Integrations: %d', spec.integrations?.length ?? 0);
 
@@ -132,12 +132,12 @@ async function readAndParseModel(absModel: string): Promise<Model> {
 }
 
 function logFlowDetails(spec: Model): void {
-  if (spec.flows !== undefined && spec.flows.length > 0) {
+  if (spec.narratives !== undefined && spec.narratives.length > 0) {
     debugModel(
       'Flow names: %o',
-      spec.flows.map((f) => f.name),
+      spec.narratives.map((f) => f.name),
     );
-    spec.flows.forEach((flow) => {
+    spec.narratives.forEach((flow) => {
       debugModel('  Flow "%s" has %d slices', flow.name, flow.slices?.length || 0);
       flow.slices?.forEach((slice) => {
         debugModel('    Slice: %s (type: %s)', slice.name, slice.type);
@@ -177,9 +177,9 @@ async function generateAndWriteScaffold(spec: Model, serverDir: string): Promise
   const domainFlowsPath = join(serverDir, 'src', 'domain', 'flows');
   debugScaffold('Generating scaffold file plans');
   debugScaffold('  Domain flows path: %s', domainFlowsPath);
-  debugScaffold('  Number of flows: %d', spec.flows?.length || 0);
+  debugScaffold('  Number of flows: %d', spec.narratives?.length || 0);
 
-  const filePlans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations, domainFlowsPath);
+  const filePlans = await generateScaffoldFilePlans(spec.narratives, spec.messages, spec.integrations, domainFlowsPath);
 
   debugScaffold('Generated %d file plans', filePlans.length);
   if (filePlans.length > 0) {
@@ -296,8 +296,8 @@ export async function handleGenerateServerCommandInternal(
 
     await generateAndWriteScaffold(spec, serverDir);
 
-    if (Array.isArray(spec.flows) && spec.flows.length > 0) {
-      for (const flow of spec.flows) {
+    if (Array.isArray(spec.narratives) && spec.narratives.length > 0) {
+      for (const flow of spec.narratives) {
         if (Array.isArray(flow.slices) && flow.slices.length > 0) {
           for (const slice of flow.slices) {
             if (slice.type === 'experience') continue; // skip experience slices

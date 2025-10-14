@@ -1,4 +1,4 @@
-import { Slice } from '@auto-engineer/flow';
+import { Slice } from '@auto-engineer/narrative';
 import { Message, MessageDefinition } from '../types';
 import { extractFieldsFromMessage } from './fields';
 

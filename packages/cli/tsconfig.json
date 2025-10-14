@@ -9,7 +9,7 @@
   "references": [
     { "path": "../message-bus" },
     { "path": "../message-store" },
-    { "path": "../flow" },
+    { "path": "../narrative" },
     { "path": "../file-store" }
   ]
 }

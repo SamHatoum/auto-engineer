@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 
 describe('projection.specs.ts.ejs', () => {
   it('should generate a valid test spec for a query slice projection', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'listing-flow',
           slices: [
@@ -180,7 +180,7 @@ describe('projection.specs.ts.ejs', () => {
       ],
     } as SpecsSchema;
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const specFile = plans.find((p) => p.outputPath.endsWith('projection.specs.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`
@@ -241,7 +241,7 @@ describe('projection.specs.ts.ejs', () => {
   it('should generate a valid test spec for a model with given/when/then pattern', async () => {
     const questionnaireSpec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Questionnaires',
           slices: [
@@ -363,7 +363,7 @@ describe('projection.specs.ts.ejs', () => {
     } as SpecsSchema;
 
     const plans = await generateScaffoldFilePlans(
-      questionnaireSpec.flows,
+      questionnaireSpec.narratives,
       questionnaireSpec.messages,
       undefined,
       'src/domain/flows',
@@ -380,7 +380,7 @@ describe('projection.specs.ts.ejs', () => {
   it('should include all events from both given and when clauses in projection imports and types', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'questionnaires',
           slices: [
@@ -569,7 +569,7 @@ describe('projection.specs.ts.ejs', () => {
     } as SpecsSchema;
 
     const plans = await generateScaffoldFilePlans(
-      spec.flows,
+      spec.narratives,
       [
         {
           type: 'command',

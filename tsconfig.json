@@ -35,7 +35,7 @@
       "path": "./packages/server-generator-apollo-emmett"
     },
     {
-      "path": "./packages/flow"
+      "path": "./packages/narrative"
     },
     {
       "path": "./packages/frontend-checks"

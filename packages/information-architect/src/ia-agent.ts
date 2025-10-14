@@ -1,6 +1,6 @@
 import { generateTextWithAI, AIProvider } from '@auto-engineer/ai-gateway';
 import { type UXSchema, type AIAgentOutput } from './types.js';
-import { type Model } from '@auto-engineer/flow';
+import { type Model } from '@auto-engineer/narrative';
 
 function extractJsonFromMarkdown(text: string): string {
   return text.replace(/```(?:json)?\s*([\s\S]*?)\s*```/, '$1').trim();

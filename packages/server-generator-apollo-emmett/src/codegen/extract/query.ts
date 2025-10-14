@@ -1,4 +1,4 @@
-import { EventExample, Slice } from '@auto-engineer/flow';
+import { EventExample, Slice } from '@auto-engineer/narrative';
 
 interface QueryGwtCondition {
   description: string;

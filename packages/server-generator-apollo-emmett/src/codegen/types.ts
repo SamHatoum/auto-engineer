@@ -1,4 +1,4 @@
-import { CommandExample, EventExample, StateExample } from '@auto-engineer/flow';
+import { CommandExample, EventExample, StateExample } from '@auto-engineer/narrative';
 
 export interface Message {
   type: string;

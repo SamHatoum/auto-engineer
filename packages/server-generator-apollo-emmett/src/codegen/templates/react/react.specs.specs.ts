@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 
 describe('react.specs.ts.ejs (react slice)', () => {
   it('should generate correct react.specs.ts', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'manage bookings',
           slices: [
@@ -161,7 +161,7 @@ describe('react.specs.ts.ejs (react slice)', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
 
     const specFile = plans.find((p) => p.outputPath.endsWith('react.specs.ts'));
     expect(specFile?.contents).toMatchInlineSnapshot(`

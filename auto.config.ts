@@ -3,7 +3,7 @@
 
 export default {
   plugins: [
-    '@auto-engineer/flow',
+    '@auto-engineer/narrative',
     '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/design-system-importer',
     '@auto-engineer/frontend-checks',

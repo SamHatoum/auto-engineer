@@ -4,7 +4,7 @@
 export default {
   // List of Auto Engineer packages to load as plugins
   plugins: [
-    '@auto-engineer/flow',
+    '@auto-engineer/narrative',
     '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
     '@auto-engineer/frontend-implementer',

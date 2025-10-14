@@ -227,7 +227,7 @@ describe.skip('Pipeline Graph Rendering Integration', () => {
     // Verify main chain exists
     const mainChainEdges = [
       {
-        from: '@auto-engineer/flow/export:schema',
+        from: '@auto-engineer/narrative/export:schema',
         to: '@auto-engineer/server-generator-apollo-emmett/generate:server',
       },
       {

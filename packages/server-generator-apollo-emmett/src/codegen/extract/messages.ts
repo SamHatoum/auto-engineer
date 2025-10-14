@@ -1,5 +1,5 @@
 import { extractCommandsFromGwt, extractCommandsFromThen } from './commands';
-import { CommandExample, ErrorExample, EventExample, Slice, StateExample } from '@auto-engineer/flow';
+import { CommandExample, ErrorExample, EventExample, Slice, StateExample } from '@auto-engineer/narrative';
 import { Message, MessageDefinition } from '../types';
 import { extractEventsFromGiven, extractEventsFromThen, extractEventsFromWhen } from './events';
 import { extractFieldsFromMessage } from './fields';

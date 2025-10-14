@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 
 describe('generateScaffoldFilePlans', () => {
   it('should generate a valid handle file', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host creates a listing',
           slices: [
@@ -97,7 +97,7 @@ describe('generateScaffoldFilePlans', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const handleFile = plans.find((p) => p.outputPath.endsWith('handle.ts'));
 
     expect(handleFile?.contents).toMatchInlineSnapshot(`
@@ -131,7 +131,7 @@ describe('generateScaffoldFilePlans', () => {
   it('should generate a valid handle file with integration', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Assistant suggests items',
           slices: [
@@ -268,7 +268,12 @@ describe('generateScaffoldFilePlans', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(
+      spec.narratives,
+      spec.messages,
+      spec.integrations,
+      'src/domain/flows',
+    );
     const handleFile = plans.find((p) => p.outputPath.endsWith('handle.ts'));
 
     expect(handleFile?.contents).toMatchInlineSnapshot(`

@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 
 describe('spec.ts.ejs', () => {
   it('should generate a valid spec file', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host creates a listing',
           slices: [
@@ -91,7 +91,7 @@ describe('spec.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const specFile = plans.find((p) => p.outputPath.endsWith('specs.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`
@@ -150,7 +150,7 @@ describe('spec.ts.ejs', () => {
   it('should include given events in the spec file when provided', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Guest removes a listing',
           slices: [
@@ -233,7 +233,7 @@ describe('spec.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const specFile = plans.find((p) => p.outputPath.endsWith('specs.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`
@@ -292,7 +292,7 @@ describe('spec.ts.ejs', () => {
   it('should generate separate tests for multiple examples with different scenarios', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Questionnaires',
           slices: [
@@ -421,7 +421,7 @@ describe('spec.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const specFile = plans.find((p) => p.outputPath.endsWith('specs.ts'));
 
     expect(specFile?.contents).toMatchInlineSnapshot(`

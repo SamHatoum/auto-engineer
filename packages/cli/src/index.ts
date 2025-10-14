@@ -318,7 +318,7 @@ const setupProgram = async (config: ReturnType<typeof loadConfig>) => {
     console.log(`
 export default {
   plugins: [
-    '@auto-engineer/flow',
+    '@auto-engineer/narrative',
     '@auto-engineer/server-generator-apollo-emmett',
     '@auto-engineer/server-implementer',
     // Add more plugins as needed

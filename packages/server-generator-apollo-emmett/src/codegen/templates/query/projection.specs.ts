@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { Model } from '@auto-engineer/flow';
+import { Model } from '@auto-engineer/narrative';
 
 describe('projection.ts.ejs', () => {
   it('should generate a valid projection file with correct relative event import path from producing slice', async () => {
     const flows: Model = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'listing-flow',
           slices: [
@@ -201,7 +201,7 @@ describe('projection.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(flows.flows, flows.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(flows.narratives, flows.messages, undefined, 'src/domain/flows');
     const projectionFile = plans.find((p) => p.outputPath.endsWith('projection.ts'));
 
     expect(projectionFile?.contents).toMatchInlineSnapshot(`
@@ -279,7 +279,7 @@ describe('projection.ts.ejs', () => {
   it('should generate a valid query resolver using ID type', async () => {
     const spec: Model = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'wishlist-flow',
           slices: [
@@ -330,7 +330,7 @@ describe('projection.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
 
     expect(resolverFile?.contents).toMatchInlineSnapshot(`

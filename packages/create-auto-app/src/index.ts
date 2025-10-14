@@ -33,7 +33,7 @@ const AUTO_ENGINEER_PACKAGES = [
   '@auto-engineer/server-checks',
   '@auto-engineer/design-system-importer',
   '@auto-engineer/server-generator-apollo-emmett',
-  '@auto-engineer/flow',
+  '@auto-engineer/narrative',
   '@auto-engineer/frontend-checks',
   '@auto-engineer/frontend-implementer',
   '@auto-engineer/component-implementer',
@@ -42,7 +42,7 @@ const AUTO_ENGINEER_PACKAGES = [
   '@auto-engineer/server-implementer',
 ];
 
-const MINIMAL_PACKAGES = ['@auto-engineer/flow', '@auto-engineer/server-generator-apollo-emmett'];
+const MINIMAL_PACKAGES = ['@auto-engineer/narrative', '@auto-engineer/server-generator-apollo-emmett'];
 
 async function detectPackageManager(): Promise<'npm' | 'pnpm' | 'yarn'> {
   try {

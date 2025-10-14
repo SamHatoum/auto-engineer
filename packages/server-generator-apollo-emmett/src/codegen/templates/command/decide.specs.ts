@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
 
 describe('decide.ts.ejs', () => {
   it('should generate a valid decide file when both command and event exist', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host creates a listing',
           slices: [
@@ -72,7 +72,7 @@ describe('decide.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const decideFile = plans.find((p) => p.outputPath.endsWith('decide.ts'));
 
     expect(decideFile?.contents).toMatchInlineSnapshot(`
@@ -117,7 +117,7 @@ describe('decide.ts.ejs', () => {
   it('should include implementation instructions when prior events are required', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host removes a listing',
           slices: [
@@ -198,7 +198,7 @@ describe('decide.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const decideFile = plans.find((p) => p.outputPath.endsWith('decide.ts'));
 
     expect(decideFile?.contents).toMatchInlineSnapshot(`
@@ -243,7 +243,7 @@ describe('decide.ts.ejs', () => {
   it('should generate a decide file that handles multiple GWTs including an error', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host creates a listing',
           slices: [
@@ -339,7 +339,7 @@ describe('decide.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const decideFile = plans.find((p) => p.outputPath.endsWith('decide.ts'));
 
     expect(decideFile?.contents).toMatchInlineSnapshot(`
@@ -388,7 +388,7 @@ describe('decide.ts.ejs', () => {
   it('should include integration return type and usage in decide function', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Assistant suggests items',
           slices: [
@@ -525,7 +525,7 @@ describe('decide.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, spec.integrations);
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, spec.integrations);
     const decideFile = plans.find((p) => p.outputPath.endsWith('decide.ts'));
 
     expect(decideFile?.contents).toMatchInlineSnapshot(`

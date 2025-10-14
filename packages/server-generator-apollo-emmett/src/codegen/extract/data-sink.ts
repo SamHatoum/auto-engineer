@@ -1,4 +1,4 @@
-import { CommandExample, Slice, type Example } from '@auto-engineer/flow';
+import { CommandExample, Slice, type Example } from '@auto-engineer/narrative';
 
 function resolveStreamId(stream: string, exampleData: Record<string, unknown>): string {
   return stream.replace(/\$\{([^}]+)\}/g, (_, key: string) => String(exampleData?.[key] ?? 'unknown'));

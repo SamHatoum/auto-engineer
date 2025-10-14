@@ -1,4 +1,4 @@
-import { CommandExample, EventExample } from '@auto-engineer/flow';
+import { CommandExample, EventExample } from '@auto-engineer/narrative';
 import { Message, MessageDefinition } from '../types';
 import { extractFieldsFromMessage } from './fields';
 

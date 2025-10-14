@@ -2,7 +2,7 @@ import { processFlowsWithAI } from './index';
 import uxSchema from './auto-ux-schema.json';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { type Model } from '@auto-engineer/flow';
+import { type Model } from '@auto-engineer/narrative';
 
 interface DesignSystemItem {
   name: string;

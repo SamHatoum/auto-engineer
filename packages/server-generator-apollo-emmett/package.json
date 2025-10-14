@@ -23,7 +23,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@auto-engineer/flow": "workspace:*",
+    "@auto-engineer/narrative": "workspace:*",
     "@auto-engineer/message-bus": "workspace:*",
     "@event-driven-io/emmett": "^0.38.2",
     "@event-driven-io/emmett-sqlite": "^0.38.5",

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { processFlowsWithAI } from '../index';
 import { type UXSchema } from '../types';
 import createDebug from 'debug';
-import { Model } from '@auto-engineer/flow';
+import { Model } from '@auto-engineer/narrative';
 
 const debug = createDebug('auto:information-architect:generate-command');
 const debugSchema = createDebug('auto:information-architect:generate-command:schema');
@@ -153,7 +153,7 @@ async function handleGenerateIACommandInternal(
     const uxSchema = JSON.parse(uxSchemaContent) as UXSchema;
     debugSchema('UX schema loaded successfully');
     const model = await getModelFromContext(modelPath);
-    debugFiles('Reading %d flow files', model.flows.length);
+    debugFiles('Reading %d flow files', model.narratives.length);
 
     // Get unique schema path and existing schema
     const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);

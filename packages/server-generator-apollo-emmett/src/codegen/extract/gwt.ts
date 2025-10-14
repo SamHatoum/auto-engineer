@@ -1,4 +1,4 @@
-import { Slice, CommandExample, EventExample, StateExample, Example } from '@auto-engineer/flow';
+import { Slice, CommandExample, EventExample, StateExample, Example } from '@auto-engineer/narrative';
 import { GwtCondition } from '../types';
 
 export function buildCommandGwtMapping(slice: Slice): Record<string, (GwtCondition & { failingFields?: string[] })[]> {

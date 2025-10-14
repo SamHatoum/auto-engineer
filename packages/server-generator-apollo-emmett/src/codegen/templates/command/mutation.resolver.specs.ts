@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateScaffoldFilePlans } from '../../scaffoldFromSchema';
-import { Model as SpecsSchema } from '@auto-engineer/flow';
+import { Model as SpecsSchema } from '@auto-engineer/narrative';
 
 describe('mutation.resolver.ts.ejs', () => {
   it('should generate a valid mutation resolver file', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Host creates a listing',
           slices: [
@@ -72,7 +72,7 @@ describe('mutation.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const mutationFile = plans.find((p) => p.outputPath.endsWith('mutation.resolver.ts'));
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
@@ -134,7 +134,7 @@ describe('mutation.resolver.ts.ejs', () => {
   it('should generate the mutation resolver for AnswerQuestion', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Questionnaires',
           slices: [
@@ -220,7 +220,7 @@ describe('mutation.resolver.ts.ejs', () => {
       integrations: [],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const mutationFile = plans.find(
       (p) =>
         p.outputPath.endsWith('mutation.resolver.ts') && p.contents.includes('export class AnswerQuestionResolver'),
@@ -267,7 +267,7 @@ describe('mutation.resolver.ts.ejs', () => {
   it('generates nested input types for inline object arrays in a mutation', async () => {
     const spec: SpecsSchema = {
       variant: 'specs',
-      flows: [
+      narratives: [
         {
           name: 'Cart',
           slices: [
@@ -315,7 +315,7 @@ describe('mutation.resolver.ts.ejs', () => {
       ],
     };
 
-    const plans = await generateScaffoldFilePlans(spec.flows, spec.messages, undefined, 'src/domain/flows');
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
     const mutationFile = plans.find(
       (p) =>
         p.outputPath.endsWith('mutation.resolver.ts') && p.contents.includes('export class AddItemsToCartResolver'),
