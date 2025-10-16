@@ -164,6 +164,47 @@ function addEventWhenToChain(
   );
 }
 
+function isEmptyEventWhen(when: { eventRef: string; exampleData: Record<string, unknown> }): boolean {
+  return (!when.eventRef || when.eventRef === '') && Object.keys(when.exampleData).length === 0;
+}
+
+function isEmptyCommandWhen(when: { commandRef: string; exampleData: Record<string, unknown> }): boolean {
+  return (!when.commandRef || when.commandRef === '') && Object.keys(when.exampleData).length === 0;
+}
+
+function isEmptyWhen(whenData: GWTBlock['when']): boolean {
+  if (!whenData) return true;
+  if (Array.isArray(whenData) && whenData.length === 0) return true;
+  if (typeof whenData === 'object' && 'eventRef' in whenData) {
+    return isEmptyEventWhen(whenData as { eventRef: string; exampleData: Record<string, unknown> });
+  }
+  if (typeof whenData === 'object' && 'commandRef' in whenData) {
+    return isEmptyCommandWhen(whenData as { commandRef: string; exampleData: Record<string, unknown> });
+  }
+  return false;
+}
+
+function processWhenForSliceKind(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  exampleChain: tsNS.Expression,
+  when: GWTBlock['when'],
+  sliceKind: 'command' | 'react' | 'query' | 'experience',
+  messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
+): tsNS.Expression {
+  if (sliceKind === 'command' && isWhenCommand(when)) {
+    return addCommandWhenToChain(ts, f, exampleChain, when, messages);
+  }
+  if ((sliceKind === 'react' || sliceKind === 'query') && isWhenEvents(when)) {
+    return addEventWhenToChain(ts, f, exampleChain, when[0], messages);
+  }
+  if (sliceKind === 'query' && when && !Array.isArray(when) && 'eventRef' in when) {
+    const whenEvent = when as { eventRef: string; exampleData: Record<string, unknown> };
+    return addEventWhenToChain(ts, f, exampleChain, whenEvent, messages);
+  }
+  return exampleChain;
+}
+
 function addWhenToChain(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
@@ -172,16 +213,10 @@ function addWhenToChain(
   sliceKind: 'command' | 'react' | 'query' | 'experience',
   messages?: Array<{ type: string; name: string; fields: Array<{ name: string; type: string; required: boolean }> }>,
 ): tsNS.Expression {
-  if (sliceKind === 'command' && isWhenCommand(g.when)) {
-    return addCommandWhenToChain(ts, f, exampleChain, g.when, messages);
-  } else if ((sliceKind === 'react' || sliceKind === 'query') && isWhenEvents(g.when)) {
-    const firstWhenEvent = g.when[0];
-    return addEventWhenToChain(ts, f, exampleChain, firstWhenEvent, messages);
-  } else if (sliceKind === 'query' && g.when && !Array.isArray(g.when) && 'eventRef' in g.when) {
-    const whenEvent = g.when as { eventRef: string; exampleData: Record<string, unknown> };
-    return addEventWhenToChain(ts, f, exampleChain, whenEvent, messages);
+  if (isEmptyWhen(g.when)) {
+    return exampleChain;
   }
-  return exampleChain;
+  return processWhenForSliceKind(ts, f, exampleChain, g.when, sliceKind, messages);
 }
 
 function getThenTypeRef(firstThenItem: GWTBlock['then'][0]): string {

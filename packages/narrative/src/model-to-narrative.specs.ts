@@ -1819,4 +1819,216 @@ narrative('Response Analytics', () => {
 });
 `);
   });
+
+  it('should omit .when({}) when given has multiple items and when is empty', async () => {
+    const modelWithEmptyWhen: Model = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'Todo List Summary',
+          id: 'TODO-001',
+          slices: [
+            {
+              name: 'views completion summary',
+              id: 'SUMMARY-001',
+              type: 'query',
+              client: {
+                description: 'Summary view client',
+              },
+              server: {
+                description: 'Summary calculation server',
+                specs: {
+                  name: 'Summary Statistics',
+                  rules: [
+                    {
+                      id: 'RULE-SUMMARY',
+                      description: 'summary shows overall todo list statistics',
+                      examples: [
+                        {
+                          description: 'calculates summary from multiple todos',
+                          given: [
+                            {
+                              eventRef: 'TodoAdded',
+                              exampleData: {
+                                todoId: 'todo-001',
+                                description: 'Buy groceries',
+                                status: 'pending',
+                                addedAt: new Date('2030-01-01T09:00:00.000Z'),
+                              },
+                            },
+                            {
+                              eventRef: 'TodoAdded',
+                              exampleData: {
+                                todoId: 'todo-002',
+                                description: 'Write report',
+                                status: 'pending',
+                                addedAt: new Date('2030-01-01T09:10:00.000Z'),
+                              },
+                            },
+                            {
+                              eventRef: 'TodoMarkedInProgress',
+                              exampleData: {
+                                todoId: 'todo-001',
+                                markedAt: new Date('2030-01-01T10:00:00.000Z'),
+                              },
+                            },
+                            {
+                              eventRef: 'TodoMarkedComplete',
+                              exampleData: {
+                                todoId: 'todo-002',
+                                completedAt: new Date('2030-01-01T11:00:00.000Z'),
+                              },
+                            },
+                          ],
+                          when: {
+                            eventRef: '',
+                            exampleData: {},
+                          },
+                          then: [
+                            {
+                              stateRef: 'TodoListSummary',
+                              exampleData: {
+                                summaryId: 'main-summary',
+                                totalTodos: 2,
+                                pendingCount: 0,
+                                inProgressCount: 1,
+                                completedCount: 1,
+                                completionPercentage: 50,
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'event',
+          name: 'TodoAdded',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'description', type: 'string', required: true },
+            { name: 'status', type: 'string', required: true },
+            { name: 'addedAt', type: 'Date', required: true },
+          ],
+          source: 'internal',
+          metadata: { version: 1 },
+        },
+        {
+          type: 'event',
+          name: 'TodoMarkedInProgress',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'markedAt', type: 'Date', required: true },
+          ],
+          source: 'internal',
+          metadata: { version: 1 },
+        },
+        {
+          type: 'event',
+          name: 'TodoMarkedComplete',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'completedAt', type: 'Date', required: true },
+          ],
+          source: 'internal',
+          metadata: { version: 1 },
+        },
+        {
+          type: 'state',
+          name: 'TodoListSummary',
+          fields: [
+            { name: 'summaryId', type: 'string', required: true },
+            { name: 'totalTodos', type: 'number', required: true },
+            { name: 'pendingCount', type: 'number', required: true },
+            { name: 'inProgressCount', type: 'number', required: true },
+            { name: 'completedCount', type: 'number', required: true },
+            { name: 'completionPercentage', type: 'number', required: true },
+          ],
+          metadata: { version: 1 },
+        },
+      ],
+      integrations: [],
+    };
+
+    const code = await modelToNarrative(modelWithEmptyWhen);
+
+    expect(code).toEqual(`import { example, narrative, query, rule, specs } from '@auto-engineer/narrative';
+import type { Event, State } from '@auto-engineer/narrative';
+type TodoAdded = Event<
+  'TodoAdded',
+  {
+    todoId: string;
+    description: string;
+    status: string;
+    addedAt: Date;
+  }
+>;
+type TodoMarkedInProgress = Event<
+  'TodoMarkedInProgress',
+  {
+    todoId: string;
+    markedAt: Date;
+  }
+>;
+type TodoMarkedComplete = Event<
+  'TodoMarkedComplete',
+  {
+    todoId: string;
+    completedAt: Date;
+  }
+>;
+type TodoListSummary = State<
+  'TodoListSummary',
+  {
+    summaryId: string;
+    totalTodos: number;
+    pendingCount: number;
+    inProgressCount: number;
+    completedCount: number;
+    completionPercentage: number;
+  }
+>;
+narrative('Todo List Summary', 'TODO-001', () => {
+  query('views completion summary', 'SUMMARY-001').server(() => {
+    specs('Summary Statistics', () => {
+      rule('summary shows overall todo list statistics', 'RULE-SUMMARY', () => {
+        example('calculates summary from multiple todos')
+          .given<TodoAdded>({
+            todoId: 'todo-001',
+            description: 'Buy groceries',
+            status: 'pending',
+            addedAt: new Date('2030-01-01T09:00:00.000Z'),
+          })
+          .and<TodoAdded>({
+            todoId: 'todo-002',
+            description: 'Write report',
+            status: 'pending',
+            addedAt: new Date('2030-01-01T09:10:00.000Z'),
+          })
+          .and<TodoMarkedInProgress>({ todoId: 'todo-001', markedAt: new Date('2030-01-01T10:00:00.000Z') })
+          .and<TodoMarkedComplete>({ todoId: 'todo-002', completedAt: new Date('2030-01-01T11:00:00.000Z') })
+          .then<TodoListSummary>({
+            summaryId: 'main-summary',
+            totalTodos: 2,
+            pendingCount: 0,
+            inProgressCount: 1,
+            completedCount: 1,
+            completionPercentage: 50,
+          });
+      });
+    });
+  });
+});
+`);
+
+    expect(code).not.toContain('.when({})');
+    expect(code).not.toContain('.when<');
+  });
 });

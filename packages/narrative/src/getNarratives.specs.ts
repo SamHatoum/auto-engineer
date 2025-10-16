@@ -640,7 +640,7 @@ flow('questionnaires-test', () => {
     }
   });
 
-  it('does not emit empty generics for empty when()', async () => {
+  it('does not emit empty generics or empty when clauses', async () => {
     const flows = await getNarratives({
       vfs,
       root,
@@ -651,13 +651,9 @@ flow('questionnaires-test', () => {
     const model = flows.toModel();
     const code = await modelToNarrative(model);
 
-    // Should not produce `.when<>({})` for empty when-clauses
     expect(code).not.toMatch(/\.when<>\(\{\}\)/);
-
-    // should render empty whens as `.when({})` for empty when-clauses
-    const emptyWhenCount = (code.match(/\.when\(\{}\)/g) ?? []).length;
-    expect(emptyWhenCount).toBeGreaterThanOrEqual(2);
     expect(code).not.toMatch(/\.when<\s*\{\s*}\s*>\(\{}\)/);
+    expect(code).not.toMatch(/\.when\(\{}\)/);
   });
 
   it('should not generate phantom messages with empty names', async () => {
@@ -927,17 +923,7 @@ function validateMixedGivenTypes(example: Example): void {
 }
 
 function validateEmptyWhenClause(example: Example): void {
-  expect(example.when).toBeDefined();
-  expect(typeof example.when === 'object' && !Array.isArray(example.when)).toBe(true);
-  if (typeof example.when === 'object' && !Array.isArray(example.when)) {
-    expect('commandRef' in example.when).toBe(false);
-    expect('eventRef' in example.when).toBe(true);
-    expect('stateRef' in example.when).toBe(false);
-    if ('eventRef' in example.when) {
-      expect(example.when.eventRef).toBe('');
-    }
-    expect(example.when.exampleData).toEqual({});
-  }
+  expect(example.when).toBeUndefined();
 }
 
 function validateThenClause(example: Example): void {

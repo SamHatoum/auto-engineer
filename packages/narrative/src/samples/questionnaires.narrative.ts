@@ -135,7 +135,6 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               link: 'https://app.example.com/q/q-001?participant=participant-abc',
               sentAt: new Date('2030-01-01T09:00:00Z'),
             })
-            .when({})
             .then<QuestionnaireProgress>({
               questionnaireId: 'q-001',
               participantId: 'participant-abc',
@@ -259,7 +258,6 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               answer: 'No',
               savedAt: new Date('2030-01-01T09:05:00Z'),
             })
-            .when({}) // FIX ME
             .then<QuestionnaireProgress>({
               questionnaireId: 'q-001',
               participantId: 'participant-abc',

@@ -58,7 +58,6 @@ flow('Mixed Given Types', 'FLOW-MGT', () => {
               itemId: 'item-002',
               addedAt: new Date('2024-01-01T10:02:00Z'),
             })
-            .when({}) // empty when clause
             .then<SystemStatus>({
               systemId: 'system-001',
               itemCount: 2,

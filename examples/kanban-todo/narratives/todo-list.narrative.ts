@@ -247,7 +247,6 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
             })
             .and<TodoMarkedInProgress>({ todoId: 'todo-001', markedAt: new Date('2030-01-01T10:00:00.000Z') })
             .and<TodoMarkedComplete>({ todoId: 'todo-002', completedAt: new Date('2030-01-01T11:00:00.000Z') })
-            .when({})
             .then<TodoState>({
               todoId: 'todo-001',
               description: 'Buy groceries',
@@ -305,7 +304,6 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
             })
             .and<TodoMarkedInProgress>({ todoId: 'todo-001', markedAt: new Date('2030-01-01T10:00:00.000Z') })
             .and<TodoMarkedComplete>({ todoId: 'todo-002', completedAt: new Date('2030-01-01T11:00:00.000Z') })
-            .when({})
             .then<TodoListSummary>({
               summaryId: 'main-summary',
               totalTodos: 3,

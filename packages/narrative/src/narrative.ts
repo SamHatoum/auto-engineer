@@ -93,7 +93,7 @@ export function rule(description: string, idOrFn: string | (() => void), fn?: ()
   callback();
 }
 
-export const example = (description: string) => {
+export const example = (description: string): TypedExampleBuilder => {
   recordExample(description);
   return createExampleBuilder();
 };
@@ -122,6 +122,7 @@ interface TypedExampleBuilder {
 interface TypedGivenBuilder<G> {
   and<U>(data: ExtractData<U> | ExtractData<U>[], context?: ContextFor<U>): TypedGivenBuilder<G | U>;
   when<W>(data: ExtractData<W> | ExtractData<W>[], context?: ContextFor<W>): TypedGivenWhenBuilder<G, W>;
+  then<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedGivenThenBuilder<G, never, T>;
 }
 
 interface TypedWhenBuilder<W> {
@@ -177,6 +178,20 @@ function createGivenBuilder<G>(): TypedGivenBuilder<G> {
               return createThenBuilder<W, T | A>() as TypedGivenThenBuilder<G, W, T | A>;
             },
           };
+        },
+      };
+    },
+    then<T>(data: ExtractData<T> | ExtractData<T>[], context?: ContextFor<T>): TypedGivenThenBuilder<G, never, T> {
+      const thenItems = Array.isArray(data) ? data : [data];
+      recordThenData(thenItems, normalizeContext(context as Partial<Record<string, string>>));
+      return {
+        and<A>(
+          data: ExtractData<A> | ExtractData<A>[],
+          context?: ContextFor<A>,
+        ): TypedGivenThenBuilder<G, never, T | A> {
+          const andItems = Array.isArray(data) ? data : [data];
+          recordAndThenData(andItems, normalizeContext(context as Partial<Record<string, string>>));
+          return createThenBuilder<never, T | A>() as TypedGivenThenBuilder<G, never, T | A>;
         },
       };
     },

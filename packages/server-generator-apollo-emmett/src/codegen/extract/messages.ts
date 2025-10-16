@@ -1,5 +1,5 @@
 import { extractCommandsFromGwt, extractCommandsFromThen } from './commands';
-import { CommandExample, ErrorExample, EventExample, Slice, StateExample } from '@auto-engineer/narrative';
+import { CommandExample, EventExample, Slice } from '@auto-engineer/narrative';
 import { Message, MessageDefinition } from '../types';
 import { extractEventsFromGiven, extractEventsFromThen, extractEventsFromWhen } from './events';
 import { extractFieldsFromMessage } from './fields';
@@ -24,17 +24,6 @@ export interface ExtractedMessages {
 export interface ReactGwtSpec {
   when?: EventExample[];
   then: CommandExample[];
-}
-
-export interface CommandGwtSpec {
-  given?: EventExample[];
-  when?: CommandExample;
-  then: Array<EventExample | ErrorExample>;
-}
-
-export interface QueryGwtSpec {
-  given: EventExample[];
-  then: StateExample[];
 }
 
 const EMPTY_EXTRACTED_MESSAGES: ExtractedMessages = {

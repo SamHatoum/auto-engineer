@@ -321,7 +321,6 @@ export function recordExample(description: string): void {
     const rule = objectRules[context.currentRuleIndex];
     rule.examples.push({
       description,
-      when: { commandRef: '', exampleData: {} }, // Default, will be updated
       then: [],
     });
     context.currentExampleIndex = rule.examples.length - 1;
