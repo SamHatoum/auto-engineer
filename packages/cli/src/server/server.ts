@@ -14,6 +14,7 @@ import { EventProcessor } from './event-processor';
 import { CommandRegistry } from './command-registry';
 import { CommandMetadataService } from './command-metadata-service';
 import { SettledTracker } from './settled-tracker';
+import { type ServerService, ChildProcessManager } from './services';
 
 const debug = createDebug('auto:cli:server');
 
@@ -38,6 +39,7 @@ export class MessageBusServer {
   private eventProcessor: EventProcessor;
   private commandRegistry: CommandRegistry;
   private settledTracker: SettledTracker;
+  private readonly services: ServerService[];
   private currentSessionId?: string;
   private dslRegistrations: Array<import('../dsl/types').DslRegistration> = [];
 
@@ -84,6 +86,8 @@ export class MessageBusServer {
 
     // Set up global event listener for state management
     this.eventProcessor.setupGlobalEventListener();
+
+    this.services = [new ChildProcessManager(this.messageBus)];
 
     // Set up WebSocket handlers
     this.setupWebSocketHandlers();
@@ -235,6 +239,19 @@ export class MessageBusServer {
       });
     });
 
+    debug('Starting %d server services', this.services.length);
+    for (const service of this.services) {
+      try {
+        debug('Starting service: %s', service.name);
+        await service.start();
+      } catch (error) {
+        debug('Failed to start service %s: %O', service.name, error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Service ${service.name} failed to start: ${errorMessage}`);
+      }
+    }
+    debug('All services started successfully');
+
     // TODO: Add event store integration here
     // this.eventStore = new EventStore();
     // this.messageBus.subscribeAll({
@@ -248,6 +265,17 @@ export class MessageBusServer {
    */
   async stop(): Promise<void> {
     debug('Stopping message bus server');
+
+    debug('Stopping %d server services', this.services.length);
+    for (const service of [...this.services].reverse()) {
+      try {
+        debug('Stopping service: %s', service.name);
+        await service.stop();
+      } catch (error) {
+        debug('Error stopping service %s: %O', service.name, error);
+      }
+    }
+    debug('All services stopped');
 
     // End current session if exists
     if (this.currentSessionId !== undefined && this.currentSessionId !== null && this.currentSessionId !== '') {
