@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.13
+
+### Patch Changes
+
+- allows direct transition in gwt from .and() to .then()
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.13
+  - @auto-engineer/id@0.11.13
+  - @auto-engineer/message-bus@0.11.13
+
 ## 0.11.12
 
 ### Patch Changes

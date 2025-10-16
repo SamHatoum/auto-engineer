@@ -1,5 +1,13 @@
 # @auto-engineer/server-generator-apollo-emmett
 
+## 0.11.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/narrative@0.11.13
+  - @auto-engineer/message-bus@0.11.13
+
 ## 0.11.12
 
 ### Patch Changes
