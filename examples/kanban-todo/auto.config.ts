@@ -23,6 +23,7 @@ import type {
   ComponentImplementedEvent,
   ComponentImplementationFailedEvent,
 } from '@auto-engineer/component-implementer';
+import type { StartServerCommand, StartClientCommand } from '@auto-engineer/dev-server';
 import * as path from 'path';
 import createDebug from 'debug';
 
@@ -68,6 +69,7 @@ export default autoConfig({
     '@auto-engineer/information-architect',
     '@auto-engineer/frontend-generator-react-graphql',
     '@auto-engineer/server-implementer',
+    '@auto-engineer/dev-server',
   ],
   aliases: {
     // Resolve command name conflicts between packages
@@ -194,12 +196,15 @@ export default autoConfig({
       }),
     );
 
-    on<GenerateServerEvents>('ServerGenerated', () =>
+    on<GenerateServerEvents>('ServerGenerated', () => [
       dispatch<GenerateIACommand>('GenerateIA', {
         modelPath: './.context/schema.json',
         outputDir: './.context',
       }),
-    );
+      dispatch<StartServerCommand>('StartServer', {
+        serverDirectory: './server',
+      }),
+    ]);
 
     on<GenerateIAEvents>('IAGenerated', () =>
       dispatch<GenerateClientCommand>('GenerateClient', {
@@ -222,6 +227,9 @@ export default autoConfig({
             componentType: 'molecule',
             filePath: 'client/src/components/molecules/Example.tsx',
             componentName: 'Example.tsx',
+          }),
+          dispatch<StartClientCommand>('StartClient', {
+            clientDirectory: './client',
           }),
         ];
       }
@@ -248,7 +256,7 @@ export default autoConfig({
 
       dispatchedPhases.add('molecule');
 
-      const commands = molecules.map((component) => {
+      const componentCommands = molecules.map((component) => {
         const componentName = path.basename(component.filePath).replace('.tsx', '');
         return dispatch<ImplementComponentCommand>('ImplementComponent', {
           projectDir: clientTargetDir,
@@ -260,7 +268,11 @@ export default autoConfig({
         });
       });
 
-      return dispatch.parallel(commands);
+      const startClientCommand = dispatch<StartClientCommand>('StartClient', {
+        clientDirectory: './client',
+      });
+
+      return dispatch.parallel([...componentCommands, startClientCommand]);
     });
 
     const handleComponentProcessed = (e: ComponentImplementedEvent | ComponentImplementationFailedEvent) => {

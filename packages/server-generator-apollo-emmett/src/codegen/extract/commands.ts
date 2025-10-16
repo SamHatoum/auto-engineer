@@ -23,7 +23,7 @@ function createCommandMessage(
 export function extractCommandsFromGwt(
   gwtSpecs: Array<{
     given?: Array<EventExample | unknown>;
-    when: CommandExample | EventExample | unknown[];
+    when?: CommandExample | EventExample | unknown[];
     then: Array<EventExample | unknown | { errorType: string; message?: string }>;
   }>,
   allMessages: MessageDefinition[],
@@ -86,7 +86,7 @@ function processCommandExample(
 export function extractCommandsFromThen(
   gwtSpecs: Array<{
     given?: Array<EventExample | unknown>;
-    when: CommandExample | EventExample | unknown[];
+    when?: CommandExample | EventExample | unknown[];
     then: Array<EventExample | unknown | { errorType: string; message?: string }>;
   }>,
   allMessages: MessageDefinition[],

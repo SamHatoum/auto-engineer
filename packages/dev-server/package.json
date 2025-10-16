@@ -1,0 +1,40 @@
+{
+  "name": "@auto-engineer/dev-server",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc && tsx ../../scripts/fix-esm-imports.ts",
+    "test": "vitest run --reporter=dot",
+    "lint": "eslint 'src/**/*.ts' --max-warnings 0 --config ../../eslint.config.ts",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
+    "lint:fix": "eslint 'src/**/*.ts' --fix --config ../../eslint.config.ts",
+    "format:fix": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\" --ignore-path ../../.prettierignore --log-level warn",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@auto-engineer/cli": "workspace:*",
+    "@auto-engineer/message-bus": "workspace:*",
+    "debug": "^4.4.1",
+    "execa": "^9.5.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@auto-engineer/cli": "workspace:*"
+  },
+  "version": "0.11.12"
+}

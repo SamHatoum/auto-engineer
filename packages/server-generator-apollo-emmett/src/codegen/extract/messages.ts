@@ -22,13 +22,13 @@ export interface ExtractedMessages {
 }
 
 export interface ReactGwtSpec {
-  when: EventExample[];
+  when?: EventExample[];
   then: CommandExample[];
 }
 
 export interface CommandGwtSpec {
   given?: EventExample[];
-  when: CommandExample;
+  when?: CommandExample;
   then: Array<EventExample | ErrorExample>;
 }
 

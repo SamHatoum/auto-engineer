@@ -11,6 +11,7 @@
     "@auto-engineer/cli": "workspace:*",
     "@auto-engineer/component-implementer": "workspace:*",
     "@auto-engineer/design-system-importer": "workspace:*",
+    "@auto-engineer/dev-server": "workspace:*",
     "@auto-engineer/narrative": "workspace:*",
     "@auto-engineer/frontend-checks": "workspace:*",
     "@auto-engineer/frontend-generator-react-graphql": "workspace:*",

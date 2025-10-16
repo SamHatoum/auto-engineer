@@ -634,7 +634,15 @@ function findCommandSource(flows: Narrative[], commandType: string): { flowName:
               })),
             )
           : [];
-      if (gwtSpecs.some((g) => !Array.isArray(g.when) && 'commandRef' in g.when && g.when.commandRef === commandType)) {
+      if (
+        gwtSpecs.some(
+          (g) =>
+            g.when !== undefined &&
+            !Array.isArray(g.when) &&
+            'commandRef' in g.when &&
+            g.when.commandRef === commandType,
+        )
+      ) {
         debugSlice('  Found command source in flow: %s, slice: %s', flow.name, slice.name);
         return { flowName: flow.name, sliceName: slice.name };
       }
