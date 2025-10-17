@@ -155,50 +155,30 @@ async function installDependencies(targetDir: string, packageManager: 'npm' | 'p
   }
 }
 
-// Known bogus fileId patterns used in templates that should be replaced
-const BOGUS_FILE_ID_PATTERNS = [
-  'a1b2c3d4e', // questionnaires template
-  'a2b2c2d2e', // shopping-app template
-];
-
-// FIXME this should be replacing no matter what
-async function replaceBogusFileIds(targetDir: string): Promise<void> {
+async function replaceTemplateFileId(targetDir: string): Promise<void> {
   const autoConfigPath = path.join(targetDir, 'auto.config.ts');
 
   if (!(await fs.pathExists(autoConfigPath))) {
-    return; // No auto.config.ts file to process
+    return;
   }
 
   try {
     const content = await fs.readFile(autoConfigPath, 'utf8');
-    let modifiedContent = content;
-    let hasReplacement = false;
 
-    // Check if any bogus patterns exist and replace them
-    for (const bogusPattern of BOGUS_FILE_ID_PATTERNS) {
-      if (content.includes(bogusPattern)) {
-        // Generate a new unique ID
-        const newFileId = generateId();
+    const fileIdPattern = /fileId:\s*['"]([\w-]+)['"]/;
+    const match = content.match(fileIdPattern);
 
-        // Replace the bogus pattern with the new ID
-        modifiedContent = modifiedContent.replace(
-          new RegExp(`fileId:\\s*['"]${bogusPattern}['"]`, 'g'),
-          `fileId: '${newFileId}'`,
-        );
+    if (match !== null) {
+      const oldFileId = match[1];
+      const newFileId = generateId();
 
-        hasReplacement = true;
-        console.log(chalk.blue(`Replaced fileId ${bogusPattern} with ${newFileId} in auto.config.ts`));
-        break; // Only replace the first match to avoid multiple replacements
-      }
-    }
+      const modifiedContent = content.replace(fileIdPattern, `fileId: '${newFileId}'`);
 
-    // Write back only if we made changes
-    if (hasReplacement) {
       await fs.writeFile(autoConfigPath, modifiedContent, 'utf8');
+      console.log(chalk.blue(`Replaced fileId ${oldFileId} with ${newFileId} in auto.config.ts`));
     }
   } catch (error) {
     console.warn(chalk.yellow(`Warning: Could not process auto.config.ts fileId replacement:`, error));
-    // Don't throw - this is not a critical failure
   }
 }
 
@@ -222,8 +202,7 @@ async function createFromTemplate(templatePath: string, targetDir: string, proje
   const packagesToCheck = [...AUTO_ENGINEER_PACKAGES];
   const versions = await getLatestVersions(packagesToCheck);
 
-  // Replace bogus fileId values in auto.config.ts files
-  await replaceBogusFileIds(targetDir);
+  await replaceTemplateFileId(targetDir);
 
   // Update package versions
   await updatePackageVersions(targetDir, projectName, versions);
@@ -550,5 +529,4 @@ if (process.env.NODE_ENV !== 'test' && typeof process.env.VITEST === 'undefined'
   });
 }
 
-// Export functions for testing
-export { getAvailableTemplates, createFromTemplate, detectPackageManager, replaceBogusFileIds };
+export { getAvailableTemplates, createFromTemplate, detectPackageManager, replaceTemplateFileId };

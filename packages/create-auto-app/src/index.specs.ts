@@ -222,61 +222,51 @@ describe('Template Discovery Integration Tests', () => {
   });
 
   describe('Auto Config ID Replacement', () => {
-    it('should replace bogus fileId with generated ID in auto.config.ts', async () => {
-      // Create template with auto.config.ts containing bogus fileId
+    it('should replace template fileId with generated ID in auto.config.ts', async () => {
       const templateDir = path.join(testDir, 'template-with-config');
       await fs.ensureDir(templateDir);
 
-      // Create auto.config.ts with bogus fileId pattern
       const autoConfigContent = `import { autoConfig } from '@auto-engineer/cli';
 
 export default autoConfig({
-  fileId: 'a1b2c3d4e', // bogus template ID that should be replaced
+  fileId: 'a1b2c3d4e',
   plugins: ['@auto-engineer/cli'],
 });`;
 
       await fs.writeFile(path.join(templateDir, 'auto.config.ts'), autoConfigContent);
 
-      // Create target directory
       const targetDir = path.join(testDir, 'target-with-replaced-id');
 
-      // Copy template files first
       await fs.copy(templateDir, targetDir);
 
-      // Now call the replacement function directly (since we're testing integration but not the full createFromTemplate flow)
-      const { replaceBogusFileIds } = await import('../dist/src/index.js');
-      await replaceBogusFileIds(targetDir);
+      const { replaceTemplateFileId } = await import('../dist/src/index.js');
+      await replaceTemplateFileId(targetDir);
 
-      // Read the processed auto.config.ts file
       const copiedConfigPath = path.join(targetDir, 'auto.config.ts');
       expect(await fs.pathExists(copiedConfigPath)).toBe(true);
 
       const copiedContent = await fs.readFile(copiedConfigPath, 'utf8');
 
-      // The bogus ID should be replaced with a generated 9-character base62 ID
-      expect(copiedContent).not.toContain('a1b2c3d4e'); // Should not contain bogus ID
+      expect(copiedContent).not.toContain('a1b2c3d4e');
 
-      // Extract the fileId value using regex
       const fileIdMatch = copiedContent.match(/fileId:\s*'([^']+)'/);
       expect(fileIdMatch).toBeTruthy();
 
       const newFileId = fileIdMatch![1];
 
-      // Should be a 9-character base62 string (different from the bogus one)
       expect(newFileId).toHaveLength(9);
-      expect(newFileId).toMatch(/^[A-Za-z0-9]+$/); // base62: A-Z, a-z, 0-9
+      expect(newFileId).toMatch(/^[A-Za-z0-9]+$/);
       expect(newFileId).not.toBe('a1b2c3d4e');
     });
 
-    it('should replace different bogus fileId patterns', async () => {
-      // Test with different bogus pattern from shopping-app
+    it('should replace any fileId pattern from templates', async () => {
       const templateDir = path.join(testDir, 'template-shopping-config');
       await fs.ensureDir(templateDir);
 
       const autoConfigContent = `import { autoConfig } from '@auto-engineer/cli';
 
 export default autoConfig({
-  fileId: 'a2b2c2d2e', // different bogus template ID
+  fileId: 'todoK4nB2',
   plugins: ['@auto-engineer/cli'],
 });`;
 
@@ -285,47 +275,51 @@ export default autoConfig({
       const targetDir = path.join(testDir, 'target-shopping-replaced-id');
       await fs.copy(templateDir, targetDir);
 
-      // Apply the replacement function
-      const { replaceBogusFileIds } = await import('../dist/src/index.js');
-      await replaceBogusFileIds(targetDir);
+      const { replaceTemplateFileId } = await import('../dist/src/index.js');
+      await replaceTemplateFileId(targetDir);
 
       const copiedContent = await fs.readFile(path.join(targetDir, 'auto.config.ts'), 'utf8');
 
-      expect(copiedContent).not.toContain('a2b2c2d2e');
+      expect(copiedContent).not.toContain('todoK4nB2');
 
       const fileIdMatch = copiedContent.match(/fileId:\s*'([^']+)'/);
       expect(fileIdMatch).toBeTruthy();
 
       const newFileId = fileIdMatch![1];
       expect(newFileId).toHaveLength(9);
-      expect(newFileId).not.toBe('a2b2c2d2e');
+      expect(newFileId).not.toBe('todoK4nB2');
     });
 
-    it('should not modify auto.config.ts files without bogus fileId patterns', async () => {
-      const templateDir = path.join(testDir, 'template-valid-config');
+    it('should handle auto.config.ts files with double quotes', async () => {
+      const templateDir = path.join(testDir, 'template-double-quotes');
       await fs.ensureDir(templateDir);
 
-      const validId = 'MyProject'; // Valid custom fileId
+      const validId = 'MyProject';
       const autoConfigContent = `import { autoConfig } from '@auto-engineer/cli';
 
 export default autoConfig({
-  fileId: '${validId}',
+  fileId: "${validId}",
   plugins: ['@auto-engineer/cli'],
 });`;
 
       await fs.writeFile(path.join(templateDir, 'auto.config.ts'), autoConfigContent);
 
-      const targetDir = path.join(testDir, 'target-valid-config');
+      const targetDir = path.join(testDir, 'target-double-quotes');
       await fs.copy(templateDir, targetDir);
 
-      // Apply the replacement function (should not change anything)
-      const { replaceBogusFileIds } = await import('../dist/src/index.js');
-      await replaceBogusFileIds(targetDir);
+      const { replaceTemplateFileId } = await import('../dist/src/index.js');
+      await replaceTemplateFileId(targetDir);
 
       const copiedContent = await fs.readFile(path.join(targetDir, 'auto.config.ts'), 'utf8');
 
-      // Should preserve the original valid fileId
-      expect(copiedContent).toContain(`fileId: '${validId}'`);
+      expect(copiedContent).not.toContain(validId);
+
+      const fileIdMatch = copiedContent.match(/fileId:\s*'([^']+)'/);
+      expect(fileIdMatch).toBeTruthy();
+
+      const newFileId = fileIdMatch![1];
+      expect(newFileId).toHaveLength(9);
+      expect(newFileId).not.toBe(validId);
     });
   });
 
