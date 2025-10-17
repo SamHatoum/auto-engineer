@@ -239,7 +239,7 @@ describe('projection.ts.ejs', () => {
                *    }
                *
                * 2. Cast document parameter to extended type:
-               *    const current: InternalAvailableListings = (document as InternalAvailableListings) || { ...defaults };
+               *    const current: InternalAvailableListings = document ?? { ...defaults };
                *
                * 3. Cast return values to extended type:
                *    return { ...allFields, internalField } as InternalAvailableListings;
@@ -549,12 +549,16 @@ describe('projection.ts.ejs', () => {
                * CRITICAL: Use internal state to track individual entity information:
                *
                * 1. Access current state:
-               *    const current = (document as InternalTodoSummary) || { ...initialState, _entities: {} };
+               *    const current: InternalTodoSummary = document ?? { ...initialState, _entities: {} };
                *
                * 2. Track entity changes:
-               *    const entityId = event.data.todoId; // or relevant ID field
-               *    const prevStatus = current._entities?.[entityId]?.status;
-               *    current._entities[entityId] = { status: 'new_status', ...otherData };
+               *    // a) Extract the unique identifier that distinguishes this entity
+               *    //    Examine event.data to find the ID field (often 'id' or '<entity>Id')
+               *    const entityId = event.data.[ENTITY_ID_FIELD];
+               *
+               *    // b) Store/update entity state with relevant properties from event.data
+               *    //    Include only fields needed for aggregation calculations
+               *    current._entities[entityId] = { [field]: value, ... };
                *
                * 3. Calculate aggregates from entity states:
                *    const counts = Object.values(current._entities).reduce((acc, entity) => {
