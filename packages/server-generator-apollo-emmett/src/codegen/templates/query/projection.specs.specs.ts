@@ -620,4 +620,372 @@ describe('projection.specs.ts.ejs', () => {
     // canHandle must include BOTH events
     expect(projectionFile?.contents).toContain("canHandle: ['QuestionnaireLinkSent', 'QuestionAnswered']");
   });
+
+  it('should generate a valid test spec for singleton projection', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'todo-flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'manage-todo',
+              stream: 'todo-${todoId}',
+              client: { description: '' },
+              server: {
+                description: '',
+                specs: {
+                  name: 'Manage todo command',
+                  rules: [
+                    {
+                      description: 'Should handle todo operations',
+                      examples: [
+                        {
+                          description: 'User adds todo',
+                          when: {
+                            commandRef: 'AddTodo',
+                            exampleData: {
+                              todoId: 'todo_123',
+                              title: 'Buy milk',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'TodoAdded',
+                              exampleData: {
+                                todoId: 'todo_123',
+                                title: 'Buy milk',
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              type: 'query',
+              name: 'view-summary',
+              stream: 'todos',
+              client: { description: '' },
+              server: {
+                description: '',
+                data: [
+                  {
+                    target: {
+                      type: 'State',
+                      name: 'TodoSummary',
+                    },
+                    origin: {
+                      type: 'projection',
+                      name: 'TodoSummaryProjection',
+                      singleton: true,
+                    },
+                  },
+                ],
+                specs: {
+                  name: 'View summary query',
+                  rules: [
+                    {
+                      description: 'Should aggregate todo counts',
+                      examples: [
+                        {
+                          description: 'Todo added updates count',
+                          when: [
+                            {
+                              eventRef: 'TodoAdded',
+                              exampleData: {
+                                todoId: 'todo_123',
+                                title: 'Buy milk',
+                              },
+                            },
+                          ],
+                          then: [
+                            {
+                              stateRef: 'TodoSummary',
+                              exampleData: {
+                                totalCount: 1,
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'AddTodo',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'event',
+          name: 'TodoAdded',
+          source: 'internal',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'state',
+          name: 'TodoSummary',
+          fields: [{ name: 'totalCount', type: 'number', required: true }],
+        },
+      ],
+    } as SpecsSchema;
+
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
+    const specFile = plans.find((p) => p.outputPath.endsWith('view-summary/projection.specs.ts'));
+
+    expect(specFile?.contents).toMatchInlineSnapshot(`
+      "import { describe, it, beforeEach, expect } from 'vitest';
+      import { InMemoryProjectionSpec } from '@event-driven-io/emmett';
+      import { projection } from './projection';
+      import type { TodoAdded } from '../manage-todo/events';
+      import { TodoSummary } from './state';
+
+      type ProjectionEvent = TodoAdded;
+
+      describe('Should aggregate todo counts', () => {
+        let given: InMemoryProjectionSpec<ProjectionEvent>;
+
+        beforeEach(() => {
+          given = InMemoryProjectionSpec.for({ projection });
+        });
+
+        it('Todo added updates count', () =>
+          given([])
+            .when([
+              {
+                type: 'TodoAdded',
+                data: {
+                  todoId: 'todo_123',
+                  title: 'Buy milk',
+                },
+                metadata: {
+                  streamName: 'todos',
+                  streamPosition: 1n,
+                  globalPosition: 1n,
+                },
+              },
+            ])
+            .then(async (state) => {
+              const document = await state.database
+                .collection<TodoSummary>('TodoSummaryProjection')
+                .findOne((doc) => doc.id === 'test-id');
+
+              const expected: TodoSummary = {
+                totalCount: 1,
+              };
+
+              expect(document).toMatchObject(expected);
+            }));
+      });
+      "
+    `);
+  });
+
+  it('should generate a valid test spec for composite key projection', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'user-project-flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'manage-user-project',
+              stream: 'user-project-${userId}-${projectId}',
+              client: { description: '' },
+              server: {
+                description: '',
+                specs: {
+                  name: 'Manage user project command',
+                  rules: [
+                    {
+                      description: 'Should handle user project operations',
+                      examples: [
+                        {
+                          description: 'User joins project',
+                          when: {
+                            commandRef: 'JoinProject',
+                            exampleData: {
+                              userId: 'user_123',
+                              projectId: 'proj_456',
+                              role: 'developer',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'UserJoinedProject',
+                              exampleData: {
+                                userId: 'user_123',
+                                projectId: 'proj_456',
+                                role: 'developer',
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              type: 'query',
+              name: 'view-user-projects',
+              stream: 'user-projects',
+              client: { description: '' },
+              server: {
+                description: '',
+                data: [
+                  {
+                    target: {
+                      type: 'State',
+                      name: 'UserProject',
+                    },
+                    origin: {
+                      type: 'projection',
+                      name: 'UserProjectsProjection',
+                      idField: ['userId', 'projectId'],
+                    },
+                  },
+                ],
+                specs: {
+                  name: 'View user projects query',
+                  rules: [
+                    {
+                      description: 'Should track user project memberships',
+                      examples: [
+                        {
+                          description: 'User joins project',
+                          when: [
+                            {
+                              eventRef: 'UserJoinedProject',
+                              exampleData: {
+                                userId: 'user_123',
+                                projectId: 'proj_456',
+                                role: 'developer',
+                              },
+                            },
+                          ],
+                          then: [
+                            {
+                              stateRef: 'UserProject',
+                              exampleData: {
+                                userId: 'user_123',
+                                projectId: 'proj_456',
+                                role: 'developer',
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'JoinProject',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'projectId', type: 'string', required: true },
+            { name: 'role', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'event',
+          name: 'UserJoinedProject',
+          source: 'internal',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'projectId', type: 'string', required: true },
+            { name: 'role', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'state',
+          name: 'UserProject',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'projectId', type: 'string', required: true },
+            { name: 'role', type: 'string', required: true },
+          ],
+        },
+      ],
+    } as SpecsSchema;
+
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
+    const specFile = plans.find((p) => p.outputPath.endsWith('view-user-projects/projection.specs.ts'));
+
+    expect(specFile?.contents).toMatchInlineSnapshot(`
+      "import { describe, it, beforeEach, expect } from 'vitest';
+      import { InMemoryProjectionSpec } from '@event-driven-io/emmett';
+      import { projection } from './projection';
+      import type { UserJoinedProject } from '../manage-user-project/events';
+      import { UserProject } from './state';
+
+      type ProjectionEvent = UserJoinedProject;
+
+      describe('Should track user project memberships', () => {
+        let given: InMemoryProjectionSpec<ProjectionEvent>;
+
+        beforeEach(() => {
+          given = InMemoryProjectionSpec.for({ projection });
+        });
+
+        it('User joins project', () =>
+          given([])
+            .when([
+              {
+                type: 'UserJoinedProject',
+                data: {
+                  userId: 'user_123',
+                  projectId: 'proj_456',
+                  role: 'developer',
+                },
+                metadata: {
+                  streamName: 'user-projects',
+                  streamPosition: 1n,
+                  globalPosition: 1n,
+                },
+              },
+            ])
+            .then(async (state) => {
+              const document = await state.database
+                .collection<UserProject>('UserProjectsProjection')
+                .findOne((doc) => doc.id === 'test-id');
+
+              const expected: UserProject = {
+                userId: 'user_123',
+                projectId: 'proj_456',
+                role: 'developer',
+              };
+
+              expect(document).toMatchObject(expected);
+            }));
+      });
+      "
+    `);
+  });
 });

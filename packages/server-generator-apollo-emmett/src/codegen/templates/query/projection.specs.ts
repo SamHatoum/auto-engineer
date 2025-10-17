@@ -378,4 +378,408 @@ describe('projection.ts.ejs', () => {
       "
     `);
   });
+
+  it('should generate a valid singleton projection file', async () => {
+    const flows: Model = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'todo-flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'manage-todo',
+              stream: 'todo-${todoId}',
+              client: {
+                description: 'manage todo UI',
+              },
+              server: {
+                description: 'handles todo operations',
+                specs: {
+                  name: 'Manage todo command',
+                  rules: [
+                    {
+                      description: 'Should handle todo operations',
+                      examples: [
+                        {
+                          description: 'User adds todo',
+                          when: {
+                            commandRef: 'AddTodo',
+                            exampleData: {
+                              todoId: 'todo_123',
+                              title: 'Buy milk',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'TodoAdded',
+                              exampleData: {
+                                todoId: 'todo_123',
+                                title: 'Buy milk',
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              type: 'query',
+              name: 'view-summary',
+              stream: 'todos',
+              client: {
+                description: 'view todo summary UI',
+              },
+              server: {
+                description: 'singleton projection for todo summary',
+                data: [
+                  {
+                    target: {
+                      type: 'State',
+                      name: 'TodoSummary',
+                    },
+                    origin: {
+                      type: 'projection',
+                      name: 'TodoSummaryProjection',
+                      singleton: true,
+                    },
+                  },
+                ],
+                specs: {
+                  name: 'View summary query',
+                  rules: [
+                    {
+                      description: 'Should aggregate todo counts',
+                      examples: [
+                        {
+                          description: 'Todo added updates count',
+                          when: [
+                            {
+                              eventRef: 'TodoAdded',
+                              exampleData: {
+                                todoId: 'todo_123',
+                                title: 'Buy milk',
+                              },
+                            },
+                          ],
+                          then: [
+                            {
+                              stateRef: 'TodoSummary',
+                              exampleData: {
+                                totalCount: 1,
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'AddTodo',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'event',
+          name: 'TodoAdded',
+          source: 'internal',
+          fields: [
+            { name: 'todoId', type: 'string', required: true },
+            { name: 'title', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'state',
+          name: 'TodoSummary',
+          fields: [{ name: 'totalCount', type: 'number', required: true }],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(flows.narratives, flows.messages, undefined, 'src/domain/flows');
+    const projectionFile = plans.find((p) => p.outputPath.endsWith('view-summary/projection.ts'));
+
+    expect(projectionFile?.contents).toMatchInlineSnapshot(`
+      "import {
+        inMemorySingleStreamProjection,
+        type ReadEvent,
+        type InMemoryReadEventMetadata,
+      } from '@event-driven-io/emmett';
+      import type { TodoSummary } from './state';
+      import type { TodoAdded } from '../manage-todo/events';
+
+      // SINGLETON AGGREGATION PATTERN
+      // This projection maintains a single document that aggregates data from multiple entities.
+      // Use internal state to track individual entity information for accurate calculations.
+      interface InternalTodoSummary extends TodoSummary {
+        _entities?: Record<string, { status?: string; [key: string]: unknown }>;
+      }
+
+      type AllEvents = TodoAdded;
+
+      export const projection = inMemorySingleStreamProjection<TodoSummary, AllEvents>({
+        collectionName: 'TodoSummaryProjection',
+        canHandle: ['TodoAdded'],
+        getDocumentId: (_event) => 'todo-summary',
+        evolve: (
+          document: TodoSummary | null,
+          event: ReadEvent<AllEvents, InMemoryReadEventMetadata>,
+        ): TodoSummary | null => {
+          switch (event.type) {
+            case 'TodoAdded': {
+              /**
+               * ## IMPLEMENTATION INSTRUCTIONS ##
+               * **SINGLETON AGGREGATION PATTERN**
+               *
+               * This projection maintains ONE document aggregating data from MANY entities.
+               *
+               * CRITICAL: Use internal state to track individual entity information:
+               *
+               * 1. Access current state:
+               *    const current = (document as InternalTodoSummary) || { ...initialState, _entities: {} };
+               *
+               * 2. Track entity changes:
+               *    const entityId = event.data.todoId; // or relevant ID field
+               *    const prevStatus = current._entities?.[entityId]?.status;
+               *    current._entities[entityId] = { status: 'new_status', ...otherData };
+               *
+               * 3. Calculate aggregates from entity states:
+               *    const counts = Object.values(current._entities).reduce((acc, entity) => {
+               *      acc[entity.status] = (acc[entity.status] || 0) + 1;
+               *      return acc;
+               *    }, {});
+               *
+               * 4. Return with internal state:
+               *    return { ...publicFields, _entities: current._entities } as InternalTodoSummary;
+               */
+              return {
+                totalCount: /* TODO: map from event.data */ 0,
+              };
+            }
+            default:
+              return document;
+          }
+        },
+      });
+
+      export default projection;
+      "
+    `);
+  });
+
+  it('should generate a valid composite key projection file', async () => {
+    const flows: Model = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'user-project-flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'manage-user-project',
+              stream: 'user-project-${userId}-${projectId}',
+              client: {
+                description: 'manage user project UI',
+              },
+              server: {
+                description: 'handles user project operations',
+                specs: {
+                  name: 'Manage user project command',
+                  rules: [
+                    {
+                      description: 'Should handle user project operations',
+                      examples: [
+                        {
+                          description: 'User joins project',
+                          when: {
+                            commandRef: 'JoinProject',
+                            exampleData: {
+                              userId: 'user_123',
+                              projectId: 'proj_456',
+                              role: 'developer',
+                            },
+                          },
+                          then: [
+                            {
+                              eventRef: 'UserJoinedProject',
+                              exampleData: {
+                                userId: 'user_123',
+                                projectId: 'proj_456',
+                                role: 'developer',
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              type: 'query',
+              name: 'view-user-projects',
+              stream: 'user-projects',
+              client: {
+                description: 'view user projects UI',
+              },
+              server: {
+                description: 'composite key projection for user projects',
+                data: [
+                  {
+                    target: {
+                      type: 'State',
+                      name: 'UserProject',
+                    },
+                    origin: {
+                      type: 'projection',
+                      name: 'UserProjectsProjection',
+                      idField: ['userId', 'projectId'],
+                    },
+                  },
+                ],
+                specs: {
+                  name: 'View user projects query',
+                  rules: [
+                    {
+                      description: 'Should track user project memberships',
+                      examples: [
+                        {
+                          description: 'User joins project',
+                          when: [
+                            {
+                              eventRef: 'UserJoinedProject',
+                              exampleData: {
+                                userId: 'user_123',
+                                projectId: 'proj_456',
+                                role: 'developer',
+                              },
+                            },
+                          ],
+                          then: [
+                            {
+                              stateRef: 'UserProject',
+                              exampleData: {
+                                userId: 'user_123',
+                                projectId: 'proj_456',
+                                role: 'developer',
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'JoinProject',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'projectId', type: 'string', required: true },
+            { name: 'role', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'event',
+          name: 'UserJoinedProject',
+          source: 'internal',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'projectId', type: 'string', required: true },
+            { name: 'role', type: 'string', required: true },
+          ],
+        },
+        {
+          type: 'state',
+          name: 'UserProject',
+          fields: [
+            { name: 'userId', type: 'string', required: true },
+            { name: 'projectId', type: 'string', required: true },
+            { name: 'role', type: 'string', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(flows.narratives, flows.messages, undefined, 'src/domain/flows');
+    const projectionFile = plans.find((p) => p.outputPath.endsWith('view-user-projects/projection.ts'));
+
+    expect(projectionFile?.contents).toMatchInlineSnapshot(`
+      "import {
+        inMemorySingleStreamProjection,
+        type ReadEvent,
+        type InMemoryReadEventMetadata,
+      } from '@event-driven-io/emmett';
+      import type { UserProject } from './state';
+      import type { UserJoinedProject } from '../manage-user-project/events';
+
+      type AllEvents = UserJoinedProject;
+
+      export const projection = inMemorySingleStreamProjection<UserProject, AllEvents>({
+        collectionName: 'UserProjectsProjection',
+        canHandle: ['UserJoinedProject'],
+        getDocumentId: (event) => \`\${event.data.userId}-\${event.data.projectId}\`,
+        evolve: (
+          document: UserProject | null,
+          event: ReadEvent<AllEvents, InMemoryReadEventMetadata>,
+        ): UserProject | null => {
+          switch (event.type) {
+            case 'UserJoinedProject': {
+              /**
+               * ## IMPLEMENTATION INSTRUCTIONS ##
+               * **COMPOSITE KEY PROJECTION**
+               *
+               * This projection uses a composite key: userId + projectId
+               * Document ID format: \`\${event.data.userId}-\${event.data.projectId}\`
+               *
+               * CRITICAL: You MUST include ALL key fields in every return statement:
+               * - userId: event.data.userId
+               * - projectId: event.data.projectId
+               *
+               * Missing even one key field will cause the projection to fail.
+               * Key fields typically map directly from event data (no transformation needed).
+               *
+               * Example implementation:
+               *    return {
+               *      userId: event.data.userId,
+               *      projectId: event.data.projectId,
+               *      // ... other fields
+               *    };
+               */
+              return {
+                userId: /* TODO: map from event.data */ '',
+                projectId: /* TODO: map from event.data */ '',
+                role: /* TODO: map from event.data */ '',
+              };
+            }
+            default:
+              return document;
+          }
+        },
+      });
+
+      export default projection;
+      "
+    `);
+  });
 });

@@ -1,4 +1,10 @@
-import {
+<%
+const origin = slice.server?.data?.[0]?.origin;
+const isSingleton = origin?.singleton === true;
+const idField = origin?.idField;
+const isCompositeKey = Array.isArray(idField);
+const compositeKeyFields = isCompositeKey ? idField : [];
+%>import {
 inMemorySingleStreamProjection,
 type ReadEvent,
 type InMemoryReadEventMetadata,
@@ -35,7 +41,14 @@ if (stateEnums.length > 0) {
 import { <%= stateEnums.join(', ') %> } from '../../../shared';
 <%
 } -%>
-
+<% if (isSingleton) { %>
+// SINGLETON AGGREGATION PATTERN
+// This projection maintains a single document that aggregates data from multiple entities.
+// Use internal state to track individual entity information for accurate calculations.
+interface Internal<%= pascalCase(targetName || 'State') %> extends <%= pascalCase(targetName || 'State') %> {
+  _entities?: Record<string, { status?: string; [key: string]: unknown }>;
+}
+<% } %>
 type AllEvents = <%= allEventTypes %>;
 
 export const projection = inMemorySingleStreamProjection<
@@ -44,17 +57,17 @@ AllEvents
 >({
 collectionName: '<%= pascalCase(slice.server?.data?.[0]?.origin?.name || "unknown-collection") %>',
 canHandle: [<%- events.map(e => `'${e.type}'`).join(', ') %>],
-getDocumentId: (event) => <%
-const idField = slice.server?.data?.[0]?.origin?.idField ?? 'id';
-// Check if idField contains hyphen-separated composite keys
-if (idField.includes('-')) {
-    const parts = idField.split('-');
-    const template = parts.map((part, index) =>
-        index === 0 ? `\${event.data.${part}}` : `-\${event.data.${part}}`
+getDocumentId: (<%- isSingleton ? '_event' : 'event' %>) => <%
+if (isSingleton) {
+%>'<%= toKebabCase(slice.server?.data?.[0]?.target?.name || 'singleton') %>'<%
+} else if (isCompositeKey) {
+    const template = compositeKeyFields.map((field, index) =>
+        index === 0 ? `\${event.data.${field}}` : `-\${event.data.${field}}`
     ).join('');
 %>`<%= template %>`<%
 } else {
-%>event.data.<%= idField %><%
+    const singleIdField = typeof idField === 'string' ? idField : 'id';
+%>event.data.<%= singleIdField %><%
 }
 %>,
 evolve: (
@@ -93,7 +106,47 @@ switch (event.type) {
 case '<%= event.type %>': {
 /**
 * ## IMPLEMENTATION INSTRUCTIONS ##
-<% if (isRemovalEvent || eventNameSuggestsRemoval) { -%>
+<% if (isSingleton) { -%>
+    * **SINGLETON AGGREGATION PATTERN**
+    *
+    * This projection maintains ONE document aggregating data from MANY entities.
+    *
+    * CRITICAL: Use internal state to track individual entity information:
+    *
+    * 1. Access current state:
+    *    const current = (document as Internal<%= pascalCase(targetName || 'State') %>) || { ...initialState, _entities: {} };
+    *
+    * 2. Track entity changes:
+    *    const entityId = event.data.todoId; // or relevant ID field
+    *    const prevStatus = current._entities?.[entityId]?.status;
+    *    current._entities[entityId] = { status: 'new_status', ...otherData };
+    *
+    * 3. Calculate aggregates from entity states:
+    *    const counts = Object.values(current._entities).reduce((acc, entity) => {
+    *      acc[entity.status] = (acc[entity.status] || 0) + 1;
+    *      return acc;
+    *    }, {});
+    *
+    * 4. Return with internal state:
+    *    return { ...publicFields, _entities: current._entities } as Internal<%= pascalCase(targetName || 'State') %>;
+<% } else if (isCompositeKey) { -%>
+    * **COMPOSITE KEY PROJECTION**
+    *
+    * This projection uses a composite key: <%= compositeKeyFields.join(' + ') %>
+    * Document ID format: `${event.data.<%= compositeKeyFields[0] %>}-${event.data.<%= compositeKeyFields.slice(1).join('}}-${event.data.') %>}`
+    *
+    * CRITICAL: You MUST include ALL key fields in every return statement:
+    * <%- compositeKeyFields.map(f => `- ${f}: event.data.${f}`).join('\n    * ') %>
+    *
+    * Missing even one key field will cause the projection to fail.
+    * Key fields typically map directly from event data (no transformation needed).
+    *
+    * Example implementation:
+    *    return {
+    *      <%- compositeKeyFields.map(f => `${f}: event.data.${f},`).join('\n    *      ') %>
+    *      // ... other fields
+    *    };
+<% } else if (isRemovalEvent || eventNameSuggestsRemoval) { -%>
     * This event might indicate removal of a <%= targetName || 'document' %>.
     *
     * - If the intent is to **remove the document**, return `null`.
