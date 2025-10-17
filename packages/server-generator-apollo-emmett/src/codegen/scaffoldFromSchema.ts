@@ -490,6 +490,7 @@ async function prepareTemplateData(
   states: Message[],
   commandSchemasByName: Record<string, Message>,
   projectionIdField: string | undefined,
+  projectionSingleton: boolean | undefined,
   allMessages?: MessageDefinition[],
   integrations?: Model['integrations'],
 ): Promise<Record<string, unknown>> {
@@ -538,6 +539,7 @@ async function prepareTemplateData(
     usedErrors,
     commandSchemasByName,
     projectionIdField,
+    projectionSingleton,
     projectionName,
     projectionType: projectionName != null ? pascalCase(projectionName) : undefined,
     parsedRequest: slice.type === 'query' && slice.request != null ? parseGraphQlRequest(slice.request) : undefined,
@@ -693,6 +695,7 @@ async function generateFilesForSlice(
     extracted.states,
     extracted.commandSchemasByName,
     extracted.projectionIdField,
+    extracted.projectionSingleton,
     messages,
     integrations,
   );

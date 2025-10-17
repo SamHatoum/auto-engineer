@@ -141,7 +141,9 @@ _%>
       .then(async (state) => {
         const document = await state.database
           .collection<<%= TargetType %>>('<%= projName %>')
-          .findOne((doc) => <%
+          .findOne(<% if (projectionSingleton) { %>);<%
+} else {
+%>(doc) => <%
 const idField = projectionIdField ?? 'id';
 if (idField.includes('-')) {
     // Handle composite keys
@@ -157,7 +159,9 @@ if (idField.includes('-')) {
     const valueStr = typeof value === 'string' ? `'${value}'` : value || "'test-id'";
 %>doc.<%= idField %> === <%= valueStr %><%
 }
-%>);
+%>);<%
+}
+%>
 
         const expected: <%= TargetType %> = {
 <% const stateKeys = Object.keys(expectedState.exampleData || {});

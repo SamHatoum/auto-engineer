@@ -783,9 +783,7 @@ describe('projection.specs.ts.ejs', () => {
               },
             ])
             .then(async (state) => {
-              const document = await state.database
-                .collection<TodoSummary>('TodoSummaryProjection')
-                .findOne((doc) => doc.id === 'test-id');
+              const document = await state.database.collection<TodoSummary>('TodoSummaryProjection').findOne();
 
               const expected: TodoSummary = {
                 totalCount: 1,

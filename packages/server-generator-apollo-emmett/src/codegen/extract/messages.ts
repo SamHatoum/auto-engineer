@@ -3,7 +3,7 @@ import { CommandExample, EventExample, Slice } from '@auto-engineer/narrative';
 import { Message, MessageDefinition } from '../types';
 import { extractEventsFromGiven, extractEventsFromThen, extractEventsFromWhen } from './events';
 import { extractFieldsFromMessage } from './fields';
-import { extractProjectionIdField } from './projection';
+import { extractProjectionIdField, extractProjectionSingleton } from './projection';
 import { extractStatesFromData, extractStatesFromTarget } from './states';
 import createDebug from 'debug';
 
@@ -19,6 +19,7 @@ export interface ExtractedMessages {
   states: Message[];
   commandSchemasByName: Record<string, Message>;
   projectionIdField?: string;
+  projectionSingleton?: boolean;
 }
 
 export interface ReactGwtSpec {
@@ -122,6 +123,9 @@ function extractMessagesForQuery(slice: Slice, allMessages: MessageDefinition[])
   const projectionIdField = extractProjectionIdField(slice);
   debugQuery('  Projection ID field: %s', projectionIdField ?? 'none');
 
+  const projectionSingleton = extractProjectionSingleton(slice);
+  debugQuery('  Projection singleton: %s', projectionSingleton);
+
   const events: Message[] = gwtSpecs.flatMap((gwt) => {
     const eventsFromGiven = Array.isArray(gwt.given)
       ? gwt.given.filter((item): item is EventExample => 'eventRef' in item)
@@ -166,6 +170,7 @@ function extractMessagesForQuery(slice: Slice, allMessages: MessageDefinition[])
     states,
     commandSchemasByName: {},
     projectionIdField,
+    projectionSingleton,
   };
 
   debugQuery('  Final result: %d events, %d states', result.events.length, result.states.length);

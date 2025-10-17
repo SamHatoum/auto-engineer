@@ -4,6 +4,7 @@ interface ProjectionOrigin {
   type: 'projection';
   idField?: string;
   name?: string;
+  singleton?: boolean;
 }
 
 interface HasOrigin {
@@ -45,4 +46,17 @@ export function extractProjectionIdField(slice: Slice): string | undefined {
 
 export function extractProjectionName(slice: Slice): string | undefined {
   return extractProjectionField(slice, 'name');
+}
+
+export function extractProjectionSingleton(slice: Slice): boolean {
+  if (!('server' in slice)) return false;
+  const dataSource = slice.server?.data?.[0];
+  if (!hasOrigin(dataSource)) return false;
+
+  const origin = dataSource.origin;
+  if (isProjectionOrigin(origin)) {
+    return origin.singleton === true;
+  }
+
+  return false;
 }
