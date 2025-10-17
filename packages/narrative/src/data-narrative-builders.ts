@@ -1,4 +1,4 @@
-import type { DataSinkItem, DataSourceItem, MessageTarget, Integration } from './types';
+import type { DataSinkItem, DataSourceItem, MessageTarget, Integration, DefaultRecord } from './types';
 import { createIntegrationOrigin } from './types';
 import { integrationExportRegistry } from './integration-export-registry';
 
@@ -240,16 +240,44 @@ export class StateSinkBuilder extends MessageTargetBuilder<DataSinkItem> {
 }
 
 // State source builder
-export class StateSourceBuilder extends MessageTargetBuilder<DataSourceItem> {
+export class StateSourceBuilder<S = unknown> extends MessageTargetBuilder<DataSourceItem> {
   constructor(name: string) {
     super();
     this.target = { type: 'State', name };
   }
 
-  fromProjection(name: string, idField: string): ChainableSource {
+  fromSingletonProjection(name: string): ChainableSource {
     const sourceItem: DataSourceItem = {
       target: this.target as MessageTarget,
-      origin: { type: 'projection', name, idField },
+      origin: { type: 'projection', name, singleton: true },
+      __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
+    };
+    return createChainableSource(sourceItem);
+  }
+
+  fromProjection<
+    K extends S extends import('./types').State<string, infer D extends DefaultRecord, DefaultRecord | undefined>
+      ? keyof D
+      : string,
+  >(name: string, idField: K): ChainableSource {
+    const sourceItem: DataSourceItem = {
+      target: this.target as MessageTarget,
+      origin: { type: 'projection', name, idField: idField as string },
+      __type: 'source' as const,
+      ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
+    };
+    return createChainableSource(sourceItem);
+  }
+
+  fromCompositeProjection<
+    K extends S extends import('./types').State<string, infer D extends DefaultRecord, DefaultRecord | undefined>
+      ? keyof D
+      : string,
+  >(name: string, idFields: K[]): ChainableSource {
+    const sourceItem: DataSourceItem = {
+      target: this.target as MessageTarget,
+      origin: { type: 'projection', name, idField: idFields as string[] },
       __type: 'source' as const,
       ...(this.instructions != null && this.instructions !== '' && { _additionalInstructions: this.instructions }),
     };
@@ -364,14 +392,16 @@ export class DataSinkBuilder {
 }
 
 export class DataSourceBuilder {
-  state(nameOrBuilder: string | BuilderResult): StateSourceBuilder {
+  state<S extends import('./types').State<string, DefaultRecord> = import('./types').State<string, DefaultRecord>>(
+    nameOrBuilder: string | BuilderResult,
+  ): StateSourceBuilder<S> {
     if (typeof nameOrBuilder === 'string') {
-      return new StateSourceBuilder(nameOrBuilder);
+      return new StateSourceBuilder<S>(nameOrBuilder);
     }
 
     // Handle state builder function
     if (isValidBuilderResult(nameOrBuilder) && nameOrBuilder.__messageCategory === 'state') {
-      return new StateSourceBuilder(nameOrBuilder.type);
+      return new StateSourceBuilder<S>(nameOrBuilder.type);
     }
 
     throw new Error('Invalid state parameter - must be a string or state builder function');
@@ -405,7 +435,9 @@ export function typedSink(builderResult: BuilderResult): EventSinkBuilder | Comm
 }
 
 // Type-safe source function that accepts builder results
-export function typedSource(builderResult: BuilderResult): StateSourceBuilder {
+export function typedSource<
+  S extends import('./types').State<string, DefaultRecord> = import('./types').State<string, DefaultRecord>,
+>(builderResult: BuilderResult): StateSourceBuilder<S> {
   if (!isValidBuilderResult(builderResult)) {
     throw new Error('Invalid builder result - must be from State builders');
   }
@@ -414,5 +446,5 @@ export function typedSource(builderResult: BuilderResult): StateSourceBuilder {
     throw new Error('Source can only be created from State builders');
   }
 
-  return new StateSourceBuilder(builderResult.type);
+  return new StateSourceBuilder<S>(builderResult.type);
 }

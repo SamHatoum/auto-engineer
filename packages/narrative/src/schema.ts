@@ -49,7 +49,18 @@ export const OriginSchema = z
     z.object({
       type: z.literal('projection'),
       name: z.string(),
-      idField: z.string().describe('Field from event used as the projection’s unique identifier'),
+      idField: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .describe(
+          'Field(s) from event used as the projection unique identifier. Can be single field or array for composite keys. Omit for singleton projections.',
+        ),
+      singleton: z
+        .boolean()
+        .optional()
+        .describe(
+          'True if this is a singleton projection that aggregates data from multiple entities into one document',
+        ),
     }),
     z.object({
       type: z.literal('readModel'),

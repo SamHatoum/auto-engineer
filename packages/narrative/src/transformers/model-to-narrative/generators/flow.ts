@@ -110,6 +110,42 @@ function addDestinationToChain(f: tsNS.NodeFactory, chain: tsNS.Expression, dest
   }
 }
 
+function buildProjectionCall(
+  f: tsNS.NodeFactory,
+  baseCall: tsNS.Expression,
+  origin: { type: 'projection'; name: string; idField?: string | string[]; singleton?: boolean },
+): tsNS.Expression {
+  if (origin.singleton === true) {
+    return f.createCallExpression(
+      f.createPropertyAccessExpression(baseCall, f.createIdentifier('fromSingletonProjection')),
+      undefined,
+      [f.createStringLiteral(origin.name)],
+    );
+  }
+  if (Array.isArray(origin.idField)) {
+    return f.createCallExpression(
+      f.createPropertyAccessExpression(baseCall, f.createIdentifier('fromCompositeProjection')),
+      undefined,
+      [
+        f.createStringLiteral(origin.name),
+        f.createArrayLiteralExpression(origin.idField.map((field) => f.createStringLiteral(field))),
+      ],
+    );
+  }
+  if (typeof origin.idField === 'string' && origin.idField.length > 0) {
+    return f.createCallExpression(
+      f.createPropertyAccessExpression(baseCall, f.createIdentifier('fromProjection')),
+      undefined,
+      [f.createStringLiteral(origin.name), f.createStringLiteral(origin.idField)],
+    );
+  }
+  return f.createCallExpression(
+    f.createPropertyAccessExpression(baseCall, f.createIdentifier('fromSingletonProjection')),
+    undefined,
+    [f.createStringLiteral(origin.name)],
+  );
+}
+
 function buildStateCall(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
@@ -135,11 +171,7 @@ function buildStateCall(
       );
     }
     case 'projection':
-      return f.createCallExpression(
-        f.createPropertyAccessExpression(baseStateCall, f.createIdentifier('fromProjection')),
-        undefined,
-        [f.createStringLiteral(origin.name), f.createStringLiteral(origin.idField)],
-      );
+      return buildProjectionCall(f, baseStateCall, origin);
     case 'database': {
       const args: tsNS.Expression[] = [f.createStringLiteral(origin.collection)];
       if (origin.query !== null && origin.query !== undefined) {
@@ -173,10 +205,39 @@ function buildStateCall(
   }
 }
 
+function buildProjectionArgs(
+  f: tsNS.NodeFactory,
+  origin: { name: string; idField?: string | string[]; singleton?: boolean },
+): tsNS.Expression[] {
+  if (origin.singleton === true) {
+    return [f.createStringLiteral(origin.name)];
+  }
+  if (Array.isArray(origin.idField)) {
+    return [
+      f.createStringLiteral(origin.name),
+      f.createArrayLiteralExpression(origin.idField.map((field) => f.createStringLiteral(field))),
+    ];
+  }
+  if (typeof origin.idField === 'string' && origin.idField.length > 0) {
+    return [f.createStringLiteral(origin.name), f.createStringLiteral(origin.idField)];
+  }
+  return [f.createStringLiteral(origin.name)];
+}
+
+function getProjectionMethodName(origin: { idField?: string | string[]; singleton?: boolean }): string {
+  if (origin.singleton === true) {
+    return 'fromSingletonProjection';
+  }
+  if (Array.isArray(origin.idField)) {
+    return 'fromCompositeProjection';
+  }
+  return 'fromProjection';
+}
+
 function buildOriginArgs(ts: typeof import('typescript'), f: tsNS.NodeFactory, origin: Origin): tsNS.Expression[] {
   switch (origin.type) {
     case 'projection':
-      return [f.createStringLiteral(origin.name), f.createStringLiteral(origin.idField)];
+      return buildProjectionArgs(f, origin);
     case 'integration': {
       const [sys] = origin.systems;
       return [f.createIdentifier(sys)];
@@ -205,7 +266,7 @@ function buildOriginArgs(ts: typeof import('typescript'), f: tsNS.NodeFactory, o
 function getOriginMethodName(origin: Origin): string {
   switch (origin.type) {
     case 'projection':
-      return 'fromProjection';
+      return getProjectionMethodName(origin);
     case 'integration':
       return 'fromIntegration';
     case 'database':
@@ -454,27 +515,25 @@ function buildServerStatements(
     const ruleGroups = buildRuleGroups(server.specs.rules as RuleType[]);
     const allRuleStatements = buildConsolidatedRules(ts, f, ruleGroups, sliceType, messages);
 
-    if (allRuleStatements.length > 0) {
-      const arrowFunction = f.createArrowFunction(
-        undefined,
-        undefined,
-        [],
-        undefined,
-        f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-        f.createBlock(allRuleStatements, true),
-      );
+    const arrowFunction = f.createArrowFunction(
+      undefined,
+      undefined,
+      [],
+      undefined,
+      f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+      f.createBlock(allRuleStatements, true),
+    );
 
-      const args: tsNS.Expression[] = [];
-      if (server.specs.name && server.specs.name.trim() !== '') {
-        args.push(f.createStringLiteral(server.specs.name));
-      }
-      args.push(arrowFunction);
-
-      const specsStatement = f.createExpressionStatement(
-        f.createCallExpression(f.createIdentifier('specs'), undefined, args),
-      );
-      statements.push(specsStatement);
+    const args: tsNS.Expression[] = [];
+    if (server.specs.name && server.specs.name.trim() !== '') {
+      args.push(f.createStringLiteral(server.specs.name));
     }
+    args.push(arrowFunction);
+
+    const specsStatement = f.createExpressionStatement(
+      f.createCallExpression(f.createIdentifier('specs'), undefined, args),
+    );
+    statements.push(specsStatement);
   }
 
   return statements;

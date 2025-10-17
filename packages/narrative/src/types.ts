@@ -87,9 +87,11 @@ export const createDatabaseDestination = (collection: string): DatabaseDestinati
 });
 export const createTopicDestination = (name: string): TopicDestination => ({ type: 'topic', name });
 
-export interface ProjectionOrigin {
+export interface ProjectionOriginWithId {
   type: 'projection';
   name: string;
+  idField?: string | string[];
+  singleton?: boolean;
 }
 
 export interface ReadModelOrigin {
@@ -116,14 +118,8 @@ export interface IntegrationOrigin {
 
 export type Origin = ProjectionOriginWithId | ReadModelOrigin | DatabaseOrigin | ApiOrigin | IntegrationOrigin;
 
-export interface ProjectionOriginWithId {
-  type: 'projection';
-  name: string;
-  idField: string;
-}
-
 // Helper functions to create origins
-export const createProjectionOrigin = (name: string): ProjectionOrigin => ({ type: 'projection', name });
+export const createProjectionOrigin = (name: string): ProjectionOriginWithId => ({ type: 'projection', name });
 export const createReadModelOrigin = (name: string): ReadModelOrigin => ({ type: 'readModel', name });
 export const createDatabaseOrigin = (collection: string, query?: Record<string, unknown>): DatabaseOrigin => ({
   type: 'database',
@@ -161,7 +157,7 @@ export interface DataItem {
   __type: 'sink' | 'source';
 }
 
-type DefaultRecord = Record<string, unknown>;
+export type DefaultRecord = Record<string, unknown>;
 
 export type State<
   StateType extends string = string,
@@ -224,3 +220,5 @@ export type Event<
 > & {
   readonly kind?: 'Event';
 };
+
+export type ExtractStateData<T> = T extends State<string, infer Data, DefaultRecord | undefined> ? Data : never;

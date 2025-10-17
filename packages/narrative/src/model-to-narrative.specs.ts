@@ -501,7 +501,9 @@ narrative('Test Flow with IDs', 'FLOW-123', () => {
         should('allow filtering');
       });
     })
-    .server(() => {});
+    .server(() => {
+      specs('Product data specs', () => {});
+    });
 });
 `);
   });
@@ -2030,5 +2032,399 @@ narrative('Todo List Summary', 'TODO-001', () => {
 
     expect(code).not.toContain('.when({})');
     expect(code).not.toContain('.when<');
+  });
+
+  describe('projection DSL generation', () => {
+    it('should generate fromSingletonProjection for singleton projections', async () => {
+      const modelWithSingletonProjection: Model = {
+        variant: 'specs',
+        narratives: [
+          {
+            name: 'Todo Summary Flow',
+            id: 'TODO-SUMMARY',
+            slices: [
+              {
+                name: 'views todo summary',
+                id: 'SUMMARY-SLICE',
+                type: 'query',
+                client: {
+                  description: 'Summary client',
+                },
+                server: {
+                  description: 'Summary server',
+                  data: [
+                    {
+                      target: {
+                        type: 'State',
+                        name: 'TodoListSummary',
+                      },
+                      origin: {
+                        type: 'projection',
+                        name: 'TodoSummary',
+                        singleton: true,
+                      },
+                    },
+                  ],
+                  specs: {
+                    name: 'Summary Rules',
+                    rules: [],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        messages: [
+          {
+            type: 'state',
+            name: 'TodoListSummary',
+            fields: [
+              { name: 'summaryId', type: 'string', required: true },
+              { name: 'totalTodos', type: 'number', required: true },
+            ],
+            metadata: { version: 1 },
+          },
+        ],
+        integrations: [],
+      };
+
+      const code = await modelToNarrative(modelWithSingletonProjection);
+
+      expect(code).toEqual(`import { data, narrative, query, source, specs } from '@auto-engineer/narrative';
+import type { State } from '@auto-engineer/narrative';
+type TodoListSummary = State<
+  'TodoListSummary',
+  {
+    summaryId: string;
+    totalTodos: number;
+  }
+>;
+narrative('Todo Summary Flow', 'TODO-SUMMARY', () => {
+  query('views todo summary', 'SUMMARY-SLICE').server(() => {
+    data([source().state('TodoListSummary').fromSingletonProjection('TodoSummary')]);
+    specs('Summary Rules', () => {});
+  });
+});
+`);
+    });
+
+    it('should generate fromProjection with single idField for regular projections', async () => {
+      const modelWithRegularProjection: Model = {
+        variant: 'specs',
+        narratives: [
+          {
+            name: 'Todo Flow',
+            id: 'TODO-FLOW',
+            slices: [
+              {
+                name: 'views todo',
+                id: 'TODO-SLICE',
+                type: 'query',
+                client: {
+                  description: 'Todo client',
+                },
+                server: {
+                  description: 'Todo server',
+                  data: [
+                    {
+                      target: {
+                        type: 'State',
+                        name: 'TodoState',
+                      },
+                      origin: {
+                        type: 'projection',
+                        name: 'Todos',
+                        idField: 'todoId',
+                      },
+                    },
+                  ],
+                  specs: {
+                    name: 'Todo Rules',
+                    rules: [],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        messages: [
+          {
+            type: 'state',
+            name: 'TodoState',
+            fields: [
+              { name: 'todoId', type: 'string', required: true },
+              { name: 'description', type: 'string', required: true },
+            ],
+            metadata: { version: 1 },
+          },
+        ],
+        integrations: [],
+      };
+
+      const code = await modelToNarrative(modelWithRegularProjection);
+
+      expect(code).toEqual(`import { data, narrative, query, source, specs } from '@auto-engineer/narrative';
+import type { State } from '@auto-engineer/narrative';
+type TodoState = State<
+  'TodoState',
+  {
+    todoId: string;
+    description: string;
+  }
+>;
+narrative('Todo Flow', 'TODO-FLOW', () => {
+  query('views todo', 'TODO-SLICE').server(() => {
+    data([source().state('TodoState').fromProjection('Todos', 'todoId')]);
+    specs('Todo Rules', () => {});
+  });
+});
+`);
+    });
+
+    it('should generate fromCompositeProjection with array idField for composite key projections', async () => {
+      const modelWithCompositeProjection: Model = {
+        variant: 'specs',
+        narratives: [
+          {
+            name: 'User Project Flow',
+            id: 'USER-PROJECT-FLOW',
+            slices: [
+              {
+                name: 'views user project',
+                id: 'USER-PROJECT-SLICE',
+                type: 'query',
+                client: {
+                  description: 'User project client',
+                },
+                server: {
+                  description: 'User project server',
+                  data: [
+                    {
+                      target: {
+                        type: 'State',
+                        name: 'UserProjectState',
+                      },
+                      origin: {
+                        type: 'projection',
+                        name: 'UserProjects',
+                        idField: ['userId', 'projectId'],
+                      },
+                    },
+                  ],
+                  specs: {
+                    name: 'User Project Rules',
+                    rules: [],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        messages: [
+          {
+            type: 'state',
+            name: 'UserProjectState',
+            fields: [
+              { name: 'userId', type: 'string', required: true },
+              { name: 'projectId', type: 'string', required: true },
+              { name: 'role', type: 'string', required: true },
+            ],
+            metadata: { version: 1 },
+          },
+        ],
+        integrations: [],
+      };
+
+      const code = await modelToNarrative(modelWithCompositeProjection);
+
+      expect(code).toEqual(`import { data, narrative, query, source, specs } from '@auto-engineer/narrative';
+import type { State } from '@auto-engineer/narrative';
+type UserProjectState = State<
+  'UserProjectState',
+  {
+    userId: string;
+    projectId: string;
+    role: string;
+  }
+>;
+narrative('User Project Flow', 'USER-PROJECT-FLOW', () => {
+  query('views user project', 'USER-PROJECT-SLICE').server(() => {
+    data([source().state('UserProjectState').fromCompositeProjection('UserProjects', ['userId', 'projectId'])]);
+    specs('User Project Rules', () => {});
+  });
+});
+`);
+    });
+
+    it('should generate all three projection types in a single narrative', async () => {
+      const modelWithAllProjectionTypes: Model = {
+        variant: 'specs',
+        narratives: [
+          {
+            name: 'All Projection Types',
+            id: 'ALL-PROJ',
+            slices: [
+              {
+                name: 'views summary',
+                id: 'SUMMARY-SLICE',
+                type: 'query',
+                client: {
+                  description: 'Summary client',
+                },
+                server: {
+                  description: 'Summary server',
+                  data: [
+                    {
+                      target: {
+                        type: 'State',
+                        name: 'TodoListSummary',
+                      },
+                      origin: {
+                        type: 'projection',
+                        name: 'TodoSummary',
+                        singleton: true,
+                      },
+                    },
+                  ],
+                  specs: {
+                    name: 'Summary Rules',
+                    rules: [],
+                  },
+                },
+              },
+              {
+                name: 'views todo',
+                id: 'TODO-SLICE',
+                type: 'query',
+                client: {
+                  description: 'Todo client',
+                },
+                server: {
+                  description: 'Todo server',
+                  data: [
+                    {
+                      target: {
+                        type: 'State',
+                        name: 'TodoState',
+                      },
+                      origin: {
+                        type: 'projection',
+                        name: 'Todos',
+                        idField: 'todoId',
+                      },
+                    },
+                  ],
+                  specs: {
+                    name: 'Todo Rules',
+                    rules: [],
+                  },
+                },
+              },
+              {
+                name: 'views user project todos',
+                id: 'USER-PROJECT-SLICE',
+                type: 'query',
+                client: {
+                  description: 'User project client',
+                },
+                server: {
+                  description: 'User project server',
+                  data: [
+                    {
+                      target: {
+                        type: 'State',
+                        name: 'UserProjectTodos',
+                      },
+                      origin: {
+                        type: 'projection',
+                        name: 'UserProjectTodos',
+                        idField: ['userId', 'projectId'],
+                      },
+                    },
+                  ],
+                  specs: {
+                    name: 'User Project Rules',
+                    rules: [],
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        messages: [
+          {
+            type: 'state',
+            name: 'TodoListSummary',
+            fields: [
+              { name: 'summaryId', type: 'string', required: true },
+              { name: 'totalTodos', type: 'number', required: true },
+            ],
+            metadata: { version: 1 },
+          },
+          {
+            type: 'state',
+            name: 'TodoState',
+            fields: [
+              { name: 'todoId', type: 'string', required: true },
+              { name: 'description', type: 'string', required: true },
+            ],
+            metadata: { version: 1 },
+          },
+          {
+            type: 'state',
+            name: 'UserProjectTodos',
+            fields: [
+              { name: 'userId', type: 'string', required: true },
+              { name: 'projectId', type: 'string', required: true },
+              { name: 'todos', type: 'Array<string>', required: true },
+            ],
+            metadata: { version: 1 },
+          },
+        ],
+        integrations: [],
+      };
+
+      const code = await modelToNarrative(modelWithAllProjectionTypes);
+
+      expect(code).toEqual(`import { data, narrative, query, source, specs } from '@auto-engineer/narrative';
+import type { State } from '@auto-engineer/narrative';
+type TodoListSummary = State<
+  'TodoListSummary',
+  {
+    summaryId: string;
+    totalTodos: number;
+  }
+>;
+type TodoState = State<
+  'TodoState',
+  {
+    todoId: string;
+    description: string;
+  }
+>;
+type UserProjectTodos = State<
+  'UserProjectTodos',
+  {
+    userId: string;
+    projectId: string;
+    todos: string[];
+  }
+>;
+narrative('All Projection Types', 'ALL-PROJ', () => {
+  query('views summary', 'SUMMARY-SLICE').server(() => {
+    data([source().state('TodoListSummary').fromSingletonProjection('TodoSummary')]);
+    specs('Summary Rules', () => {});
+  });
+  query('views todo', 'TODO-SLICE').server(() => {
+    data([source().state('TodoState').fromProjection('Todos', 'todoId')]);
+    specs('Todo Rules', () => {});
+  });
+  query('views user project todos', 'USER-PROJECT-SLICE').server(() => {
+    data([source().state('UserProjectTodos').fromCompositeProjection('UserProjectTodos', ['userId', 'projectId'])]);
+    specs('User Project Rules', () => {});
+  });
+});
+`);
+    });
   });
 });

@@ -1232,3 +1232,263 @@ function validateThenEvents(example: unknown): void {
     });
   }
 }
+
+describe('projection DSL methods', () => {
+  it('should generate correct origin for singleton projection', async () => {
+    const memoryVfs = new InMemoryFileStore();
+    const flowContent = `
+import { flow, query, specs, rule, example, data, source, type Event, type State } from '@auto-engineer/narrative';
+
+type TodoAdded = Event<'TodoAdded', { todoId: string; description: string; addedAt: Date }>;
+type TodoListSummary = State<'TodoListSummary', { summaryId: string; totalTodos: number }>;
+
+flow('Projection Test', () => {
+  query('views summary')
+    .server(() => {
+      specs(() => {
+        rule('shows summary', () => {
+          example('summary')
+            .given<TodoAdded>({ todoId: 'todo-001', description: 'Test', addedAt: new Date('2030-01-01T09:00:00Z') })
+            .when({})
+            .then<TodoListSummary>({ summaryId: 'main', totalTodos: 1 });
+        });
+      });
+      data([source().state<TodoListSummary>('TodoListSummary').fromSingletonProjection('TodoSummary')]);
+    });
+});
+    `;
+
+    await memoryVfs.write('/test/projection.narrative.ts', new TextEncoder().encode(flowContent));
+
+    const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+    const model = flows.toModel();
+
+    const projectionFlow = model.narratives.find((f) => f.name === 'Projection Test');
+    expect(projectionFlow).toBeDefined();
+
+    if (!projectionFlow) return;
+
+    const summarySlice = projectionFlow.slices.find((s) => s.name === 'views summary');
+    expect(summarySlice?.type).toBe('query');
+
+    if (summarySlice?.type !== 'query') return;
+
+    const data = summarySlice.server.data as DataSource[] | undefined;
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(1);
+
+    expect(data?.[0].origin).toMatchObject({
+      type: 'projection',
+      name: 'TodoSummary',
+      singleton: true,
+    });
+
+    expect(data?.[0].origin).not.toHaveProperty('idField');
+  });
+
+  it('should generate correct origin for regular projection with single idField', async () => {
+    const memoryVfs = new InMemoryFileStore();
+    const flowContent = `
+import { flow, query, specs, rule, example, data, source, type Event, type State } from '@auto-engineer/narrative';
+
+type TodoAdded = Event<'TodoAdded', { todoId: string; description: string; addedAt: Date }>;
+type TodoState = State<'TodoState', { todoId: string; description: string; status: string }>;
+
+flow('Projection Test', () => {
+  query('views todo')
+    .server(() => {
+      specs(() => {
+        rule('shows todo', () => {
+          example('todo')
+            .given<TodoAdded>({ todoId: 'todo-001', description: 'Test', addedAt: new Date('2030-01-01T09:00:00Z') })
+            .when({})
+            .then<TodoState>({ todoId: 'todo-001', description: 'Test', status: 'pending' });
+        });
+      });
+      data([source().state<TodoState>('TodoState').fromProjection('Todos', 'todoId')]);
+    });
+});
+    `;
+
+    await memoryVfs.write('/test/projection.narrative.ts', new TextEncoder().encode(flowContent));
+
+    const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+    const model = flows.toModel();
+
+    const projectionFlow = model.narratives.find((f) => f.name === 'Projection Test');
+    expect(projectionFlow).toBeDefined();
+
+    if (!projectionFlow) return;
+
+    const todoSlice = projectionFlow.slices.find((s) => s.name === 'views todo');
+    expect(todoSlice?.type).toBe('query');
+
+    if (todoSlice?.type !== 'query') return;
+
+    const data = todoSlice.server.data as DataSource[] | undefined;
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(1);
+
+    expect(data?.[0].origin).toMatchObject({
+      type: 'projection',
+      name: 'Todos',
+      idField: 'todoId',
+    });
+
+    expect(data?.[0].origin).not.toHaveProperty('singleton');
+  });
+
+  it('should generate correct origin for composite projection with multiple idFields', async () => {
+    const memoryVfs = new InMemoryFileStore();
+    const flowContent = `
+import { flow, query, specs, rule, example, data, source, type Event, type State } from '@auto-engineer/narrative';
+
+type UserProjectAssigned = Event<'UserProjectAssigned', { userId: string; projectId: string; assignedAt: Date }>;
+type UserProjectState = State<'UserProjectState', { userId: string; projectId: string; role: string }>;
+
+flow('Projection Test', () => {
+  query('views user project')
+    .server(() => {
+      specs(() => {
+        rule('shows user project', () => {
+          example('user project')
+            .given<UserProjectAssigned>({ userId: 'user-001', projectId: 'proj-001', assignedAt: new Date('2030-01-01T09:00:00Z') })
+            .when({})
+            .then<UserProjectState>({ userId: 'user-001', projectId: 'proj-001', role: 'admin' });
+        });
+      });
+      data([source().state<UserProjectState>('UserProjectState').fromCompositeProjection('UserProjects', ['userId', 'projectId'])]);
+    });
+});
+    `;
+
+    await memoryVfs.write('/test/projection.narrative.ts', new TextEncoder().encode(flowContent));
+
+    const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+    const model = flows.toModel();
+
+    const projectionFlow = model.narratives.find((f) => f.name === 'Projection Test');
+    expect(projectionFlow).toBeDefined();
+
+    if (!projectionFlow) return;
+
+    const userProjectSlice = projectionFlow.slices.find((s) => s.name === 'views user project');
+    expect(userProjectSlice?.type).toBe('query');
+
+    if (userProjectSlice?.type !== 'query') return;
+
+    const data = userProjectSlice.server.data as DataSource[] | undefined;
+    expect(data).toBeDefined();
+    expect(data).toHaveLength(1);
+
+    expect(data?.[0].origin).toMatchObject({
+      type: 'projection',
+      name: 'UserProjects',
+      idField: ['userId', 'projectId'],
+    });
+
+    expect(data?.[0].origin).not.toHaveProperty('singleton');
+  });
+
+  it('should validate all three projection patterns together', async () => {
+    const memoryVfs = new InMemoryFileStore();
+    const flowContent = `
+import { flow, query, specs, rule, example, data, source, type Event, type State } from '@auto-engineer/narrative';
+
+type TodoAdded = Event<'TodoAdded', { todoId: string; userId: string; projectId: string; description: string; addedAt: Date }>;
+
+type TodoListSummary = State<'TodoListSummary', { summaryId: string; totalTodos: number }>;
+type TodoState = State<'TodoState', { todoId: string; description: string; status: string }>;
+type UserProjectTodos = State<'UserProjectTodos', { userId: string; projectId: string; todos: string[] }>;
+
+flow('All Projection Patterns', () => {
+  query('views summary')
+    .server(() => {
+      specs(() => {
+        rule('shows summary', () => {
+          example('summary')
+            .given<TodoAdded>({ todoId: 'todo-001', userId: 'u1', projectId: 'p1', description: 'Test', addedAt: new Date('2030-01-01T09:00:00Z') })
+            .when({})
+            .then<TodoListSummary>({ summaryId: 'main', totalTodos: 1 });
+        });
+      });
+      data([source().state<TodoListSummary>('TodoListSummary').fromSingletonProjection('TodoSummary')]);
+    });
+
+  query('views todo')
+    .server(() => {
+      specs(() => {
+        rule('shows todo', () => {
+          example('todo')
+            .given<TodoAdded>({ todoId: 'todo-001', userId: 'u1', projectId: 'p1', description: 'Test', addedAt: new Date('2030-01-01T09:00:00Z') })
+            .when({})
+            .then<TodoState>({ todoId: 'todo-001', description: 'Test', status: 'pending' });
+        });
+      });
+      data([source().state<TodoState>('TodoState').fromProjection('Todos', 'todoId')]);
+    });
+
+  query('views user project todos')
+    .server(() => {
+      specs(() => {
+        rule('shows user project todos', () => {
+          example('user project todos')
+            .given<TodoAdded>({ todoId: 'todo-001', userId: 'u1', projectId: 'p1', description: 'Test', addedAt: new Date('2030-01-01T09:00:00Z') })
+            .when({})
+            .then<UserProjectTodos>({ userId: 'u1', projectId: 'p1', todos: ['todo-001'] });
+        });
+      });
+      data([source().state<UserProjectTodos>('UserProjectTodos').fromCompositeProjection('UserProjectTodos', ['userId', 'projectId'])]);
+    });
+});
+    `;
+
+    await memoryVfs.write('/test/projection.narrative.ts', new TextEncoder().encode(flowContent));
+
+    const flows = await getNarratives({ vfs: memoryVfs, root: '/test', pattern, fastFsScan: true });
+    const model = flows.toModel();
+
+    const parseResult = modelSchema.safeParse(model);
+    if (!parseResult.success) {
+      console.error('Schema validation errors:', parseResult.error.format());
+    }
+    expect(parseResult.success).toBe(true);
+
+    const projectionFlow = model.narratives.find((f) => f.name === 'All Projection Patterns');
+    expect(projectionFlow).toBeDefined();
+
+    if (!projectionFlow) return;
+
+    expect(projectionFlow.slices).toHaveLength(3);
+
+    const summarySlice = projectionFlow.slices.find((s) => s.name === 'views summary');
+    if (summarySlice?.type === 'query') {
+      const data = summarySlice.server.data as DataSource[] | undefined;
+      expect(data?.[0].origin).toMatchObject({
+        type: 'projection',
+        name: 'TodoSummary',
+        singleton: true,
+      });
+    }
+
+    const todoSlice = projectionFlow.slices.find((s) => s.name === 'views todo');
+    if (todoSlice?.type === 'query') {
+      const data = todoSlice.server.data as DataSource[] | undefined;
+      expect(data?.[0].origin).toMatchObject({
+        type: 'projection',
+        name: 'Todos',
+        idField: 'todoId',
+      });
+    }
+
+    const userProjectSlice = projectionFlow.slices.find((s) => s.name === 'views user project todos');
+    if (userProjectSlice?.type === 'query') {
+      const data = userProjectSlice.server.data as DataSource[] | undefined;
+      expect(data?.[0].origin).toMatchObject({
+        type: 'projection',
+        name: 'UserProjectTodos',
+        idField: ['userId', 'projectId'],
+      });
+    }
+  });
+});
