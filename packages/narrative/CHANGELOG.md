@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.14
+
+### Patch Changes
+
+- support for singleton and composite ids projections
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.14
+  - @auto-engineer/id@0.11.14
+  - @auto-engineer/message-bus@0.11.14
+
 ## 0.11.13
 
 ### Patch Changes
