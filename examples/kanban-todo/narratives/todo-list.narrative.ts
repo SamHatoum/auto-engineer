@@ -48,7 +48,6 @@ type TodoAdded = Event<
 type TodoListSummary = State<
   'TodoListSummary',
   {
-    summaryId: string;
     totalTodos: number;
     pendingCount: number;
     inProgressCount: number;
@@ -229,7 +228,7 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
 }`),
     )
     .server(() => {
-      data([source().state('TodoState').fromProjection('Todos', 'todoId')]);
+      data([source().state<TodoState>('TodoState').fromProjection('Todos', 'todoId')]);
       specs(() => {
         rule('all todos are displayed with their current status', 'AUTO-r4E5Fr1B', () => {
           example('shows multiple todos in different states')
@@ -280,7 +279,7 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
 }`),
     )
     .server(() => {
-      data([source().state('TodoListSummary').fromProjection('TodoSummary', 'summaryId')]);
+      data([source().state('TodoListSummary').fromSingletonProjection('TodoSummary')]);
       specs(() => {
         rule('summary shows overall todo list statistics', 'AUTO-r5F6Gs2C', () => {
           example('calculates summary from multiple todos')
@@ -305,7 +304,6 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
             .and<TodoMarkedInProgress>({ todoId: 'todo-001', markedAt: new Date('2030-01-01T10:00:00.000Z') })
             .and<TodoMarkedComplete>({ todoId: 'todo-002', completedAt: new Date('2030-01-01T11:00:00.000Z') })
             .then<TodoListSummary>({
-              summaryId: 'main-summary',
               totalTodos: 3,
               pendingCount: 1,
               inProgressCount: 1,
