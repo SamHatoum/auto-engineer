@@ -36,5 +36,5 @@
   "devDependencies": {
     "@auto-engineer/cli": "workspace:*"
   },
-  "version": "0.11.14"
+  "version": "0.11.15"
 }

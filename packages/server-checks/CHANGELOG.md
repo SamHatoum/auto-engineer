@@ -1,5 +1,13 @@
 # @auto-engineer/server-checks
 
+## 0.11.15
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.11.15
+  - @auto-engineer/message-bus@0.11.15
+
 ## 0.11.14
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @auto-engineer/message-store
 
+## 0.11.15
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.15
+
 ## 0.11.14
 
 ### Patch Changes
