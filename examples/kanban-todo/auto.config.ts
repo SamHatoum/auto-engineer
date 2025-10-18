@@ -104,6 +104,7 @@ export default autoConfig({
           componentType: type,
           filePath: component.filePath,
           componentName,
+          aiOptions: { maxTokens: 2000 },
         });
       });
       return dispatch.parallel(commands);
@@ -136,6 +137,7 @@ export default autoConfig({
           previousOutputs: 'errors',
           attemptNumber: 0,
         },
+        aiOptions: { maxTokens: 2000 },
       }),
     );
 
@@ -189,6 +191,7 @@ export default autoConfig({
               previousOutputs: collectErrorMessages(failures),
               attemptNumber: currentAttempt + 1,
             },
+            aiOptions: { maxTokens: 2000 },
           },
         });
 
@@ -227,6 +230,7 @@ export default autoConfig({
             componentType: 'molecule',
             filePath: 'client/src/components/molecules/Example.tsx',
             componentName: 'Example.tsx',
+            aiOptions: { maxTokens: 2000 },
           }),
           dispatch<StartClientCommand>('StartClient', {
             clientDirectory: './client',
@@ -265,6 +269,7 @@ export default autoConfig({
           componentType: 'molecule',
           filePath: component.filePath,
           componentName,
+          aiOptions: { maxTokens: 2000 },
         });
       });
 
