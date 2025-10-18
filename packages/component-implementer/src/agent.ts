@@ -115,9 +115,9 @@ function extractJsonArray(text: string): string {
   return text;
 }
 
-export async function callAI(prompt: string, options?: { temperature?: number; maxTokens?: number }) {
-  const temperature = options?.temperature ?? 0.2;
-  const maxTokens = options?.maxTokens ?? 4000 * 3;
+export async function callAI(prompt: string, aiOptions?: { temperature?: number; maxTokens?: number }) {
+  const temperature = aiOptions?.temperature ?? 0.2;
+  const maxTokens = aiOptions?.maxTokens ?? 2000;
   debugAI('Calling AI with prompt length: %d, temperature: %f, maxTokens: %d', prompt.length, temperature, maxTokens);
   const result = await generateTextWithAI(prompt, { provider, temperature, maxTokens });
   debugAI('AI response received, length: %d', result.length);

@@ -23,6 +23,10 @@ export type ImplementComponentCommand = Command<
     filePath: string;
     componentName: string;
     failures?: string[];
+    aiOptions?: {
+      temperature?: number;
+      maxTokens?: number;
+    };
   }
 >;
 
@@ -67,6 +71,10 @@ export const commandHandler = defineCommandHandler<
     filePath: { description: 'Component file path', required: true },
     componentName: { description: 'Name of component to implement', required: true },
     failures: { description: 'Any failures from previous implementations', required: false },
+    aiOptions: {
+      description: 'AI generation options',
+      required: false,
+    },
   },
   examples: [
     '$ auto implement:component --project-dir=./client --ia-scheme-dir=./.context --design-system-path=./design-system.md --component-type=molecule --component-name=SurveyCard',
@@ -165,7 +173,7 @@ async function handleImplementComponentCommandInternal(
           ? makeImplementPrompt(basePrompt)
           : makeRetryPrompt(basePrompt, componentType, componentName, code, lastErrors);
 
-      const aiRaw = await callAI(prompt);
+      const aiRaw = await callAI(prompt, command.data.aiOptions);
       code = extractCodeBlock(aiRaw);
       await fs.writeFile(outPath, code, 'utf-8');
       debugProcess(
