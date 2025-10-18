@@ -19,6 +19,9 @@ export type ImplementSliceCommand = Command<
       previousOutputs?: string;
       attemptNumber?: number;
     };
+    aiOptions?: {
+      maxTokens?: number;
+    };
   }
 >;
 
@@ -56,6 +59,10 @@ export const commandHandler = defineCommandHandler<
     },
     context: {
       description: 'Context for retry attempts with previous outputs',
+      required: false,
+    },
+    aiOptions: {
+      description: 'Maximum tokens for AI generation',
       required: false,
     },
   },
@@ -299,6 +306,7 @@ async function implementFile(
   targetFile: string,
   contextFiles: Record<string, string>,
   retryContext?: { previousOutputs?: string; attemptNumber?: number },
+  aiOptions?: { maxTokens?: number },
 ): Promise<void> {
   debugProcess(`Implementing ${targetFile}`);
 
@@ -312,7 +320,7 @@ async function implementFile(
     debugProcess(`Using retry prompt for attempt #${retryContext?.attemptNumber ?? 2}`);
   }
 
-  const aiOutput = await generateTextWithAI(prompt, { maxTokens: 8000 });
+  const aiOutput = await generateTextWithAI(prompt, { maxTokens: aiOptions?.maxTokens ?? 2000 });
   let cleanedCode = extractCodeBlock(aiOutput);
   cleanedCode = addImplementationMarker(cleanedCode);
 
@@ -326,6 +334,7 @@ async function implementFile(
 async function implementSlice(
   slicePath: string,
   context?: { previousOutputs?: string; attemptNumber?: number },
+  aiOptions?: { maxTokens?: number },
 ): Promise<{ success: boolean; filesImplemented: string[]; error?: string }> {
   const sliceName = path.basename(slicePath);
 
@@ -347,7 +356,7 @@ async function implementSlice(
 
     const implementedFiles: string[] = [];
     for (const [targetFile] of filesToImplement) {
-      await implementFile(slicePath, targetFile, contextFiles, context);
+      await implementFile(slicePath, targetFile, contextFiles, context, aiOptions);
       implementedFiles.push(targetFile);
     }
 
@@ -424,6 +433,7 @@ export async function handleImplementSliceCommand(
   const rawData = command.data as ImplementSliceCommand['data'] & { path?: string };
   const slicePath = rawData.slicePath ?? rawData.path;
   const { context } = command.data;
+  const aiOptions = command.data.aiOptions;
 
   if (slicePath === undefined || slicePath === null || slicePath === '') {
     debugHandler('ERROR: No slice path provided. Expected slicePath or path parameter');
@@ -445,7 +455,7 @@ export async function handleImplementSliceCommand(
     debugProcess('Starting slice implementation for: %s', sliceRoot);
     logRetryContext(context);
 
-    const result = await implementSlice(sliceRoot, context);
+    const result = await implementSlice(sliceRoot, context, aiOptions);
 
     if (!result.success) {
       return createFailedEvent(command, result.error ?? 'Implementation failed', sliceRoot);
