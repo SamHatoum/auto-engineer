@@ -51,35 +51,35 @@ auto
 
 You should see `server running on http://localhost:5555` in your console. You're ready to start exploring!
 
-### Explore Flows
+### Explore Narratives
 
-Open one of the flow files in your IDE. Flow files are located under `/flows` in the example you installed.
+Open one of the narrative files in your IDE. Narrative files are located under `/narratives` in the example you installed.
 
-Next, navigate to http://localhost:5555 in your browser. Click the button to go to your sandbox, and you'll see the visual counterpart of the flow that you saw in your IDE. 🤯
+Next, navigate to http://localhost:5555 in your browser. Click the button to go to your sandbox, and you'll see the visual counterpart of the narrative that you saw in your IDE. 🤯
 
-With Flow, you model your apps using the flow of time. Think of flows like a user journey where you tell the story slice by slice.
+With Narratives, you model your apps using the flow of time. Think of Narratives like a user journey where you tell the story slice by slice.
 
-Click on a slice, which are the purple boxes that you see inside the flows, and you'll see a pen icon. Click that to see the specs in plain English for that slice. You can edit them to and get as specific as you require.
+Click on a slice, which are the purple boxes that you see inside the narratives, and you'll see a pen icon. Click that to see the specs in plain English for that slice. You can edit them to and get as specific as you require.
 
 As you make changes, you'll see an "sync" icon with a number in the top right. This is an indication of the number of differences between the sandbox and your IDE. You can think of the sandbox you're working in as a git remote that you need to push and pull from.
 
-### Collaborate on your Flows
+### Collaborate on your Narratives
 
-Grab the `sandbox.on.auto/...` link that you see in your browser and share it with your colleagues. They can immediately collaborate with you on your canvas! No apps to download, just instant access to the flows. Any changes they make will also appear for you in the top right sync icon. This allows you to collaborate with non-technical people and get their input, while still keeping it real. 🤘
+Grab the `sandbox.on.auto/...` link that you see in your browser and share it with your colleagues. They can immediately collaborate with you on your canvas! No apps to download, just instant access to the narratives. Any changes they make will also appear for you in the top right sync icon. This allows you to collaborate with non-technical people and get their input, while still keeping it real. 🤘
 
-### Build your Flows
+### Build your Narrative into an App
 
-Ok, so you've authored a flow to your liking, sliced and diced it, you've collaborated on it, and got a 👍 from your colleagues. Now let's build your app!
+Ok, so you've authored a narrative to your liking, sliced and diced it, you've collaborated on it, and got a 👍 from your colleagues. Now let's build your app!
 
 On the left toolbar, you'll see a pipelines icon. Click it and you'll see a visual of a pipeline.
 
 Select "Export Schema" and click run, then continue reading as you marvel at cogs turning.
 
-The pipelines are where all the magic happens. First the flows are converted into a model, which is used to scaffold a backend. AI then creates a user experience architecture, which in turn scaffolds a front end. Both the scaffolded frontend and backend are then implemented and tested by AI 🤖.
+The pipelines are where all the magic happens. First the narratives are converted into a model, which is used to scaffold a backend. AI then creates a user experience architecture, which in turn scaffolds a front end. Both the scaffolded frontend and backend are then implemented and tested by AI 🤖.
 
-The pipeline gives you full control over how you want apps to be built. The example has a set of default that the Auto team put together, but everything is customizable to the nth degree, including the Flow DSL itself!
+The pipeline gives you full control over how you want apps to be built. The example has a set of default that the Auto team put together, but everything is customizable to the nth degree, including the narrative DSL itself!
 
-### Preview your Flows
+### Preview your App
 
 Once the run is complete, you can go to `https://localhost:3000` and preview your newly created app.
 
