@@ -328,7 +328,6 @@ export function buildEventToCommandMapping(metadataService?: CommandMetadataServ
     return {};
   }
 
-  // Use the dynamic mappings from the command metadata service
   const eventToCommandMap = (
     metadataService as CommandMetadataService & { getEventToCommandMapping?: () => Map<string, string> }
   ).getEventToCommandMapping?.();
@@ -340,14 +339,7 @@ export function buildEventToCommandMapping(metadataService?: CommandMetadataServ
     }
   }
 
-  debug('Built %d dynamic event-to-command mappings from metadata service', Object.keys(result).length);
-
   return result;
-}
-
-function getCommandFromEventType(eventType: string, metadataService?: CommandMetadataService): string | null {
-  const eventToCommandMap = buildEventToCommandMapping(metadataService);
-  return eventToCommandMap[eventType] || null;
 }
 
 function hasEventError(event: { message: { data: unknown } }): boolean {
@@ -564,6 +556,47 @@ async function calculateNodeStatus(
   }
 }
 
+function processEventHandlers(
+  eventHandlers: Map<string, Array<(event: Event) => void>>,
+  commandNodes: Set<string>,
+  eventToCommandMap: Record<string, string>,
+): void {
+  debug('Using event handlers, found %d handlers', eventHandlers.size);
+
+  for (const [eventType, handlers] of eventHandlers) {
+    debug('Processing event type %s with %d handlers', eventType, handlers.length);
+    const sourceCommand = eventToCommandMap[eventType] || null;
+    debug('Source command for %s = %s', eventType, sourceCommand);
+    if (sourceCommand !== null && sourceCommand !== '') {
+      commandNodes.add(sourceCommand);
+      debug('Warning: eventHandlers path cannot determine target commands - skipping edge creation');
+    }
+  }
+
+  debug('Final nodes: %o', Array.from(commandNodes));
+}
+
+function processDslRegistrations(
+  dslRegistrations: DslRegistration[] | undefined,
+  commandNodes: Set<string>,
+  edges: Array<{ from: string; to: string }>,
+  metadataService: CommandMetadataService | undefined,
+  eventToCommandMap: Record<string, string>,
+): void {
+  const regsToProcess = dslRegistrations || registrations;
+  debug('Using DSL registrations, found %d registrations', regsToProcess.length);
+
+  regsToProcess.forEach((registration) => {
+    if (registration.type === 'on') {
+      processEventRegistration(registration, commandNodes, edges, metadataService, eventToCommandMap);
+    }
+
+    if (registration.type === 'on-settled') {
+      processSettledRegistration(registration, commandNodes, edges, metadataService);
+    }
+  });
+}
+
 /**
  * Generate pipeline graph from current registrations
  */
@@ -597,42 +630,13 @@ export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promis
     dslRegistrations?.length ?? 0,
   );
 
-  // If eventHandlers are provided, use them instead of DSL registrations
+  const eventToCommandMap = buildEventToCommandMapping(metadataService);
+  debug('Built %d dynamic event-to-command mappings from metadata service', Object.keys(eventToCommandMap).length);
+
   if (eventHandlers) {
-    debug('Using event handlers, found %d handlers', eventHandlers.size);
-    // For now, we need to reconstruct the pipeline from the event handlers
-    // This is a simplified approach that may need enhancement
-    for (const [eventType, handlers] of eventHandlers) {
-      debug('Processing event type %s with %d handlers', eventType, handlers.length);
-      // Extract command relationships from event type names
-      // This is based on the naming convention in auto.config.ts
-      const sourceCommand = getCommandFromEventType(eventType, metadataService);
-      debug('Source command for %s = %s', eventType, sourceCommand);
-      if (sourceCommand !== null && sourceCommand !== '') {
-        commandNodes.add(sourceCommand);
-
-        // We can't determine target commands from event handlers without analyzing their dispatch calls
-        // The eventHandlers approach is fundamentally broken for pipeline graph generation
-        // Only the DSL registrations path should be used
-        debug('Warning: eventHandlers path cannot determine target commands - skipping edge creation');
-      }
-    }
-    debug('Final nodes: %o', Array.from(commandNodes));
-    debug('Final edges: %o', edges);
+    processEventHandlers(eventHandlers, commandNodes, eventToCommandMap);
   } else {
-    // Use DSL registrations (either passed in or from global state)
-    const regsToProcess = dslRegistrations || registrations;
-    debug('Using DSL registrations, found %d registrations', regsToProcess.length);
-
-    regsToProcess.forEach((registration) => {
-      if (registration.type === 'on') {
-        processEventRegistration(registration, commandNodes, edges, metadataService);
-      }
-
-      if (registration.type === 'on-settled') {
-        processSettledRegistration(registration, commandNodes, edges, metadataService);
-      }
-    });
+    processDslRegistrations(dslRegistrations, commandNodes, edges, metadataService, eventToCommandMap);
   }
 
   const nodes = await Promise.all(
@@ -675,9 +679,8 @@ export async function getPipelineGraph(config: PipelineGraphConfig = {}): Promis
   );
 
   const commandToEvents = buildCommandEventMappings(metadataService);
-  const eventToCommand = buildEventToCommandMapping(metadataService);
 
-  return { nodes, edges, commandToEvents, eventToCommand };
+  return { nodes, edges, commandToEvents, eventToCommand: eventToCommandMap };
 }
 
 function processEventRegistration(
@@ -685,17 +688,25 @@ function processEventRegistration(
   commandNodes: Set<string>,
   edges: Array<{ from: string; to: string }>,
   metadataService?: CommandMetadataService,
+  eventToCommandMap?: Record<string, string>,
 ): void {
   try {
     const mockEvent = { type: registration.eventType, data: {} } as Event;
     const result = registration.handler(mockEvent);
 
     if (result && typeof result === 'object' && 'type' in result) {
-      addCommandAndEdge(result as Command, registration.eventType, commandNodes, edges, metadataService);
+      addCommandAndEdge(
+        result as Command,
+        registration.eventType,
+        commandNodes,
+        edges,
+        metadataService,
+        eventToCommandMap,
+      );
     } else if (Array.isArray(result)) {
       result.forEach((command) => {
         if (command !== null && typeof command === 'object' && 'type' in command && typeof command.type === 'string') {
-          addCommandAndEdge(command, registration.eventType, commandNodes, edges, metadataService);
+          addCommandAndEdge(command, registration.eventType, commandNodes, edges, metadataService, eventToCommandMap);
         }
       });
     }
@@ -744,6 +755,7 @@ function addCommandAndEdge(
   commandNodes: Set<string>,
   edges: Array<{ from: string; to: string }>,
   metadataService?: CommandMetadataService,
+  eventToCommandMap?: Record<string, string>,
 ): void {
   function getNodeId(commandType: string): string {
     if (metadataService) {
@@ -757,8 +769,7 @@ function addCommandAndEdge(
 
   commandNodes.add(command.type);
 
-  const eventToCommandMap = buildEventToCommandMapping(metadataService);
-  const sourceCommand = eventToCommandMap[eventType];
+  const sourceCommand = eventToCommandMap?.[eventType];
   if (sourceCommand !== undefined) {
     commandNodes.add(sourceCommand);
     edges.push({

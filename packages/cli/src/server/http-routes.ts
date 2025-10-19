@@ -114,6 +114,9 @@ export function setupHttpRoutes(
   stateManager: StateManager<Record<string, unknown>>,
   config: HttpRoutesConfig,
 ): void {
+  let cachedPipelineGraph: Awaited<ReturnType<typeof getPipelineGraph>> | null = null;
+  let lastMessageCount = 0;
+
   // Health check endpoint
   app.get('/health', (_req, res) => {
     res.json({
@@ -153,16 +156,34 @@ export function setupHttpRoutes(
 
   // Get pipeline graph with command metadata and icons
   // This endpoint will be polled frequently for status updates
+  // Caching is implemented to avoid expensive recomputation when nothing has changed
   app.get('/pipeline', (_req, res) => {
     void (async () => {
-      const currentDslRegistrations = config.getDslRegistrations?.() ?? config.dslRegistrations;
-      debugHttp('Pipeline request - dslRegistrations length:', currentDslRegistrations?.length ?? 0);
-      const graph = await getPipelineGraph({
-        metadataService: config.commandMetadataService,
-        messageStore: config.messageStore as ILocalMessageStore,
-        dslRegistrations: currentDslRegistrations,
-      });
-      res.json(graph);
+      try {
+        const stats = await config.messageStore.getStats();
+        const currentMessageCount = stats.totalMessages;
+
+        if (cachedPipelineGraph !== null && currentMessageCount === lastMessageCount) {
+          debugHttp('Pipeline cache hit - returning cached graph');
+          res.json(cachedPipelineGraph);
+          return;
+        }
+
+        debugHttp('Pipeline cache miss - rebuilding graph (messages: %d -> %d)', lastMessageCount, currentMessageCount);
+        const currentDslRegistrations = config.getDslRegistrations?.() ?? config.dslRegistrations;
+        const graph = await getPipelineGraph({
+          metadataService: config.commandMetadataService,
+          messageStore: config.messageStore as ILocalMessageStore,
+          dslRegistrations: currentDslRegistrations,
+        });
+
+        cachedPipelineGraph = graph;
+        lastMessageCount = currentMessageCount;
+        res.json(graph);
+      } catch (error) {
+        debugHttp('Error building pipeline graph:', error);
+        res.status(500).json({ error: 'Failed to build pipeline graph' });
+      }
     })();
   });
 
