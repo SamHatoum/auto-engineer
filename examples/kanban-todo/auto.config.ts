@@ -221,6 +221,7 @@ export default autoConfig({
     on<GenerateClientEvents>('ClientGenerated', (e) => {
       if (e.type !== 'ClientGenerated') return;
 
+      // this is purley for display purposes the pipeline
       if (e.data === null || e.data === undefined || !Array.isArray(e.data.components)) {
         return [
           dispatch<ImplementComponentCommand>('ImplementComponent', {
@@ -230,7 +231,7 @@ export default autoConfig({
             componentType: 'molecule',
             filePath: 'client/src/components/molecules/Example.tsx',
             componentName: 'Example.tsx',
-            aiOptions: { maxTokens: 2000 },
+            aiOptions: { maxTokens: 3000 },
           }),
           dispatch<StartClientCommand>('StartClient', {
             clientDirectory: './client',
@@ -269,7 +270,7 @@ export default autoConfig({
           componentType: 'molecule',
           filePath: component.filePath,
           componentName,
-          aiOptions: { maxTokens: 2000 },
+          aiOptions: { maxTokens: 3000 },
         });
       });
 
