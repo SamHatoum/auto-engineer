@@ -131,8 +131,12 @@ async function handleGenerateClientCommandInternal(command: GenerateClientComman
     const iaSchemeJson = JSON.parse(iaSchemeJsonFile) as IAScheme;
     debugGeneration('IA schema parsed successfully');
 
+    debugGeneration('Reading GraphQL schema from: %s', gqlSchemaPath);
+    const gqlSchemaContent = await fs.readFile(gqlSchemaPath, 'utf-8');
+    debugGeneration('GraphQL schema file size: %d bytes', gqlSchemaContent.length);
+
     debugGeneration('Generating components to: %s/src', targetDir);
-    const generatedComponents = generateComponents(iaSchemeJson, `${targetDir}/src`) ?? [];
+    const generatedComponents = generateComponents(iaSchemeJson, `${targetDir}/src`, gqlSchemaContent) ?? [];
     debugGeneration('%d components generated', generatedComponents.length);
 
     debugGeneration('Writing GraphQL operations to: %s/src', targetDir);

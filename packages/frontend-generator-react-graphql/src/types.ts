@@ -21,6 +21,7 @@ export interface MoleculeSpec {
     atoms: string[];
   };
   specs?: string[];
+  data_requirements?: DataRequirement[];
 }
 
 export interface OrganismSpec {

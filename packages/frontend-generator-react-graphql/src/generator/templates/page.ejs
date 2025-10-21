@@ -4,6 +4,9 @@ import { <%= org %> } from "@/components/organisms/<%= org %>";
 <% if (template) { -%>
 import { <%= template.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') %> } from "@/components/templates/<%= template %>";
 <% } -%>
+<% if (typeGuidance && typeGuidance.imports && typeGuidance.imports.length > 0) { -%>
+import { <%= typeGuidance.imports.join(', ') %> } from '@/gql/graphql';
+<% } -%>
 
 // <%= description %>
 <% if (specs && specs.length) { -%>
@@ -12,6 +15,100 @@ import { <%= template.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.sl
 // - <%- spec %>
 <% }) -%>
 <% } -%>
+<% if (organisms && organisms.length > 0) { -%>
+//
+// ──────────────────────────────────────────────────────────────────────────────
+// PAGE COMPOSITION - Spec Coverage Analysis
+// ──────────────────────────────────────────────────────────────────────────────
+//
+<% if (specs && specs.length > 0) { -%>
+// YOUR SPECS (what this page must accomplish):
+//
+<% specs.forEach(spec => { -%>
+<%   const coveredBy = organisms.find(org => organismSpecs[org]?.includes(spec)); -%>
+//   [<%= coveredBy ? '✓' : ' ' %>] <%= spec %>
+<%   if (coveredBy) { -%>
+//       └─ Implemented by <%= coveredBy %>
+<%   } -%>
+<% }); -%>
+//
+<% } -%>
+// Available Organisms:
+//
+<% organisms.forEach(org => { -%>
+<%   const orgSpecs = organismSpecs[org]; -%>
+<%   if (orgSpecs && orgSpecs.length > 0) { -%>
+// **<%= org %>** capabilities:
+<%     orgSpecs.forEach(spec => { -%>
+//   • <%= spec %>
+<%     }); -%>
+//
+<%   } else { -%>
+// **<%= org %>**
+//   (Organism with specific purpose - compose as needed)
+//
+<%   } -%>
+<% }); -%>
+// Composition Rules:
+//
+// 1. ✓ Checked specs = already implemented by organism
+// 2. [ ] Unchecked specs = your responsibility
+// 3. Your job: compose organisms into page layout
+//
+<% } -%>
+<% if (typeGuidance && (typeGuidance.queryGuidance.length > 0 || typeGuidance.mutationGuidance.length > 0 || typeGuidance.enumGuidance.length > 0)) { -%>
+//
+// CRITICAL - TYPE GUIDANCE - Child organism data requirements
+//
+// The following operations are used by child organisms.
+// You can either:
+//   A) Fetch here and pass as props (recommended for shared data/mutations)
+//   B) Let each organism fetch its own data (simpler, but may duplicate queries)
+//
+// Use these EXACT imports:
+//
+<% typeGuidance.queryGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+<% typeGuidance.mutationGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+<% typeGuidance.enumGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+<% } -%>
+//
+// CRITICAL - CONTAINER-AWARE RESPONSIVE DESIGN:
+//
+// THIS COMPONENT WILL BE USED IN UNPREDICTABLE CONTAINER SIZES:
+// - Narrow sidebars: 300-400px
+// - Medium containers: 500-800px
+// - Wide layouts: 800px+
+// - Mobile viewports: 320-640px
+// - Flex layouts where space is shared with siblings (flex-1)
+//
+// 🎯 MANDATORY RESPONSIVE PATTERNS:
+//
+// 1. GRIDS: Always start mobile-first, progressively enhance
+//    WRONG: grid grid-cols-3
+//    RIGHT: grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
+//
+// 2. TEXT SIZING: Use responsive classes, never fixed large sizes
+//    WRONG: text-5xl (too big for narrow containers)
+//    RIGHT: text-2xl sm:text-3xl lg:text-4xl
+//
+// 3. FLEX LAYOUTS: Prefer flex-col with responsive row breakpoints
+//    RIGHT: flex flex-col lg:flex-row gap-4
+//
+// 4. PREVENT OVERFLOW: Use min-w-0 and truncation
+//    RIGHT: min-w-0 truncate OR overflow-hidden
+//
+// 5. MENTAL TEST: Would this work in a 320px wide container?
+//    If no → make it responsive!
+//
 
 export function <%= name %>() {
     return <div />;

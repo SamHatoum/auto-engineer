@@ -1,9 +1,18 @@
-<% atoms.forEach(atom => { -%>
-import { <%= atom %> } from "@/components/atoms/<%= atom.toLowerCase() %>";
-<% }) -%>
+<% if (atoms && atoms.length > 0) { -%>
+// 🎨 REQUIRED ATOM COMPONENTS:
+// <%= atoms.join(', ') %>
+//
+// Atom source code is provided in the "Available Dependencies" section below.
+// Check that section for the exact exports to import.
+// Pattern: import { ExportedName } from '@/components/atoms/{atomName}'
+//
+<% } -%>
 <% molecules.forEach(mol => { -%>
 import { <%= mol %> } from "@/components/molecules/<%= mol %>";
 <% }) -%>
+<% if (typeGuidance && typeGuidance.imports && typeGuidance.imports.length > 0) { -%>
+import { <%= typeGuidance.imports.join(', ') %> } from '@/gql/graphql';
+<% } -%>
 
 // <%= description %>
 <% if (specs && specs.length) { -%>
@@ -11,6 +20,119 @@ import { <%= mol %> } from "@/components/molecules/<%= mol %>";
 <% specs.forEach(spec => { -%>
 // - <%- spec %>
 <% }) -%>
+<% } -%>
+<% if (typeGuidance && (typeGuidance.queryGuidance.length > 0 || typeGuidance.mutationGuidance.length > 0 || typeGuidance.enumGuidance.length > 0 || (typeGuidance.typeFieldGuidance && typeGuidance.typeFieldGuidance.length > 0))) { -%>
+//
+// CRITICAL - TYPE GUIDANCE - Use these EXACT imports:
+//
+<% typeGuidance.queryGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+<% typeGuidance.mutationGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+<% if (typeGuidance.typeFieldGuidance && typeGuidance.typeFieldGuidance.length > 0) { -%>
+<% typeGuidance.typeFieldGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+<% } -%>
+<% typeGuidance.enumGuidance.forEach(guidance => { -%>
+// <%- guidance.split('\n').join('\n// ') %>
+//
+<% }) -%>
+//
+// PROHIBITED PATTERNS - NEVER USE:
+// - NEVER: import { gql } from '@apollo/client'
+// - NEVER: gql`query ...` or gql`mutation ...` (inline GraphQL)
+// - ALWAYS: import { QueryName } from '@/graphql/queries'
+// - ALWAYS: import { MutationName } from '@/graphql/mutations'
+// - ALWAYS: use pre-generated operations shown above
+//
+<% if (typeGuidance.mutationGuidance.length > 0) { -%>
+//
+// MUTATION ERROR HANDLING PATTERN (ALL mutations return success/error):
+// const [mutate, { loading }] = useMutation(MutationName, {
+//   refetchQueries: [{ query: QueryName }],
+//   awaitRefetchQueries: true
+// });
+//
+// const handleMutation = async () => {
+//   try {
+//     const { data } = await mutate({ variables: { input: {...} } });
+//     if (data?.mutationName?.success) {
+//       // Success handling
+//     } else if (data?.mutationName?.error) {
+//       console.error('Mutation failed:', data.mutationName.error.message);
+//     }
+//   } catch (err) {
+//     console.error('Network error:', err);
+//   }
+// };
+//
+// <Button disabled={loading} onClick={handleMutation}>Submit</Button>
+//
+<% } -%>
+<% } -%>
+<% if (molecules && molecules.length > 0) { -%>
+//
+// IMPLEMENTATION GUIDE (Priority: Read this immediately before coding)
+//
+<% if (specs && specs.length > 0) { -%>
+// Spec Coverage:
+<% specs.forEach(spec => { -%>
+<%   const coveredBy = molecules.find(mol => moleculeSpecs[mol]?.includes(spec)); -%>
+//   [<%= coveredBy ? '✓' : ' ' %>] <%= spec %><%= coveredBy ? ` ← ${coveredBy}` : '' %>
+<% }); -%>
+//
+<% } -%>
+<%
+const comprehensiveMolecules = molecules.filter(mol => {
+  const molSpecs = moleculeSpecs[mol] || [];
+  return specs && specs.length > 0 && specs.every(spec => molSpecs.includes(spec));
+});
+const hasComprehensive = comprehensiveMolecules.length > 0;
+-%>
+<% if (hasComprehensive) { -%>
+// Pattern for THIS component:
+<% comprehensiveMolecules.forEach(mol => { -%>
+//   <%= mol %> implements ALL ✓ specs (Props: None - self-contained)
+//   → Use AS-IS without modification
+<% }); -%>
+<%   const otherMolecules = molecules.filter(mol => !comprehensiveMolecules.includes(mol)); -%>
+<%   if (otherMolecules.length > 0) { -%>
+<%     otherMolecules.forEach(mol => { -%>
+//   <%= mol %>: Helper component
+<%     }); -%>
+<%   } -%>
+//
+// Code structure:
+//   return (
+//     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+<%   molecules.forEach(mol => { -%>
+//       <<%= mol %> />
+<%   }); -%>
+//     </div>
+//   );
+//
+// CRITICAL: NO grids/arrays for single comprehensive components above
+// Grids are ONLY for mapping data: items.map(item => <Card {...item} />)
+<% } else { -%>
+// Pattern for THIS component:
+<% molecules.forEach(mol => { -%>
+<%   const molSpecs = moleculeSpecs[mol] || []; -%>
+//   <%= mol %>: <%= molSpecs.length %> capabilities
+<% }); -%>
+//
+// Layout guidance:
+//   Vertical: space-y-4 sm:space-y-6
+//   Padding: p-4 sm:p-6
+//   Grids for data: grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
+//   Responsive: Start mobile-first, add sm:/lg: breakpoints
+<% } -%>
+//
 <% } -%>
 
 export function <%= name %>() {
