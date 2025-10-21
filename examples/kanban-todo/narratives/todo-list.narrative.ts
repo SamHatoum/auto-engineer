@@ -2,8 +2,8 @@ import {
   command,
   data,
   example,
-  narrative,
   gql,
+  narrative,
   query,
   rule,
   should,
@@ -12,7 +12,6 @@ import {
   specs,
 } from '@auto-engineer/narrative';
 import type { Command, Event, State } from '@auto-engineer/narrative';
-
 type AddTodo = Command<
   'AddTodo',
   {
@@ -20,21 +19,6 @@ type AddTodo = Command<
     description: string;
   }
 >;
-
-type MarkTodoComplete = Command<
-  'MarkTodoComplete',
-  {
-    todoId: string;
-  }
->;
-
-type MarkTodoInProgress = Command<
-  'MarkTodoInProgress',
-  {
-    todoId: string;
-  }
->;
-
 type TodoAdded = Event<
   'TodoAdded',
   {
@@ -44,26 +28,12 @@ type TodoAdded = Event<
     addedAt: Date;
   }
 >;
-
-type TodoListSummary = State<
-  'TodoListSummary',
-  {
-    totalTodos: number;
-    pendingCount: number;
-    inProgressCount: number;
-    completedCount: number;
-    completionPercentage: number;
-  }
->;
-
-type TodoMarkedComplete = Event<
-  'TodoMarkedComplete',
+type MarkTodoInProgress = Command<
+  'MarkTodoInProgress',
   {
     todoId: string;
-    completedAt: Date;
   }
 >;
-
 type TodoMarkedInProgress = Event<
   'TodoMarkedInProgress',
   {
@@ -71,7 +41,19 @@ type TodoMarkedInProgress = Event<
     markedAt: Date;
   }
 >;
-
+type MarkTodoComplete = Command<
+  'MarkTodoComplete',
+  {
+    todoId: string;
+  }
+>;
+type TodoMarkedComplete = Event<
+  'TodoMarkedComplete',
+  {
+    todoId: string;
+    completedAt: Date;
+  }
+>;
 type TodoState = State<
   'TodoState',
   {
@@ -82,7 +64,16 @@ type TodoState = State<
     completedAt: Date | null;
   }
 >;
-
+type TodoListSummary = State<
+  'TodoListSummary',
+  {
+    totalTodos: number;
+    pendingCount: number;
+    inProgressCount: number;
+    completedCount: number;
+    completionPercentage: number;
+  }
+>;
 narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
   command('adds a new todo', 'AUTO-A1c4Mn7Bz')
     .client(() => {
@@ -228,7 +219,7 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
 }`),
     )
     .server(() => {
-      data([source().state<TodoState>('TodoState').fromProjection('Todos', 'todoId')]);
+      data([source().state('TodoState').fromProjection('Todos', 'todoId')]);
       specs(() => {
         rule('all todos are displayed with their current status', 'AUTO-r4E5Fr1B', () => {
           example('shows multiple todos in different states')

@@ -104,7 +104,7 @@ export default autoConfig({
           componentType: type,
           filePath: component.filePath,
           componentName,
-          aiOptions: { maxTokens: 2000 },
+          aiOptions: { maxTokens: 3000 },
         });
       });
       return dispatch.parallel(commands);

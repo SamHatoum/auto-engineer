@@ -26,30 +26,6 @@ narrative('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('use gradient borders matching task status');
     });
   });
-  experience('Statistics Dashboard', 'AUTO-S1n4Xx7Lz').client(() => {
-    specs(() => {
-      should('show total tasks count with large prominent number');
-      should('display tasks completed today with celebration icon');
-      should('show breakdown: pending, in-progress, completed counts');
-      should('display completion percentage with visual indicator');
-      should('use card-based layout with glass morphism styling');
-      should('include subtle icons for each statistic');
-      should('update in real-time when tasks change status');
-      should('animate number changes with counting effect');
-    });
-  });
-  experience('Recent Activity Feed', 'AUTO-R2o5Yy8Mz').client(() => {
-    specs(() => {
-      should('display recent task completions in chronological order');
-      should('show completion timestamp in relative format');
-      should('limit to last 5 completed tasks');
-      should('include task description with completed styling');
-      should('show subtle celebration icon for each completion');
-      should('use minimalist list design with dividers');
-      should('support click to view task details');
-      should('auto-scroll new completions into view with smooth animation');
-    });
-  });
   experience('View Toggle Controls', 'AUTO-V3p6Zz9Nz').client(() => {
     specs(() => {
       should('provide toggle between Kanban and List views');
@@ -126,6 +102,30 @@ narrative('Todo Dashboard', 'AUTO-H6i9Rs2Gz', () => {
       should('auto-focus input when opened');
       should('clear and collapse after successful task addition');
       should('show loading state during task submission');
+    });
+  });
+  experience('Statistics Dashboard', 'AUTO-S1n4Xx7Lz').client(() => {
+    specs(() => {
+      should('show total tasks count with large prominent number');
+      should('display tasks completed today with celebration icon');
+      should('show breakdown: pending, in-progress, completed counts');
+      should('display completion percentage with visual indicator');
+      should('use card-based layout with glass morphism styling');
+      should('include subtle icons for each statistic');
+      should('update in real-time when tasks change status');
+      should('animate number changes with counting effect');
+    });
+  });
+  experience('Recent Activity Feed', 'AUTO-R2o5Yy8Mz').client(() => {
+    specs(() => {
+      should('display recent task completions in chronological order');
+      should('show completion timestamp in relative format');
+      should('limit to last 5 completed tasks');
+      should('include task description with completed styling');
+      should('show subtle celebration icon for each completion');
+      should('use minimalist list design with dividers');
+      should('support click to view task details');
+      should('auto-scroll new completions into view with smooth animation');
     });
   });
 });

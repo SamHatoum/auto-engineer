@@ -22,17 +22,6 @@ narrative('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('use CSS Grid for Kanban column layout');
     });
   });
-  experience('Kanban Board Container', 'AUTO-K1x4Hh7Vz').client(() => {
-    specs(() => {
-      should('display three equal-width columns in desktop view');
-      should('apply consistent gap spacing between columns');
-      should('stack columns vertically on mobile devices');
-      should('support horizontal scrolling on smaller screens if needed');
-      should('maintain minimum column width for readability');
-      should('apply max-height with scroll for columns with many tasks');
-      should('show subtle scrollbar styling matching theme');
-    });
-  });
   experience('Column Headers', 'AUTO-H2y5Ii8Wz').client(() => {
     specs(() => {
       should('display column title with clear typography');
@@ -146,6 +135,17 @@ narrative('App Structure', 'AUTO-A8u1Ee4Sz', () => {
       should('respect prefers-reduced-motion for animations');
       should('ensure color contrast meets WCAG AA standards');
       should('provide alt text for all decorative images and icons');
+    });
+  });
+  experience('Kanban Board Container', 'AUTO-K1x4Hh7Vz').client(() => {
+    specs(() => {
+      should('display three equal-width columns in desktop view');
+      should('apply consistent gap spacing between columns');
+      should('stack columns vertically on mobile devices');
+      should('support horizontal scrolling on smaller screens if needed');
+      should('maintain minimum column width for readability');
+      should('apply max-height with scroll for columns with many tasks');
+      should('show subtle scrollbar styling matching theme');
     });
   });
 });
