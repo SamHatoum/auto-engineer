@@ -1,6 +1,7 @@
 <%
 const target = slice?.server?.data?.[0]?.target;
 const projection = slice?.server?.data?.[0]?.origin;
+const isSingleton = projection?.singleton === true;
 const queryName = parsedRequest?.queryName ?? camelCase(sliceName);
 const viewType = target?.name ? pascalCase(target.name) : 'UnknownView';
 const projectionType = projection?.name ? pascalCase(projection.name) : 'UnknownProjection';
@@ -32,7 +33,7 @@ const hasArgs = parsedRequest?.args?.length > 0;
 %>
 import { Query, Resolver<% if (hasArgs) { %>, Arg<% } %>, Ctx, ObjectType, Field<% if (usesID) { %>, ID<% } %><% if (usesFloat) { %>, Float<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
 <% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
-<% } %>import { type GraphQLContext, ReadModel<% if (enumList.length > 0) { %>, <%= enumList.join(', ') %><% } %> } from '../../../shared';
+<% } %>import { type GraphQLContext<% if (!isSingleton) { %>, ReadModel<% } %><% if (enumList.length > 0) { %>, <%= enumList.join(', ') %><% } %> } from '../../../shared';
 
 <%
         for (const { typeName, tsType } of embeddedTypes) {
@@ -88,7 +89,7 @@ export class <%= viewType %> {
 
 @Resolver()
 export class <%= resolverClassName %> {
-<% if (projectionSingleton) { %>
+<% if (isSingleton) { %>
 @Query(() => <%= viewType %>)
 async <%= queryName %>(
 @Ctx() ctx: GraphQLContext<% if (parsedRequest?.args?.length) { %>,
@@ -99,19 +100,35 @@ async <%= queryName %>(
 %>    @Arg('<%= arg.name %>', () => <%= gqlType %>, { nullable: true }) <%= arg.name %>?: <%= tsType %><%= i < parsedRequest.args.length - 1 ? ',' : '' %>
 <%   } } %>
 ): Promise<<%= viewType %>> {
-const model = new ReadModel<<%= viewType %>>(ctx.database, '<%= projectionType %>');
+  const result = await ctx.database.collection<<%= viewType %>>('<%= projectionType %>').findOne();
 
-// ## IMPLEMENTATION INSTRUCTIONS ##
-// This is a SINGLETON projection - it returns a single aggregated object.
-// You can query the projection using the ReadModel API:
-// - model.getAll() — fetch all documents (returns array with single element for singletons)
-// - model.getById(id) — fetch the document by its fixed ID
-// - model.first() — fetch the first (and only) document
-//
-// For singleton projections, we return the first element since there's only one document.
+  if (!result) {
+    return {
+<% for (let i = 0; i < messageFields.length; i++) {
+    const field = messageFields[i];
+    const tsType = field.type ?? 'string';
+    const baseType = tsType.replace(/\s*\|\s*null/g, '').trim();
+    let defaultValue = '0';
 
-const results = await model.getAll();
-return results[0];
+    if (baseType === 'string' || baseType === 'ID') {
+      defaultValue = "''";
+    } else if (baseType === 'number') {
+      defaultValue = '0';
+    } else if (baseType === 'boolean') {
+      defaultValue = 'false';
+    } else if (baseType === 'Date') {
+      defaultValue = 'new Date()';
+    } else if (baseType.startsWith('Array<')) {
+      defaultValue = '[]';
+    } else if (baseType.includes('|') && (baseType.includes('"') || baseType.includes("'"))) {
+      const firstValue = baseType.match(/['"]([^'"]+)['"]/)?.[1] ?? '';
+      defaultValue = `'${firstValue}'`;
+    }
+%>      <%= field.name %>: <%= defaultValue %>,
+<% } %>    };
+  }
+
+  return result;
 }
 <% } else { %>
 @Query(() => [<%= viewType %>])

@@ -610,4 +610,83 @@ describe('query.resolver.ts.ejs', () => {
     expect(resolverFile?.contents).toContain('Float');
     expect(resolverFile?.contents).toContain("@Arg('minPrice', () => Float");
   });
+
+  it('should generate a singleton query resolver that returns a single object', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'todo-list-flow',
+          slices: [
+            {
+              type: 'query',
+              name: 'views-completion-summary',
+              request: `
+                query TodoListSummary {
+                  todoListSummary {
+                    totalTodos
+                    pendingCount
+                    inProgressCount
+                    completedCount
+                    completionPercentage
+                  }
+                }
+              `,
+              client: {
+                description: '',
+              },
+              server: {
+                description: '',
+                data: [
+                  {
+                    origin: {
+                      type: 'projection',
+                      name: 'TodoSummary',
+                      singleton: true,
+                    },
+                    target: {
+                      type: 'State',
+                      name: 'TodoListSummary',
+                    },
+                  },
+                ],
+                specs: { name: '', rules: [] },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'state',
+          name: 'TodoListSummary',
+          fields: [
+            { name: 'totalTodos', type: 'number', required: true },
+            { name: 'pendingCount', type: 'number', required: true },
+            { name: 'inProgressCount', type: 'number', required: true },
+            { name: 'completedCount', type: 'number', required: true },
+            { name: 'completionPercentage', type: 'number', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
+    const resolverFile = plans.find((p) => p.outputPath.endsWith('query.resolver.ts'));
+
+    // Should return single object, not array
+    expect(resolverFile?.contents).toContain('@Query(() => TodoListSummary)');
+    expect(resolverFile?.contents).not.toContain('@Query(() => [TodoListSummary])');
+
+    // Should use collection.findOne() pattern
+    expect(resolverFile?.contents).toContain("ctx.database.collection<TodoListSummary>('TodoSummary').findOne()");
+
+    expect(resolverFile?.contents).toContain('if (!result)');
+    expect(resolverFile?.contents).toContain('totalTodos: 0');
+    expect(resolverFile?.contents).toContain('pendingCount: 0');
+
+    // Should NOT import ReadModel (unused for singletons)
+    expect(resolverFile?.contents).toContain("import { type GraphQLContext } from '../../../shared'");
+    expect(resolverFile?.contents).not.toContain(', ReadModel');
+  });
 });
