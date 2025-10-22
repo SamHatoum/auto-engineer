@@ -11,6 +11,7 @@ build
 out
 *.tsbuildinfo
 .tmp
+*.timestamp-*.mjs
 
 # TypeScript compiled files in src directories (should never be there)
 **/src/**/*.js
