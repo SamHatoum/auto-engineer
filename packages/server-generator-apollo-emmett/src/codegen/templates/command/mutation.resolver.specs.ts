@@ -76,7 +76,7 @@ describe('mutation.resolver.ts.ejs', () => {
     const mutationFile = plans.find((p) => p.outputPath.endsWith('mutation.resolver.ts'));
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
-      "import { Mutation, Resolver, Arg, Ctx, Field, InputType, GraphQLISODateTime } from 'type-graphql';
+      "import { Mutation, Resolver, Arg, Ctx, Field, InputType, Float, GraphQLISODateTime } from 'type-graphql';
       import { GraphQLJSON } from 'graphql-type-json';
       import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
@@ -322,7 +322,7 @@ describe('mutation.resolver.ts.ejs', () => {
     );
 
     expect(mutationFile?.contents).toMatchInlineSnapshot(`
-"import { Mutation, Resolver, Arg, Ctx, Field, InputType } from 'type-graphql';
+"import { Mutation, Resolver, Arg, Ctx, Field, InputType, Float } from 'type-graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 import { type GraphQLContext, sendCommand, MutationResponse } from '../../../shared';
 
@@ -360,5 +360,69 @@ export class AddItemsToCartResolver {
 }
 "
 `);
+  });
+
+  it('should import Float when Float fields are used', async () => {
+    const spec: SpecsSchema = {
+      variant: 'specs',
+      narratives: [
+        {
+          name: 'product-flow',
+          slices: [
+            {
+              type: 'command',
+              name: 'update-product-price',
+              client: {
+                description: '',
+              },
+              server: {
+                description: '',
+                specs: {
+                  name: '',
+                  rules: [
+                    {
+                      description: 'update price',
+                      examples: [
+                        {
+                          description: 'happy path',
+                          when: {
+                            commandRef: 'UpdateProductPrice',
+                            exampleData: {
+                              productId: 'p-1',
+                              price: 99.99,
+                              discount: 10.5,
+                            },
+                          },
+                          then: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+      messages: [
+        {
+          type: 'command',
+          name: 'UpdateProductPrice',
+          fields: [
+            { name: 'productId', type: 'string', required: true },
+            { name: 'price', type: 'number', required: true },
+            { name: 'discount', type: 'number', required: true },
+          ],
+        },
+      ],
+    };
+
+    const plans = await generateScaffoldFilePlans(spec.narratives, spec.messages, undefined, 'src/domain/flows');
+    const mutationFile = plans.find((p) => p.outputPath.endsWith('mutation.resolver.ts'));
+
+    expect(mutationFile?.contents).toContain(
+      "import { Mutation, Resolver, Arg, Ctx, Field, InputType, Float } from 'type-graphql';",
+    );
+    expect(mutationFile?.contents).toContain('@Field(() => Float)');
   });
 });

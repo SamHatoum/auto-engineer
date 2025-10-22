@@ -1,12 +1,13 @@
 <%
 const cmd = commands[0];
-const usesDate = cmd.fields.some(f => fieldUsesDate(f.tsType));
-const usesJSON = cmd.fields.some(f => fieldUsesJSON(f.tsType));
+const usesDate = cmd.fields.some(f => fieldUsesDate(f.type ?? f.tsType));
+const usesJSON = cmd.fields.some(f => fieldUsesJSON(f.type ?? f.tsType));
+const usesFloat = cmd.fields.some(f => fieldUsesFloat(f.type ?? f.tsType));
 const enumList = collectEnumNames(cmd.fields);
 
 const embeddedInputs = [];
 for (const f of cmd.fields) {
-    const tsType = f.tsType ?? 'string';
+    const tsType = f.type ?? f.tsType ?? 'string';
     if (isInlineObjectArray(tsType) || isInlineObject(tsType)) {
         embeddedInputs.push({
             typeName: `${pascalCase(cmd.type)}${pascalCase(f.name)}Input`,
@@ -15,7 +16,7 @@ for (const f of cmd.fields) {
     }
 }
 %>
-import { Mutation, Resolver, Arg, Ctx, Field, InputType<% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
+import { Mutation, Resolver, Arg, Ctx, Field, InputType<% if (usesFloat) { %>, Float<% } %><% if (usesDate) { %>, GraphQLISODateTime<% } %> } from 'type-graphql';
 <% if (usesJSON) { %>import { GraphQLJSON } from 'graphql-type-json';
 <% } %>import { type GraphQLContext, sendCommand, MutationResponse<% if (enumList.length > 0) { %>, <%= enumList.join(', ') %><% } %> } from '../../../shared';
 
@@ -46,7 +47,7 @@ export class <%= typeName %> {
 @InputType()
 export class <%= pascalCase(cmd.type) %>Input {
 <% for (const field of cmd.fields) {
-    const tsType = field.tsType ?? 'string';
+    const tsType = field.type ?? field.tsType ?? 'string';
     const gqlType = graphqlType(tsType);
     const nestedName = `${pascalCase(cmd.type)}${pascalCase(field.name)}Input`;
 
