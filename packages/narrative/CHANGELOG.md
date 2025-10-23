@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.16
+
+### Patch Changes
+
+- version bump
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.16
+  - @auto-engineer/id@0.11.16
+  - @auto-engineer/message-bus@0.11.16
+
 ## 0.11.15
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @auto-engineer/design-system-importer
 
+## 0.11.16
+
+### Patch Changes
+
+- version bump
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.16
+
 ## 0.11.15
 
 ### Patch Changes

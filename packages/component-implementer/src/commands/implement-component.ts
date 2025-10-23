@@ -191,13 +191,13 @@ async function loadDependencySources(
   }
 
   for (const dep of primaryDeps) {
-    debugProcess(`[readComponentPropsInterface] Attempting to read props for ${dep.type}/${dep.name}`);
-    const depPropsInterface = await readComponentPropsInterface(projectDir, dep.type, dep.name, registry);
-    if (depPropsInterface != null) {
-      debugProcess(`[readComponentPropsInterface] Successfully read props for ${dep.type}/${dep.name}`);
-      dependencySources[`${dep.type}/${dep.name}`] = depPropsInterface;
+    debugProcess(`[loadDependencySources] Attempting to read dependency ${dep.type}/${dep.name}`);
+    const depContent = await readComponentFullImplementation(projectDir, dep.type, dep.name, registry);
+    if (depContent != null) {
+      debugProcess(`[loadDependencySources] Successfully read full implementation for ${dep.type}/${dep.name}`);
+      dependencySources[`${dep.type}/${dep.name}`] = depContent;
     } else {
-      debugProcess(`[readComponentPropsInterface] Failed to read props for ${dep.type}/${dep.name} (returned null)`);
+      debugProcess(`[loadDependencySources] Failed to read implementation for ${dep.type}/${dep.name} (returned null)`);
     }
   }
 
@@ -759,6 +759,37 @@ async function readComponentPropsInterface(
     return result;
   } catch (error) {
     debugProcess(`[readComponentPropsInterface] Error reading file: ${String(error)}`);
+    return null;
+  }
+}
+
+async function readComponentFullImplementation(
+  projectDir: string,
+  _type: string,
+  name: string,
+  registry: ComponentRegistry,
+): Promise<string | null> {
+  const entry = registry.get(name);
+  if (entry === undefined) {
+    debugProcess(`[readComponentFullImplementation] No registry entry found for ${name}`);
+    return null;
+  }
+
+  const file = path.join(projectDir, 'src', 'components', entry.type, `${entry.actualFilename}.tsx`);
+  debugProcess(`[readComponentFullImplementation] Reading file: ${file}`);
+  try {
+    const sourceCode = await fs.readFile(file, 'utf-8');
+    const sourceFile = ts.createSourceFile(`${name}.tsx`, sourceCode, ts.ScriptTarget.Latest, true);
+    const exportedComponents = extractExportedComponentNames(sourceFile);
+    const toImport = exportedComponents.length > 0 ? [...exportedComponents] : [name];
+    const importStatement = `import { ${toImport.join(', ')} } from '@/components/${entry.type}/${entry.actualFilename}';`;
+
+    const formattedOutput = `**Import**: \`${importStatement}\`\n\n**Implementation**:\n\`\`\`tsx\n${sourceCode}\n\`\`\``;
+
+    debugProcess(`[readComponentFullImplementation] Returning ${formattedOutput.length} chars for ${name}`);
+    return formattedOutput;
+  } catch (error) {
+    debugProcess(`[readComponentFullImplementation] Error reading file: ${String(error)}`);
     return null;
   }
 }
