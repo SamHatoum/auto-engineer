@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AIProvider } from './constants';
-import { getAvailableProviders, getDefaultModel, getDefaultAIProvider } from './index';
+import { AIProvider } from './core/types';
+import { getAvailableProviders, getDefaultModel, getDefaultAIProvider, resetGlobalContext } from './index';
 
 // Mock the config module
-vi.mock('./config', () => ({
+vi.mock('./node/config', () => ({
   configureAIProvider: vi.fn(),
 }));
 
 // Mock the custom provider
-vi.mock('./providers/custom', () => ({
+vi.mock('./core/providers/custom', () => ({
   createCustomProvider: vi.fn(() => ({
     languageModel: vi.fn(),
   })),
@@ -21,15 +21,17 @@ describe('Index Integration with Custom Providers', () => {
     vi.resetModules();
     process.env = { ...originalEnv };
     vi.clearAllMocks();
+    resetGlobalContext();
   });
 
   afterEach(() => {
     process.env = originalEnv;
+    resetGlobalContext();
   });
 
   describe('getAvailableProviders', () => {
     it('should include custom provider when configured', async () => {
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         custom: {
           name: 'litellm',
@@ -47,7 +49,7 @@ describe('Index Integration with Custom Providers', () => {
     });
 
     it('should not include custom provider when not configured', async () => {
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         anthropic: { apiKey: 'sk-anthropic' },
       });
@@ -59,7 +61,7 @@ describe('Index Integration with Custom Providers', () => {
     });
 
     it('should handle multiple providers including custom', async () => {
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         openai: { apiKey: 'sk-openai' },
         anthropic: { apiKey: 'sk-anthropic' },
@@ -86,7 +88,7 @@ describe('Index Integration with Custom Providers', () => {
 
   describe('getDefaultModel', () => {
     it('should return custom provider default model when provider is Custom', async () => {
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         custom: {
           name: 'litellm',
@@ -101,7 +103,7 @@ describe('Index Integration with Custom Providers', () => {
     });
 
     it('should throw error when custom provider not configured but requested', async () => {
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         anthropic: { apiKey: 'sk-anthropic' },
       });
@@ -112,7 +114,7 @@ describe('Index Integration with Custom Providers', () => {
     it('should use environment variable DEFAULT_AI_MODEL for custom provider', async () => {
       process.env.DEFAULT_AI_MODEL = 'env-override-model';
 
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         custom: {
           name: 'custom',
@@ -129,9 +131,10 @@ describe('Index Integration with Custom Providers', () => {
     it('should handle different custom provider models', async () => {
       const testCases = ['gpt-4o', 'claude-3-opus', 'llama3.1:70b', 'mistral-large', 'gemini-1.5-pro'];
 
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
 
       testCases.forEach((testModel) => {
+        resetGlobalContext();
         vi.mocked(configureAIProvider).mockReturnValue({
           custom: {
             name: 'test',
@@ -151,7 +154,7 @@ describe('Index Integration with Custom Providers', () => {
     it('should use custom provider as fallback when available', async () => {
       process.env.DEFAULT_AI_PROVIDER = 'nonexistent';
 
-      const { configureAIProvider } = await import('./config');
+      const { configureAIProvider } = await import('./node/config');
       vi.mocked(configureAIProvider).mockReturnValue({
         custom: {
           name: 'custom',
@@ -183,6 +186,7 @@ describe('Index Integration with Custom Providers', () => {
       ];
 
       testCases.forEach(({ env, expected }) => {
+        resetGlobalContext();
         process.env.DEFAULT_AI_PROVIDER = env;
         const provider = getDefaultAIProvider();
         expect(provider).toBe(expected);

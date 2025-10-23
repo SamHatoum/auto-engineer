@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { getAvailableProviders, getDefaultAIProvider, getDefaultModel } from './index';
-import { DEFAULT_MODELS, AIProvider } from './constants';
-import type { AIConfig } from './config';
+import { getAvailableProviders, getDefaultAIProvider, getDefaultModel, resetGlobalContext } from './index';
+import { DEFAULT_MODELS } from './core/constants';
+import { AIProvider } from './core/types';
+import type { AIConfig } from './core/types';
 
 // Mock the config module
-vi.mock('./config', () => ({
+vi.mock('./node/config', () => ({
   configureAIProvider: vi.fn(
     () =>
       ({
@@ -22,6 +23,7 @@ describe('Provider Selection Logic', () => {
 
     beforeEach(() => {
       originalProvider = process.env.DEFAULT_AI_PROVIDER;
+      resetGlobalContext();
     });
 
     afterEach(() => {
@@ -30,6 +32,7 @@ describe('Provider Selection Logic', () => {
       } else {
         delete process.env.DEFAULT_AI_PROVIDER;
       }
+      resetGlobalContext();
     });
 
     it('should respect DEFAULT_AI_PROVIDER environment variable when set to anthropic', () => {

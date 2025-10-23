@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import createDebug from 'debug';
-import { CustomProviderConfig } from './constants';
+import { CustomProviderConfig, AIConfig } from '../core/types';
 
 const debug = createDebug('auto:ai-gateway:config');
 const debugEnv = createDebug('auto:ai-gateway:config:env');
@@ -10,25 +10,9 @@ const debugEnv = createDebug('auto:ai-gateway:config:env');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const envPath = resolve(__dirname, '../../../.env');
+const envPath = resolve(__dirname, '../../../../.env');
 debug('Loading environment from: %s', envPath);
 dotenv.config({ path: envPath });
-
-export interface AIConfig {
-  openai?: {
-    apiKey: string;
-  };
-  anthropic?: {
-    apiKey: string;
-  };
-  google?: {
-    apiKey: string;
-  };
-  xai?: {
-    apiKey: string;
-  };
-  custom?: CustomProviderConfig;
-}
 
 function logProviderConfig(providerName: string, apiKey: string | undefined): void {
   if (apiKey !== undefined) {
@@ -63,7 +47,6 @@ function buildCustomProviderConfig(): CustomProviderConfig | undefined {
   return undefined;
 }
 
-// Helper to build provider config
 function buildProviderConfig(): AIConfig {
   return {
     openai: process.env.OPENAI_API_KEY != null ? { apiKey: process.env.OPENAI_API_KEY } : undefined,
@@ -79,14 +62,12 @@ export function configureAIProvider(): AIConfig {
 
   const config = buildProviderConfig();
 
-  // Log which providers are configured (without exposing keys)
   debugEnv('OpenAI configured: %s', config.openai != null);
   debugEnv('Anthropic configured: %s', config.anthropic != null);
   debugEnv('Google configured: %s', config.google != null);
   debugEnv('XAI configured: %s', config.xai != null);
   debugEnv('Custom configured: %s', config.custom != null);
 
-  // Log provider configurations
   logProviderConfig('OpenAI', config.openai?.apiKey);
   logProviderConfig('Anthropic', config.anthropic?.apiKey);
   logProviderConfig('Google', config.google?.apiKey);

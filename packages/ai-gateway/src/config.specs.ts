@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { configureAIProvider } from './config';
+import { configureAIProvider } from './node';
 
 // Mock environment variables
 const originalEnv = process.env;
@@ -7,7 +7,6 @@ const originalEnv = process.env;
 describe('AI Configuration with Custom Providers', () => {
   beforeEach(() => {
     vi.resetModules();
-    // Clear all AI-related environment variables for clean test state
     process.env = {};
   });
 
