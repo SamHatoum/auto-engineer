@@ -1,18 +1,22 @@
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { resolve } from 'path';
 import createDebug from 'debug';
 import { CustomProviderConfig, AIConfig } from '../core/types';
 
 const debug = createDebug('auto:ai-gateway:config');
 const debugEnv = createDebug('auto:ai-gateway:config:env');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+let envLoaded = false;
 
-const envPath = resolve(__dirname, '../../../../.env');
-debug('Loading environment from: %s', envPath);
-dotenv.config({ path: envPath });
+function loadEnvironment(): void {
+  if (envLoaded) {
+    return;
+  }
+  const envPath = resolve(process.cwd(), '.env');
+  debug('Loading environment from: %s', envPath);
+  dotenv.config({ path: envPath });
+  envLoaded = true;
+}
 
 function logProviderConfig(providerName: string, apiKey: string | undefined): void {
   if (apiKey !== undefined) {
@@ -58,6 +62,7 @@ function buildProviderConfig(): AIConfig {
 }
 
 export function configureAIProvider(): AIConfig {
+  loadEnvironment();
   debugEnv('Checking environment variables for AI providers');
 
   const config = buildProviderConfig();
