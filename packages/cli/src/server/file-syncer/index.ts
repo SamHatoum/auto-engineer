@@ -8,6 +8,8 @@ import { loadAutoConfig } from '../config-loader';
 import { md5, readBase64, statSize } from './utils/hash';
 import { toWirePath, fromWirePath, rebuildWirePathCache } from './utils/path';
 import type { WireChange, WireInitial } from './types/wire';
+import { createJWE } from './crypto/jwe-encryptor';
+import { getActiveProvider, getProviderEnvHash } from './crypto/provider-resolver';
 
 const debug = createDebug('auto:cli:file-syncer');
 
@@ -27,6 +29,7 @@ export class FileSyncer {
   private pendingInitialFiles: Promise<WireInitial> | null = null;
   private autoConfigHash: string | null = null;
   private autoConfigContent: unknown = null;
+  private providerEnvHash: string | null = null;
 
   constructor(io: SocketIOServer, watchDir = '.', _extensions?: string[]) {
     this.io = io;
@@ -37,9 +40,35 @@ export class FileSyncer {
   }
 
   start(): void {
-    const serializeConfig = (cfg: unknown) =>
-      JSON.stringify(
-        cfg,
+    const serializeConfig = async (cfg: unknown, fileId: string): Promise<string> => {
+      let configWithCreds: unknown = cfg;
+
+      try {
+        const active = getActiveProvider();
+        if (active !== null) {
+          const jwe = await createJWE({
+            provider: active.provider,
+            apiKey: active.apiKey,
+            model: active.model,
+            custom: active.provider === 'custom' ? active.custom : undefined,
+            roomId: fileId,
+          });
+          if (typeof cfg === 'object' && cfg !== null) {
+            configWithCreds = {
+              ...cfg,
+              token: jwe,
+            };
+          }
+          debug('Added token to config for provider: %s', active.provider);
+        } else {
+          debug('No active provider found, skipping credential encryption');
+        }
+      } catch (error) {
+        debug('Failed to encrypt credentials, continuing without: %O', error);
+      }
+
+      return JSON.stringify(
+        configWithCreds,
         (key: string, value: unknown) => {
           if (typeof value === 'function') {
             const funcName = (value as { name?: string }).name;
@@ -49,6 +78,7 @@ export class FileSyncer {
         },
         2,
       );
+    };
 
     const getVirtualConfigWirePath = () => {
       const virtualPath = path.join(this.watchDir, 'auto.config.json');
@@ -92,7 +122,9 @@ export class FileSyncer {
         files.push({ path: wire, content });
       }
       if (this.autoConfigContent !== null) {
-        const virtualContent = Buffer.from(serializeConfig(this.autoConfigContent), 'utf8').toString('base64');
+        const configWithFileId = this.autoConfigContent as { fileId: string };
+        const serializedConfig = await serializeConfig(this.autoConfigContent, configWithFileId.fileId);
+        const virtualContent = Buffer.from(serializedConfig, 'utf8').toString('base64');
         files.push({ path: getVirtualConfigWirePath(), content: virtualContent });
         debug('Added virtual auto.config.json to initial sync');
       }
@@ -190,27 +222,41 @@ export class FileSyncer {
         if (autoConfigPath === null) {
           if (this.autoConfigContent !== null) {
             debug('Auto config removed, emitting delete');
-            // Create the virtual auto.config.json path relative to watchDir like regular files
             const virtualPath = path.join(this.watchDir, 'auto.config.json');
             const virtualWirePath = toWirePath(virtualPath, this.projectRoot);
             this.io.emit('file-change', { event: 'delete', path: virtualWirePath });
             this.autoConfigContent = null;
             this.autoConfigHash = null;
+            this.providerEnvHash = null;
           }
           return;
         }
 
         const currentHash = await md5(this.vfs, autoConfigPath);
-        if (currentHash === null || currentHash === this.autoConfigHash) {
+        const currentProviderEnvHash = getProviderEnvHash();
+        const configChanged = currentHash !== null && currentHash !== this.autoConfigHash;
+        const envChanged = currentProviderEnvHash !== this.providerEnvHash;
+
+        if (!configChanged && !envChanged) {
           return;
         }
 
-        debug('Auto config changed, executing and syncing');
+        if (configChanged) {
+          debug('Auto config changed, executing and syncing');
+        }
+        if (envChanged) {
+          debug('Provider environment changed, regenerating token');
+        }
+
         const config = await loadAutoConfig(autoConfigPath);
-        const wasPresent = this.autoConfigContent !== null; // <-- capture before overwriting
+        const wasPresent = this.autoConfigContent !== null;
         this.autoConfigContent = config;
         this.autoConfigHash = currentHash;
-        const virtualContent = Buffer.from(serializeConfig(config), 'utf8').toString('base64');
+        this.providerEnvHash = currentProviderEnvHash;
+
+        const configWithFileId = config as { fileId: string };
+        const serializedConfig = await serializeConfig(config, configWithFileId.fileId);
+        const virtualContent = Buffer.from(serializedConfig, 'utf8').toString('base64');
         const virtualWirePath = getVirtualConfigWirePath();
         const eventType: WireChange['event'] = wasPresent ? 'change' : 'add';
         this.io.emit('file-change', {

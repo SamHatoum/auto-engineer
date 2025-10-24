@@ -14,6 +14,7 @@ export interface AutoConfig extends ConfigDefinition {
     dir?: string;
     extensions?: string[];
   };
+  token?: string;
 }
 
 let configLoading = false;
@@ -56,81 +57,85 @@ export async function loadAutoConfig(configPath: string): Promise<AutoConfig> {
   }
 }
 
-/**
- * Load message bus configuration and register handlers
- */
-// eslint-disable-next-line complexity
+async function loadAndRegisterPlugins(configPath: string, config: AutoConfig, server: MessageBusServer): Promise<void> {
+  if (config.plugins === undefined || config.plugins.length === 0) {
+    return;
+  }
+
+  try {
+    debug('Loading plugins for metadata:', config.plugins);
+    const { PluginLoader } = await import('../plugin-loader');
+    const pluginLoader = new PluginLoader();
+    await pluginLoader.loadPlugins(configPath);
+
+    const unifiedHandlers = pluginLoader.getUnifiedHandlers();
+    const commandHandlers = Array.from(unifiedHandlers.values());
+
+    if (commandHandlers.length > 0) {
+      debug('Registering %d unified command handlers from plugins', commandHandlers.length);
+      server.registerCommandHandlers(commandHandlers);
+    }
+
+    debug('Loaded %d unified handlers from plugins', unifiedHandlers.size);
+  } catch (error) {
+    debug('Failed to load plugin metadata:', error);
+  }
+}
+
+function registerDslRegistration(
+  registration: ReturnType<typeof getRegistrations>[number],
+  server: MessageBusServer,
+): void {
+  if (registration.type === 'on') {
+    debug('Registering event handler:', registration.eventType);
+    server.registerEventHandler(registration);
+  } else if (registration.type === 'fold') {
+    debug('Registering fold:', registration.eventType);
+    server.registerFold(registration);
+  } else if (registration.type === 'on-settled') {
+    debug('Registering settled handler:', registration.commandTypes);
+    server.registerSettledHandler(registration);
+  }
+}
+
+function executePipelineAndRegister(config: AutoConfig, server: MessageBusServer): void {
+  if (config.pipeline === undefined || typeof config.pipeline !== 'function') {
+    return;
+  }
+
+  debug('Executing pipeline function to collect DSL registrations');
+
+  getRegistrations();
+  getPendingDispatches();
+
+  config.pipeline();
+
+  const registrations = getRegistrations();
+  debug('Collected %d registrations from pipeline', registrations.length);
+
+  server.setDslRegistrations(registrations);
+
+  for (const registration of registrations) {
+    registerDslRegistration(registration, server);
+  }
+
+  const dispatches = getPendingDispatches();
+  if (dispatches.length > 0) {
+    debug('Warning: Found pending dispatches at config time:', dispatches.length);
+  }
+}
+
 export async function loadMessageBusConfig(configPath: string, server: MessageBusServer): Promise<void> {
-  // Clear any previous registrations
   getRegistrations();
   getPendingDispatches();
 
   const config = await loadAutoConfig(configPath);
 
-  // Load plugins if configured to get command metadata
-  if (config.plugins !== undefined && config.plugins.length > 0) {
-    try {
-      debug('Loading plugins for metadata:', config.plugins);
-      const { PluginLoader } = await import('../plugin-loader');
-      const pluginLoader = new PluginLoader();
-      await pluginLoader.loadPlugins(configPath);
-
-      // Register unified command handlers from plugin loader
-      const unifiedHandlers = pluginLoader.getUnifiedHandlers();
-      const commandHandlers = Array.from(unifiedHandlers.values());
-
-      if (commandHandlers.length > 0) {
-        debug('Registering %d unified command handlers from plugins', commandHandlers.length);
-        server.registerCommandHandlers(commandHandlers);
-      }
-
-      debug('Loaded %d unified handlers from plugins', unifiedHandlers.size);
-    } catch (error) {
-      debug('Failed to load plugin metadata:', error);
-    }
-  }
-
-  // Execute pipeline function if present to collect DSL registrations
-  if (config.pipeline && typeof config.pipeline === 'function') {
-    debug('Executing pipeline function to collect DSL registrations');
-
-    // Clear any previous registrations
-    getRegistrations();
-    getPendingDispatches();
-
-    // Execute the pipeline function
-    config.pipeline();
-
-    // Get and process registrations collected during pipeline execution
-    const registrations = getRegistrations();
-    debug('Collected %d registrations from pipeline', registrations.length);
-
-    // Store registrations in server for pipeline graph generation
-    server.setDslRegistrations(registrations);
-
-    for (const registration of registrations) {
-      if (registration.type === 'on') {
-        debug('Registering event handler:', registration.eventType);
-        server.registerEventHandler(registration);
-      } else if (registration.type === 'fold') {
-        debug('Registering fold:', registration.eventType);
-        server.registerFold(registration);
-      } else if (registration.type === 'on-settled') {
-        debug('Registering settled handler:', registration.commandTypes);
-        server.registerSettledHandler(registration);
-      }
-    }
-
-    // Process any pending dispatches (shouldn't be any at config time)
-    const dispatches = getPendingDispatches();
-    if (dispatches.length > 0) {
-      debug('Warning: Found pending dispatches at config time:', dispatches.length);
-    }
-  }
+  await loadAndRegisterPlugins(configPath, config, server);
+  executePipelineAndRegister(config, server);
 
   debug('Message bus configuration loaded and registered');
 
-  // Set up HTTP routes now that DSL registrations are available
   server.setupRoutes();
   debug('HTTP routes configured with DSL registrations');
 }
