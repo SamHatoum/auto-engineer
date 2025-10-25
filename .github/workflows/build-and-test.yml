@@ -4,8 +4,15 @@ on:
   pull_request:
   push:
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     # To use Turborepo Remote Caching, set the following environment variables for the job.
     env:
@@ -43,5 +50,129 @@ jobs:
             echo "pnpm install failed (attempt $i), backing off..."
             sleep $((i*30))
           done
+
+      - name: Build all workspaces
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: pnpm build
+
+      - name: Find Slack User ID
+        if: failure()
+        id: find-slack-user-build
+        continue-on-error: true
+        run: |
+          # Look up Slack user from mapping file
+          GITHUB_USER="${{ github.actor }}"
+          SLACK_USER_ID=$(jq -r --arg user "$GITHUB_USER" '.[$user] // empty' .github/slack-user-mapping.json)
+
+          if [ -n "$SLACK_USER_ID" ] && [ "$SLACK_USER_ID" != "null" ]; then
+            echo "Found Slack user mapping: $SLACK_USER_ID"
+            echo "user_id=$SLACK_USER_ID" >> $GITHUB_OUTPUT
+            echo "mention=<@$SLACK_USER_ID>" >> $GITHUB_OUTPUT
+          else
+            echo "No Slack mapping found for $GITHUB_USER, using GitHub username"
+            echo "mention=*$GITHUB_USER*" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify on build failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          payload: |
+            {
+              "text": "🚨 Build failed for ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚨 *Build Failed*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Triggered by:* ${{ steps.find-slack-user-build.outputs.mention }}\n*Commit:* ${{ github.event.head_commit.message }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Run>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      NEXT_PUBLIC_V0_URL: https://v0.dev
+      NEXT_PUBLIC_APP_URL: http://localhost:4000
+      NPM_CONFIG_FETCH_RETRIES: '5'
+      NPM_CONFIG_FETCH_RETRY_MINTIMEOUT: '30000'
+      NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT: '120000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@auto-engineer'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Pre-fetch deps
+        run: pnpm fetch --network-concurrency=8
+
+      - name: Install dependencies
+        run: |
+          set -e
+          for i in 1 2 3; do
+            pnpm install --network-concurrency=8 --reporter=append && break
+            echo "pnpm install failed (attempt $i), backing off..."
+            sleep $((i*30))
+          done
+
       - name: Lint, format, test
         run: pnpm check
+
+      - name: Test notification
+        run: exit 1
+
+      - name: Find Slack User ID
+        if: failure()
+        id: find-slack-user-test
+        continue-on-error: true
+        run: |
+          # Look up Slack user from mapping file
+          GITHUB_USER="${{ github.actor }}"
+          SLACK_USER_ID=$(jq -r --arg user "$GITHUB_USER" '.[$user] // empty' .github/slack-user-mapping.json)
+
+          if [ -n "$SLACK_USER_ID" ] && [ "$SLACK_USER_ID" != "null" ]; then
+            echo "Found Slack user mapping: $SLACK_USER_ID"
+            echo "user_id=$SLACK_USER_ID" >> $GITHUB_OUTPUT
+            echo "mention=<@$SLACK_USER_ID>" >> $GITHUB_OUTPUT
+          else
+            echo "No Slack mapping found for $GITHUB_USER, using GitHub username"
+            echo "mention=*$GITHUB_USER*" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify on test failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          payload: |
+            {
+              "text": "🚨 Tests failed for ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚨 *Tests Failed*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Triggered by:* ${{ steps.find-slack-user-test.outputs.mention }}\n*Commit:* ${{ github.event.head_commit.message }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Run>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
