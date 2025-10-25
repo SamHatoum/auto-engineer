@@ -44,14 +44,14 @@ export function createMessageBus() {
   }
 
   async function sendCommand<TCommand extends Command>(command: TCommand): Promise<void> {
-    await logCommand(command);
+    logCommand(command);
 
     const commandHandler = findCommandHandler(command.type);
 
     await executeCommandHandler(commandHandler, command);
   }
 
-  async function logCommand<TCommand extends Command>(command: TCommand): Promise<void> {
+  function logCommand<TCommand extends Command>(command: TCommand): void {
     debugCommand('Sending command: %s', command.type);
     debugCommand('  Request ID: %s', command.requestId ?? 'none');
     debugCommand('  Correlation ID: %s', command.correlationId ?? 'none');
