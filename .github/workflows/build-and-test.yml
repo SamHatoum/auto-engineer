@@ -135,9 +135,6 @@ jobs:
       - name: Lint, format, test
         run: pnpm check
 
-      - name: Test notification
-        run: exit 1
-
       - name: Find Slack User ID
         if: failure()
         id: find-slack-user-test
