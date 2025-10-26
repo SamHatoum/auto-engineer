@@ -119,6 +119,8 @@ jobs:
     needs: [build-and-test, test]
     if: success()
     steps:
+      - uses: actions/checkout@v4
+
       - name: Send success notification
         uses: ./.github/actions/slack-notification
         with:
