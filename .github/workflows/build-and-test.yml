@@ -56,12 +56,12 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: pnpm build
 
-      - name: Send build notification
-        if: always()
+      - name: Send build failure notification
+        if: failure()
         uses: ./.github/actions/slack-notification
         with:
           job-name: 'Build'
-          job-status: ${{ job.status }}
+          job-status: 'failure'
           slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
 
@@ -105,11 +105,24 @@ jobs:
       - name: Lint, format, test
         run: pnpm check
 
-      - name: Send test notification
-        if: always()
+      - name: Send test failure notification
+        if: failure()
         uses: ./.github/actions/slack-notification
         with:
           job-name: 'Tests'
-          job-status: ${{ job.status }}
+          job-status: 'failure'
+          slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, test]
+    if: success()
+    steps:
+      - name: Send success notification
+        uses: ./.github/actions/slack-notification
+        with:
+          job-name: 'Build & Test'
+          job-status: 'success'
           slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
