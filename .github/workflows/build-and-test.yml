@@ -12,7 +12,7 @@ env:
   CI: true
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     # To use Turborepo Remote Caching, set the following environment variables for the job.
     env:
