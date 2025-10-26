@@ -1,0 +1,83 @@
+name: 'Slack Notification'
+description: 'Send Slack notifications for job success or failure'
+inputs:
+  job-name:
+    description: 'Name of the job (e.g., Build, Tests, Deploy)'
+    required: true
+  job-status:
+    description: 'Status of the job (success or failure)'
+    required: true
+  slack-channel-id:
+    description: 'Slack channel ID'
+    required: true
+  slack-bot-token:
+    description: 'Slack bot token'
+    required: true
+  slack-user-mapping-file:
+    description: 'Path to Slack user mapping file'
+    required: false
+    default: '.github/slack-user-mapping.json'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Find Slack User ID
+      if: inputs.job-status == 'failure'
+      id: find-slack-user
+      continue-on-error: true
+      shell: bash
+      run: |
+        # Look up Slack user from mapping file
+        GITHUB_USER="${{ github.actor }}"
+        SLACK_USER_ID=$(jq -r --arg user "$GITHUB_USER" '.[$user] // empty' ${{ inputs.slack-user-mapping-file }})
+
+        if [ -n "$SLACK_USER_ID" ] && [ "$SLACK_USER_ID" != "null" ]; then
+          echo "Found Slack user mapping: $SLACK_USER_ID"
+          echo "user_id=$SLACK_USER_ID" >> $GITHUB_OUTPUT
+          echo "mention=<@$SLACK_USER_ID>" >> $GITHUB_OUTPUT
+        else
+          echo "No Slack mapping found for $GITHUB_USER, using GitHub username"
+          echo "mention=*$GITHUB_USER*" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Notify on failure
+      if: inputs.job-status == 'failure'
+      uses: slackapi/slack-github-action@v1.26.0
+      with:
+        channel-id: ${{ inputs.slack-channel-id }}
+        payload: |
+          {
+            "text": "🚨 ${{ inputs.job-name }} failed for ${{ github.repository }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "🚨 *${{ inputs.job-name }} Failed*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Triggered by:* ${{ steps.find-slack-user.outputs.mention }}\n*Commit:* ${{ github.event.head_commit.message }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Run>"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+
+    - name: Notify on success
+      if: inputs.job-status == 'success'
+      uses: slackapi/slack-github-action@v1.26.0
+      with:
+        channel-id: ${{ inputs.slack-channel-id }}
+        payload: |
+          {
+            "text": "✅ ${{ inputs.job-name }} succeeded for ${{ github.repository }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "✅ *${{ inputs.job-name }} Succeeded*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Triggered by:* *${{ github.actor }}*\n*Commit:* ${{ github.event.head_commit.message }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}

@@ -56,44 +56,14 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: pnpm build
 
-      - name: Find Slack User ID
-        if: failure()
-        id: find-slack-user-build
-        continue-on-error: true
-        run: |
-          # Look up Slack user from mapping file
-          GITHUB_USER="${{ github.actor }}"
-          SLACK_USER_ID=$(jq -r --arg user "$GITHUB_USER" '.[$user] // empty' .github/slack-user-mapping.json)
-
-          if [ -n "$SLACK_USER_ID" ] && [ "$SLACK_USER_ID" != "null" ]; then
-            echo "Found Slack user mapping: $SLACK_USER_ID"
-            echo "user_id=$SLACK_USER_ID" >> $GITHUB_OUTPUT
-            echo "mention=<@$SLACK_USER_ID>" >> $GITHUB_OUTPUT
-          else
-            echo "No Slack mapping found for $GITHUB_USER, using GitHub username"
-            echo "mention=*$GITHUB_USER*" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Notify on build failure
-        if: failure()
-        uses: slackapi/slack-github-action@v1.26.0
+      - name: Send build notification
+        if: always()
+        uses: ./.github/actions/slack-notification
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          payload: |
-            {
-              "text": "🚨 Build failed for ${{ github.repository }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "🚨 *Build Failed*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Triggered by:* ${{ steps.find-slack-user-build.outputs.mention }}\n*Commit:* ${{ github.event.head_commit.message }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Run>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          job-name: 'Build'
+          job-status: ${{ job.status }}
+          slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
 
   test:
     runs-on: ubuntu-latest
@@ -135,41 +105,11 @@ jobs:
       - name: Lint, format, test
         run: pnpm check
 
-      - name: Find Slack User ID
-        if: failure()
-        id: find-slack-user-test
-        continue-on-error: true
-        run: |
-          # Look up Slack user from mapping file
-          GITHUB_USER="${{ github.actor }}"
-          SLACK_USER_ID=$(jq -r --arg user "$GITHUB_USER" '.[$user] // empty' .github/slack-user-mapping.json)
-
-          if [ -n "$SLACK_USER_ID" ] && [ "$SLACK_USER_ID" != "null" ]; then
-            echo "Found Slack user mapping: $SLACK_USER_ID"
-            echo "user_id=$SLACK_USER_ID" >> $GITHUB_OUTPUT
-            echo "mention=<@$SLACK_USER_ID>" >> $GITHUB_OUTPUT
-          else
-            echo "No Slack mapping found for $GITHUB_USER, using GitHub username"
-            echo "mention=*$GITHUB_USER*" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Notify on test failure
-        if: failure()
-        uses: slackapi/slack-github-action@v1.26.0
+      - name: Send test notification
+        if: always()
+        uses: ./.github/actions/slack-notification
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          payload: |
-            {
-              "text": "🚨 Tests failed for ${{ github.repository }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "🚨 *Tests Failed*\n*Repository:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`\n*Triggered by:* ${{ steps.find-slack-user-test.outputs.mention }}\n*Commit:* ${{ github.event.head_commit.message }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Run>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          job-name: 'Tests'
+          job-status: ${{ job.status }}
+          slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
