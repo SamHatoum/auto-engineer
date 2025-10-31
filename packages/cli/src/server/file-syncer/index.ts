@@ -2,7 +2,7 @@ import chokidar from 'chokidar';
 import path from 'path';
 import type { Server as SocketIOServer } from 'socket.io';
 import createDebug from 'debug';
-import { NodeFileStore } from '@auto-engineer/file-store';
+import { NodeFileStore } from '@auto-engineer/file-store/node';
 import { resolveSyncFileSet } from './sync/resolveSyncFileSet';
 import { loadAutoConfig } from '../config-loader';
 import { md5, readBase64, statSize } from './utils/hash';

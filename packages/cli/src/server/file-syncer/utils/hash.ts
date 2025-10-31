@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { NodeFileStore } from '@auto-engineer/file-store';
+import { NodeFileStore } from '@auto-engineer/file-store/node';
 
 export async function readBase64(vfs: NodeFileStore, abs: string): Promise<string | null> {
   const buf = await vfs.read(abs);

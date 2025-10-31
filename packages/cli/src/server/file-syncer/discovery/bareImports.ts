@@ -1,4 +1,4 @@
-import { NodeFileStore } from '@auto-engineer/file-store';
+import { NodeFileStore } from '@auto-engineer/file-store/node';
 
 const BARE_IMPORT_RE =
   /\bfrom\s+['"]([^'"]+)['"]|require\(\s*['"]([^'"]+)['"]\s*\)|\bimport\(\s*['"]([^'"]+)['"]\s*\)/g;

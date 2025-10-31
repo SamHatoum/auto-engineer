@@ -1,6 +1,6 @@
 import createDebug from 'debug';
 import { getFs } from './filestore.node';
-import { IExtendedFileStore, NodeFileStore } from '@auto-engineer/file-store';
+import { IExtendedFileStore, NodeFileStore } from '@auto-engineer/file-store/node';
 
 const debug = createDebug('auto:narrative:export-schema-helper');
 if ('color' in debug && typeof debug === 'object') {

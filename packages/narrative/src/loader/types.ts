@@ -1,4 +1,4 @@
-import type { IFileStore } from '@auto-engineer/file-store';
+import type { IFileStore } from '@auto-engineer/file-store/node';
 
 export type Resolved =
   | { kind: 'vfs'; path: string }

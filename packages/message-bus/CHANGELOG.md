@@ -1,5 +1,7 @@
 # @auto-engineer/message-bus
 
+## 0.11.17
+
 ## 0.11.16
 
 ### Patch Changes

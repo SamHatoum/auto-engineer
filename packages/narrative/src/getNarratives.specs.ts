@@ -3,7 +3,7 @@ import { modelSchema } from './schema';
 import { DataSource, Example, Narrative, Model, modelToNarrative, QuerySlice } from './index';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import { InMemoryFileStore, NodeFileStore } from '@auto-engineer/file-store';
+import { InMemoryFileStore, NodeFileStore } from '@auto-engineer/file-store/node';
 import { getNarratives } from './getNarratives';
 
 const __filename = fileURLToPath(import.meta.url);

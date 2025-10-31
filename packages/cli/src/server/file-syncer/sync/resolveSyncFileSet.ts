@@ -1,4 +1,4 @@
-import { NodeFileStore } from '@auto-engineer/file-store';
+import { NodeFileStore } from '@auto-engineer/file-store/node';
 import { collectBareImportsFromFiles } from '../discovery/bareImports';
 import { nmRootsForBases, probeEntryDtsForPackagesFromRoots } from '../discovery/dts';
 import { dirOf, logArray, pkgNameFromPath, scorePathForDedupe, uniq } from '../utils/path';

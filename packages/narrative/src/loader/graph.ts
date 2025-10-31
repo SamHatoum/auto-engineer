@@ -1,6 +1,6 @@
 import createDebug from 'debug';
 import type { Graph } from './types';
-import type { IFileStore } from '@auto-engineer/file-store';
+import type { IFileStore } from '@auto-engineer/file-store/node';
 import {
   parseImports,
   parseTypeDefinitions,

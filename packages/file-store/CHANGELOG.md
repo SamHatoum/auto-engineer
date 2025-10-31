@@ -1,5 +1,11 @@
 # @auto-engineer/file-store
 
+## 0.11.17
+
+### Patch Changes
+
+- Separate node functionality from platform agnostic functionality
+
 ## 0.11.16
 
 ### Patch Changes

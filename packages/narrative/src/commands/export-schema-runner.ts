@@ -3,7 +3,7 @@
 import { resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 import createDebug from 'debug';
-import { NodeFileStore } from '@auto-engineer/file-store';
+import { NodeFileStore } from '@auto-engineer/file-store/node';
 
 const debug = createDebug('auto:narrative:export-schema-runner');
 if ('color' in debug && typeof debug === 'object') {

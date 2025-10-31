@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { getNarratives, clearGetNarrativesCache } from './getNarratives';
-import { InMemoryFileStore, type IFileStore } from '@auto-engineer/file-store';
+import { InMemoryFileStore, type IFileStore } from '@auto-engineer/file-store/node';
 import * as flowApi from './narrative';
 import * as fluent from './fluent-builder';
 import * as dataBuilders from './data-narrative-builders';
