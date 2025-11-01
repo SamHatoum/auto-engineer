@@ -2,7 +2,7 @@ import createDebug from 'debug';
 import { registry } from './narrative-registry';
 import type { Narrative, Model } from './index';
 import { narrativesToModel } from './transformers/narrative-to-model';
-import type { IFileStore } from '@auto-engineer/file-store/node';
+import type { IFileStore } from '@auto-engineer/file-store';
 import { executeAST } from './loader';
 import { sha256 } from 'js-sha256';
 

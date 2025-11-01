@@ -1,4 +1,4 @@
-import type { IFileStore } from '@auto-engineer/file-store/node';
+import type { IFileStore } from '@auto-engineer/file-store';
 import { CANDIDATE_EXTS, dirname, join, normalize } from './fs-path';
 import createDebug from 'debug';
 

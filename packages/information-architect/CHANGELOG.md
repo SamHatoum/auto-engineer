@@ -1,5 +1,14 @@
 # @auto-engineer/information-architect
 
+## 0.11.18
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/narrative@0.11.18
+  - @auto-engineer/ai-gateway@0.11.18
+  - @auto-engineer/message-bus@0.11.18
+
 ## 0.11.17
 
 ### Patch Changes

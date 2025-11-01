@@ -1,4 +1,4 @@
-import type { IFileStore } from '@auto-engineer/file-store/node';
+import type { IFileStore } from '@auto-engineer/file-store';
 import { resolveAbsolute, resolveRelative } from './ts-utils';
 import type { Resolved } from './types';
 
