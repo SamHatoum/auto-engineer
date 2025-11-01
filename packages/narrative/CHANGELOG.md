@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.19
+
+### Patch Changes
+
+- improve browser compatibility
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.19
+  - @auto-engineer/id@0.11.19
+  - @auto-engineer/message-bus@0.11.19
+
 ## 0.11.18
 
 ### Patch Changes

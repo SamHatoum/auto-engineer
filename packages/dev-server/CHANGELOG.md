@@ -1,5 +1,13 @@
 # @auto-engineer/dev-server
 
+## 0.11.19
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.11.19
+  - @auto-engineer/message-bus@0.11.19
+
 ## 0.11.18
 
 ### Patch Changes

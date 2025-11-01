@@ -1,5 +1,4 @@
 import { type Command, type Event, defineCommandHandler } from '@auto-engineer/message-bus';
-import { getFs } from './filestore.node.js';
 import createDebug from 'debug';
 
 const debug = createDebug('auto:narrative:export-schema');
@@ -65,6 +64,7 @@ export async function handleExportSchemaCommand(
 
   try {
     // Run the helper script with tsx
+    const { getFs } = await import('./filestore.node.js');
     const fs = await getFs();
     const __dirname = fs.dirname(new URL(import.meta.url).href);
     const helperScript = fs.join(__dirname, 'export-schema-helper.js');
