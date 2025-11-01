@@ -116,16 +116,5 @@ export type MessageField = z.infer<typeof MessageFieldSchema>;
 export type Rule = z.infer<typeof RuleSchema>;
 export type Spec = z.infer<typeof SpecSchema>;
 
-export {
-  commandHandler as exportSchemaCommandHandler,
-  type ExportSchemaCommand,
-  type ExportSchemaEvents,
-  type SchemaExportedEvent,
-  type SchemaExportFailedEvent,
-} from './commands/export-schema';
-
-import { commandHandler as exportSchemaHandler } from './commands/export-schema';
-export const COMMANDS = [exportSchemaHandler];
-
 // ID assignment utilities
 export { addAutoIds, hasAllIds } from './id';

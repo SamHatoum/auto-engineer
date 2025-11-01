@@ -2,6 +2,8 @@
 
 # @auto-engineer/ai-gateway
 
+## 0.11.20
+
 ## 0.11.19
 
 ## 0.11.18
@@ -261,6 +263,15 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/cli
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.20
+  - @auto-engineer/message-bus@0.11.20
+  - @auto-engineer/message-store@0.11.20
 
 ## 0.11.19
 
@@ -1073,6 +1084,14 @@
 
 # @auto-engineer/frontend-implementer
 
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.11.20
+  - @auto-engineer/message-bus@0.11.20
+
 ## 0.11.19
 
 ### Patch Changes
@@ -1616,6 +1635,13 @@
 
 # create-auto-app
 
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.11.20
+
 ## 0.11.19
 
 ### Patch Changes
@@ -1933,6 +1959,13 @@
 - Major overhaul of the plugin system
 
 # @auto-engineer/design-system-importer
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -2516,6 +2549,14 @@
 
 # @auto-engineer/dev-server
 
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.11.20
+  - @auto-engineer/message-bus@0.11.20
+
 ## 0.11.19
 
 ### Patch Changes
@@ -2575,6 +2616,8 @@
   - @auto-engineer/message-bus@0.11.13
 
 # @auto-engineer/file-store
+
+## 0.11.20
 
 ## 0.11.19
 
@@ -2793,6 +2836,13 @@
 - version bump
 
 # @auto-engineer/frontend-checks
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -3334,6 +3384,14 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/frontend-react-graphql-generator
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.11.20
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -3979,6 +4037,14 @@
 
 # @auto-engineer/frontend-implementer
 
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.11.20
+  - @auto-engineer/message-bus@0.11.20
+
 ## 0.11.19
 
 ### Patch Changes
@@ -4620,6 +4686,8 @@
 
 # @auto-engineer/id
 
+## 0.11.20
+
 ## 0.11.19
 
 ## 0.11.18
@@ -4775,6 +4843,15 @@
 ## 0.8.6
 
 # @auto-engineer/information-architect
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/narrative@0.11.20
+  - @auto-engineer/ai-gateway@0.11.20
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -5442,6 +5519,8 @@
 
 # @auto-engineer/message-bus
 
+## 0.11.20
+
 ## 0.11.19
 
 ## 0.11.18
@@ -5706,6 +5785,13 @@
 - Bump versions to fix npm publish conflicts
 
 # @auto-engineer/message-store
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -6074,6 +6160,17 @@
 - @auto-engineer/message-bus@0.8.6
 
 # @auto-engineer/flow
+
+## 0.11.20
+
+### Patch Changes
+
+- separate node exports from main index
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.20
+  - @auto-engineer/id@0.11.20
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -6853,6 +6950,14 @@
 
 # @auto-engineer/server-checks
 
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/cli@0.11.20
+  - @auto-engineer/message-bus@0.11.20
+
 ## 0.11.19
 
 ### Patch Changes
@@ -7349,6 +7454,14 @@
   - @auto-engineer/message-bus@0.4.0
 
 # @auto-engineer/server-generator-apollo-emmett
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/narrative@0.11.20
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 
@@ -7995,6 +8108,14 @@
   - @auto-engineer/flow@0.1.2
 
 # @auto-engineer/server-implementer
+
+## 0.11.20
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/ai-gateway@0.11.20
+  - @auto-engineer/message-bus@0.11.20
 
 ## 0.11.19
 

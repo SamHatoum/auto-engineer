@@ -426,9 +426,23 @@ export class PluginLoader {
   ): Promise<void> {
     debugPlugins('Loading plugin: %s', packageName);
     try {
-      const pkg = (await this.loadPlugin(packageName)) as {
-        COMMANDS?: UnifiedCommandHandler<Command>[];
-      };
+      let pkg: { COMMANDS?: UnifiedCommandHandler<Command>[] };
+
+      try {
+        pkg = (await this.loadPlugin(packageName)) as {
+          COMMANDS?: UnifiedCommandHandler<Command>[];
+        };
+        debugPlugins('Loaded from default export: %s', packageName);
+      } catch (defaultError) {
+        try {
+          pkg = (await this.loadPlugin(packageName + '/node')) as {
+            COMMANDS?: UnifiedCommandHandler<Command>[];
+          };
+          debugPlugins('Loaded from /node export: %s', packageName);
+        } catch {
+          throw defaultError;
+        }
+      }
 
       // Check for unified command format first (backward compatibility)
       if (pkg.COMMANDS) {

@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.11.20
+
+### Patch Changes
+
+- separate node exports from main index
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.11.20
+  - @auto-engineer/id@0.11.20
+  - @auto-engineer/message-bus@0.11.20
+
 ## 0.11.19
 
 ### Patch Changes
