@@ -38,8 +38,7 @@ export async function generateText(context: AIContext, prompt: string, options: 
     const result = await aiGenerateText({
       model: modelInstance,
       prompt,
-      temperature: finalOptions.temperature,
-      maxTokens: finalOptions.maxTokens,
+      ...(finalOptions.temperature !== undefined && { temperature: finalOptions.temperature }),
     });
 
     debugAPI('API call successful - response length: %d, usage: %o', result.text.length, result.usage);
@@ -61,8 +60,7 @@ export async function* streamText(context: AIContext, prompt: string, options: A
     const stream = aiStreamText({
       model: modelInstance,
       prompt,
-      temperature: finalOptions.temperature,
-      maxTokens: finalOptions.maxTokens,
+      ...(finalOptions.temperature !== undefined && { temperature: finalOptions.temperature }),
     });
 
     let totalChunks = 0;
@@ -140,8 +138,7 @@ export async function generateTextWithImage(
           ],
         },
       ],
-      temperature: finalOptions.temperature,
-      maxTokens: finalOptions.maxTokens,
+      ...(finalOptions.temperature !== undefined && { temperature: finalOptions.temperature }),
     });
 
     debugAPI('Image API call successful - response length: %d', result.text.length);
@@ -157,8 +154,6 @@ async function attemptStructuredGeneration<T>(
   prompt: string,
   provider: AIProvider,
   options: StructuredAIOptions<T>,
-  registeredTools: Record<string, RegisteredToolForAI>,
-  hasTools: boolean,
 ): Promise<T> {
   const maxSchemaRetries = 3;
   let lastError: AIToolValidationError | undefined;
@@ -179,12 +174,7 @@ async function attemptStructuredGeneration<T>(
         schema: options.schema,
         schemaName: options.schemaName,
         schemaDescription: options.schemaDescription,
-        temperature: options.temperature,
-        maxTokens: options.maxTokens,
-        ...(hasTools && {
-          tools: registeredTools,
-          toolChoice: 'auto' as const,
-        }),
+        ...(options.temperature !== undefined && { temperature: options.temperature }),
       };
       debugAPI('Generating structured object with schema: %s', options.schemaName ?? 'unnamed');
       const result = await generateObject(opts);
@@ -212,7 +202,6 @@ export async function generateStructuredData<T>(
   context: AIContext,
   prompt: string,
   options: StructuredAIOptions<T>,
-  registeredTools: Record<string, RegisteredToolForAI> = {},
 ): Promise<T> {
   const resolvedProvider = options.provider ?? getDefaultProvider(context);
   debugAPI(
@@ -221,9 +210,31 @@ export async function generateStructuredData<T>(
     options.schemaName ?? 'unnamed',
   );
 
-  const hasTools = Object.keys(registeredTools).length > 0;
+  return attemptStructuredGeneration(context, prompt, resolvedProvider, options);
+}
 
-  return attemptStructuredGeneration(context, prompt, resolvedProvider, options, registeredTools, hasTools);
+function startPartialObjectStream(
+  result: {
+    partialObjectStream: AsyncIterable<unknown>;
+  },
+  onPartialObject: ((partialObject: unknown) => void) | undefined,
+): void {
+  if (!onPartialObject) return;
+
+  debugStream('Starting partial object stream');
+  void (async () => {
+    try {
+      let partialCount = 0;
+      for await (const partialObject of result.partialObjectStream) {
+        partialCount++;
+        debugStream('Partial object %d received', partialCount);
+        onPartialObject(partialObject);
+      }
+      debugStream('Partial object stream complete - total partials: %d', partialCount);
+    } catch (streamError) {
+      debugError('Error in partial object stream: %O', streamError);
+    }
+  })();
 }
 
 export async function streamStructuredData<T>(
@@ -253,26 +264,10 @@ export async function streamStructuredData<T>(
         schema: options.schema,
         schemaName: options.schemaName,
         schemaDescription: options.schemaDescription,
-        temperature: options.temperature,
-        maxTokens: options.maxTokens,
+        ...(options.temperature !== undefined && { temperature: options.temperature }),
       });
 
-      if (options.onPartialObject) {
-        debugStream('Starting partial object stream');
-        void (async () => {
-          try {
-            let partialCount = 0;
-            for await (const partialObject of result.partialObjectStream) {
-              partialCount++;
-              debugStream('Partial object %d received', partialCount);
-              options.onPartialObject?.(partialObject);
-            }
-            debugStream('Partial object stream complete - total partials: %d', partialCount);
-          } catch (streamError) {
-            debugError('Error in partial object stream: %O', streamError);
-          }
-        })();
-      }
+      startPartialObjectStream(result, options.onPartialObject);
 
       const finalObject = await result.object;
       debugStream('Final structured object received');
@@ -298,103 +293,32 @@ export async function streamStructuredData<T>(
 async function executeToolConversation(
   modelInstance: ReturnType<typeof getModel>,
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-  registeredTools: Record<string, RegisteredToolForAI>,
-  hasTools: boolean,
   finalOptions: AIOptions & { temperature?: number; maxTokens?: number },
   provider: AIProvider,
 ): Promise<{ finalResult: string; allToolCalls: unknown[] }> {
-  let finalResult = '';
   const allToolCalls: unknown[] = [];
-  let attempts = 0;
-  const maxAttempts = 5;
 
-  while (attempts < maxAttempts) {
-    attempts++;
-    debugTools('Tool execution attempt %d/%d', attempts, maxAttempts);
-
+  try {
     const opts = {
       model: modelInstance,
       messages,
-      temperature: finalOptions.temperature,
-      maxTokens: finalOptions.maxTokens,
-      ...(hasTools && {
-        tools: registeredTools,
-        toolChoice: 'auto' as const,
-      }),
+      ...(finalOptions.temperature !== undefined && { temperature: finalOptions.temperature }),
     };
-    debugTools('Request options: %o', { ...opts, tools: hasTools ? '[tools included]' : undefined });
 
-    try {
-      const result = await aiGenerateText(opts);
-      debugTools('Result received - has text: %s, tool calls: %d', !!result.text, result.toolCalls?.length ?? 0);
+    const result = await aiGenerateText(opts);
 
-      if (result.text) {
-        messages.push({ role: 'assistant', content: result.text });
-        finalResult = result.text;
-        debugTools('Assistant message added to conversation');
-      }
-
-      if (result.toolCalls !== undefined && result.toolCalls.length > 0) {
-        allToolCalls.push(...result.toolCalls);
-        debugTools('Executing %d tool calls', result.toolCalls.length);
-
-        const toolResults = await executeToolCalls(result.toolCalls, registeredTools);
-        debugTools('Tool execution completed, results length: %d', toolResults.length);
-
-        messages.push({
-          role: 'user',
-          content: `${toolResults}\n\nUsing the tool outputs above, continue your response to the original request.`,
-        });
-
-        continue;
-      }
-
-      debugTools('No tool calls, conversation complete');
-      break;
-    } catch (error) {
-      extractAndLogError(error, provider, 'generateTextWithTools');
-      throw error;
-    }
+    return { finalResult: result.text, allToolCalls };
+  } catch (error) {
+    extractAndLogError(error, provider, 'generateTextWithTools');
+    throw error;
   }
-
-  return { finalResult, allToolCalls };
-}
-
-async function executeToolCalls(
-  toolCalls: unknown[],
-  registeredTools: Record<string, RegisteredToolForAI>,
-): Promise<string> {
-  debugTools('Executing %d tool calls', toolCalls.length);
-  let toolResults = '';
-
-  for (const toolCall of toolCalls) {
-    try {
-      const toolCallObj = toolCall as { toolName: string; args: Record<string, unknown> };
-      debugTools('Executing tool: %s with args: %o', toolCallObj.toolName, toolCallObj.args);
-      const tool = registeredTools[toolCallObj.toolName];
-      if (tool?.execute) {
-        const toolResult = await tool.execute(toolCallObj.args);
-        toolResults += `Tool ${toolCallObj.toolName} returned: ${String(toolResult)}\n\n`;
-        debugTools('Tool %s executed successfully', toolCallObj.toolName);
-      } else {
-        toolResults += `Error: Tool ${toolCallObj.toolName} not found or missing execute function\n\n`;
-        debugTools('Tool %s not found or missing execute function', toolCallObj.toolName);
-      }
-    } catch (error) {
-      const toolCallObj = toolCall as { toolName: string };
-      debugError('Tool execution error for %s: %O', toolCallObj.toolName, error);
-      toolResults += `Error executing tool ${toolCallObj.toolName}: ${String(error)}\n\n`;
-    }
-  }
-
-  return toolResults;
 }
 
 export async function generateTextWithTools(
   context: AIContext,
   prompt: string,
   options: AIOptions = {},
-  registeredTools: Record<string, RegisteredToolForAI> = {},
+  _registeredTools: Record<string, RegisteredToolForAI> = {},
 ): Promise<{ text: string; toolCalls?: unknown[] }> {
   const resolvedProvider = options.provider ?? getDefaultProvider(context);
   debugTools('generateTextWithTools called - provider: %s', resolvedProvider);
@@ -402,17 +326,11 @@ export async function generateTextWithTools(
   const model = finalOptions.model ?? getDefaultModel(resolvedProvider, context);
   const modelInstance = getModel(resolvedProvider, model, context);
 
-  debugTools('Registered tools: %o', Object.keys(registeredTools));
-  const hasTools = Object.keys(registeredTools).length > 0;
-  debugTools('Has tools available: %s', hasTools);
-
   const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [{ role: 'user', content: prompt }];
 
   const { finalResult, allToolCalls } = await executeToolConversation(
     modelInstance,
     messages,
-    registeredTools,
-    hasTools,
     finalOptions,
     resolvedProvider,
   );

@@ -113,8 +113,6 @@ export async function generateStructuredDataWithAI<T>(prompt: string, options: S
     } catch (e) {
       throw new Error(`MCP server failed to start: ${(e as Error).message}`);
     }
-    const tools = getRegisteredToolsForAI();
-    return coreGenerateStructuredData(context, prompt, options, tools);
   }
 
   return coreGenerateStructuredData(context, prompt, options);

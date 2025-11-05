@@ -75,7 +75,7 @@ export interface AIToolValidationError extends Error {
 }
 
 export type RegisteredToolForAI = {
-  parameters: z.ZodSchema;
   description: string;
+  parameters: z.ZodSchema;
   execute?: (args: Record<string, unknown>) => Promise<string>;
 };

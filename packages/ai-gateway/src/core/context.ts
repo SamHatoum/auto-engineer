@@ -2,6 +2,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createXai } from '@ai-sdk/xai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { AIProvider, AIContext, AIConfig } from './types';
 import { DEFAULT_MODELS } from './constants';
 import { createCustomProvider } from './providers/custom';
@@ -91,7 +92,7 @@ const providerFactories = {
   },
 };
 
-function createProviderModel(provider: AIProvider, modelName: string, context: AIContext) {
+function createProviderModel(provider: AIProvider, modelName: string, context: AIContext): LanguageModelV2 {
   const factory = providerFactories[provider];
   if (factory == null) {
     throw new Error(`Unknown provider: ${provider as string}`);
@@ -99,7 +100,7 @@ function createProviderModel(provider: AIProvider, modelName: string, context: A
   return factory(modelName, context);
 }
 
-export function getModel(provider: AIProvider, model: string | undefined, context: AIContext) {
+export function getModel(provider: AIProvider, model: string | undefined, context: AIContext): LanguageModelV2 {
   const modelName = model ?? getDefaultModel(provider, context);
   debugConfig('Creating model instance for provider %s with model %s', provider, modelName);
   return createProviderModel(provider, modelName, context);
