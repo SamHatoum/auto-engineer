@@ -1,5 +1,11 @@
 # @auto-engineer/message-bus
 
+## 0.12.0
+
+### Minor Changes
+
+- Upgrade vercel ai sdk
+
 ## 0.11.20
 
 ## 0.11.19

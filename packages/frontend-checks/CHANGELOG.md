@@ -1,5 +1,16 @@
 # @auto-engineer/frontend-checks
 
+## 0.12.0
+
+### Minor Changes
+
+- Upgrade vercel ai sdk
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-bus@0.12.0
+
 ## 0.11.20
 
 ### Patch Changes

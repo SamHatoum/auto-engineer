@@ -1,5 +1,18 @@
 # @auto-engineer/cli
 
+## 0.12.0
+
+### Minor Changes
+
+- Upgrade vercel ai sdk
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/message-store@0.12.0
+  - @auto-engineer/message-bus@0.12.0
+  - @auto-engineer/file-store@0.12.0
+
 ## 0.11.20
 
 ### Patch Changes

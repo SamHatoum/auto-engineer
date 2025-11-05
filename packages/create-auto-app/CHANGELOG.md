@@ -1,5 +1,16 @@
 # create-auto-app
 
+## 0.12.0
+
+### Minor Changes
+
+- Upgrade vercel ai sdk
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @auto-engineer/id@0.12.0
+
 ## 0.11.20
 
 ### Patch Changes
