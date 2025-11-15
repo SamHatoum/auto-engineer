@@ -44,7 +44,7 @@ export type { FieldSelector } from './data-narrative-builders';
 
 // Narrative language functions
 export { narrative, narrative as flow } from './narrative';
-export { client, server, specs, should, request, data, rule, example } from './narrative';
+export { client, server, specs, describe, it, should, request, data, rule, example } from './narrative';
 export type { SliceTypeValueInterface } from './narrative';
 export { SliceType } from './narrative';
 
@@ -115,6 +115,7 @@ export type Example = z.infer<typeof ExampleSchema>;
 export type MessageField = z.infer<typeof MessageFieldSchema>;
 export type Rule = z.infer<typeof RuleSchema>;
 export type Spec = z.infer<typeof SpecSchema>;
+export type { ClientSpecNode } from './schema';
 
 // ID assignment utilities
 export { addAutoIds, hasAllIds } from './id';

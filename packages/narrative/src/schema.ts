@@ -215,17 +215,38 @@ const SpecSchema = z
   })
   .describe('Specification with business rules');
 
+const ItNode = z
+  .object({
+    type: z.literal('it'),
+    id: z.string().optional(),
+    title: z.string(),
+  })
+  .strict();
+
+type ClientSpecNode =
+  | { type: 'it'; id?: string; title: string }
+  | { type: 'describe'; id?: string; title?: string; children?: ClientSpecNode[] };
+
+export const ClientSpecNodeSchema: z.ZodType<ClientSpecNode> = z.lazy(() =>
+  z.union([
+    ItNode,
+    z
+      .object({
+        type: z.literal('describe'),
+        id: z.string().optional(),
+        title: z.string().optional(),
+        children: z.array(ClientSpecNodeSchema).default([]),
+      })
+      .strict(),
+  ]),
+);
+
+export const ClientSpecSchema = z.array(ClientSpecNodeSchema).default([]);
+
 const CommandSliceSchema = BaseSliceSchema.extend({
   type: z.literal('command'),
   client: z.object({
-    description: z.string(),
-    specs: z
-      .object({
-        name: z.string().describe('Spec group name'),
-        rules: z.array(z.string()).describe('UI specifications (should statements)'),
-      })
-      .optional()
-      .describe('Client-side specifications'),
+    specs: ClientSpecSchema,
   }),
   request: z.string().describe('Command request (GraphQL, REST endpoint, or other query format)').optional(),
   server: z.object({
@@ -238,14 +259,7 @@ const CommandSliceSchema = BaseSliceSchema.extend({
 const QuerySliceSchema = BaseSliceSchema.extend({
   type: z.literal('query'),
   client: z.object({
-    description: z.string(),
-    specs: z
-      .object({
-        name: z.string().describe('Spec group name'),
-        rules: z.array(z.string()).describe('UI specifications (should statements)'),
-      })
-      .optional()
-      .describe('Client-side specifications'),
+    specs: ClientSpecSchema,
   }),
   request: z.string().describe('Query request (GraphQL, REST endpoint, or other query format)').optional(),
   server: z.object({
@@ -270,14 +284,7 @@ const ReactSliceSchema = BaseSliceSchema.extend({
 const ExperienceSliceSchema = BaseSliceSchema.extend({
   type: z.literal('experience'),
   client: z.object({
-    description: z.string().optional(),
-    specs: z
-      .object({
-        name: z.string().describe('Spec group name'),
-        rules: z.array(z.string()).describe('UI specifications (should statements)'),
-      })
-      .optional()
-      .describe('Client-side specifications'),
+    specs: ClientSpecSchema,
   }),
 }).describe('Experience slice for user interactions and UI behavior');
 
@@ -386,6 +393,8 @@ export const modelSchema = z
     integrations: z.array(IntegrationSchema).optional(),
   })
   .describe('Complete system specification with all implementation details');
+
+export type { ClientSpecNode };
 
 export {
   StateExampleSchema,

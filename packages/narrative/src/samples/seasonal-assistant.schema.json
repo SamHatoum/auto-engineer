@@ -8,18 +8,20 @@
           "name": "enters shopping criteria into assistant",
           "type": "command",
           "client": {
-            "description": "",
-            "specs": {
-              "name": "Assistant Chat Interface",
-              "rules": [
-                "allow shopper to describe their shopping needs in natural language",
-                "provide a text input for entering criteria",
-                "show examples of what to include (age, interests, budget)",
-                "show a button to submit the criteria",
-                "generate a persisted session id for a visit",
-                "show the header on top of the page"
-              ]
-            }
+            "specs": [
+              {
+                "type": "describe",
+                "title": "Assistant Chat Interface",
+                "children": [
+                  { "type": "it", "title": "allow shopper to describe their shopping needs in natural language" },
+                  { "type": "it", "title": "provide a text input for entering criteria" },
+                  { "type": "it", "title": "show examples of what to include (age, interests, budget)" },
+                  { "type": "it", "title": "show a button to submit the criteria" },
+                  { "type": "it", "title": "generate a persisted session id for a visit" },
+                  { "type": "it", "title": "show the header on top of the page" }
+                ]
+              }
+            ]
           },
           "request": "mutation EnterShoppingCriteria($input: EnterShoppingCriteriaInput!) {\n  enterShoppingCriteria(input: $input) {\n    success\n    error {\n      type\n      message\n    }\n  }\n}",
           "server": {
@@ -250,16 +252,18 @@
           "name": "views suggested items",
           "type": "query",
           "client": {
-            "description": "",
-            "specs": {
-              "name": "Suggested Items Screen",
-              "rules": [
-                "display all suggested items with names and reasons",
-                "show quantity selectors for each item",
-                "have an \"Add to Cart\" button for selected items",
-                "allow removing items from the suggestions"
-              ]
-            }
+            "specs": [
+              {
+                "type": "describe",
+                "title": "Suggested Items Screen",
+                "children": [
+                  { "type": "it", "title": "display all suggested items with names and reasons" },
+                  { "type": "it", "title": "show quantity selectors for each item" },
+                  { "type": "it", "title": "have an \"Add to Cart\" button for selected items" },
+                  { "type": "it", "title": "allow removing items from the suggestions" }
+                ]
+              }
+            ]
           },
           "request": "query GetSuggestedItems($sessionId: ID!) {\n  suggestedItems(sessionId: $sessionId) {\n    items {\n      productId\n      name\n      quantity\n      reason\n    }\n  }\n}",
           "server": {
@@ -362,15 +366,17 @@
           "name": "accepts items and adds to their cart",
           "type": "command",
           "client": {
-            "description": "",
-            "specs": {
-              "name": "Suggested Items Screen",
-              "rules": [
-                "allow selecting specific items to add",
-                "update quantities before adding to cart",
-                "provide feedback when items are added"
-              ]
-            }
+            "specs": [
+              {
+                "type": "describe",
+                "title": "Suggested Items Screen",
+                "children": [
+                  { "type": "it", "title": "allow selecting specific items to add" },
+                  { "type": "it", "title": "update quantities before adding to cart" },
+                  { "type": "it", "title": "provide feedback when items are added" }
+                ]
+              }
+            ]
           },
           "server": {
             "description": "",

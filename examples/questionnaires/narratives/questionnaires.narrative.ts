@@ -3,7 +3,8 @@ import {
   query,
   experience,
   narrative,
-  should,
+  describe,
+  it,
   specs,
   rule,
   example,
@@ -130,9 +131,9 @@ narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     `)
     .client(() => {
-      specs('Questionnaire Link', () => {
-        should('display a confirmation message when the link is sent');
-        should('handle errors when the link cannot be sent');
+      describe('Questionnaire Link', () => {
+        it('display a confirmation message when the link is sent');
+        it('handle errors when the link cannot be sent');
       });
     });
   query('views the questionnaire', 'AUTO-V7n8Rq5M')
@@ -197,11 +198,11 @@ narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     `)
     .client(() => {
-      specs('Questionnaire Progress', () => {
-        should('focus on the current question based on the progress state');
-        should('display the list of answered questions');
-        should('display the list of remaining questions');
-        should('show a progress indicator that is always visible as the user scrolls');
+      describe('Questionnaire Progress', () => {
+        it('focus on the current question based on the progress state');
+        it('display the list of answered questions');
+        it('display the list of remaining questions');
+        it('show a progress indicator that is always visible as the user scrolls');
       });
     });
 
@@ -257,9 +258,9 @@ narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     `)
     .client(() => {
-      specs('Submissions', () => {
-        should('displays a success message when the answer is submitted');
-        should('display an error message when the answer submission is rejected');
+      describe('Submissions', () => {
+        it('displays a success message when the answer is submitted');
+        it('display an error message when the answer submission is rejected');
       });
     });
 
@@ -349,9 +350,9 @@ narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     `)
     .client(() => {
-      specs('Submission Readiness', () => {
-        should('enable the submit button when all questions are answered');
-        should('disable the submit button when all questions have not been answered');
+      describe('Submission Readiness', () => {
+        it('enable the submit button when all questions are answered');
+        it('disable the submit button when all questions have not been answered');
       });
     });
 
@@ -381,8 +382,8 @@ narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     `)
     .client(() => {
-      specs('Submission Confirmation', () => {
-        should('display a confirmation message upon successful submission');
+      describe('Submission Confirmation', () => {
+        it('display a confirmation message upon successful submission');
       });
     });
 });

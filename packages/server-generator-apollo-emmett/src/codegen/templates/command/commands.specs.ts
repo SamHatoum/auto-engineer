@@ -14,7 +14,7 @@ describe('commands.ts.ejs', () => {
               type: 'command',
               name: 'Create listing',
               client: {
-                description: 'test',
+                specs: [],
               },
               server: {
                 description: 'test',

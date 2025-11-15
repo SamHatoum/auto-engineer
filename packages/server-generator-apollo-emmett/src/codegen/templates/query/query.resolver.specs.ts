@@ -25,7 +25,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               `,
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',
@@ -149,7 +149,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               }
             `,
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 data: [
@@ -262,16 +262,7 @@ describe('query.resolver.ts.ejs', () => {
               name: 'views the questionnaire',
               type: 'query',
               client: {
-                description: '',
-                specs: {
-                  name: '',
-                  rules: [
-                    'focus on the current question based on the progress state',
-                    'display the list of answered questions',
-                    'display the list of remaining questions',
-                    'show a progress indicator that is always visible as the user scrolls',
-                  ],
-                },
+                specs: [],
               },
               request:
                 'query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    status\n    currentQuestionId\n    remainingQuestions\n    answers {\n      questionId\n      value\n    }\n  }\n}',
@@ -446,7 +437,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               `,
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',
@@ -509,7 +500,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               `,
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',
@@ -569,7 +560,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               `,
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',
@@ -633,7 +624,7 @@ describe('query.resolver.ts.ejs', () => {
                 }
               `,
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',

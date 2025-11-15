@@ -13,6 +13,7 @@ import {
   DataSourceSchema,
   DestinationSchema,
   OriginSchema,
+  type ClientSpecNode,
 } from '../../../schema';
 
 type CommandSlice = z.infer<typeof CommandSliceSchema>;
@@ -27,33 +28,55 @@ type Destination = z.infer<typeof DestinationSchema>;
 type Origin = z.infer<typeof OriginSchema>;
 type Slice = CommandSlice | QuerySlice | ReactSlice | ExperienceSlice;
 
+function buildClientSpecNode(
+  ts: typeof import('typescript'),
+  f: tsNS.NodeFactory,
+  node: ClientSpecNode,
+): tsNS.Statement {
+  if (node.type === 'it') {
+    const args: tsNS.Expression[] = [];
+
+    if (node.id !== undefined && node.id !== '') {
+      args.push(f.createStringLiteral(node.id));
+      args.push(f.createStringLiteral(node.title));
+    } else {
+      args.push(f.createStringLiteral(node.title));
+    }
+
+    return f.createExpressionStatement(f.createCallExpression(f.createIdentifier('it'), undefined, args));
+  } else {
+    const childStatements = (node.children || []).map((child) => buildClientSpecNode(ts, f, child));
+
+    const args: tsNS.Expression[] = [];
+
+    if (node.id !== undefined && node.id !== '') {
+      args.push(f.createStringLiteral(node.id));
+      args.push(f.createStringLiteral(node.title ?? ''));
+    } else {
+      args.push(f.createStringLiteral(node.title ?? ''));
+    }
+
+    args.push(
+      f.createArrowFunction(
+        undefined,
+        undefined,
+        [],
+        undefined,
+        f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+        f.createBlock(childStatements, true),
+      ),
+    );
+
+    return f.createExpressionStatement(f.createCallExpression(f.createIdentifier('describe'), undefined, args));
+  }
+}
+
 function buildClientSpecs(
   ts: typeof import('typescript'),
   f: tsNS.NodeFactory,
-  specs: { name: string; rules: string[] },
-) {
-  const shouldCalls = specs.rules.map((txt) =>
-    f.createExpressionStatement(
-      f.createCallExpression(f.createIdentifier('should'), undefined, [f.createStringLiteral(txt)]),
-    ),
-  );
-
-  const arrowFunction = f.createArrowFunction(
-    undefined,
-    undefined,
-    [],
-    undefined,
-    f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-    f.createBlock(shouldCalls, true),
-  );
-
-  const args: tsNS.Expression[] = [];
-  if (specs.name && specs.name.trim() !== '') {
-    args.push(f.createStringLiteral(specs.name));
-  }
-  args.push(arrowFunction);
-
-  return f.createExpressionStatement(f.createCallExpression(f.createIdentifier('specs'), undefined, args));
+  specs: ClientSpecNode[],
+): tsNS.Statement[] {
+  return specs.map((node) => buildClientSpecNode(ts, f, node));
 }
 
 function buildInitialChain(
@@ -347,7 +370,14 @@ function addClientToChain(
   chain: tsNS.Expression,
   slice: CommandSlice | QuerySlice | ReactSlice | ExperienceSlice,
 ): tsNS.Expression {
-  if ('client' in slice && slice.client !== null && slice.client !== undefined && slice.client.specs) {
+  if (
+    'client' in slice &&
+    slice.client !== null &&
+    slice.client !== undefined &&
+    'specs' in slice.client &&
+    slice.client.specs !== undefined &&
+    slice.client.specs.length > 0
+  ) {
     return f.createCallExpression(f.createPropertyAccessExpression(chain, f.createIdentifier('client')), undefined, [
       f.createArrowFunction(
         undefined,
@@ -355,7 +385,7 @@ function addClientToChain(
         [],
         undefined,
         f.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-        f.createBlock([buildClientSpecs(ts, f, slice.client.specs)], true),
+        f.createBlock(buildClientSpecs(ts, f, slice.client.specs), true),
       ),
     ]);
   }

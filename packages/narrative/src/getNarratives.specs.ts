@@ -56,8 +56,13 @@ describe('getNarratives', (_mode) => {
       expect(createItemSlice.stream).toBe('item-${id}');
       if (createItemSlice.type === 'command') {
         expect(createItemSlice.client.specs).toBeDefined();
-        expect(createItemSlice.client.specs?.name).toBe('A form that allows users to add items');
-        expect(createItemSlice.client.specs?.rules).toHaveLength(1);
+        expect(Array.isArray(createItemSlice.client.specs)).toBe(true);
+        expect(createItemSlice.client.specs).toHaveLength(1);
+        expect(createItemSlice.client.specs[0].type).toBe('describe');
+        expect(createItemSlice.client.specs[0].title).toBe('A form that allows users to add items');
+        if (createItemSlice.client.specs[0].type === 'describe') {
+          expect(createItemSlice.client.specs[0].children).toHaveLength(1);
+        }
         expect(createItemSlice.server.specs).toBeDefined();
         const spec = createItemSlice.server.specs;
         expect(spec.name).toBeDefined();
@@ -91,8 +96,13 @@ describe('getNarratives', (_mode) => {
       expect(viewItemSlice.type).toBe('query');
       expect(viewItemSlice.name).toBe('view items');
       expect(viewItemSlice.client.specs).toBeDefined();
-      expect(viewItemSlice.client.specs?.name).toBe('view Items Screen');
-      expect(viewItemSlice.client.specs?.rules).toHaveLength(3);
+      expect(Array.isArray(viewItemSlice.client.specs)).toBe(true);
+      expect(viewItemSlice.client.specs).toHaveLength(1);
+      expect(viewItemSlice.client.specs[0].type).toBe('describe');
+      expect(viewItemSlice.client.specs[0].title).toBe('view Items Screen');
+      if (viewItemSlice.client.specs[0].type === 'describe') {
+        expect(viewItemSlice.client.specs[0].children).toHaveLength(3);
+      }
       expect(viewItemSlice.request).toBeDefined();
       expect(viewItemSlice.request).toMatch(
         /query items\(\$itemId: String!\) {\s+items\(itemId: \$itemId\) {\s+id\s+description\s+}/,
@@ -119,8 +129,13 @@ describe('getNarratives', (_mode) => {
 
       if (submitOrderSlice.type === 'command') {
         expect(submitOrderSlice.client.specs).toBeDefined();
-        expect(submitOrderSlice.client.specs?.name).toBe('Order submission form');
-        expect(submitOrderSlice.client.specs?.rules).toHaveLength(2);
+        expect(Array.isArray(submitOrderSlice.client.specs)).toBe(true);
+        expect(submitOrderSlice.client.specs).toHaveLength(1);
+        expect(submitOrderSlice.client.specs[0].type).toBe('describe');
+        expect(submitOrderSlice.client.specs[0].title).toBe('Order submission form');
+        if (submitOrderSlice.client.specs[0].type === 'describe') {
+          expect(submitOrderSlice.client.specs[0].children).toHaveLength(2);
+        }
         expect(submitOrderSlice.server.specs).toBeDefined();
         const spec = submitOrderSlice.server.specs;
         expect(spec.rules).toHaveLength(1);
@@ -390,13 +405,13 @@ describe('getNarratives', (_mode) => {
   it('should handle experience slice with client specs', async () => {
     const memoryVfs = new InMemoryFileStore();
     const flowWithExperienceContent = `
-import { flow, experience, should, specs } from '@auto-engineer/narrative';
+import { flow, experience, it, specs } from '@auto-engineer/narrative';
 
 flow('Test Experience Flow', () => {
   experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {
     specs(() => {
-      should('show a hero section with a welcome message');
-      should('allow user to start the questionnaire');
+      it('show a hero section with a welcome message');
+      it('allow user to start the questionnaire');
     });
   });
 });
@@ -418,15 +433,12 @@ flow('Test Experience Flow', () => {
       if (homepageSlice?.type === 'experience') {
         expect(homepageSlice.client).toBeDefined();
         expect(homepageSlice.client.specs).toBeDefined();
-        expect(homepageSlice.client.specs?.rules).toBeDefined();
-        expect(homepageSlice.client.specs?.rules).toHaveLength(2);
-
-        const rules = homepageSlice.client.specs?.rules;
-        if (rules && Array.isArray(rules)) {
-          expect(rules).toHaveLength(2);
-          expect(rules[0]).toBe('show a hero section with a welcome message');
-          expect(rules[1]).toBe('allow user to start the questionnaire');
-        }
+        expect(Array.isArray(homepageSlice.client.specs)).toBe(true);
+        expect(homepageSlice.client.specs).toHaveLength(2);
+        expect(homepageSlice.client.specs[0].type).toBe('it');
+        expect(homepageSlice.client.specs[0].title).toBe('show a hero section with a welcome message');
+        expect(homepageSlice.client.specs[1].type).toBe('it');
+        expect(homepageSlice.client.specs[1].title).toBe('allow user to start the questionnaire');
       }
     }
   });
@@ -434,12 +446,12 @@ flow('Test Experience Flow', () => {
   it('simulates browser execution with transpiled CommonJS code', async () => {
     const memoryVfs = new InMemoryFileStore();
     const flowContent = `
-import { flow, experience, should, specs } from '@auto-engineer/narrative';
+import { flow, experience, it, specs } from '@auto-engineer/narrative';
 
 flow('Browser Test Flow', () => {
   experience('HomePage').client(() => {
     specs(() => {
-      should('render correctly');
+      it('render correctly');
     });
   });
 });
@@ -466,8 +478,10 @@ flow('Browser Test Flow', () => {
     if (slice.type === 'experience') {
       expect(slice.client).toBeDefined();
       expect(slice.client.specs).toBeDefined();
-      expect(slice.client.specs?.rules).toHaveLength(1);
-      expect(slice.client.specs?.rules?.[0]).toBe('render correctly');
+      expect(Array.isArray(slice.client.specs)).toBe(true);
+      expect(slice.client.specs).toHaveLength(1);
+      expect(slice.client.specs[0].type).toBe('it');
+      expect(slice.client.specs[0].title).toBe('render correctly');
     }
   });
 
@@ -972,7 +986,8 @@ import {
   query,
   experience,
   flow,
-  should,
+  describe,
+  it,
   specs,
   rule,
   example,
@@ -1048,9 +1063,9 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     \`)
     .client(() => {
-      specs('Questionnaire Link', () => {
-        should('display a confirmation message when the link is sent');
-        should('handle errors when the link cannot be sent');
+      describe('Questionnaire Link', () => {
+        it('display a confirmation message when the link is sent');
+        it('handle errors when the link cannot be sent');
       });
     });
 
@@ -1080,8 +1095,8 @@ flow('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
       }
     \`)
     .client(() => {
-      specs('Submission Confirmation', () => {
-        should('display a confirmation message upon successful submission');
+      describe('Submission Confirmation', () => {
+        it('display a confirmation message upon successful submission');
       });
     });
 });`;

@@ -13,7 +13,7 @@ describe('register.ts.ejs (react slice)', () => {
             {
               type: 'command',
               name: 'guest submits booking request',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -116,7 +116,7 @@ describe('register.ts.ejs (react slice)', () => {
             {
               type: 'command',
               name: 'notify host',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {

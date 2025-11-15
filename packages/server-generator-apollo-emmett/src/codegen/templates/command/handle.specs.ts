@@ -15,7 +15,7 @@ describe('generateScaffoldFilePlans', () => {
               name: 'Create listing',
               stream: 'listing-${propertyId}',
               client: {
-                description: 'test',
+                specs: [],
               },
               server: {
                 description: 'test',
@@ -140,7 +140,7 @@ describe('generateScaffoldFilePlans', () => {
               name: 'Suggest Items',
               stream: 'session-${sessionId}',
               client: {
-                description: 'test',
+                specs: [],
               },
               server: {
                 description: '',

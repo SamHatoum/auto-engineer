@@ -92,9 +92,10 @@ Instructions:
     - template (what wrapper does the page use)
     - navigation (array of navigation actions, e.g., { "on": "Click Listing Card", "to": "ListingDetailPage" })
     - data_requirements (array, as above, for page-level data fetching)
-- For each component or page, if there are any specs defined in the model's flow slices (look for slice.specs array where specs have context='client'), extract all spec descriptions and assign them as an array of strings to a 'specs' field for the corresponding component/page.
-- Only include specs where the context is 'client', not 'server' or other contexts.
-- If no specs are found for a component/page, omit the 'specs' field.
+- For each component or page, if there are any specs defined in the model's flow slices, look at slice.client.specs which is an array of strings.
+- These specs describe behavioral requirements with nested context preserved using ' → ' separator (e.g., "Form → Validation → shows error").
+- Assign these specs directly to the 'specs' field for the corresponding component/page.
+- If no client.specs exist for a slice, omit the 'specs' field.
 
 Use the following structure as a template for your response:
 ----

@@ -14,7 +14,7 @@ describe('state.ts.ejs', () => {
               type: 'query',
               name: 'Get available items',
               client: {
-                description: 'Client view of available items',
+                specs: [],
               },
               server: {
                 description: 'Projects available items',

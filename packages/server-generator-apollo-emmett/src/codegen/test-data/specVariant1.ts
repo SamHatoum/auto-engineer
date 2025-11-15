@@ -13,11 +13,13 @@ const specVariant1: SpecsSchema = {
           name: 'Create item',
           description: 'Handles item creation',
           client: {
-            description: 'A form that allows users to add items',
-            specs: {
-              name: 'A form that allows users to add items',
-              rules: ['have fields for id and description'],
-            },
+            specs: [
+              {
+                type: 'describe',
+                title: 'A form that allows users to add items',
+                children: [{ type: 'it', title: 'have fields for id and description' }],
+              },
+            ],
           },
 
           server: {
@@ -59,7 +61,7 @@ const specVariant1: SpecsSchema = {
           name: 'Get available items',
           description: 'Projection of available items',
           client: {
-            description: 'Show available items',
+            specs: [],
           },
           server: {
             description: 'Project items based on ItemCreated',

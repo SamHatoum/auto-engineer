@@ -129,11 +129,9 @@ function createTypeResolver(
   };
 }
 
-function getSliceSpecs(slice: Slice) {
+function getServerSpecs(slice: Slice) {
   if ('server' in slice && slice.server?.specs !== undefined) {
     return slice.server.specs;
-  } else if ('client' in slice && slice.client?.specs !== undefined) {
-    return slice.client.specs;
   }
   return undefined;
 }
@@ -144,11 +142,10 @@ function processSliceSpecs(
   messages: Map<string, Message>,
   exampleShapeHints: ExampleShapeHints,
 ): void {
-  const spec = getSliceSpecs(slice);
+  const serverSpec = getServerSpecs(slice);
 
-  if (spec !== undefined && Array.isArray(spec.rules)) {
-    spec.rules.forEach((rule: unknown) => {
-      // Only process rule objects (server specs), not string rules (client specs)
+  if (serverSpec !== undefined && Array.isArray(serverSpec.rules)) {
+    serverSpec.rules.forEach((rule: unknown) => {
       if (
         typeof rule === 'object' &&
         rule !== null &&

@@ -15,7 +15,7 @@ describe('projection.ts.ejs', () => {
               name: 'create-listing',
               stream: 'listing-${propertyId}',
               client: {
-                description: 'create listing UI',
+                specs: [],
               },
               server: {
                 description: 'handles create/remove listing',
@@ -76,7 +76,7 @@ describe('projection.ts.ejs', () => {
               name: 'search-listings',
               stream: 'listings',
               client: {
-                description: 'search listings UI',
+                specs: [],
               },
               server: {
                 description: 'projection for available listings',
@@ -295,7 +295,7 @@ describe('projection.ts.ejs', () => {
               }
             `,
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',
@@ -391,7 +391,7 @@ describe('projection.ts.ejs', () => {
               name: 'manage-todo',
               stream: 'todo-${todoId}',
               client: {
-                description: 'manage todo UI',
+                specs: [],
               },
               server: {
                 description: 'handles todo operations',
@@ -431,7 +431,7 @@ describe('projection.ts.ejs', () => {
               name: 'view-summary',
               stream: 'todos',
               client: {
-                description: 'view todo summary UI',
+                specs: [],
               },
               server: {
                 description: 'singleton projection for todo summary',
@@ -596,7 +596,7 @@ describe('projection.ts.ejs', () => {
               name: 'manage-user-project',
               stream: 'user-project-${userId}-${projectId}',
               client: {
-                description: 'manage user project UI',
+                specs: [],
               },
               server: {
                 description: 'handles user project operations',
@@ -638,7 +638,7 @@ describe('projection.ts.ejs', () => {
               name: 'view-user-projects',
               stream: 'user-projects',
               client: {
-                description: 'view user projects UI',
+                specs: [],
               },
               server: {
                 description: 'composite key projection for user projects',

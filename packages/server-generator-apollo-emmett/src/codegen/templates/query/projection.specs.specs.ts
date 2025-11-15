@@ -14,7 +14,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'command',
               name: 'CreateListing',
               stream: 'listing-${propertyId}',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -73,7 +73,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'query',
               name: 'search-listings',
               stream: 'listings',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 data: [
@@ -248,7 +248,7 @@ describe('projection.specs.ts.ejs', () => {
             {
               name: 'views the questionnaire',
               type: 'query',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 data: [
@@ -387,7 +387,7 @@ describe('projection.specs.ts.ejs', () => {
             {
               type: 'command',
               name: 'sends-the-questionnaire-link',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -426,7 +426,7 @@ describe('projection.specs.ts.ejs', () => {
             {
               type: 'command',
               name: 'submits-a-questionnaire-answer',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -468,7 +468,7 @@ describe('projection.specs.ts.ejs', () => {
             {
               type: 'query',
               name: 'views-the-questionnaire',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -632,7 +632,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'command',
               name: 'manage-todo',
               stream: 'todo-${todoId}',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -670,7 +670,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'query',
               name: 'view-summary',
               stream: 'todos',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 data: [
@@ -807,7 +807,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'command',
               name: 'manage-user-project',
               stream: 'user-project-${userId}-${projectId}',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -847,7 +847,7 @@ describe('projection.specs.ts.ejs', () => {
               type: 'query',
               name: 'view-user-projects',
               stream: 'user-projects',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 data: [

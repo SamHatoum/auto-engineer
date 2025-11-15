@@ -1,7 +1,8 @@
 import createDebug from 'debug';
 import type { DataSinkItem, DataSourceItem, DataItem, DataSink, DataSource } from './types';
 import type { GivenTypeInfo } from './loader/ts-utils';
-import { Narrative, Slice, Example } from './index';
+import { Narrative, Slice, Example, CommandSlice, QuerySlice, ExperienceSlice } from './index';
+import type { ClientSpecNode } from './schema';
 
 function normalizeContext(context?: Partial<Record<string, string>>): Record<string, string> | undefined {
   if (!context) return undefined;
@@ -25,6 +26,7 @@ interface NarrativeContext {
   currentSpecIndex: number | null;
   currentRuleIndex: number | null;
   currentExampleIndex: number | null;
+  clientSpecStack: ClientSpecNode[];
 }
 
 let context: NarrativeContext | null = null;
@@ -65,6 +67,7 @@ export function startNarrative(name: string, id?: string): Narrative {
     currentSpecIndex: null,
     currentRuleIndex: null,
     currentExampleIndex: null,
+    clientSpecStack: [],
   };
   return narrative;
 }
@@ -88,13 +91,6 @@ export function addSlice(slice: Slice): void {
   context.currentSliceIndex = context.narrative.slices.length - 1;
 }
 
-function getClientSpecs(slice: Slice): { name: string; rules: string[] } | undefined {
-  if (slice.type === 'command' || slice.type === 'query') {
-    return slice.client.specs;
-  }
-  return undefined;
-}
-
 function getServerSpecs(
   slice: Slice,
 ): { name: string; rules: { id?: string; description: string; examples: Example[] }[] } | undefined {
@@ -102,21 +98,6 @@ function getServerSpecs(
     return slice.server?.specs;
   }
   return undefined;
-}
-
-function getCurrentSpecs(
-  slice: Slice,
-): { name: string; rules: string[] | { id?: string; description: string; examples: Example[] }[] } | undefined {
-  if (!context?.currentSpecTarget) return undefined;
-
-  switch (context.currentSpecTarget) {
-    case 'client':
-      return getClientSpecs(slice);
-    case 'server':
-      return getServerSpecs(slice);
-    default:
-      return undefined;
-  }
 }
 
 function getCurrentExample(slice: Slice): Example | undefined {
@@ -129,39 +110,40 @@ function getCurrentExample(slice: Slice): Example | undefined {
     return undefined;
   }
 
-  const spec = getCurrentSpecs(slice);
+  const spec = getServerSpecs(slice);
   if (!spec) return undefined;
 
-  // Only server specs have object rules with examples
-  if (context.currentSpecTarget === 'server') {
-    const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
-    return objectRules[context.currentRuleIndex]?.examples[context.currentExampleIndex];
-  }
-
-  return undefined;
+  const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
+  return objectRules[context.currentRuleIndex]?.examples[context.currentExampleIndex];
 }
 
-export function startClientBlock(slice: Slice, description: string = ''): void {
+export function startClientBlock(slice: Slice): void {
   if (!context) throw new Error('No active flow context');
 
-  if (slice.type === 'command' || slice.type === 'query') {
+  if (slice.type === 'command' || slice.type === 'query' || slice.type === 'experience') {
     slice.client = {
-      description,
-      specs: undefined,
+      specs: [],
     };
     context.currentSpecTarget = 'client';
-  } else if (slice.type === 'experience') {
-    slice.client = {
-      description: description || undefined,
-      specs: undefined,
-    };
-    context.currentSpecTarget = 'client';
+    context.clientSpecStack = [];
   }
 }
 
 export function endClientBlock(): void {
   if (context) {
+    if (context.clientSpecStack.length > 0) {
+      const unclosedCount = context.clientSpecStack.length;
+      const unclosedTitles = context.clientSpecStack
+        .map((n) => {
+          if (n.title !== undefined && n.title !== '') return n.title;
+          if (n.id !== undefined && n.id !== '') return n.id;
+          return 'unnamed';
+        })
+        .join(', ');
+      throw new Error(`${unclosedCount} unclosed describe block(s): ${unclosedTitles}`);
+    }
     context.currentSpecTarget = null;
+    context.clientSpecStack = [];
   }
 }
 
@@ -197,23 +179,6 @@ export function endServerBlock(): void {
   }
 }
 
-function initializeClientSpecs(slice: Slice, description: string): void {
-  if (slice.type === 'command' || slice.type === 'query') {
-    slice.client.specs = {
-      name: description,
-      rules: [],
-    };
-  } else if (slice.type === 'experience') {
-    if (slice.client == null) {
-      slice.client = { description: '', specs: undefined };
-    }
-    slice.client.specs = {
-      name: description,
-      rules: [],
-    };
-  }
-}
-
 function initializeServerSpecs(slice: Slice, description: string): void {
   if ('server' in slice && slice.server != null) {
     slice.server.specs = {
@@ -229,29 +194,72 @@ export function pushSpec(description: string): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
 
-  switch (context.currentSpecTarget) {
-    case 'client':
-      initializeClientSpecs(slice, description);
-      break;
-    case 'server':
-      initializeServerSpecs(slice, description);
-      break;
+  if (context.currentSpecTarget === 'server') {
+    initializeServerSpecs(slice, description);
   }
 }
 
-export function recordShouldBlock(description?: string): void {
-  if (typeof description === 'string' && context?.currentSpecTarget === 'client') {
-    const slice = getCurrentSlice();
-    if (slice && (slice.type === 'command' || slice.type === 'query' || slice.type === 'experience')) {
-      if (!slice.client.specs) {
-        slice.client.specs = {
-          name: '',
-          rules: [],
-        };
-      }
-      slice.client.specs.rules.push(description);
+export function pushDescribe(id?: string, title?: string): void {
+  if (!context) throw new Error('No active narrative context');
+
+  const describeNode: ClientSpecNode = {
+    type: 'describe',
+    ...(id !== undefined && id !== '' ? { id } : {}),
+    ...(title !== undefined && title !== '' ? { title } : {}),
+    children: [],
+  };
+
+  context.clientSpecStack.push(describeNode);
+}
+
+function validateSliceSupportsClientSpecs(slice: Slice): void {
+  if (slice.type !== 'command' && slice.type !== 'query' && slice.type !== 'experience') {
+    throw new Error('Client specs can only be added to command, query, or experience slices');
+  }
+}
+
+function addNodeToParentOrRoot(node: ClientSpecNode, slice: CommandSlice | QuerySlice | ExperienceSlice): void {
+  if (!context) return;
+
+  if (context.clientSpecStack.length === 0) {
+    slice.client.specs.push(node);
+  } else {
+    const parent = context.clientSpecStack[context.clientSpecStack.length - 1];
+    if (parent.type === 'describe') {
+      if (!parent.children) parent.children = [];
+      parent.children.push(node);
     }
   }
+}
+
+export function popDescribe(): void {
+  if (!context) throw new Error('No active narrative context');
+  if (context.clientSpecStack.length === 0) throw new Error('No active describe block');
+
+  const completedDescribe = context.clientSpecStack.pop();
+  if (!completedDescribe) return;
+
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  validateSliceSupportsClientSpecs(slice);
+  addNodeToParentOrRoot(completedDescribe, slice as CommandSlice | QuerySlice | ExperienceSlice);
+}
+
+export function recordIt(id?: string, title: string = ''): void {
+  if (!context) throw new Error('No active narrative context');
+
+  const itNode: ClientSpecNode = {
+    type: 'it',
+    ...(id !== undefined && id !== '' ? { id } : {}),
+    title,
+  };
+
+  const slice = getCurrentSlice();
+  if (!slice) throw new Error('No active slice');
+
+  validateSliceSupportsClientSpecs(slice);
+  addNodeToParentOrRoot(itNode, slice as CommandSlice | QuerySlice | ExperienceSlice);
 }
 
 export function setQueryRequest(request: string): void {
@@ -290,19 +298,16 @@ export function recordRule(description: string, id?: string): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
 
-  const spec = getCurrentSpecs(slice);
+  const spec = getServerSpecs(slice);
   if (!spec) throw new Error('No active specs for current slice');
 
-  // Only server specs have object rules with examples
-  if (context.currentSpecTarget === 'server') {
-    const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
-    objectRules.push({
-      id,
-      description,
-      examples: [],
-    });
-    context.currentRuleIndex = objectRules.length - 1;
-  }
+  const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
+  objectRules.push({
+    id,
+    description,
+    examples: [],
+  });
+  context.currentRuleIndex = objectRules.length - 1;
 }
 
 export function recordExample(description: string): void {
@@ -312,19 +317,16 @@ export function recordExample(description: string): void {
   const slice = getCurrentSlice();
   if (!slice) throw new Error('No active slice');
 
-  const spec = getCurrentSpecs(slice);
+  const spec = getServerSpecs(slice);
   if (!spec) throw new Error('No active specs for current slice');
 
-  // Only server specs have object rules with examples
-  if (context.currentSpecTarget === 'server') {
-    const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
-    const rule = objectRules[context.currentRuleIndex];
-    rule.examples.push({
-      description,
-      then: [],
-    });
-    context.currentExampleIndex = rule.examples.length - 1;
-  }
+  const objectRules = spec.rules as { id?: string; description: string; examples: Example[] }[];
+  const rule = objectRules[context.currentRuleIndex];
+  rule.examples.push({
+    description,
+    then: [],
+  });
+  context.currentExampleIndex = rule.examples.length - 1;
 }
 
 function processItemWithASTMatch(

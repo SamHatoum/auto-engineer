@@ -13,7 +13,7 @@ describe('spec.ts.ejs', () => {
             {
               type: 'command',
               name: 'Create listing',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -157,7 +157,7 @@ describe('spec.ts.ejs', () => {
             {
               type: 'command',
               name: 'Remove listing',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -299,7 +299,7 @@ describe('spec.ts.ejs', () => {
             {
               type: 'command',
               name: 'submits a questionnaire answer',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {

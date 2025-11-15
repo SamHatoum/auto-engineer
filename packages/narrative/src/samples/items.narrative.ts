@@ -1,4 +1,4 @@
-import { data, flow, should, specs, rule, example } from '../narrative';
+import { data, flow, describe, it, specs, rule, example } from '../narrative';
 import { command, query } from '../fluent-builder';
 import gql from 'graphql-tag';
 import { source } from '../data-narrative-builders';
@@ -33,8 +33,8 @@ flow('items', () => {
   command('Create item')
     .stream('item-${id}')
     .client(() => {
-      specs('A form that allows users to add items', () => {
-        should('have fields for id and description');
+      describe('A form that allows users to add items', () => {
+        it('have fields for id and description');
       });
     })
     .server(() => {
@@ -64,10 +64,10 @@ flow('items', () => {
       }
     `)
     .client(() => {
-      specs('view Items Screen', () => {
-        should('display all items');
-        should('show quantity selectors for each item');
-        should('allow removing items');
+      describe('view Items Screen', () => {
+        it('display all items');
+        it('show quantity selectors for each item');
+        it('allow removing items');
       });
     })
     .server(() => {

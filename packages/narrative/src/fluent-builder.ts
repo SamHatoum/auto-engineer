@@ -72,7 +72,7 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
       type: 'command',
       name,
       id,
-      client: { description: '', specs: undefined },
+      client: { specs: [] },
       server: { description: '', specs: { name: '', rules: [] }, data: undefined },
     };
     addSlice(this.slice);
@@ -88,16 +88,15 @@ class CommandSliceBuilderImpl implements FluentCommandSliceBuilder {
   client(fn: () => void): FluentCommandSliceBuilder;
   client(description: string, fn: () => void): FluentCommandSliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentCommandSliceBuilder {
-    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    debugCommand('Adding client block to slice %s, description: "%s"', this.slice.name, description);
+    debugCommand('Adding client block to slice %s', this.slice.name);
 
     if (callback) {
       const slice = getCurrentSlice();
       if (slice) {
         debugCommand('Starting client block execution');
-        startClientBlock(slice, description);
+        startClientBlock(slice);
         callback();
         endClientBlock();
         debugCommand('Client block execution completed');
@@ -179,7 +178,7 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
       type: 'query',
       name,
       id,
-      client: { description: '', specs: undefined },
+      client: { specs: [] },
       server: { description: '', specs: { name: '', rules: [] }, data: undefined },
     };
     addSlice(this.slice);
@@ -189,16 +188,15 @@ class QuerySliceBuilderImpl implements FluentQuerySliceBuilder {
   client(fn: () => void): FluentQuerySliceBuilder;
   client(description: string, fn: () => void): FluentQuerySliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentQuerySliceBuilder {
-    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    debugQuery('Adding client block to slice %s, description: "%s"', this.slice.name, description);
+    debugQuery('Adding client block to slice %s', this.slice.name);
 
     if (callback) {
       const slice = getCurrentSlice();
       if (slice) {
         debugQuery('Starting client block execution');
-        startClientBlock(slice, description);
+        startClientBlock(slice);
         callback();
         endClientBlock();
         debugQuery('Client block execution completed');
@@ -320,7 +318,7 @@ class ExperienceSliceBuilderImpl implements FluentExperienceSliceBuilder {
       type: 'experience',
       name,
       id,
-      client: { description: '', specs: undefined },
+      client: { specs: [] },
     };
     addSlice(this.slice);
     debugExperience('Experience slice added to flow: %s', name);
@@ -329,16 +327,15 @@ class ExperienceSliceBuilderImpl implements FluentExperienceSliceBuilder {
   client(fn: () => void): FluentExperienceSliceBuilder;
   client(description: string, fn: () => void): FluentExperienceSliceBuilder;
   client(descriptionOrFn: string | (() => void), fn?: () => void): FluentExperienceSliceBuilder {
-    const description = typeof descriptionOrFn === 'string' ? descriptionOrFn : '';
     const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn;
 
-    debugExperience('Adding client block to slice %s, description: "%s"', this.slice.name, description);
+    debugExperience('Adding client block to slice %s', this.slice.name);
 
     if (callback) {
       const slice = getCurrentSlice();
       if (slice) {
         debugExperience('Starting client block execution');
-        startClientBlock(slice, description);
+        startClientBlock(slice);
         callback();
         endClientBlock();
         debugExperience('Client block execution completed');

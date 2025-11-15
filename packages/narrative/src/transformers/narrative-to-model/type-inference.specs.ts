@@ -13,7 +13,7 @@ describe('Type inference in narrative-to-model transformer', () => {
             id: 'SLICE-001',
             type: 'command',
             name: 'Submit Answer Command',
-            client: { description: 'Submit answer client' },
+            client: { specs: [] },
             server: {
               description: 'Submit answer server',
               specs: {
@@ -59,7 +59,7 @@ describe('Type inference in narrative-to-model transformer', () => {
             id: 'SLICE-002',
             type: 'command',
             name: 'Submit Questionnaire Command',
-            client: { description: 'Submit questionnaire client' },
+            client: { specs: [] },
             server: {
               description: 'Submit questionnaire server',
               specs: {
@@ -132,7 +132,7 @@ describe('Type inference in narrative-to-model transformer', () => {
             id: 'SLICE-001',
             type: 'command',
             name: 'Single Object Command',
-            client: { description: 'Single object client' },
+            client: { specs: [] },
             server: {
               description: 'Single object server',
               specs: {

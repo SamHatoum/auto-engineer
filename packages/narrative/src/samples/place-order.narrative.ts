@@ -1,4 +1,4 @@
-import { flow, should, specs, rule, example } from '../narrative';
+import { flow, describe, it, specs, rule, example } from '../narrative';
 import { command } from '../fluent-builder';
 
 export interface OrderPlaced {
@@ -32,9 +32,9 @@ flow('Place order', () => {
   command('Submit order')
     .stream('order-${orderId}')
     .client(() => {
-      specs('Order submission form', () => {
-        should('allow product selection');
-        should('allow quantity input');
+      describe('Order submission form', () => {
+        it('allow product selection');
+        it('allow quantity input');
       });
     })
     .server(() => {

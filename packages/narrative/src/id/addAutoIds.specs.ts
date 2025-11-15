@@ -12,7 +12,7 @@ describe('addAutoIds', () => {
           {
             type: 'command',
             name: 'Test Command Slice',
-            client: { description: 'Test client' },
+            client: { specs: [] },
             server: {
               description: 'Test server',
               specs: {
@@ -35,7 +35,7 @@ describe('addAutoIds', () => {
             type: 'query',
             name: 'Test Query Slice',
             id: 'EXISTING-SLICE-001',
-            client: { description: 'Test client' },
+            client: { specs: [] },
             server: {
               description: 'Test server',
               specs: {
@@ -135,7 +135,7 @@ describe('addAutoIds', () => {
             {
               type: 'command',
               name: 'Simple Command',
-              client: { description: 'Simple client' },
+              client: { specs: [] },
               server: {
                 description: 'Simple server',
                 specs: {
@@ -176,11 +176,10 @@ describe('addAutoIds', () => {
               type: 'experience',
               name: 'User Onboarding Experience',
               client: {
-                description: 'User onboarding client',
-                specs: {
-                  name: 'Onboarding Specs',
-                  rules: ['User should see welcome message', 'User should complete profile setup'],
-                },
+                specs: [
+                  { type: 'it', title: 'User should see welcome message' },
+                  { type: 'it', title: 'User should complete profile setup' },
+                ],
               },
             },
             {
@@ -188,11 +187,7 @@ describe('addAutoIds', () => {
               name: 'Checkout Experience',
               id: 'EXISTING-EXPERIENCE-SLICE-001',
               client: {
-                description: 'Checkout client',
-                specs: {
-                  name: 'Checkout Specs',
-                  rules: ['User should review cart items'],
-                },
+                specs: [{ type: 'it', title: 'User should review cart items' }],
               },
             },
           ],
@@ -226,10 +221,7 @@ describe('addAutoIds', () => {
               name: 'Active Surveys Summary',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['show active surveys summary'],
-                },
+                specs: [{ type: 'it', title: 'show active surveys summary' }],
               },
             },
           ],
@@ -242,10 +234,7 @@ describe('addAutoIds', () => {
               name: 'Create Survey Form',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['allow entering survey title'],
-                },
+                specs: [{ type: 'it', title: 'allow entering survey title' }],
               },
             },
           ],
@@ -258,10 +247,7 @@ describe('addAutoIds', () => {
               name: 'Response Rate Charts',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['show daily response rate charts'],
-                },
+                specs: [{ type: 'it', title: 'show daily response rate charts' }],
               },
             },
           ],

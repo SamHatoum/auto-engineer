@@ -6,7 +6,8 @@ import {
   narrative,
   query,
   rule,
-  should,
+  describe,
+  it,
   sink,
   source,
   specs,
@@ -77,12 +78,12 @@ type TodoListSummary = State<
 narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
   command('adds a new todo', 'AUTO-A1c4Mn7Bz')
     .client(() => {
-      specs('Add Todo', () => {
-        should('display a quick-add input field with floating action button');
-        should('show success animation when todo is added');
-        should('automatically place new todo in "To Do" column');
-        should('clear input field after successful addition');
-        should('focus back to input for quick consecutive additions');
+      describe('Add Todo', () => {
+        it('display a quick-add input field with floating action button');
+        it('show success animation when todo is added');
+        it('automatically place new todo in "To Do" column');
+        it('clear input field after successful addition');
+        it('focus back to input for quick consecutive additions');
       });
     })
     .request(
@@ -113,11 +114,11 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
     });
   command('moves todo to in progress', 'AUTO-M2d5No8Cz')
     .client(() => {
-      specs('Move to In Progress', () => {
-        should('support drag-and-drop from "To Do" to "In Progress" column');
-        should('animate smooth transition between columns');
-        should('update column count badges in real-time');
-        should('show visual feedback during drag operation');
+      describe('Move to In Progress', () => {
+        it('support drag-and-drop from "To Do" to "In Progress" column');
+        it('animate smooth transition between columns');
+        it('update column count badges in real-time');
+        it('show visual feedback during drag operation');
       });
     })
     .request(
@@ -149,13 +150,13 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
     });
   command('marks todo as complete', 'AUTO-C3e6Op9Dz')
     .client(() => {
-      specs('Complete Todo', () => {
-        should('support drag-and-drop to "Done" column');
-        should('show celebration animation on completion');
-        should('display visual confetti effect for milestone completions');
-        should('update completion percentage progress ring');
-        should('strike-through completed todo text with smooth animation');
-        should('show completion timestamp on hover');
+      describe('Complete Todo', () => {
+        it('support drag-and-drop to "Done" column');
+        it('show celebration animation on completion');
+        it('display visual confetti effect for milestone completions');
+        it('update completion percentage progress ring');
+        it('strike-through completed todo text with smooth animation');
+        it('show completion timestamp on hover');
       });
     })
     .request(
@@ -197,14 +198,14 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
     });
   query('views all todos', 'AUTO-V4f7Pq0Ez')
     .client(() => {
-      specs('Todo List View', () => {
-        should('display todos organized in three columns: To Do, In Progress, Done');
-        should('show count badges on each column header');
-        should('support drag-and-drop between columns');
-        should('display empty state illustrations for empty columns');
-        should('show todo cards with glass morphism effect');
-        should('display subtle hover effects on todo cards');
-        should('support keyboard navigation between todos');
+      describe('Todo List View', () => {
+        it('display todos organized in three columns: To Do, In Progress, Done');
+        it('show count badges on each column header');
+        it('support drag-and-drop between columns');
+        it('display empty state illustrations for empty columns');
+        it('show todo cards with glass morphism effect');
+        it('display subtle hover effects on todo cards');
+        it('support keyboard navigation between todos');
       });
     })
     .request(
@@ -249,13 +250,13 @@ narrative('Todo List', 'AUTO-T8dL3k9Xw', () => {
     });
   query('views completion summary', 'AUTO-S5g8Qr1Fz')
     .client(() => {
-      specs('Completion Summary', () => {
-        should('display circular progress ring showing completion percentage');
-        should('show total task count in center of progress ring');
-        should('display breakdown of pending, in-progress, and completed counts');
-        should('update progress ring with smooth animation on status changes');
-        should('use gradient colors for progress ring');
-        should('show daily completion goal progress');
+      describe('Completion Summary', () => {
+        it('display circular progress ring showing completion percentage');
+        it('show total task count in center of progress ring');
+        it('display breakdown of pending, in-progress, and completed counts');
+        it('update progress ring with smooth animation on status changes');
+        it('use gradient colors for progress ring');
+        it('show daily completion goal progress');
       });
     })
     .request(

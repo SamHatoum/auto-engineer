@@ -58,13 +58,13 @@ flow('Test Flow with IDs', 'FLOW-001', () => {
 });`;
 
     const multipleFlowsSameSource = `
-import { flow, specs, should } from '../narrative';
+import { flow, specs, it } from '../narrative';
 import { experience } from '../fluent-builder';
 
 flow('Home Screen', 'AUTO-aifPcU3hw', () => {
   experience('Active Surveys Summary', 'AUTO-slice1').client(() => {
     specs(() => {
-      should('show active surveys summary');
+      it('show active surveys summary');
     });
   });
 });
@@ -72,7 +72,7 @@ flow('Home Screen', 'AUTO-aifPcU3hw', () => {
 flow('Create Survey', 'AUTO-MPviTMrQC', () => {
   experience('Create Survey Form', 'AUTO-slice2').client(() => {
     specs(() => {
-      should('allow entering survey title');
+      it('allow entering survey title');
     });
   });
 });
@@ -80,19 +80,19 @@ flow('Create Survey', 'AUTO-MPviTMrQC', () => {
 flow('Response Analytics', 'AUTO-eME978Euk', () => {
   experience('Response Rate Charts', 'AUTO-slice3').client(() => {
     specs(() => {
-      should('show daily response rate charts');
+      it('show daily response rate charts');
     });
   });
 });`;
 
     const multipleFlowsIncomplete = `
-import { flow, specs, should } from '../narrative';
+import { flow, specs, it } from '../narrative';
 import { experience } from '../fluent-builder';
 
 flow('Home Screen', 'AUTO-aifPcU3hw', () => {
   experience('Active Surveys Summary', 'AUTO-slice1').client(() => {
     specs(() => {
-      should('show active surveys summary');
+      it('show active surveys summary');
     });
   });
 });
@@ -100,7 +100,7 @@ flow('Home Screen', 'AUTO-aifPcU3hw', () => {
 flow('Create Survey', () => {
   experience('Create Survey Form', 'AUTO-slice2').client(() => {
     specs(() => {
-      should('allow entering survey title');
+      it('allow entering survey title');
     });
   });
 });
@@ -108,19 +108,19 @@ flow('Create Survey', () => {
 flow('Response Analytics', 'AUTO-eME978Euk', () => {
   experience('Response Rate Charts', 'AUTO-slice3').client(() => {
     specs(() => {
-      should('show daily response rate charts');
+      it('show daily response rate charts');
     });
   });
 });`;
 
     const multipleFlowsSliceMissing = `
-import { flow, specs, should } from '../narrative';
+import { flow, specs, it } from '../narrative';
 import { experience } from '../fluent-builder';
 
 flow('Home Screen', 'AUTO-aifPcU3hw', () => {
   experience('Active Surveys Summary', 'AUTO-slice1').client(() => {
     specs(() => {
-      should('show active surveys summary');
+      it('show active surveys summary');
     });
   });
 });
@@ -128,7 +128,7 @@ flow('Home Screen', 'AUTO-aifPcU3hw', () => {
 flow('Create Survey', 'AUTO-MPviTMrQC', () => {
   experience('Create Survey Form').client(() => {
     specs(() => {
-      should('allow entering survey title');
+      it('allow entering survey title');
     });
   });
 });
@@ -136,7 +136,7 @@ flow('Create Survey', 'AUTO-MPviTMrQC', () => {
 flow('Response Analytics', 'AUTO-eME978Euk', () => {
   experience('Response Rate Charts', 'AUTO-slice3').client(() => {
     specs(() => {
-      should('show daily response rate charts');
+      it('show daily response rate charts');
     });
   });
 });`;

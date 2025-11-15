@@ -29,7 +29,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "Optional. UX and behavioral specifications for this component/page, derived from flow specs."
+                  "description": "Optional. Array of behavioral test specifications. Uses ' → ' to show nested context."
                 }
               },
               "required": ["description"]
@@ -72,7 +72,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "Optional. UX and behavioral specifications for this component/page, derived from flow specs."
+                  "description": "Optional. Array of behavioral test specifications. Uses ' → ' to show nested context."
                 }
               },
               "required": ["description", "composition"]
@@ -154,7 +154,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "Optional. UX and behavioral specifications for this component/page, derived from flow specs."
+                  "description": "Optional. Array of behavioral test specifications. Uses ' → ' to show nested context."
                 }
               },
               "required": ["description", "composition"]
@@ -254,7 +254,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "Optional. UX and behavioral specifications for this component/page, derived from flow specs."
+                  "description": "Optional. Array of behavioral test specifications. Uses ' → ' to show nested context."
                 }
               },
               "required": ["route", "description", "layout"]

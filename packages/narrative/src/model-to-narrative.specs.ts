@@ -10,13 +10,14 @@ describe('modelToNarrative', () => {
     expect(code).toEqual(`import {
   command,
   data,
+  describe,
   example,
   gql,
+  it,
   narrative,
   query,
   react,
   rule,
-  should,
   sink,
   source,
   specs,
@@ -92,13 +93,13 @@ type ItemsAddedToCart = Event<
 narrative('Seasonal Assistant', () => {
   command('enters shopping criteria into assistant')
     .client(() => {
-      specs('Assistant Chat Interface', () => {
-        should('allow shopper to describe their shopping needs in natural language');
-        should('provide a text input for entering criteria');
-        should('show examples of what to include (age, interests, budget)');
-        should('show a button to submit the criteria');
-        should('generate a persisted session id for a visit');
-        should('show the header on top of the page');
+      describe('Assistant Chat Interface', () => {
+        it('allow shopper to describe their shopping needs in natural language');
+        it('provide a text input for entering criteria');
+        it('show examples of what to include (age, interests, budget)');
+        it('show a button to submit the criteria');
+        it('generate a persisted session id for a visit');
+        it('show the header on top of the page');
       });
     })
     .request(
@@ -236,11 +237,11 @@ narrative('Seasonal Assistant', () => {
   });
   query('views suggested items')
     .client(() => {
-      specs('Suggested Items Screen', () => {
-        should('display all suggested items with names and reasons');
-        should('show quantity selectors for each item');
-        should('have an "Add to Cart" button for selected items');
-        should('allow removing items from the suggestions');
+      describe('Suggested Items Screen', () => {
+        it('display all suggested items with names and reasons');
+        it('show quantity selectors for each item');
+        it('have an "Add to Cart" button for selected items');
+        it('allow removing items from the suggestions');
       });
     })
     .request(
@@ -323,10 +324,10 @@ narrative('Seasonal Assistant', () => {
     });
   command('accepts items and adds to their cart')
     .client(() => {
-      specs('Suggested Items Screen', () => {
-        should('allow selecting specific items to add');
-        should('update quantities before adding to cart');
-        should('provide feedback when items are added');
+      describe('Suggested Items Screen', () => {
+        it('allow selecting specific items to add');
+        it('update quantities before adding to cart');
+        it('provide feedback when items are added');
       });
     })
     .server(() => {
@@ -372,10 +373,10 @@ narrative('Seasonal Assistant', () => {
               id: 'EXP-001',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['show a hero section with a welcome message', 'allow user to start the questionnaire'],
-                },
+                specs: [
+                  { type: 'it', title: 'show a hero section with a welcome message' },
+                  { type: 'it', title: 'allow user to start the questionnaire' },
+                ],
               },
             },
           ],
@@ -387,13 +388,11 @@ narrative('Seasonal Assistant', () => {
 
     const code = await modelToNarrative(experienceModel);
 
-    expect(code).toEqual(`import { experience, narrative, should, specs } from '@auto-engineer/narrative';
+    expect(code).toEqual(`import { experience, it, narrative } from '@auto-engineer/narrative';
 narrative('Test Experience Flow', 'TEST-001', () => {
   experience('Homepage', 'EXP-001').client(() => {
-    specs(() => {
-      should('show a hero section with a welcome message');
-      should('allow user to start the questionnaire');
-    });
+    it('show a hero section with a welcome message');
+    it('allow user to start the questionnaire');
   });
 });
 `);
@@ -412,10 +411,16 @@ narrative('Test Experience Flow', 'TEST-001', () => {
               // id: undefined - no ID
               type: 'experience',
               client: {
-                specs: {
-                  name: 'Homepage specs',
-                  rules: ['show welcome message', 'display navigation'],
-                },
+                specs: [
+                  {
+                    type: 'describe',
+                    title: 'Homepage specs',
+                    children: [
+                      { type: 'it', title: 'show welcome message' },
+                      { type: 'it', title: 'display navigation' },
+                    ],
+                  },
+                ],
               },
             },
           ],
@@ -427,12 +432,12 @@ narrative('Test Experience Flow', 'TEST-001', () => {
 
     const code = await modelToNarrative(modelWithoutIds);
 
-    expect(code).toEqual(`import { experience, narrative, should, specs } from '@auto-engineer/narrative';
+    expect(code).toEqual(`import { describe, experience, it, narrative } from '@auto-engineer/narrative';
 narrative('Test Flow without IDs', () => {
   experience('Homepage').client(() => {
-    specs('Homepage specs', () => {
-      should('show welcome message');
-      should('display navigation');
+    describe('Homepage specs', () => {
+      it('show welcome message');
+      it('display navigation');
     });
   });
 });
@@ -452,10 +457,16 @@ narrative('Test Flow without IDs', () => {
               id: 'SLICE-ABC',
               type: 'experience',
               client: {
-                specs: {
-                  name: 'Homepage specs',
-                  rules: ['show welcome message', 'display navigation'],
-                },
+                specs: [
+                  {
+                    type: 'describe',
+                    title: 'Homepage specs',
+                    children: [
+                      { type: 'it', title: 'show welcome message' },
+                      { type: 'it', title: 'display navigation' },
+                    ],
+                  },
+                ],
               },
             },
             {
@@ -463,11 +474,16 @@ narrative('Test Flow without IDs', () => {
               id: 'SLICE-XYZ',
               type: 'query',
               client: {
-                description: 'Product query client',
-                specs: {
-                  name: 'Product list specs',
-                  rules: ['display all products', 'allow filtering'],
-                },
+                specs: [
+                  {
+                    type: 'describe',
+                    title: 'Product list specs',
+                    children: [
+                      { type: 'it', title: 'display all products' },
+                      { type: 'it', title: 'allow filtering' },
+                    ],
+                  },
+                ],
               },
               server: {
                 description: 'Product query server',
@@ -486,19 +502,19 @@ narrative('Test Flow without IDs', () => {
 
     const code = await modelToNarrative(modelWithIds);
 
-    expect(code).toEqual(`import { experience, narrative, query, should, specs } from '@auto-engineer/narrative';
+    expect(code).toEqual(`import { describe, experience, it, narrative, query, specs } from '@auto-engineer/narrative';
 narrative('Test Flow with IDs', 'FLOW-123', () => {
   experience('Homepage', 'SLICE-ABC').client(() => {
-    specs('Homepage specs', () => {
-      should('show welcome message');
-      should('display navigation');
+    describe('Homepage specs', () => {
+      it('show welcome message');
+      it('display navigation');
     });
   });
   query('view products', 'SLICE-XYZ')
     .client(() => {
-      specs('Product list specs', () => {
-        should('display all products');
-        should('allow filtering');
+      describe('Product list specs', () => {
+        it('display all products');
+        it('allow filtering');
       });
     })
     .server(() => {
@@ -521,7 +537,7 @@ narrative('Test Flow with IDs', 'FLOW-123', () => {
               id: 'SLICE-789',
               type: 'command',
               client: {
-                description: 'Command processing client',
+                specs: [],
               },
               server: {
                 description: 'Command processing server',
@@ -690,10 +706,10 @@ narrative('Questionnaire Flow', 'QUEST-001', () => {});
               id: 'AUTO-H1a4Bn6Cy',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['show a hero section with a welcome message', 'allow user to start the questionnaire'],
-                },
+                specs: [
+                  { type: 'it', title: 'show a hero section with a welcome message' },
+                  { type: 'it', title: 'allow user to start the questionnaire' },
+                ],
               },
             },
             {
@@ -701,16 +717,18 @@ narrative('Questionnaire Flow', 'QUEST-001', () => {});
               id: 'AUTO-V7n8Rq5M',
               type: 'query',
               client: {
-                description: '',
-                specs: {
-                  name: 'Questionnaire Progress',
-                  rules: [
-                    'focus on the current question based on the progress state',
-                    'display the list of answered questions',
-                    'display the list of remaining questions',
-                    'show a progress indicator that is always visible as the user scrolls',
-                  ],
-                },
+                specs: [
+                  {
+                    type: 'describe',
+                    title: 'Questionnaire Progress',
+                    children: [
+                      { type: 'it', title: 'focus on the current question based on the progress state' },
+                      { type: 'it', title: 'display the list of answered questions' },
+                      { type: 'it', title: 'display the list of remaining questions' },
+                      { type: 'it', title: 'show a progress indicator that is always visible as the user scrolls' },
+                    ],
+                  },
+                ],
               },
               request:
                 'query QuestionnaireProgress($participantId: ID!) {\n  questionnaireProgress(participantId: $participantId) {\n    questionnaireId\n    participantId\n    currentQuestionId\n    remainingQuestions\n    status\n    answers {\n      questionId\n      value\n    }\n  }\n}',
@@ -900,13 +918,14 @@ narrative('Questionnaire Flow', 'QUEST-001', () => {});
 
     expect(code).toEqual(`import {
   data,
+  describe,
   example,
   experience,
   gql,
+  it,
   narrative,
   query,
   rule,
-  should,
   source,
   specs,
 } from '@auto-engineer/narrative';
@@ -946,18 +965,16 @@ type QuestionnaireProgress = State<
 >;
 narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
   experience('Homepage', 'AUTO-H1a4Bn6Cy').client(() => {
-    specs(() => {
-      should('show a hero section with a welcome message');
-      should('allow user to start the questionnaire');
-    });
+    it('show a hero section with a welcome message');
+    it('allow user to start the questionnaire');
   });
   query('views the questionnaire', 'AUTO-V7n8Rq5M')
     .client(() => {
-      specs('Questionnaire Progress', () => {
-        should('focus on the current question based on the progress state');
-        should('display the list of answered questions');
-        should('display the list of remaining questions');
-        should('show a progress indicator that is always visible as the user scrolls');
+      describe('Questionnaire Progress', () => {
+        it('focus on the current question based on the progress state');
+        it('display the list of answered questions');
+        it('display the list of remaining questions');
+        it('show a progress indicator that is always visible as the user scrolls');
       });
     })
     .request(
@@ -1021,7 +1038,7 @@ narrative('Questionnaires', 'AUTO-Q9m2Kp4Lx', () => {
               id: 'TEST-SLICE',
               type: 'query',
               client: {
-                description: 'Test client for duplicate rules',
+                specs: [],
               },
               server: {
                 description: 'Test server for duplicate rules',
@@ -1188,7 +1205,7 @@ narrative('Test Flow', 'TEST-FLOW', () => {
               id: 'MULTI-SLICE',
               type: 'query',
               client: {
-                description: 'Multi given client',
+                specs: [],
               },
               server: {
                 description: 'Multi given server rules',
@@ -1435,7 +1452,7 @@ narrative('Multi Given Flow', 'MULTI-GIVEN', () => {
               id: 'REF-SLICE',
               type: 'query',
               client: {
-                description: 'Client for referenced states',
+                specs: [],
               },
               server: {
                 description: 'Server for referenced states',
@@ -1596,7 +1613,7 @@ narrative('Referenced States Flow', 'REF-STATES', () => {
               id: 'DATE-SLICE',
               type: 'query',
               client: {
-                description: 'Date client',
+                specs: [],
               },
               server: {
                 description: 'Date server with Date fields',
@@ -1748,10 +1765,7 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
               id: 'AUTO-aifPcU3hw',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['show active surveys summary'],
-                },
+                specs: [{ type: 'it', title: 'show active surveys summary' }],
               },
             },
           ],
@@ -1765,10 +1779,7 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
               id: 'AUTO-MPviTMrQC',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['allow entering survey title'],
-                },
+                specs: [{ type: 'it', title: 'allow entering survey title' }],
               },
             },
           ],
@@ -1782,10 +1793,7 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
               id: 'AUTO-eME978Euk',
               type: 'experience',
               client: {
-                specs: {
-                  name: '',
-                  rules: ['show daily response rate charts'],
-                },
+                specs: [{ type: 'it', title: 'show daily response rate charts' }],
               },
             },
           ],
@@ -1797,26 +1805,20 @@ narrative('Date Handling Flow', 'DATE-FLOW', () => {
 
     const code = await modelToNarrative(modelWithMultipleFlowsSameSource);
 
-    expect(code).toEqual(`import { experience, narrative, should, specs } from '@auto-engineer/narrative';
+    expect(code).toEqual(`import { experience, it, narrative } from '@auto-engineer/narrative';
 narrative('Home Screen', () => {
   experience('Active Surveys Summary', 'AUTO-aifPcU3hw').client(() => {
-    specs(() => {
-      should('show active surveys summary');
-    });
+    it('show active surveys summary');
   });
 });
 narrative('Create Survey', () => {
   experience('Create Survey Form', 'AUTO-MPviTMrQC').client(() => {
-    specs(() => {
-      should('allow entering survey title');
-    });
+    it('allow entering survey title');
   });
 });
 narrative('Response Analytics', () => {
   experience('Response Rate Charts', 'AUTO-eME978Euk').client(() => {
-    specs(() => {
-      should('show daily response rate charts');
-    });
+    it('show daily response rate charts');
   });
 });
 `);
@@ -1835,7 +1837,7 @@ narrative('Response Analytics', () => {
               id: 'SUMMARY-001',
               type: 'query',
               client: {
-                description: 'Summary view client',
+                specs: [],
               },
               server: {
                 description: 'Summary calculation server',
@@ -2048,7 +2050,7 @@ narrative('Todo List Summary', 'TODO-001', () => {
                 id: 'SUMMARY-SLICE',
                 type: 'query',
                 client: {
-                  description: 'Summary client',
+                  specs: [],
                 },
                 server: {
                   description: 'Summary server',
@@ -2121,7 +2123,7 @@ narrative('Todo Summary Flow', 'TODO-SUMMARY', () => {
                 id: 'TODO-SLICE',
                 type: 'query',
                 client: {
-                  description: 'Todo client',
+                  specs: [],
                 },
                 server: {
                   description: 'Todo server',
@@ -2194,7 +2196,7 @@ narrative('Todo Flow', 'TODO-FLOW', () => {
                 id: 'USER-PROJECT-SLICE',
                 type: 'query',
                 client: {
-                  description: 'User project client',
+                  specs: [],
                 },
                 server: {
                   description: 'User project server',
@@ -2269,7 +2271,7 @@ narrative('User Project Flow', 'USER-PROJECT-FLOW', () => {
                 id: 'SUMMARY-SLICE',
                 type: 'query',
                 client: {
-                  description: 'Summary client',
+                  specs: [],
                 },
                 server: {
                   description: 'Summary server',
@@ -2297,7 +2299,7 @@ narrative('User Project Flow', 'USER-PROJECT-FLOW', () => {
                 id: 'TODO-SLICE',
                 type: 'query',
                 client: {
-                  description: 'Todo client',
+                  specs: [],
                 },
                 server: {
                   description: 'Todo server',
@@ -2325,7 +2327,7 @@ narrative('User Project Flow', 'USER-PROJECT-FLOW', () => {
                 id: 'USER-PROJECT-SLICE',
                 type: 'query',
                 client: {
-                  description: 'User project client',
+                  specs: [],
                 },
                 server: {
                   description: 'User project server',

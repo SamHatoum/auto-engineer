@@ -8,7 +8,9 @@ import {
   startServerBlock,
   endServerBlock,
   pushSpec,
-  recordShouldBlock,
+  pushDescribe,
+  popDescribe,
+  recordIt,
   setSliceData,
   recordRule,
   recordExample,
@@ -45,7 +47,7 @@ export function narrative(name: string, idOrFn: string | (() => void), fn?: () =
 export const client = (fn: () => void) => {
   const slice = getCurrentSlice();
   if (slice) {
-    startClientBlock(slice, '');
+    startClientBlock(slice);
     fn();
     endClientBlock();
   }
@@ -64,9 +66,46 @@ export const request = (_query: unknown) => ({
   with: (..._dependencies: unknown[]) => {},
 });
 
-export const should = (description: string) => {
-  recordShouldBlock(description);
-};
+export function describe(fn: () => void): void;
+export function describe(title: string, fn: () => void): void;
+export function describe(id: string, title: string, fn: () => void): void;
+export function describe(
+  idOrTitleOrFn: string | (() => void),
+  titleOrFn?: string | (() => void),
+  fn?: () => void,
+): void {
+  if (typeof idOrTitleOrFn === 'function') {
+    const slice = getCurrentSlice();
+    const inferredTitle = slice?.name ?? '';
+    pushDescribe(undefined, inferredTitle);
+    idOrTitleOrFn();
+    popDescribe();
+    return;
+  }
+
+  const hasId = typeof titleOrFn === 'string';
+  const id = hasId ? idOrTitleOrFn : undefined;
+  const title = hasId ? titleOrFn : idOrTitleOrFn;
+  const callback = hasId ? fn! : (titleOrFn as () => void);
+
+  pushDescribe(id, title);
+  callback();
+  popDescribe();
+}
+
+export function it(title: string): void;
+export function it(id: string, title: string): void;
+export function it(idOrTitle: string, title?: string): void {
+  const hasId = title !== undefined;
+  recordIt(hasId ? idOrTitle : undefined, hasId ? title : idOrTitle);
+}
+
+export function should(title: string): void;
+export function should(id: string, title: string): void;
+export function should(idOrTitle: string, title?: string): void {
+  const hasId = title !== undefined;
+  recordIt(hasId ? idOrTitle : undefined, hasId ? title : idOrTitle);
+}
 
 export function specs(description: string, fn: () => void): void;
 export function specs(fn: () => void): void;
@@ -75,7 +114,6 @@ export function specs(descriptionOrFn: string | (() => void), fn?: () => void): 
   const callback = typeof descriptionOrFn === 'function' ? descriptionOrFn : fn!;
 
   pushSpec(description);
-  recordShouldBlock();
   callback();
 }
 

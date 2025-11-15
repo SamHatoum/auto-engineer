@@ -6,6 +6,7 @@ import { processFlowsWithAI } from '../index';
 import { type UXSchema } from '../types';
 import createDebug from 'debug';
 import { Model } from '@auto-engineer/narrative';
+import { flattenClientSpecs } from '../spec-utils';
 
 const debug = createDebug('auto:information-architect:generate-command');
 const debugSchema = createDebug('auto:information-architect:generate-command:schema');
@@ -110,6 +111,22 @@ async function getModelFromContext(modelPath: string): Promise<Model> {
   return JSON.parse(modelContent) as Model;
 }
 
+function preprocessModelForAI(model: Model): Model {
+  const processedModel = JSON.parse(JSON.stringify(model)) as Model;
+
+  for (const narrative of processedModel.narratives) {
+    for (const slice of narrative.slices) {
+      if ('client' in slice && slice.client !== undefined && slice.client.specs !== undefined) {
+        const flattenedSpecs = flattenClientSpecs(slice.client.specs);
+        (slice.client as Record<string, unknown>).specs = flattenedSpecs;
+        debug('Flattened %d client specs for slice: %s', flattenedSpecs.length, slice.name);
+      }
+    }
+  }
+
+  return processedModel;
+}
+
 async function getUniqueSchemaPath(
   outputDir: string,
 ): Promise<{ filePath: string; existingSchema: object | undefined }> {
@@ -155,6 +172,10 @@ async function handleGenerateIACommandInternal(
     const model = await getModelFromContext(modelPath);
     debugFiles('Reading %d flow files', model.narratives.length);
 
+    // Preprocess model to flatten client specs for AI
+    const processedModel = preprocessModelForAI(model);
+    debug('Model preprocessed with flattened client specs');
+
     // Get unique schema path and existing schema
     const { filePath, existingSchema } = await getUniqueSchemaPath(outputDir);
 
@@ -169,7 +190,7 @@ async function handleGenerateIACommandInternal(
     debug('  Existing schema: %s', existingSchema ? 'yes' : 'no');
     debug('  Atom count: %d', atoms.length);
 
-    const iaSchema = await processFlowsWithAI(model, uxSchema, existingSchema, atoms);
+    const iaSchema = await processFlowsWithAI(processedModel, uxSchema, existingSchema, atoms);
     debug('AI processing complete');
 
     // Write the schema to file

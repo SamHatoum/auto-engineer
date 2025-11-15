@@ -14,7 +14,7 @@ describe('mutation.resolver.ts.ejs', () => {
               type: 'command',
               name: 'Create listing',
               client: {
-                description: 'A form that allows users to add a new listing',
+                specs: [],
               },
               server: {
                 description: 'Handles listing creation',
@@ -142,14 +142,7 @@ describe('mutation.resolver.ts.ejs', () => {
               name: 'submits a questionnaire answer',
               type: 'command',
               client: {
-                description: '',
-                specs: {
-                  name: '',
-                  rules: [
-                    'display a success message when the answer is submitted',
-                    'display an error message when the answer submission is rejected',
-                  ],
-                },
+                specs: [],
               },
               request:
                 'mutation AnswerQuestion($input: AnswerQuestionInput!) {\\n  answerQuestion(input: $input) {\\n    success\\n  }\\n}',
@@ -274,7 +267,7 @@ describe('mutation.resolver.ts.ejs', () => {
             {
               type: 'command',
               name: 'Add items to cart',
-              client: { description: '' },
+              client: { specs: [] },
               server: {
                 description: '',
                 specs: {
@@ -373,7 +366,7 @@ export class AddItemsToCartResolver {
               type: 'command',
               name: 'update-product-price',
               client: {
-                description: '',
+                specs: [],
               },
               server: {
                 description: '',
