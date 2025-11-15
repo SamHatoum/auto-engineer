@@ -1,5 +1,7 @@
 # @auto-engineer/file-store
 
+## 0.12.1
+
 ## 0.12.0
 
 ### Minor Changes

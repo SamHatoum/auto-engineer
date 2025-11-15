@@ -1,5 +1,16 @@
 # @auto-engineer/flow
 
+## 0.12.1
+
+### Patch Changes
+
+- migrate client specs from flat structure to nested describe/it
+
+- Updated dependencies []:
+  - @auto-engineer/file-store@0.12.1
+  - @auto-engineer/id@0.12.1
+  - @auto-engineer/message-bus@0.12.1
+
 ## 0.12.0
 
 ### Minor Changes
